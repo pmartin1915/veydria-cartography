@@ -1,0 +1,6 @@
+PyYAML>=6.0
+networkx>=3.1
+scipy>=1.11
+Shapely>=2.0
+noise>=1.2.2
+matplotlib>=3.8

@@ -1,0 +1,1473 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "veydria-topology.yaml",
+    "generator": "veydria-cartography/generator/export/geojson.py",
+    "coordinate_system": "SVG viewBox (1200x800) — use CRS.Simple in Leaflet with Y-inversion",
+    "description": "Spatial data for the continent of Veydria. All coordinates derived from veydria-schematic.svg."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              340,
+              330
+            ],
+            [
+              360,
+              310
+            ],
+            [
+              400,
+              290
+            ],
+            [
+              460,
+              280
+            ],
+            [
+              540,
+              260
+            ],
+            [
+              650,
+              270
+            ],
+            [
+              750,
+              300
+            ],
+            [
+              830,
+              330
+            ],
+            [
+              870,
+              370
+            ],
+            [
+              880,
+              420
+            ],
+            [
+              890,
+              480
+            ],
+            [
+              860,
+              540
+            ],
+            [
+              800,
+              580
+            ],
+            [
+              740,
+              620
+            ],
+            [
+              650,
+              640
+            ],
+            [
+              560,
+              650
+            ],
+            [
+              480,
+              660
+            ],
+            [
+              420,
+              640
+            ],
+            [
+              380,
+              600
+            ],
+            [
+              340,
+              560
+            ],
+            [
+              310,
+              500
+            ],
+            [
+              300,
+              450
+            ],
+            [
+              290,
+              400
+            ],
+            [
+              310,
+              360
+            ],
+            [
+              340,
+              330
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "aethelian_basin",
+        "name": "Aethelian Basin",
+        "category": "water",
+        "description": "Continental trade pivot. Not a producer — a processor, certifier, and neutral ground. No army; enforcement via triple-seal excommunication. Contains multiple port cities with six distinct architectural traditions",
+        "opening": "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea",
+        "fill": "#3a7ca5",
+        "fillOpacity": 0.6
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              380,
+              80
+            ],
+            [
+              500,
+              60
+            ],
+            [
+              750,
+              50
+            ],
+            [
+              900,
+              80
+            ],
+            [
+              950,
+              90
+            ],
+            [
+              980,
+              110
+            ],
+            [
+              1000,
+              140
+            ],
+            [
+              940,
+              170
+            ],
+            [
+              860,
+              190
+            ],
+            [
+              780,
+              200
+            ],
+            [
+              680,
+              220
+            ],
+            [
+              560,
+              210
+            ],
+            [
+              460,
+              200
+            ],
+            [
+              400,
+              190
+            ],
+            [
+              370,
+              160
+            ],
+            [
+              380,
+              120
+            ],
+            [
+              380,
+              80
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ngaru_bon",
+        "name": "Ngaru Bon",
+        "category": "civilization",
+        "cardinal": "North",
+        "elevation": "4000-6000m (gorges 2000-3000m)",
+        "terrain": "Hypoxic mountain plateau with deep river gorges",
+        "basin_access": "Indirect — via Lam-Chen Pass to steppe, then overland to Basin; or via Kilwa-analog southeastern Basin margin",
+        "borders": [
+          "irrah (south, via Smith-Spring frontier)",
+          "kheshkai (south, via Lam-Chen Pass — singular exit)"
+        ],
+        "fill": "#7a6b55",
+        "fillOpacity": 0.35,
+        "centroid": [
+          650,
+          120
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              460,
+              200
+            ],
+            [
+              560,
+              210
+            ],
+            [
+              680,
+              220
+            ],
+            [
+              780,
+              200
+            ],
+            [
+              860,
+              190
+            ],
+            [
+              940,
+              170
+            ],
+            [
+              1000,
+              140
+            ],
+            [
+              1040,
+              180
+            ],
+            [
+              1080,
+              240
+            ],
+            [
+              1100,
+              300
+            ],
+            [
+              1080,
+              350
+            ],
+            [
+              1050,
+              400
+            ],
+            [
+              1000,
+              440
+            ],
+            [
+              940,
+              380
+            ],
+            [
+              860,
+              360
+            ],
+            [
+              780,
+              340
+            ],
+            [
+              680,
+              310
+            ],
+            [
+              560,
+              300
+            ],
+            [
+              460,
+              290
+            ],
+            [
+              400,
+              280
+            ],
+            [
+              370,
+              250
+            ],
+            [
+              380,
+              220
+            ],
+            [
+              400,
+              210
+            ],
+            [
+              430,
+              200
+            ],
+            [
+              460,
+              200
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "irrah",
+        "name": "Irrah",
+        "category": "civilization",
+        "cardinal": "Central (trans-continental east-west belt between the highland north and the lowland south)",
+        "elevation": "Variable — sabkha flats near sea level, oasis valleys 200-800m, frankincense escarpments to 1500m",
+        "terrain": "Arid desert belt spanning the continent's interior. Not a compact region but a horizontal swathe: Ngaru-Bon plateau rises above it to the north, Kheshkai steppe flanks it to the northeast, Ndjadi delta lies below it to the south, and the Basin's eastern shore forms its western edge. Three trunk corridors (Northern Thread, Southern Thread, The Spine) connect 40+ oases",
+        "basin_access": "Via caravan routes westward to Basin's eastern shore (Halani-Tamu port); Scribal Ladder pilgrimage route connects south to Ndjadi delta via Basin transit",
+        "borders": [
+          "ngaru_bon (north, at Smith-Spring frontier — escarpment rises from desert floor)",
+          "kheshkai (northeast, desert margin meets steppe grassland)",
+          "ndjadi (south, thorn-steppe transitions to floodplain)",
+          "aethelian_basin (west, caravan terminus at Halani-Tamu)"
+        ],
+        "fill": "#d4a854",
+        "fillOpacity": 0.35,
+        "centroid": [
+          730,
+          270
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1000,
+              140
+            ],
+            [
+              1040,
+              180
+            ],
+            [
+              1080,
+              240
+            ],
+            [
+              1100,
+              300
+            ],
+            [
+              1110,
+              340
+            ],
+            [
+              1100,
+              380
+            ],
+            [
+              1080,
+              420
+            ],
+            [
+              1050,
+              460
+            ],
+            [
+              1000,
+              490
+            ],
+            [
+              950,
+              510
+            ],
+            [
+              900,
+              460
+            ],
+            [
+              870,
+              400
+            ],
+            [
+              860,
+              360
+            ],
+            [
+              870,
+              320
+            ],
+            [
+              900,
+              280
+            ],
+            [
+              940,
+              250
+            ],
+            [
+              960,
+              220
+            ],
+            [
+              980,
+              180
+            ],
+            [
+              1000,
+              140
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "kheshkai",
+        "name": "Kheshkai",
+        "category": "civilization",
+        "cardinal": "East to northeast",
+        "elevation": "1500-2500m",
+        "terrain": "High-altitude grassland steppe with cliff edges overlooking Ndjadi delta to south",
+        "basin_access": "Overland to eastern Basin ports; also via A-Tzalan Ford to Ndjadi delta",
+        "borders": [
+          "ngaru_bon (north, via Lam-Chen Pass)",
+          "irrah (south/southeast, desert margin)",
+          "ndjadi (south, via A-Tzalan Ford — cliff edge descends to delta)",
+          "qollari (southwest, at Breath-of-Cloud sanctuary — cloud forest meets steppe)"
+        ],
+        "fill": "#a8b86a",
+        "fillOpacity": 0.35,
+        "centroid": [
+          1010,
+          340
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              460,
+              580
+            ],
+            [
+              530,
+              600
+            ],
+            [
+              620,
+              620
+            ],
+            [
+              700,
+              630
+            ],
+            [
+              780,
+              640
+            ],
+            [
+              840,
+              630
+            ],
+            [
+              880,
+              610
+            ],
+            [
+              920,
+              590
+            ],
+            [
+              950,
+              560
+            ],
+            [
+              960,
+              530
+            ],
+            [
+              930,
+              550
+            ],
+            [
+              900,
+              570
+            ],
+            [
+              860,
+              590
+            ],
+            [
+              800,
+              620
+            ],
+            [
+              700,
+              640
+            ],
+            [
+              600,
+              650
+            ],
+            [
+              520,
+              660
+            ],
+            [
+              450,
+              650
+            ],
+            [
+              400,
+              630
+            ],
+            [
+              370,
+              610
+            ],
+            [
+              360,
+              590
+            ],
+            [
+              380,
+              570
+            ],
+            [
+              410,
+              575
+            ],
+            [
+              440,
+              580
+            ],
+            [
+              460,
+              580
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi",
+        "name": "Ndjadi",
+        "category": "civilization",
+        "cardinal": "South",
+        "elevation": "Near sea level, flat alluvial",
+        "terrain": "Equatorial monsoon river delta with five distributaries, stone barays, mangrove swamps",
+        "basin_access": "Direct — delta mouth enters Basin's south shore (Ki-Mbuhari port zone)",
+        "borders": [
+          "kheshkai (north, via A-Tzalan Ford)",
+          "qollari (west, Qollari cliff roads descend to floodplains)",
+          "irrah (north/northeast, across desert — Scribal Ladder route)"
+        ],
+        "fill": "#3a8a3a",
+        "fillOpacity": 0.35,
+        "centroid": [
+          680,
+          610
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              340,
+              330
+            ],
+            [
+              330,
+              370
+            ],
+            [
+              310,
+              410
+            ],
+            [
+              300,
+              450
+            ],
+            [
+              290,
+              490
+            ],
+            [
+              300,
+              530
+            ],
+            [
+              330,
+              560
+            ],
+            [
+              360,
+              580
+            ],
+            [
+              400,
+              590
+            ],
+            [
+              440,
+              580
+            ],
+            [
+              430,
+              560
+            ],
+            [
+              420,
+              520
+            ],
+            [
+              400,
+              480
+            ],
+            [
+              380,
+              440
+            ],
+            [
+              370,
+              400
+            ],
+            [
+              360,
+              360
+            ],
+            [
+              350,
+              340
+            ],
+            [
+              340,
+              330
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "qollari",
+        "name": "Qollari",
+        "category": "civilization",
+        "cardinal": "Southwest",
+        "elevation": "2500-4500m",
+        "terrain": "Cloud forest and mountain terraces with carved cliff roads, fog banks, astronomical observatories",
+        "basin_access": "Via cliff roads descending to Oravan coast and Basin's southern rim",
+        "borders": [
+          "kheshkai (northeast, at Breath-of-Cloud sanctuary)",
+          "ndjadi (east, cliff roads descend to floodplains)",
+          "oravan (west, cliff roads descend to coast)"
+        ],
+        "fill": "#2d6b3f",
+        "fillOpacity": 0.35,
+        "centroid": [
+          365,
+          470
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140,
+              290
+            ],
+            [
+              180,
+              270
+            ],
+            [
+              250,
+              278
+            ],
+            [
+              270,
+              310
+            ],
+            [
+              270,
+              380
+            ],
+            [
+              250,
+              430
+            ],
+            [
+              220,
+              455
+            ],
+            [
+              190,
+              455
+            ],
+            [
+              150,
+              420
+            ],
+            [
+              130,
+              380
+            ],
+            [
+              130,
+              340
+            ],
+            [
+              140,
+              290
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "oravan",
+        "name": "Oravan",
+        "category": "civilization",
+        "cardinal": "West (archipelago in open ocean, facing Basin entrance)",
+        "elevation": "Sea level to 3000m volcanic peaks",
+        "terrain": "Volcanic island chain with narrow straits, coral reefs, geothermal vents",
+        "basin_access": "Via Halkar Straits into Basin's western opening",
+        "borders": [
+          "basin (east, via Halkar Straits)",
+          "qollari (east, via Gold-Banner Route — maritime to mountain)",
+          "open_ocean (west, south, north — monsoon-gated)"
+        ],
+        "fill": "#4a9a4a",
+        "fillOpacity": 0.35,
+        "centroid": [
+          200,
+          365
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          940,
+          168
+        ]
+      },
+      "properties": {
+        "id": "lam_chen_pass",
+        "name": "Lam Chen Pass",
+        "category": "chokepoint",
+        "type": "mountain_pass",
+        "connects": [
+          "ngaru_bon",
+          "kheshkai"
+        ],
+        "description": "Singular treacherous land route from Ngaru-Bon plateau down to the steppes. Only exit for Ngaru-Bon exports. Contested for centuries",
+        "strategic_value": "Closure creates existential famine for Ngaru-Bon within one growing season",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          960,
+          510
+        ]
+      },
+      "properties": {
+        "id": "a_tzalan_ford",
+        "name": "A Tzalan Ford",
+        "category": "chokepoint",
+        "type": "river_crossing",
+        "connects": [
+          "kheshkai",
+          "ndjadi"
+        ],
+        "description": "Vital ford where Kheshkai steppe cliff edge descends to Ndjadi river delta. Most contested point on the continent",
+        "strategic_value": "Seizure controls north-south overland trade. Ndjadi can weaponize via upstream river diversion",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          370,
+          520
+        ]
+      },
+      "properties": {
+        "id": "qollari_cliff_roads",
+        "name": "Qollari Cliff Roads",
+        "category": "chokepoint",
+        "type": "mountain_road_network",
+        "connects": [
+          "qollari",
+          "ndjadi",
+          "oravan"
+        ],
+        "description": "Vertigo-inducing carved paths connecting cloud-forest terraces to lowlands and coast. Can be destroyed to deny pursuit",
+        "strategic_value": "Qollari monopoly on highland-lowland access. Llama 25-30 kg load cap forces dense waystation networks",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          320,
+          390
+        ]
+      },
+      "properties": {
+        "id": "halkar_straits",
+        "name": "Halkar Straits",
+        "category": "chokepoint",
+        "type": "maritime_strait",
+        "connects": [
+          "oravan",
+          "aethelian_basin"
+        ],
+        "description": "Narrow passage between Oravan archipelago and Basin. Controls obsidian export and all Oravan maritime access",
+        "strategic_value": "Oravan naval dominance is absolute in the Basin but cannot enforce land control without allies",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          880,
+          200
+        ]
+      },
+      "properties": {
+        "id": "smith_spring",
+        "name": "Smith Spring",
+        "category": "chokepoint",
+        "type": "frontier_resource",
+        "connects": [
+          "ngaru_bon",
+          "irrah"
+        ],
+        "description": "Ore-bearing hot spring at the Ngaru-Bon/Irrah frontier. Ngaru-Bon controls upstream forge-precinct; Irrah controls downstream water-rights; Basin merchants use buffer-zone riverbank",
+        "strategic_value": "Shared resource that forces cooperation. Iron and charcoal flow south; salt flows north",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          900,
+          440
+        ]
+      },
+      "properties": {
+        "id": "breath_of_cloud",
+        "name": "Breath of Cloud",
+        "category": "chokepoint",
+        "type": "border_sanctuary",
+        "connects": [
+          "kheshkai",
+          "qollari"
+        ],
+        "description": "Where cloud forest meets steppe. Only permanent cross-civ sacred site on the continent. Triennial convergence of Kheshkai shamans and Qollari calendarists",
+        "strategic_value": "Massive commercial traffic during festival years creates boom-bust cycle in border towns",
+        "marker-color": "#f44",
+        "marker-symbol": "roadblock"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          650,
+          620
+        ]
+      },
+      "properties": {
+        "id": "ki_mbuhari",
+        "name": "Ki-Mbuhari",
+        "category": "port",
+        "etymology": "Ndjadi: Ki- (settlement) + Mbu- (water) + hari 'surplus'. The Surplus-Water Settlement",
+        "real_world_parallel": "Alexandria analog",
+        "location": "South shore, where Ndjadi delta enters",
+        "function": "Grain funnel and spice transshipment. Ndjadi grain surplus enters continental circulation here",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          600,
+          290
+        ]
+      },
+      "properties": {
+        "id": "tavakh_qarat",
+        "name": "Tavakh-Qarat",
+        "category": "port",
+        "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + qarat (Irrah 'citadel'). The Exchange Citadel",
+        "real_world_parallel": "Venice analog",
+        "location": "North shore",
+        "function": "Salt pans, glass production, grain imports. Oldest commercial quarter. Where khazadari money-changers formed",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          860,
+          420
+        ]
+      },
+      "properties": {
+        "id": "halani_tamu",
+        "name": "Halani-Tamu",
+        "category": "port",
+        "etymology": "Oravan: hala 'reef, harbor' + ni (genitive) + tamu 'sweetwater'. The Sweetwater Harbor",
+        "real_world_parallel": "Hormuz analog",
+        "location": "East shore",
+        "function": "Monsoon switching point. Where Oravan sea-lanes hand off to overland routes. Irrah caravans arrive here",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          830,
+          560
+        ]
+      },
+      "properties": {
+        "id": "dzong_tamu",
+        "name": "Dzong-Tamu",
+        "category": "port",
+        "etymology": "Ngaru-Bon: dzong 'fortress-monastery' + tamu (Basin pidgin 'sweetwater/fresh'). The Fortress Harbor",
+        "real_world_parallel": "Kilwa analog",
+        "location": "Southeast margin",
+        "function": "Link to Ngaru-Bon gold trade via coastal routes. Where Ngaru-Bon metallurgical exports reach the Basin",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          599,
+          444
+        ]
+      },
+      "properties": {
+        "id": "qhabal_ur",
+        "name": "Qhabal Ur",
+        "category": "contested_site",
+        "location": "Basin center",
+        "description": "The Drowned Step — monumental stepped platform partially submerged by tides. Claimed by Oravan (garrison) and Ndjadi (scribal access)",
+        "marker-color": "#adf",
+        "marker-symbol": "religious-christian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          483,
+          576
+        ]
+      },
+      "properties": {
+        "id": "veyd_kirrha",
+        "name": "Veyd Kirrha",
+        "category": "contested_site",
+        "location": "Basin southern rim",
+        "description": "Ash-Oracle — volcanic vent drawing multi-tradition visitors. Oravan, Kheshkai, Qollari, and Irrah scholars converge with competing interpretations",
+        "marker-color": "#adf",
+        "marker-symbol": "religious-christian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            650,
+            620
+          ],
+          [
+            750,
+            590
+          ],
+          [
+            900,
+            540
+          ],
+          [
+            960,
+            510
+          ],
+          [
+            970,
+            470
+          ],
+          [
+            960,
+            350
+          ],
+          [
+            950,
+            280
+          ],
+          [
+            945,
+            230
+          ],
+          [
+            940,
+            190
+          ],
+          [
+            940,
+            168
+          ],
+          [
+            860,
+            110
+          ]
+        ]
+      },
+      "properties": {
+        "id": "copper_for_steel_road",
+        "name": "Copper-for-Steel Road",
+        "category": "trade_route",
+        "endpoints": [
+          "ndjadi",
+          "ngaru_bon"
+        ],
+        "path_description": "Ndjadi delta → A-Tzalan Ford → across Kheshkai steppe → Lam-Chen Pass → Ngaru-Bon plateau",
+        "commodities": "Copper northbound; finished steel/iron southbound",
+        "bottleneck": "A-Tzalan Ford (Kheshkai can toll/seize) and Lam-Chen Pass (singular exit)",
+        "consequence_if_closed": "The defining bilateral dependency. Closure creates existential crises for both sides",
+        "stroke": "#8b5e3c",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "8,3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            860,
+            110
+          ],
+          [
+            900,
+            140
+          ],
+          [
+            940,
+            160
+          ],
+          [
+            940,
+            168
+          ],
+          [
+            960,
+            200
+          ],
+          [
+            980,
+            260
+          ],
+          [
+            1000,
+            320
+          ],
+          [
+            1000,
+            380
+          ],
+          [
+            970,
+            410
+          ],
+          [
+            940,
+            430
+          ],
+          [
+            900,
+            440
+          ],
+          [
+            850,
+            450
+          ],
+          [
+            750,
+            470
+          ],
+          [
+            600,
+            480
+          ],
+          [
+            500,
+            490
+          ],
+          [
+            430,
+            490
+          ],
+          [
+            400,
+            480
+          ]
+        ]
+      },
+      "properties": {
+        "id": "highland_steppe_corridor",
+        "name": "Highland-Steppe Corridor",
+        "category": "trade_route",
+        "endpoints": [
+          "ngaru_bon",
+          "kheshkai",
+          "qollari"
+        ],
+        "path_description": "Two connected legs forming an L-shape: Leg 1 (north-to-south): Ngaru-Bon plateau → Lam-Chen Pass → Kheshkai steppe (metals southbound, horses/tin northbound). Leg 2 (northeast-to-southwest): Kheshkai steppe → Breath-of-Cloud border → Qollari highlands (horses/furs southwestbound, dyes/wool northeastbound)",
+        "commodities": "Metals, horses, furs, amber, tin, dyes, fine wool. Not a single east-west flow but two bilateral exchanges pivoting through Kheshkai",
+        "bottleneck": "Kheshkai clan-lords (grazing rights at waystations on both legs)",
+        "consequence_if_closed": "Ngaru-Bon loses its overland iron market. Qollari loses horse supply and steppe amber. A clan feud can close 300 leagues for a year",
+        "stroke": "#d4a017",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "6,4"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            380,
+            460
+          ],
+          [
+            420,
+            500
+          ],
+          [
+            460,
+            530
+          ],
+          [
+            500,
+            560
+          ],
+          [
+            540,
+            580
+          ],
+          [
+            600,
+            600
+          ],
+          [
+            650,
+            620
+          ]
+        ]
+      },
+      "properties": {
+        "id": "highland_relay",
+        "name": "Highland Relay",
+        "category": "trade_route",
+        "endpoints": [
+          "qollari",
+          "basin"
+        ],
+        "path_description": "Qollari cloud-state cliff roads → Basin ports and connected lowlands",
+        "commodities": "High-value low-bulk: medicinals, dyes, ritual barks, fine wool. Also oath-messages (fastest information channel on the continent)",
+        "bottleneck": "Qollari calendar-keepers (calendar-gated pass access)",
+        "consequence_if_closed": "Continental mail slows from weeks to months. Urgent medicinal shipments fail. Calendar schism has historically closed relay for decades",
+        "stroke": "#3a8a3a",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "3,5"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            220,
+            360
+          ],
+          [
+            260,
+            360
+          ],
+          [
+            290,
+            370
+          ],
+          [
+            320,
+            380
+          ],
+          [
+            360,
+            390
+          ],
+          [
+            420,
+            400
+          ],
+          [
+            500,
+            410
+          ],
+          [
+            580,
+            420
+          ],
+          [
+            680,
+            430
+          ],
+          [
+            780,
+            440
+          ],
+          [
+            830,
+            445
+          ],
+          [
+            860,
+            430
+          ],
+          [
+            860,
+            420
+          ]
+        ]
+      },
+      "properties": {
+        "id": "coastal_monsoon",
+        "name": "Coastal Monsoon",
+        "category": "trade_route",
+        "endpoints": [
+          "oravan",
+          "basin"
+        ],
+        "path_description": "Oravan archipelago → Halkar Straits → Basin ports (monsoon-gated circuit)",
+        "commodities": "Bulk maritime: spices, coral-stone, obsidian, re-exported Irrah dates outbound; iron inbound to archipelago",
+        "bottleneck": "Oravan queen-church (wave-tithe collection)",
+        "consequence_if_closed": "Oravan imports collapse (no iron = no new ships). Coastal Basin access halves. Monsoon failure or queen-church succession crisis suspends all tithe-backed insurance",
+        "stroke": "#4a8ab0",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "8,2,2,2"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            880,
+            200
+          ],
+          [
+            840,
+            230
+          ],
+          [
+            790,
+            250
+          ],
+          [
+            730,
+            260
+          ],
+          [
+            730,
+            260
+          ],
+          [
+            770,
+            300
+          ],
+          [
+            820,
+            360
+          ],
+          [
+            860,
+            420
+          ]
+        ]
+      },
+      "properties": {
+        "id": "caravan_thread",
+        "name": "Caravan Thread",
+        "category": "trade_route",
+        "endpoints": [
+          "irrah",
+          "basin",
+          "ngaru_bon"
+        ],
+        "path_description": "Three-hub network, not a single thread: Hub 1 (Smith-Spring frontier): Ngaru-Bon iron/charcoal flows south to Irrah; Irrah salt flows north to Ngaru-Bon. This is a frontier contact-point with buffer zone, not a through-route. Hub 2 (Irrah oasis network): internal east-west trunk corridors (The Spine) connecting 40+ oases. Hub 3 (Basin terminus): caravans depart Irrah westward under Qalībin escort to Halani-Tamu port on Basin's east shore",
+        "commodities": "Salt, frankincense, myrrh, dates, silver outbound from Irrah to Basin; iron, grain, timber, cotton inbound from Basin/Ngaru-Bon to Irrah",
+        "bottleneck": "Qalībin path-finders (only legally recognized desert escorts for the Basin leg); Smith-Spring buffer zone (neutral contact point for the Ngaru-Bon leg)",
+        "consequence_if_closed": "Salt supply to southern continent collapses. Irrah iron imports cease. Continental banking network (khatti letters of credit) breaks — Qalībin oath-binders are the de facto banking infrastructure",
+        "stroke": "#d4a854",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "3,4"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          730,
+          260
+        ]
+      },
+      "properties": {
+        "id": "qarat_al_fidda",
+        "name": "Qarat al-Fidda",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          590,
+          240
+        ]
+      },
+      "properties": {
+        "id": "ghadam_thalla",
+        "name": "Ghadam Thalla",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          950,
+          240
+        ]
+      },
+      "properties": {
+        "id": "tin_mashraq",
+        "name": "Tin Mashraq",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          680,
+          320
+        ]
+      },
+      "properties": {
+        "id": "khulut",
+        "name": "Khulut",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          820,
+          230
+        ]
+      },
+      "properties": {
+        "id": "zin_iferis",
+        "name": "Zin Iferis",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    }
+  ]
+}

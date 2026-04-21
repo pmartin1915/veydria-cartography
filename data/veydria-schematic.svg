@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <title>Veydria Continental Schematic — Spatial Reference Map</title>
+  <desc>Geometrically accurate schematic derived from veydria-topology.yaml. Not a final art map — a reference for verifying spatial relationships. C-shaped continent, 6 civilizations, Aethelian Basin, 5 trade routes, 6 chokepoints.</desc>
+
+  <defs>
+    <!-- Terrain patterns -->
+    <pattern id="dunes" patternUnits="userSpaceOnUse" width="12" height="12">
+      <path d="M0 8 Q3 4 6 8 Q9 12 12 8" fill="none" stroke="#d4a854" stroke-width="0.5" opacity="0.4"/>
+    </pattern>
+    <pattern id="mountains" patternUnits="userSpaceOnUse" width="16" height="12">
+      <path d="M0 12 L4 4 L8 12 M8 12 L12 2 L16 12" fill="none" stroke="#8b7355" stroke-width="0.7" opacity="0.3"/>
+    </pattern>
+    <pattern id="steppe" patternUnits="userSpaceOnUse" width="8" height="8">
+      <line x1="0" y1="6" x2="4" y2="6" stroke="#8fa" stroke-width="0.4" opacity="0.3"/>
+      <line x1="4" y1="2" x2="8" y2="2" stroke="#8fa" stroke-width="0.4" opacity="0.3"/>
+    </pattern>
+    <pattern id="forest" patternUnits="userSpaceOnUse" width="10" height="10">
+      <circle cx="5" cy="5" r="2.5" fill="#2d6b3f" opacity="0.15"/>
+    </pattern>
+
+    <!-- Route markers -->
+    <marker id="arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+      <path d="M0 0 L6 2 L0 4 Z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- Background: ocean -->
+  <rect width="1200" height="800" fill="#1a3a5c"/>
+
+  <!-- Open ocean label -->
+  <text x="120" y="400" fill="#2a5a8c" font-family="Georgia, serif" font-size="18" font-style="italic" opacity="0.6" transform="rotate(-90 120 400)">O P E N &amp;#160; O C E A N</text>
+
+  <!-- ============================================ -->
+  <!-- CONTINENTAL LANDMASS (C-shape) -->
+  <!-- ============================================ -->
+
+  <!-- Main C-shaped landmass -->
+  <path d="
+    M 380 80
+    C 500 60, 750 50, 900 80
+    C 1000 100, 1080 150, 1100 250
+    C 1120 350, 1100 430, 1050 500
+    C 1000 570, 920 620, 850 650
+    C 780 680, 700 700, 620 710
+    C 540 720, 460 710, 400 690
+    C 340 660, 300 620, 280 570
+    C 260 520, 270 460, 300 420
+    C 280 390, 270 360, 280 330
+    C 290 300, 310 260, 340 230
+    C 360 200, 370 160, 380 120
+    Z
+  " fill="#c4a862" stroke="#8b7355" stroke-width="2"/>
+
+  <!-- Frankincense coast (SE extension) -->
+  <path d="
+    M 1050 500
+    C 1080 540, 1120 570, 1140 620
+    C 1150 650, 1140 680, 1120 700
+    C 1100 690, 1070 660, 1050 630
+    C 1020 600, 980 580, 950 610
+    C 920 630, 880 650, 850 650
+  " fill="#c4a862" stroke="#8b7355" stroke-width="2"/>
+
+  <!-- ============================================ -->
+  <!-- AETHELIAN BASIN (central sea) -->
+  <!-- ============================================ -->
+
+  <path d="
+    M 340 330
+    C 360 310, 400 290, 460 280
+    C 540 260, 650 270, 750 300
+    C 830 330, 870 370, 880 420
+    C 890 480, 860 540, 800 580
+    C 740 620, 650 640, 560 650
+    C 480 660, 420 640, 380 600
+    C 340 560, 310 500, 300 450
+    C 290 400, 310 360, 340 330
+    Z
+  " fill="#3a7ca5" stroke="#2a5a8c" stroke-width="1.5" opacity="0.9"/>
+
+  <!-- Basin label -->
+  <text x="580" y="460" fill="#1a3a5c" font-family="Georgia, serif" font-size="14" font-style="italic" text-anchor="middle" opacity="0.7">A E T H E L I A N</text>
+  <text x="580" y="480" fill="#1a3a5c" font-family="Georgia, serif" font-size="14" font-style="italic" text-anchor="middle" opacity="0.7">B A S I N</text>
+
+  <!-- Halkar Straits (western mouth) -->
+  <line x1="320" y1="350" x2="320" y2="430" stroke="#2a5a8c" stroke-width="3" stroke-dasharray="4,3"/>
+  <text x="295" y="395" fill="#fff" font-family="Georgia, serif" font-size="8" text-anchor="middle" transform="rotate(-90 295 395)">Halkar Straits</text>
+
+  <!-- ============================================ -->
+  <!-- TERRAIN REGIONS -->
+  <!-- ============================================ -->
+
+  <!-- Ngaru-Bon Plateau (north) -->
+  <path d="
+    M 380 80
+    C 500 60, 750 50, 900 80
+    C 950 90, 980 110, 1000 140
+    C 940 170, 860 190, 780 200
+    C 680 220, 560 210, 460 200
+    C 400 190, 370 160, 380 120
+    Z
+  " fill="#7a6b55" opacity="0.7"/>
+  <rect x="380" y="60" width="620" height="140" fill="url(#mountains)" opacity="0.5"/>
+
+  <!-- Ngaru-Bon label -->
+  <text x="650" y="120" fill="#fff" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">N G A R U - B O N</text>
+  <text x="650" y="136" fill="#ddd" font-family="Georgia, serif" font-size="9" text-anchor="middle">P L A T E A U &amp;#160; (4,000-6,000m)</text>
+
+  <!-- Tsetse belt (hatched line below Ngaru-Bon) -->
+  <path d="M 460 200 C 560 210, 680 220, 780 200 C 860 190, 940 170, 1000 140" fill="none" stroke="#556b2f" stroke-width="6" stroke-dasharray="2,4" opacity="0.5"/>
+  <text x="720" y="195" fill="#556b2f" font-family="Georgia, serif" font-size="7" text-anchor="middle" opacity="0.8">tsetse belt</text>
+
+  <!-- Irrah Desert Belt (central band) -->
+  <path d="
+    M 460 200
+    C 560 210, 680 220, 780 200
+    C 860 190, 940 170, 1000 140
+    C 1040 180, 1080 240, 1100 300
+    C 1080 350, 1050 400, 1000 440
+    C 940 380, 860 360, 780 340
+    C 680 310, 560 300, 460 290
+    C 400 280, 370 250, 380 220
+    C 400 210, 430 200, 460 200
+    Z
+  " fill="#d4a854" opacity="0.5"/>
+  <rect x="400" y="200" width="700" height="200" fill="url(#dunes)" opacity="0.6"/>
+
+  <!-- Irrah label -->
+  <text x="730" y="270" fill="#8b6914" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">I R R A H &amp;#160; D R Y L A N D S</text>
+
+  <!-- Kheshkai Steppe (northeast) -->
+  <path d="
+    M 1000 140
+    C 1040 180, 1080 240, 1100 300
+    C 1110 340, 1100 380, 1080 420
+    C 1050 460, 1000 490, 950 510
+    C 900 460, 870 400, 860 360
+    C 870 320, 900 280, 940 250
+    C 960 220, 980 180, 1000 140
+    Z
+  " fill="#a8b86a" opacity="0.5"/>
+  <rect x="900" y="140" width="220" height="380" fill="url(#steppe)"/>
+
+  <!-- Kheshkai label -->
+  <text x="1010" y="340" fill="#4a5a2a" font-family="Georgia, serif" font-size="12" font-weight="bold" text-anchor="middle">KHESHKAI</text>
+  <text x="1010" y="355" fill="#5a6a3a" font-family="Georgia, serif" font-size="9" text-anchor="middle">STEPPE</text>
+  <text x="1010" y="368" fill="#6a7a4a" font-family="Georgia, serif" font-size="8" text-anchor="middle">(1,500-2,500m)</text>
+
+  <!-- Ndjadi Floodplains (south) -->
+  <path d="
+    M 460 580
+    C 530 600, 620 620, 700 630
+    C 780 640, 840 630, 880 610
+    C 920 590, 950 560, 960 530
+    C 930 550, 900 570, 860 590
+    C 800 620, 700 640, 600 650
+    C 520 660, 450 650, 400 630
+    C 370 610, 360 590, 380 570
+    C 410 575, 440 580, 460 580
+    Z
+  " fill="#3a8a3a" opacity="0.5"/>
+
+  <!-- Ndjadi rivers (5 distributaries) -->
+  <path d="M 700 530 C 680 560, 660 590, 640 640" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
+  <path d="M 700 530 C 710 565, 700 600, 680 640" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
+  <path d="M 700 530 C 720 570, 730 610, 720 645" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
+  <path d="M 700 530 C 740 570, 760 610, 760 645" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
+  <path d="M 700 530 C 750 560, 790 600, 800 635" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
+  <!-- Tributary from Kheshkai -->
+  <path d="M 960 510 C 900 520, 820 530, 700 530" fill="none" stroke="#4a8ab0" stroke-width="2" opacity="0.6"/>
+  <!-- Tributary from Qollari -->
+  <path d="M 440 480 C 500 500, 600 520, 700 530" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Ndjadi label -->
+  <text x="680" y="610" fill="#1a5a1a" font-family="Georgia, serif" font-size="12" font-weight="bold" text-anchor="middle">N D J A D I</text>
+  <text x="680" y="625" fill="#2a6a2a" font-family="Georgia, serif" font-size="9" text-anchor="middle">FLOODPLAINS (0-50m)</text>
+
+  <!-- Qollari Highlands (southwest) -->
+  <path d="
+    M 340 330
+    C 330 370, 310 410, 300 450
+    C 290 490, 300 530, 330 560
+    C 360 580, 400 590, 440 580
+    C 430 560, 420 520, 400 480
+    C 380 440, 370 400, 360 360
+    C 350 340, 340 330, 340 330
+    Z
+  " fill="#2d6b3f" opacity="0.6"/>
+  <rect x="280" y="330" width="180" height="260" fill="url(#forest)"/>
+
+  <!-- Qollari label -->
+  <text x="365" y="470" fill="#fff" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">QOLLARI</text>
+  <text x="365" y="484" fill="#cfc" font-family="Georgia, serif" font-size="8" text-anchor="middle">HIGHLANDS</text>
+  <text x="365" y="496" fill="#cfc" font-family="Georgia, serif" font-size="7" text-anchor="middle">(2,500-4,500m)</text>
+
+  <!-- ============================================ -->
+  <!-- ORAVAN ARCHIPELAGO (west, in ocean) -->
+  <!-- ============================================ -->
+
+  <!-- Main island -->
+  <ellipse cx="220" cy="360" rx="45" ry="55" fill="#4a9a4a" stroke="#3a7a3a" stroke-width="1.5" transform="rotate(-15 220 360)"/>
+  <!-- Secondary islands -->
+  <ellipse cx="180" cy="300" rx="22" ry="18" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
+  <ellipse cx="160" cy="380" rx="18" ry="25" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
+  <ellipse cx="200" cy="440" rx="20" ry="15" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
+  <ellipse cx="250" cy="290" rx="15" ry="12" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
+  <!-- Small outliers -->
+  <circle cx="140" cy="340" r="8" fill="#6aba6a" stroke="#3a7a3a" stroke-width="0.5"/>
+  <circle cx="250" cy="430" r="6" fill="#6aba6a" stroke="#3a7a3a" stroke-width="0.5"/>
+
+  <!-- Oravan label -->
+  <text x="200" y="365" fill="#fff" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">ORAVAN</text>
+  <text x="200" y="378" fill="#cfc" font-family="Georgia, serif" font-size="8" text-anchor="middle">ARCHIPELAGO</text>
+
+  <!-- Volcano symbols on two islands -->
+  <path d="M 215 340 L 220 328 L 225 340" fill="none" stroke="#c44" stroke-width="1.5"/>
+  <circle cx="220" cy="326" r="2" fill="#f84" opacity="0.7"/>
+  <path d="M 157 370 L 160 362 L 163 370" fill="none" stroke="#c44" stroke-width="1"/>
+
+  <!-- ============================================ -->
+  <!-- BASIN PORT ZONES -->
+  <!-- ============================================ -->
+
+  <!-- Ki-Mbuhari (south shore) -->
+  <circle cx="650" cy="620" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="650" y="645" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="middle">Ki-Mbuhari</text>
+
+  <!-- Tavakh-Qarat (north shore) -->
+  <circle cx="600" cy="290" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="600" y="282" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="middle">Tavakh-Qarat</text>
+
+  <!-- Halani-Tamu (east shore) -->
+  <circle cx="860" cy="420" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="880" y="415" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="start">Halani-Tamu</text>
+
+  <!-- Dzong-Tamu (SE margin) -->
+  <circle cx="830" cy="560" r="5" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="850" y="565" fill="#e8c840" font-family="Georgia, serif" font-size="8" font-weight="bold" text-anchor="start">Dzong-Tamu</text>
+
+  <!-- Qhabal-Ur (Basin center) -->
+  <rect x="595" y="440" width="8" height="8" fill="none" stroke="#fff" stroke-width="1" transform="rotate(45 599 444)"/>
+  <text x="615" y="445" fill="#adf" font-family="Georgia, serif" font-size="7" font-style="italic">Qhabal-Ur</text>
+
+  <!-- Veyd-Kirrha (south rim) -->
+  <path d="M 480 580 L 483 572 L 486 580" fill="none" stroke="#f84" stroke-width="1.2"/>
+  <text x="498" y="577" fill="#f84" font-family="Georgia, serif" font-size="7" font-style="italic">Veyd-Kirrha</text>
+
+  <!-- ============================================ -->
+  <!-- CHOKEPOINTS -->
+  <!-- ============================================ -->
+
+  <!-- Lam-Chen Pass -->
+  <circle cx="940" cy="168" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="936" y1="168" x2="944" y2="168" stroke="#f44" stroke-width="2"/>
+  <text x="920" y="158" fill="#f88" font-family="Georgia, serif" font-size="8" text-anchor="end">Lam-Chen Pass</text>
+
+  <!-- A-Tzalan Ford -->
+  <circle cx="960" cy="510" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="956" y1="510" x2="964" y2="510" stroke="#f44" stroke-width="2"/>
+  <text x="978" y="520" fill="#f88" font-family="Georgia, serif" font-size="8">A-Tzalan Ford</text>
+
+  <!-- Smith-Spring -->
+  <circle cx="880" cy="200" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="876" y1="200" x2="884" y2="200" stroke="#f44" stroke-width="2"/>
+  <text x="862" y="218" fill="#f88" font-family="Georgia, serif" font-size="8" text-anchor="end">Smith-Spring</text>
+
+  <!-- Breath-of-Cloud -->
+  <circle cx="900" cy="440" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="896" y1="440" x2="904" y2="440" stroke="#f44" stroke-width="2"/>
+  <text x="912" y="445" fill="#f88" font-family="Georgia, serif" font-size="7">Breath-of-Cloud</text>
+
+  <!-- ============================================ -->
+  <!-- TRADE ROUTES -->
+  <!-- ============================================ -->
+
+  <!-- Copper-for-Steel Road (south to north, brown) -->
+  <path d="M 650 620 C 750 590, 900 540, 960 510 C 970 470, 960 350, 950 280 C 945 230, 940 190, 940 168 C 940 150, 920 130, 860 110" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-dasharray="8,3" opacity="0.8"/>
+
+  <!-- Highland-Steppe Corridor Leg 1: Ngaru-Bon to Kheshkai (amber) -->
+  <path d="M 860 110 C 900 140, 940 160, 940 168 C 960 200, 980 260, 1000 320" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
+  <!-- Leg 2: Kheshkai to Qollari (amber) -->
+  <path d="M 1000 380 C 970 410, 940 430, 900 440 C 850 450, 750 470, 600 480 C 500 490, 430 490, 400 480" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
+
+  <!-- Highland Relay: Qollari to Basin (green dotted) -->
+  <path d="M 380 460 C 420 500, 460 530, 500 560 C 540 580, 600 600, 650 620" fill="none" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5" opacity="0.7"/>
+
+  <!-- Coastal Monsoon: Oravan through Basin (blue wavy) -->
+  <path d="M 220 360 C 260 360, 290 370, 320 380 C 360 390, 420 400, 500 410 C 580 420, 680 430, 780 440 C 830 445, 860 430, 860 420" fill="none" stroke="#4a8ab0" stroke-width="2.5" stroke-dasharray="8,2,2,2" opacity="0.7"/>
+
+  <!-- Caravan Thread: Irrah network (gold dotted) -->
+  <!-- Smith-Spring to Qarat al-Fidda -->
+  <path d="M 880 200 C 840 230, 790 250, 730 260" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.7"/>
+  <!-- Qarat al-Fidda to Halani-Tamu -->
+  <path d="M 730 260 C 770 300, 820 360, 860 420" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.7"/>
+
+  <!-- ============================================ -->
+  <!-- NAMED IRRAH OASES -->
+  <!-- ============================================ -->
+
+  <circle cx="730" cy="260" r="4" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="730" y="252" fill="#4a9a3a" font-family="Georgia, serif" font-size="7" text-anchor="middle">Qarat al-Fidda</text>
+
+  <circle cx="590" cy="240" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
+  <text x="590" y="233" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Ghadam-Thalla</text>
+
+  <circle cx="950" cy="240" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
+  <text x="952" y="233" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="start">Tin Mashraq</text>
+
+  <circle cx="680" cy="320" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
+  <text x="680" y="334" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Khulut</text>
+
+  <circle cx="820" cy="230" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
+  <text x="820" y="223" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Zin-Iferis</text>
+
+  <!-- ============================================ -->
+  <!-- NAMED FEATURES -->
+  <!-- ============================================ -->
+
+  <!-- Zang-Ri (Copper Mountain) -->
+  <path d="M 550 85 L 555 72 L 560 85" fill="none" stroke="#a86" stroke-width="1.2"/>
+  <text x="555" y="70" fill="#dca" font-family="Georgia, serif" font-size="6" text-anchor="middle">Zang-Ri</text>
+
+  <!-- Apu-Yana (Black Mountain, Qollari east border) -->
+  <path d="M 410 420 L 414 408 L 418 420" fill="none" stroke="#644" stroke-width="1.2"/>
+  <text x="430" y="412" fill="#a88" font-family="Georgia, serif" font-size="6">Apu-Yana</text>
+
+  <!-- Volata-Xal near A-Tzalan -->
+  <text x="978" y="535" fill="#aaa" font-family="Georgia, serif" font-size="6" font-style="italic">Volata-Xal</text>
+
+  <!-- Frankincense coast label -->
+  <text x="1110" y="660" fill="#c4a862" font-family="Georgia, serif" font-size="8" font-style="italic" transform="rotate(-50 1110 660)">Frankincense Coast</text>
+
+  <!-- ============================================ -->
+  <!-- COMPASS + SCALE -->
+  <!-- ============================================ -->
+
+  <!-- Compass rose -->
+  <g transform="translate(80, 700)">
+    <circle cx="0" cy="0" r="22" fill="none" stroke="#8b7355" stroke-width="1"/>
+    <line x1="0" y1="-20" x2="0" y2="20" stroke="#8b7355" stroke-width="1"/>
+    <line x1="-20" y1="0" x2="20" y2="0" stroke="#8b7355" stroke-width="1"/>
+    <text x="0" y="-26" fill="#c4a862" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">N</text>
+    <text x="0" y="34" fill="#8b7355" font-family="Georgia, serif" font-size="8" text-anchor="middle">S</text>
+    <text x="28" y="4" fill="#8b7355" font-family="Georgia, serif" font-size="8" text-anchor="middle">E</text>
+    <text x="-28" y="4" fill="#8b7355" font-family="Georgia, serif" font-size="8" text-anchor="middle">W</text>
+  </g>
+
+  <!-- Scale bar -->
+  <g transform="translate(80, 750)">
+    <line x1="0" y1="0" x2="100" y2="0" stroke="#c4a862" stroke-width="2"/>
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#c4a862" stroke-width="1.5"/>
+    <line x1="50" y1="-3" x2="50" y2="3" stroke="#c4a862" stroke-width="1"/>
+    <line x1="100" y1="-4" x2="100" y2="4" stroke="#c4a862" stroke-width="1.5"/>
+    <text x="50" y="14" fill="#c4a862" font-family="Georgia, serif" font-size="8" text-anchor="middle">~500 km (5-7 days by ship)</text>
+  </g>
+
+  <!-- ============================================ -->
+  <!-- LEGEND -->
+  <!-- ============================================ -->
+
+  <g transform="translate(950, 650)">
+    <rect x="0" y="0" width="230" height="140" rx="4" fill="#1a2a3c" opacity="0.85" stroke="#8b7355" stroke-width="1"/>
+    <text x="115" y="18" fill="#c4a862" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">LEGEND</text>
+
+    <!-- Trade routes -->
+    <line x1="10" y1="32" x2="40" y2="32" stroke="#8b5e3c" stroke-width="2" stroke-dasharray="8,3"/>
+    <text x="48" y="36" fill="#ccc" font-family="Georgia, serif" font-size="7">Copper-for-Steel Road</text>
+
+    <line x1="10" y1="46" x2="40" y2="46" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="48" y="50" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland-Steppe Corridor</text>
+
+    <line x1="10" y1="60" x2="40" y2="60" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5"/>
+    <text x="48" y="64" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland Relay</text>
+
+    <line x1="10" y1="74" x2="40" y2="74" stroke="#4a8ab0" stroke-width="2" stroke-dasharray="8,2,2,2"/>
+    <text x="48" y="78" fill="#ccc" font-family="Georgia, serif" font-size="7">Coastal Monsoon</text>
+
+    <line x1="10" y1="88" x2="40" y2="88" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4"/>
+    <text x="48" y="92" fill="#ccc" font-family="Georgia, serif" font-size="7">Caravan Thread</text>
+
+    <!-- Symbols -->
+    <circle cx="20" cy="106" r="4" fill="none" stroke="#f44" stroke-width="1.5"/>
+    <line x1="17" y1="106" x2="23" y2="106" stroke="#f44" stroke-width="1.5"/>
+    <text x="48" y="110" fill="#ccc" font-family="Georgia, serif" font-size="7">Chokepoint</text>
+
+    <circle cx="20" cy="120" r="3" fill="#e8c840" stroke="#8b6914" stroke-width="1"/>
+    <text x="48" y="124" fill="#ccc" font-family="Georgia, serif" font-size="7">Basin Port Zone</text>
+
+    <circle cx="20" cy="132" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+    <text x="48" y="136" fill="#ccc" font-family="Georgia, serif" font-size="7">Irrah Oasis City</text>
+  </g>
+
+  <!-- ============================================ -->
+  <!-- TITLE -->
+  <!-- ============================================ -->
+
+  <text x="600" y="30" fill="#c4a862" font-family="Georgia, serif" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="4">V E Y D R I A</text>
+  <text x="600" y="48" fill="#8b7355" font-family="Georgia, serif" font-size="10" text-anchor="middle" letter-spacing="2">Continental Schematic — Spatial Reference</text>
+
+</svg>

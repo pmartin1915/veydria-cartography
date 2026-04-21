@@ -1,0 +1,199 @@
+# ============================================================
+# Veydria Continental Topology — Spatial Source of Truth
+# AUTHOR: Claude Opus 4.6 (laptop) on 2026-04-21
+# SOURCE: Synthesized from region files, religion layer (58 files),
+#   ecology flow_table.md, and economy deep research
+# STATUS: draft — Perry review needed before economy layer builds on this
+# ============================================================
+# This file encodes WHERE things are relative to each other.
+# It does NOT duplicate content from region files (terrain detail),
+# religion files (institutional function), or ecology files (biome data).
+# Cross-reference those layers for depth.
+# ============================================================
+
+continental_shape:
+  model: "C-shaped horseshoe landmass wrapping north→east→south around a semi-enclosed sea (the Aethelian Basin), opening westward to open ocean"
+  scale: "Mediterranean basin — days to weeks between civilizations, not months"
+  real_world_analog: "Indian Ocean rim at Red-Sea/Persian-Gulf scale: semi-enclosed trade sea, monsoon-gated maritime routes, caravan-crossing arid interior, highland metallurgical source, equatorial grain basin"
+
+civilization_positions:
+  ngaru_bon:
+    cardinal: "North"
+    elevation: "4000-6000m (gorges 2000-3000m)"
+    terrain: "Hypoxic mountain plateau with deep river gorges"
+    basin_access: "Indirect — via Lam-Chen Pass to steppe, then overland to Basin; or via Kilwa-analog southeastern Basin margin"
+    borders: ["irrah (south, via Smith-Spring frontier)", "kheshkai (south, via Lam-Chen Pass — singular exit)"]
+
+  irrah:
+    cardinal: "Central (trans-continental east-west belt between the highland north and the lowland south)"
+    elevation: "Variable — sabkha flats near sea level, oasis valleys 200-800m, frankincense escarpments to 1500m"
+    terrain: "Arid desert belt spanning the continent's interior. Not a compact region but a horizontal swathe: Ngaru-Bon plateau rises above it to the north, Kheshkai steppe flanks it to the northeast, Ndjadi delta lies below it to the south, and the Basin's eastern shore forms its western edge. Three trunk corridors (Northern Thread, Southern Thread, The Spine) connect 40+ oases"
+    basin_access: "Via caravan routes westward to Basin's eastern shore (Halani-Tamu port); Scribal Ladder pilgrimage route connects south to Ndjadi delta via Basin transit"
+    borders: ["ngaru_bon (north, at Smith-Spring frontier — escarpment rises from desert floor)", "kheshkai (northeast, desert margin meets steppe grassland)", "ndjadi (south, thorn-steppe transitions to floodplain)", "aethelian_basin (west, caravan terminus at Halani-Tamu)"]
+    second_coast: "Frankincense coast on southeastern ocean (Dhofar/Hadhramaut analog) — independent trade outlet not dependent on Basin"
+
+  kheshkai:
+    cardinal: "East to northeast"
+    elevation: "1500-2500m"
+    terrain: "High-altitude grassland steppe with cliff edges overlooking Ndjadi delta to south"
+    basin_access: "Overland to eastern Basin ports; also via A-Tzalan Ford to Ndjadi delta"
+    borders: ["ngaru_bon (north, via Lam-Chen Pass)", "irrah (south/southeast, desert margin)", "ndjadi (south, via A-Tzalan Ford — cliff edge descends to delta)", "qollari (southwest, at Breath-of-Cloud sanctuary — cloud forest meets steppe)"]
+
+  ndjadi:
+    cardinal: "South"
+    elevation: "Near sea level, flat alluvial"
+    terrain: "Equatorial monsoon river delta with five distributaries, stone barays, mangrove swamps"
+    river_sources: "Northern tributaries descend from Kheshkai escarpment (A-Tzalan watershed); western tributaries from Qollari cloud forest; all converge into five-distributary fan delta entering Basin at south shore"
+    basin_access: "Direct — delta mouth enters Basin's south shore (Ki-Mbuhari port zone)"
+    borders: ["kheshkai (north, via A-Tzalan Ford)", "qollari (west, Qollari cliff roads descend to floodplains)", "irrah (north/northeast, across desert — Scribal Ladder route)"]
+
+  qollari:
+    cardinal: "Southwest"
+    elevation: "2500-4500m"
+    terrain: "Cloud forest and mountain terraces with carved cliff roads, fog banks, astronomical observatories"
+    basin_access: "Via cliff roads descending to Oravan coast and Basin's southern rim"
+    borders: ["kheshkai (northeast, at Breath-of-Cloud sanctuary)", "ndjadi (east, cliff roads descend to floodplains)", "oravan (west, cliff roads descend to coast)"]
+
+  oravan:
+    cardinal: "West (archipelago in open ocean, facing Basin entrance)"
+    elevation: "Sea level to 3000m volcanic peaks"
+    terrain: "Volcanic island chain with narrow straits, coral reefs, geothermal vents"
+    basin_access: "Via Halkar Straits into Basin's western opening"
+    borders: ["basin (east, via Halkar Straits)", "qollari (east, via Gold-Banner Route — maritime to mountain)", "open_ocean (west, south, north — monsoon-gated)"]
+
+chokepoints:
+  lam_chen_pass:
+    connects: ["ngaru_bon", "kheshkai"]
+    type: "mountain_pass"
+    description: "Singular treacherous land route from Ngaru-Bon plateau down to the steppes. Only exit for Ngaru-Bon exports. Contested for centuries"
+    strategic_value: "Closure creates existential famine for Ngaru-Bon within one growing season"
+
+  a_tzalan_ford:
+    connects: ["kheshkai", "ndjadi"]
+    type: "river_crossing"
+    description: "Vital ford where Kheshkai steppe cliff edge descends to Ndjadi river delta. Most contested point on the continent"
+    strategic_value: "Seizure controls north-south overland trade. Ndjadi can weaponize via upstream river diversion"
+    historic: "Seized by Kheshkai warlord Kosh-Taka during the Obsidian Blockade"
+
+  qollari_cliff_roads:
+    connects: ["qollari", "ndjadi", "oravan"]
+    type: "mountain_road_network"
+    description: "Vertigo-inducing carved paths connecting cloud-forest terraces to lowlands and coast. Can be destroyed to deny pursuit"
+    strategic_value: "Qollari monopoly on highland-lowland access. Llama 25-30 kg load cap forces dense waystation networks"
+    sub_routes:
+      - "Western descent to Oravan coast (steep switchbacks)"
+      - "Southern descent to Ndjadi floodplains (through cloud forest into jungle)"
+      - "Eastern border road toward steppe (passes near Apu-Yana; dangerous, rarely used)"
+
+  halkar_straits:
+    connects: ["oravan", "aethelian_basin"]
+    type: "maritime_strait"
+    description: "Narrow passage between Oravan archipelago and Basin. Controls obsidian export and all Oravan maritime access"
+    strategic_value: "Oravan naval dominance is absolute in the Basin but cannot enforce land control without allies"
+
+  smith_spring:
+    connects: ["ngaru_bon", "irrah"]
+    type: "frontier_resource"
+    description: "Ore-bearing hot spring at the Ngaru-Bon/Irrah frontier. Ngaru-Bon controls upstream forge-precinct; Irrah controls downstream water-rights; Basin merchants use buffer-zone riverbank"
+    strategic_value: "Shared resource that forces cooperation. Iron and charcoal flow south; salt flows north"
+
+  breath_of_cloud:
+    connects: ["kheshkai", "qollari"]
+    type: "border_sanctuary"
+    description: "Where cloud forest meets steppe. Only permanent cross-civ sacred site on the continent. Triennial convergence of Kheshkai shamans and Qollari calendarists"
+    strategic_value: "Massive commercial traffic during festival years creates boom-bust cycle in border towns"
+
+aethelian_basin:
+  type: "semi-enclosed shallow sea"
+  description: "Continental trade pivot. Not a producer — a processor, certifier, and neutral ground. No army; enforcement via triple-seal excommunication. Contains multiple port cities with six distinct architectural traditions"
+  opening: "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea"
+  functional_zones:
+    ki_mbuhari:
+      in_world_name: "Ki-Mbuhari"
+      etymology: "Ndjadi: Ki- (settlement) + Mbu- (water) + hari 'surplus'. The Surplus-Water Settlement"
+      real_world_parallel: "Alexandria analog"
+      location: "South shore, where Ndjadi delta enters"
+      function: "Grain funnel and spice transshipment. Ndjadi grain surplus enters continental circulation here"
+    tavakh_qarat:
+      in_world_name: "Tavakh-Qarat"
+      etymology: "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + qarat (Irrah 'citadel'). The Exchange Citadel"
+      real_world_parallel: "Venice analog"
+      location: "North shore"
+      function: "Salt pans, glass production, grain imports. Oldest commercial quarter. Where khazadari money-changers formed"
+    halani_tamu:
+      in_world_name: "Halani-Tamu"
+      etymology: "Oravan: hala 'reef, harbor' + ni (genitive) + tamu 'sweetwater'. The Sweetwater Harbor"
+      real_world_parallel: "Hormuz analog"
+      location: "East shore"
+      function: "Monsoon switching point. Where Oravan sea-lanes hand off to overland routes. Irrah caravans arrive here"
+    dzong_tamu:
+      in_world_name: "Dzong-Tamu"
+      etymology: "Ngaru-Bon: dzong 'fortress-monastery' + tamu (Basin pidgin 'sweetwater/fresh'). The Fortress Harbor"
+      real_world_parallel: "Kilwa analog"
+      location: "Southeast margin"
+      function: "Link to Ngaru-Bon gold trade via coastal routes. Where Ngaru-Bon metallurgical exports reach the Basin"
+  contested_sites:
+    qhabal_ur:
+      location: "Basin center"
+      description: "The Drowned Step — monumental stepped platform partially submerged by tides. Claimed by Oravan (garrison) and Ndjadi (scribal access)"
+    veyd_kirrha:
+      location: "Basin southern rim"
+      description: "Ash-Oracle — volcanic vent drawing multi-tradition visitors. Oravan, Kheshkai, Qollari, and Irrah scholars converge with competing interpretations"
+
+trade_routes:
+  copper_for_steel_road:
+    endpoints: ["ndjadi", "ngaru_bon"]
+    path: "Ndjadi delta → A-Tzalan Ford → across Kheshkai steppe → Lam-Chen Pass → Ngaru-Bon plateau"
+    commodities: "Copper northbound; finished steel/iron southbound"
+    bottleneck: "A-Tzalan Ford (Kheshkai can toll/seize) and Lam-Chen Pass (singular exit)"
+    consequence_if_closed: "The defining bilateral dependency. Closure creates existential crises for both sides"
+
+  highland_steppe_corridor:
+    endpoints: ["ngaru_bon", "kheshkai", "qollari"]
+    path: "Two connected legs forming an L-shape: Leg 1 (north-to-south): Ngaru-Bon plateau → Lam-Chen Pass → Kheshkai steppe (metals southbound, horses/tin northbound). Leg 2 (northeast-to-southwest): Kheshkai steppe → Breath-of-Cloud border → Qollari highlands (horses/furs southwestbound, dyes/wool northeastbound)"
+    commodities: "Metals, horses, furs, amber, tin, dyes, fine wool. Not a single east-west flow but two bilateral exchanges pivoting through Kheshkai"
+    bottleneck: "Kheshkai clan-lords (grazing rights at waystations on both legs)"
+    consequence_if_closed: "Ngaru-Bon loses its overland iron market. Qollari loses horse supply and steppe amber. A clan feud can close 300 leagues for a year"
+
+  highland_relay:
+    endpoints: ["qollari", "basin"]
+    path: "Qollari cloud-state cliff roads → Basin ports and connected lowlands"
+    commodities: "High-value low-bulk: medicinals, dyes, ritual barks, fine wool. Also oath-messages (fastest information channel on the continent)"
+    bottleneck: "Qollari calendar-keepers (calendar-gated pass access)"
+    consequence_if_closed: "Continental mail slows from weeks to months. Urgent medicinal shipments fail. Calendar schism has historically closed relay for decades"
+
+  coastal_monsoon:
+    endpoints: ["oravan", "basin"]
+    path: "Oravan archipelago → Halkar Straits → Basin ports (monsoon-gated circuit)"
+    commodities: "Bulk maritime: spices, coral-stone, obsidian, re-exported Irrah dates outbound; iron inbound to archipelago"
+    bottleneck: "Oravan queen-church (wave-tithe collection)"
+    consequence_if_closed: "Oravan imports collapse (no iron = no new ships). Coastal Basin access halves. Monsoon failure or queen-church succession crisis suspends all tithe-backed insurance"
+
+  caravan_thread:
+    endpoints: ["irrah", "basin", "ngaru_bon"]
+    path: "Three-hub network, not a single thread: Hub 1 (Smith-Spring frontier): Ngaru-Bon iron/charcoal flows south to Irrah; Irrah salt flows north to Ngaru-Bon. This is a frontier contact-point with buffer zone, not a through-route. Hub 2 (Irrah oasis network): internal east-west trunk corridors (The Spine) connecting 40+ oases. Hub 3 (Basin terminus): caravans depart Irrah westward under Qalībin escort to Halani-Tamu port on Basin's east shore"
+    commodities: "Salt, frankincense, myrrh, dates, silver outbound from Irrah to Basin; iron, grain, timber, cotton inbound from Basin/Ngaru-Bon to Irrah"
+    bottleneck: "Qalībin path-finders (only legally recognized desert escorts for the Basin leg); Smith-Spring buffer zone (neutral contact point for the Ngaru-Bon leg)"
+    consequence_if_closed: "Salt supply to southern continent collapses. Irrah iron imports cease. Continental banking network (khatti letters of credit) breaks — Qalībin oath-binders are the de facto banking infrastructure"
+
+biological_barriers:
+  tsetse_belt:
+    location: "Ngaru-Bon approach corridors"
+    effect: "Causes nagana in equids and cattle. Prevents horse-keeping in Ngaru-Bon territory"
+    consequence: "Metallurgical apex with no cavalry = cannot project force overland. Forces trade through coastal intermediaries"
+
+  monsoon_window:
+    location: "Oravan sea-lanes and Basin approaches"
+    effect: "SE trade season (late spring-early autumn) is primary sailing window. NW monsoon (months ~11-3) marginal. Cyclone risk at transition"
+    consequence: "Maritime trade is seasonal. Oravan spice harvest aligns with sailing window"
+
+elevation_profile:
+  description: "Vertical stratification constrains movement — lower regions cannot easily assault higher. Natural defensibility increases with altitude"
+  bands:
+    - { region: "ngaru_bon", elevation_m: "4000-6000", notes: "Highest — nearly impregnable except via Lam-Chen" }
+    - { region: "qollari", elevation_m: "2500-4500", notes: "Cloud forest; fog banks favor defenders" }
+    - { region: "kheshkai", elevation_m: "1500-2500", notes: "Elevated steppe; cliff edge descends to Ndjadi" }
+    - { region: "oravan", elevation_m: "0-3000", notes: "Sea level to volcanic peaks; ocean isolates" }
+    - { region: "irrah", elevation_m: "0-1500", notes: "Variable — sabkha flats to escarpments" }
+    - { region: "ndjadi", elevation_m: "0-50", notes: "Flat alluvial delta; lowest on continent" }
+    - { region: "aethelian_basin", elevation_m: "0", notes: "Sea level; port cities on shore" }
