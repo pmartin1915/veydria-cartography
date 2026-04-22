@@ -13,7 +13,7 @@ interface InfoPanelProps {
   onClose: () => void
 }
 
-// Fields to display for each category (ordered)
+// Fields to display for each category
 const CATEGORY_FIELDS: Record<string, string[]> = {
   port: ['etymology', 'location', 'function', 'real_world_parallel'],
   chokepoint: ['type', 'description', 'strategic_value', 'connects'],
@@ -22,9 +22,11 @@ const CATEGORY_FIELDS: Record<string, string[]> = {
   civilization: ['cardinal', 'elevation', 'terrain', 'basin_access', 'borders'],
   trade_route: ['path_description', 'commodities', 'bottleneck', 'consequence_if_closed', 'endpoints'],
   water: ['description', 'opening'],
+  landmark: ['type', 'description'],
+  river: ['description'],
 }
 
-// Pretty labels for field keys
+// Pretty labels
 const FIELD_LABELS: Record<string, string> = {
   etymology: 'Etymology',
   location: 'Location',
@@ -46,6 +48,15 @@ const FIELD_LABELS: Record<string, string> = {
   endpoints: 'Endpoints',
   opening: 'Basin Opening',
 }
+
+// Styling keys to skip
+const SKIP_KEYS = new Set([
+  'name', 'id', 'category', 'etymology',
+  'marker-color', 'marker-symbol',
+  'fill', 'fillOpacity',
+  'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity',
+  'centroid',
+])
 
 export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
   if (!feature) {
@@ -84,38 +95,21 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
         <div className="info-panel-divider" />
 
         {fields.map((fieldKey) => {
-          // Skip fields already shown (name, category, etymology) or styling fields
-          if (
-            fieldKey === 'name' ||
-            fieldKey === 'id' ||
-            fieldKey === 'category' ||
-            fieldKey === 'etymology' ||
-            fieldKey.startsWith('marker-') ||
-            fieldKey === 'fill' ||
-            fieldKey === 'fillOpacity' ||
-            fieldKey === 'stroke' ||
-            fieldKey === 'stroke-width' ||
-            fieldKey === 'stroke-dasharray' ||
-            fieldKey === 'centroid'
-          ) {
-            return null
-          }
+          if (SKIP_KEYS.has(fieldKey)) return null
 
           const value = props[fieldKey]
           if (value === undefined || value === null || value === '') return null
 
           const label = FIELD_LABELS[fieldKey] || fieldKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
-          // Handle arrays (borders, connects, endpoints)
+          // Arrays
           if (Array.isArray(value)) {
             return (
               <div className="info-field" key={fieldKey}>
                 <div className="info-field-label">{label}</div>
                 <div className="info-tag-list">
                   {value.map((item, i) => (
-                    <span className="info-tag" key={i}>
-                      {String(item)}
-                    </span>
+                    <span className="info-tag" key={i}>{String(item)}</span>
                   ))}
                 </div>
               </div>

@@ -1468,6 +1468,451 @@
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          780,
+          290
+        ]
+      },
+      "properties": {
+        "id": "ayn_salqat",
+        "name": "Ayn Salqat",
+        "category": "oasis",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          555,
+          78
+        ]
+      },
+      "properties": {
+        "id": "zang_ri",
+        "name": "Zang-Ri (Copper Mountain)",
+        "category": "landmark",
+        "type": "mountain",
+        "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          414,
+          414
+        ]
+      },
+      "properties": {
+        "id": "apu_yana",
+        "name": "Apu-Yana (Black Mountain)",
+        "category": "landmark",
+        "type": "volcano",
+        "description": "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1040,
+          290
+        ]
+      },
+      "properties": {
+        "id": "kha_tepet",
+        "name": "Kha-Tepet (Blood Mountain)",
+        "category": "landmark",
+        "type": "mountain",
+        "description": "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          720,
+          580
+        ]
+      },
+      "properties": {
+        "id": "ki_jenga",
+        "name": "Ki-Jenga",
+        "category": "landmark",
+        "type": "city",
+        "description": "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          700,
+          540
+        ]
+      },
+      "properties": {
+        "id": "hassag_nganin",
+        "name": "Hassag-Nganin (Five-Confluence)",
+        "category": "landmark",
+        "type": "sacred_site",
+        "description": "Where the five Ndjadi channels braid together. Contested religious site.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          978,
+          530
+        ]
+      },
+      "properties": {
+        "id": "volata_xal",
+        "name": "Volata-Xal (\"Shipyard in the Dust\")",
+        "category": "landmark",
+        "type": "ruin",
+        "description": "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          330,
+          550
+        ]
+      },
+      "properties": {
+        "id": "wasi_puma",
+        "name": "Wasi-Puma (\"House of the Lion\")",
+        "category": "landmark",
+        "type": "fortress",
+        "description": "Fortified Qollari settlement built during the Obsidian Blockade.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          255,
+          310
+        ]
+      },
+      "properties": {
+        "id": "halkar_port",
+        "name": "Halkar",
+        "category": "landmark",
+        "type": "port_city",
+        "description": "Main Oravan port island closest to Halkar Straits. Primary settlement.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          190,
+          370
+        ]
+      },
+      "properties": {
+        "id": "first_caldera",
+        "name": "First Caldera",
+        "category": "landmark",
+        "type": "sacred_site",
+        "description": "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155,
+          340
+        ]
+      },
+      "properties": {
+        "id": "kelata",
+        "name": "Kelata",
+        "category": "landmark",
+        "type": "resource",
+        "description": "Obsidian-source island. Key strategic resource for Oravan naval power.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            960,
+            510
+          ],
+          [
+            900,
+            520
+          ],
+          [
+            820,
+            530
+          ],
+          [
+            700,
+            530
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_tributary_north",
+        "name": "Northern Tributary (from Kheshkai)",
+        "category": "river",
+        "description": "Descends from the Kheshkai escarpment through A-Tzalan Ford.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            440,
+            480
+          ],
+          [
+            500,
+            500
+          ],
+          [
+            600,
+            520
+          ],
+          [
+            700,
+            530
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_tributary_west",
+        "name": "Western Tributary (from Qollari)",
+        "category": "river",
+        "description": "Flows from Qollari cloud forest into the delta system.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            700,
+            530
+          ],
+          [
+            680,
+            560
+          ],
+          [
+            660,
+            590
+          ],
+          [
+            640,
+            640
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_dist_1",
+        "name": "First Distributary",
+        "category": "river",
+        "description": "Westernmost channel of the five-distributary fan delta.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            700,
+            530
+          ],
+          [
+            710,
+            565
+          ],
+          [
+            700,
+            600
+          ],
+          [
+            680,
+            640
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_dist_2",
+        "name": "Second Distributary",
+        "category": "river",
+        "description": "Second channel, passing near Ki-Jenga.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            700,
+            530
+          ],
+          [
+            720,
+            570
+          ],
+          [
+            730,
+            610
+          ],
+          [
+            720,
+            645
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_dist_3",
+        "name": "Third Distributary (Central)",
+        "category": "river",
+        "description": "Central channel — the main navigable waterway.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            700,
+            530
+          ],
+          [
+            740,
+            570
+          ],
+          [
+            760,
+            610
+          ],
+          [
+            760,
+            645
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_dist_4",
+        "name": "Fourth Distributary",
+        "category": "river",
+        "description": "Fourth channel, serving the eastern granary districts.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            700,
+            530
+          ],
+          [
+            750,
+            560
+          ],
+          [
+            790,
+            600
+          ],
+          [
+            800,
+            635
+          ]
+        ]
+      },
+      "properties": {
+        "id": "ndjadi_dist_5",
+        "name": "Fifth Distributary",
+        "category": "river",
+        "description": "Easternmost channel, entering the Basin near Dzong-Tamu.",
+        "stroke": "#4a8ab0",
+        "stroke-width": 1.5,
+        "stroke-opacity": 0.6,
+        "stroke-dasharray": ""
+      }
     }
   ]
 }

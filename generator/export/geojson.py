@@ -4,10 +4,12 @@ geojson.py — Convert veydria-topology.yaml into GeoJSON FeatureCollection
 Produces a single GeoJSON file with features for:
 - 6 civilization regions (approximate polygons derived from SVG schematic coordinates)
 - 6 chokepoints (point features)
-- 5 trade routes (LineString features with styled properties)
+- 6 trade/pilgrimage routes (LineString features with styled properties)
 - 4 Basin port zones (point features with lore)
 - 2 contested sacred sites (point features)
 - 6 Irrah oasis cities (point features)
+- 10+ named landmarks (mountains, cities, islands, ruins)
+- Ndjadi river system (LineString features)
 - Aethelian Basin (polygon feature)
 
 Coordinate system: matches the SVG viewBox (0-1200 x 0-800), which maps
@@ -129,14 +131,77 @@ CONTESTED_COORDS: dict[str, list[float]] = {
     "veyd_kirrha": [483, 576],
 }
 
-# Irrah oasis positions (from SVG)
+# Irrah oasis positions (from SVG + MAP-PROMPT)
 OASIS_COORDS: dict[str, list[float]] = {
     "qarat_al_fidda": [730, 260],
     "ghadam_thalla": [590, 240],
     "tin_mashraq": [950, 240],
     "khulut": [680, 320],
     "zin_iferis": [820, 230],
+    "ayn_salqat": [780, 290],  # Along Scribal Ladder route
 }
+
+# Named landmarks (from MAP-PROMPT and SVG)
+LANDMARK_DATA: list[dict[str, Any]] = [
+    # Mountains
+    {"id": "zang_ri", "name": "Zang-Ri (Copper Mountain)", "coords": [555, 78],
+     "category": "landmark", "type": "mountain",
+     "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore."},
+    {"id": "apu_yana", "name": "Apu-Yana (Black Mountain)", "coords": [414, 414],
+     "category": "landmark", "type": "volcano",
+     "description": "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site."},
+    {"id": "kha_tepet", "name": "Kha-Tepet (Blood Mountain)", "coords": [1040, 290],
+     "category": "landmark", "type": "mountain",
+     "description": "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans."},
+    # Cities & settlements
+    {"id": "ki_jenga", "name": "Ki-Jenga", "coords": [720, 580],
+     "category": "landmark", "type": "city",
+     "description": "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade."},
+    {"id": "hassag_nganin", "name": "Hassag-Nganin (Five-Confluence)", "coords": [700, 540],
+     "category": "landmark", "type": "sacred_site",
+     "description": "Where the five Ndjadi channels braid together. Contested religious site."},
+    {"id": "volata_xal", "name": 'Volata-Xal ("Shipyard in the Dust")', "coords": [978, 530],
+     "category": "landmark", "type": "ruin",
+     "description": "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade."},
+    {"id": "wasi_puma", "name": 'Wasi-Puma ("House of the Lion")', "coords": [330, 550],
+     "category": "landmark", "type": "fortress",
+     "description": "Fortified Qollari settlement built during the Obsidian Blockade."},
+    # Oravan islands
+    {"id": "halkar_port", "name": "Halkar", "coords": [255, 310],
+     "category": "landmark", "type": "port_city",
+     "description": "Main Oravan port island closest to Halkar Straits. Primary settlement."},
+    {"id": "first_caldera", "name": "First Caldera", "coords": [190, 370],
+     "category": "landmark", "type": "sacred_site",
+     "description": "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site."},
+    {"id": "kelata", "name": "Kelata", "coords": [155, 340],
+     "category": "landmark", "type": "resource",
+     "description": "Obsidian-source island. Key strategic resource for Oravan naval power."},
+]
+
+# Ndjadi river system (from SVG paths)
+RIVER_PATHS: list[dict[str, Any]] = [
+    {"id": "ndjadi_tributary_north", "name": "Northern Tributary (from Kheshkai)",
+     "path": [[960, 510], [900, 520], [820, 530], [700, 530]],
+     "description": "Descends from the Kheshkai escarpment through A-Tzalan Ford."},
+    {"id": "ndjadi_tributary_west", "name": "Western Tributary (from Qollari)",
+     "path": [[440, 480], [500, 500], [600, 520], [700, 530]],
+     "description": "Flows from Qollari cloud forest into the delta system."},
+    {"id": "ndjadi_dist_1", "name": "First Distributary",
+     "path": [[700, 530], [680, 560], [660, 590], [640, 640]],
+     "description": "Westernmost channel of the five-distributary fan delta."},
+    {"id": "ndjadi_dist_2", "name": "Second Distributary",
+     "path": [[700, 530], [710, 565], [700, 600], [680, 640]],
+     "description": "Second channel, passing near Ki-Jenga."},
+    {"id": "ndjadi_dist_3", "name": "Third Distributary (Central)",
+     "path": [[700, 530], [720, 570], [730, 610], [720, 645]],
+     "description": "Central channel — the main navigable waterway."},
+    {"id": "ndjadi_dist_4", "name": "Fourth Distributary",
+     "path": [[700, 530], [740, 570], [760, 610], [760, 645]],
+     "description": "Fourth channel, serving the eastern granary districts."},
+    {"id": "ndjadi_dist_5", "name": "Fifth Distributary",
+     "path": [[700, 530], [750, 560], [790, 600], [800, 635]],
+     "description": "Easternmost channel, entering the Basin near Dzong-Tamu."},
+]
 
 # Trade route paths (from SVG, simplified waypoints)
 ROUTE_PATHS: dict[str, list[list[float]]] = {
@@ -172,6 +237,14 @@ ROUTE_PATHS: dict[str, list[list[float]]] = {
     ],
 }
 
+# Scribal Ladder pilgrimage (bonus route from MAP-PROMPT)
+ROUTE_PATHS["scribal_ladder"] = [
+    [650, 620], [680, 560], [720, 500], [780, 460],
+    [830, 440], [860, 420],  # Ki-Mbuhari → Halani-Tamu via Basin
+    [860, 420], [840, 380], [820, 340], [790, 290],  # Overland into Irrah
+    [780, 290], [770, 310], [760, 340],  # To pyramid-necropolises
+]
+
 # Trade route styling
 ROUTE_STYLES: dict[str, dict[str, str]] = {
     "copper_for_steel_road": {"color": "#8b5e3c", "dashArray": "8,3", "label": "Copper-for-Steel Road"},
@@ -179,6 +252,7 @@ ROUTE_STYLES: dict[str, dict[str, str]] = {
     "highland_relay": {"color": "#3a8a3a", "dashArray": "3,5", "label": "Highland Relay"},
     "coastal_monsoon": {"color": "#4a8ab0", "dashArray": "8,2,2,2", "label": "Coastal Monsoon"},
     "caravan_thread": {"color": "#d4a854", "dashArray": "3,4", "label": "Caravan Thread"},
+    "scribal_ladder": {"color": "#e05555", "dashArray": "2,5", "label": "Scribal Ladder (pilgrimage)"},
 }
 
 # Aethelian Basin polygon (from SVG)
@@ -362,6 +436,39 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
                 "category": "oasis",
                 "marker-color": "#4a9a3a",
                 "marker-symbol": "garden",
+            },
+        ))
+
+    # --- Named landmarks ---
+    for lm in LANDMARK_DATA:
+        features.append(_make_feature(
+            "Point",
+            lm["coords"],
+            {
+                "id": lm["id"],
+                "name": lm["name"],
+                "category": "landmark",
+                "type": lm.get("type", ""),
+                "description": lm.get("description", ""),
+                "marker-color": "#c4a862",
+                "marker-symbol": "star",
+            },
+        ))
+
+    # --- Ndjadi river system ---
+    for river in RIVER_PATHS:
+        features.append(_make_feature(
+            "LineString",
+            river["path"],
+            {
+                "id": river["id"],
+                "name": river["name"],
+                "category": "river",
+                "description": river.get("description", ""),
+                "stroke": "#4a8ab0",
+                "stroke-width": 1.5,
+                "stroke-opacity": 0.6,
+                "stroke-dasharray": "",
             },
         ))
 

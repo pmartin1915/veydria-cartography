@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import MapViewer from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
+import SearchBar from './components/SearchBar'
+import LayerControls from './components/LayerControls'
 
 // GeoJSON types
-interface GeoJSONFeature {
+export interface GeoJSONFeature {
   type: 'Feature'
   geometry: {
     type: string
@@ -12,10 +14,35 @@ interface GeoJSONFeature {
   properties: Record<string, unknown>
 }
 
-interface GeoJSONCollection {
+export interface GeoJSONCollection {
   type: 'FeatureCollection'
   metadata?: Record<string, unknown>
   features: GeoJSONFeature[]
+}
+
+// Layer visibility state
+export interface LayerVisibility {
+  civilization: boolean
+  water: boolean
+  chokepoint: boolean
+  port: boolean
+  oasis: boolean
+  contested_site: boolean
+  trade_route: boolean
+  landmark: boolean
+  river: boolean
+}
+
+const DEFAULT_LAYERS: LayerVisibility = {
+  civilization: true,
+  water: true,
+  chokepoint: true,
+  port: true,
+  oasis: true,
+  contested_site: true,
+  trade_route: true,
+  landmark: true,
+  river: true,
 }
 
 function App() {
@@ -24,6 +51,9 @@ function App() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void } | null>(null)
 
   useEffect(() => {
     fetch('/veydria-spatial.geojson')
@@ -48,17 +78,46 @@ function App() {
 
   const handleClosePanel = useCallback(() => {
     setPanelOpen(false)
-    // Delay clearing to allow animation
     setTimeout(() => setSelectedFeature(null), 300)
   }, [])
+
+  const handleLayerToggle = useCallback((layer: keyof LayerVisibility) => {
+    setLayers((prev) => ({ ...prev, [layer]: !prev[layer] }))
+  }, [])
+
+  const handleSearchSelect = useCallback((feature: GeoJSONFeature) => {
+    setSelectedFeature(feature)
+    setPanelOpen(true)
+    setSearchOpen(false)
+    mapRef.current?.flyToFeature(feature)
+  }, [])
+
+  // Keyboard shortcut: Ctrl+K or / for search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchOpen && document.activeElement === document.body)) {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+        handleClosePanel()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [searchOpen, handleClosePanel])
 
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="loading-content">
+          <div className="loading-glow" />
           <h1 className="loading-title">VEYDRIA</h1>
           <div className="loading-subtitle">Loading continental data...</div>
-          <div className="loading-spinner" />
+          <div className="loading-bar">
+            <div className="loading-bar-fill" />
+          </div>
         </div>
       </div>
     )
@@ -81,47 +140,63 @@ function App() {
     )
   }
 
+  const featureCount = geojson?.features.length ?? 0
+
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="app-title">VEYDRIA</h1>
-        <span className="app-subtitle">Continental Reference Map</span>
+        <div className="header-left">
+          <h1 className="app-title">VEYDRIA</h1>
+          <span className="app-subtitle">Continental Reference Map</span>
+        </div>
+        <div className="header-right">
+          <button
+            className="search-trigger"
+            onClick={() => setSearchOpen(true)}
+            title="Search features (Ctrl+K)"
+            id="search-trigger"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <span>Search...</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <span className="feature-count">{featureCount} features</span>
+        </div>
       </header>
 
       <main className="app-main">
         {geojson && (
           <MapViewer
+            ref={mapRef}
             geojson={geojson}
+            layers={layers}
             onFeatureClick={handleFeatureClick}
             selectedFeatureId={selectedFeature?.properties?.id as string | undefined}
           />
         )}
+
+        <LayerControls
+          layers={layers}
+          onToggle={handleLayerToggle}
+        />
 
         <InfoPanel
           feature={selectedFeature}
           open={panelOpen}
           onClose={handleClosePanel}
         />
-      </main>
 
-      <div className="app-legend">
-        <div className="legend-section">
-          <span className="legend-dot" style={{ background: '#e8c840' }} />
-          <span>Port Zone</span>
-        </div>
-        <div className="legend-section">
-          <span className="legend-dot" style={{ background: '#f44' }} />
-          <span>Chokepoint</span>
-        </div>
-        <div className="legend-section">
-          <span className="legend-dot" style={{ background: '#4a9a3a' }} />
-          <span>Oasis City</span>
-        </div>
-        <div className="legend-section">
-          <span className="legend-dot" style={{ background: '#adf' }} />
-          <span>Contested Site</span>
-        </div>
-      </div>
+        {searchOpen && geojson && (
+          <SearchBar
+            features={geojson.features}
+            onSelect={handleSearchSelect}
+            onClose={() => setSearchOpen(false)}
+          />
+        )}
+      </main>
     </div>
   )
 }
