@@ -1387,6 +1387,74 @@
     {
       "type": "Feature",
       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            650,
+            620
+          ],
+          [
+            680,
+            560
+          ],
+          [
+            720,
+            500
+          ],
+          [
+            780,
+            460
+          ],
+          [
+            830,
+            440
+          ],
+          [
+            860,
+            420
+          ],
+          [
+            860,
+            420
+          ],
+          [
+            840,
+            380
+          ],
+          [
+            820,
+            340
+          ],
+          [
+            790,
+            290
+          ],
+          [
+            780,
+            290
+          ],
+          [
+            770,
+            310
+          ],
+          [
+            760,
+            340
+          ]
+        ]
+      },
+      "properties": {
+        "id": "scribal_ladder",
+        "name": "Scribal Ladder (pilgrimage)",
+        "category": "trade_route",
+        "stroke": "#e05555",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "2,5"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
         "type": "Point",
         "coordinates": [
           730,

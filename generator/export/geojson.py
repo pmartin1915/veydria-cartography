@@ -401,12 +401,14 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
                 },
             ))
 
-    # --- Trade routes ---
+    # --- Trade routes (from YAML) ---
+    yaml_route_ids = set()
     for route_key in data.route_names:
         route = data.get_route(route_key)
         path = ROUTE_PATHS.get(route_key)
         style = ROUTE_STYLES.get(route_key, {})
         if path:
+            yaml_route_ids.add(route_key)
             features.append(_make_feature(
                 "LineString",
                 path,
@@ -424,6 +426,24 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
                     "stroke-dasharray": style.get("dashArray", ""),
                 },
             ))
+
+    # --- Extra routes (defined in coordinate data only, e.g. Scribal Ladder) ---
+    for route_key, path in ROUTE_PATHS.items():
+        if route_key in yaml_route_ids:
+            continue
+        style = ROUTE_STYLES.get(route_key, {})
+        features.append(_make_feature(
+            "LineString",
+            path,
+            {
+                "id": route_key,
+                "name": style.get("label", _display_name(route_key)),
+                "category": "trade_route",
+                "stroke": style.get("color", "#888"),
+                "stroke-width": 2.5,
+                "stroke-dasharray": style.get("dashArray", ""),
+            },
+        ))
 
     # --- Irrah oases ---
     for oasis_key, coords in OASIS_COORDS.items():

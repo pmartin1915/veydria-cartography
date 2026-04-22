@@ -4,6 +4,8 @@ pipeline.py — CLI entry point for the Veydria map generation pipeline.
 Usage:
     python pipeline.py export-geojson              # YAML → GeoJSON
     python pipeline.py export-geojson -o out.json   # Custom output path
+    python pipeline.py render-map                   # GeoJSON → PNG
+    python pipeline.py render-map --dpi 300          # High-res render
     python pipeline.py info                         # Print topology summary
 """
 
@@ -16,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from generator.core.yaml_loader import load_topology
 from generator.export.geojson import export_geojson
+from generator.render.rasterize import rasterize_map
 
 
 def cmd_export_geojson(args: argparse.Namespace) -> None:
@@ -116,10 +119,37 @@ def main() -> None:
     # info
     sub.add_parser("info", help="Print topology summary")
 
+    # render-map
+    p_render = sub.add_parser("render-map", help="Render GeoJSON to parchment-style PNG")
+    p_render.add_argument(
+        "-g", "--geojson",
+        type=Path,
+        default=None,
+        help="Input GeoJSON path (default: output/veydria-spatial.geojson)",
+    )
+    p_render.add_argument(
+        "-o", "--output",
+        type=Path,
+        default=None,
+        help="Output PNG path (default: output/veydria-map.png)",
+    )
+    p_render.add_argument(
+        "--dpi",
+        type=int,
+        default=200,
+        help="Resolution in DPI (default: 200)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "export-geojson":
         cmd_export_geojson(args)
+    elif args.command == "render-map":
+        rasterize_map(
+            geojson_path=args.geojson,
+            output_path=args.output,
+            dpi=args.dpi,
+        )
     elif args.command == "info":
         cmd_info(args)
     else:
