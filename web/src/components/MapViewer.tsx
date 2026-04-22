@@ -93,7 +93,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
-    const animFrameRef = useRef<number>(0)
+    const animFrameIdsRef = useRef<Set<number>>(new Set())
 
     // Separate features by type
     const featuresByCategory = useMemo(() => {
@@ -258,9 +258,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
                     particleMarkers[p].setLatLng([lat, lng])
                   }
                 }
-                animFrameRef.current = requestAnimationFrame(animate)
+                animFrameIdsRef.current.add(requestAnimationFrame(animate))
               }
-              animate()
+              animFrameIdsRef.current.add(requestAnimationFrame(animate))
             }
 
           } else if (geomType === 'Point') {
@@ -300,7 +300,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       mapRef.current = map
 
       return () => {
-        cancelAnimationFrame(animFrameRef.current)
+        animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
+        animFrameIdsRef.current.clear()
         map.remove()
         mapRef.current = null
         layerGroupsRef.current.clear()
