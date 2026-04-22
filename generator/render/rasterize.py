@@ -177,7 +177,7 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
         ys = [SVG_HEIGHT - p[1] for p in jittered]  # Y-invert
 
         ax.fill(xs, ys, facecolor=fill, edgecolor=BORDER_COLOR,
-                linewidth=1.2, alpha=0.7, zorder=3)
+                linewidth=1.2, alpha=0.15, zorder=3)
 
         # Region label at centroid (with optional override)
         civ_id = props.get('id', '')
@@ -199,6 +199,30 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
                     pe.withStroke(linewidth=3, foreground=PARCHMENT_BG, alpha=0.85),
                 ])
 
+
+def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict]) -> None:
+    """Draw Voronoi heightmap cells."""
+    if not terrain_cells:
+        return
+        
+    cmap = plt.get_cmap('terrain')
+    
+    elevations = [f['properties']['elevation'] for f in terrain_cells]
+    min_elev = -500
+    max_elev = max(elevations) if elevations else 3000
+    
+    for feat in terrain_cells:
+        elev = feat['properties']['elevation']
+        coords = feat['geometry']['coordinates'][0]
+        xs = [p[0] for p in coords]
+        ys = [SVG_HEIGHT - p[1] for p in coords]
+        
+        # Normalize elevation to 0.25-1.0 to avoid deep ocean blues on land
+        norm_elev = max(0.25, min(1.0, 0.25 + 0.75 * (elev - min_elev) / (max_elev - min_elev)))
+        color = cmap(norm_elev)
+        
+        # zorder=2 so it sits above ocean(1) and under civ fills(3)
+        ax.fill(xs, ys, facecolor=color, edgecolor='none', alpha=0.85, zorder=2)
 
 def _draw_basin(ax: plt.Axes, basin_feat: dict, rng: np.random.Generator) -> None:
     """Draw the Aethelian Basin as a translucent water body."""
@@ -446,12 +470,13 @@ def rasterize_map(
 
     # Sort features by category
     civilizations = [f for f in features if f['properties'].get('category') == 'civilization']
+    terrain_cells = [f for f in features if f['properties'].get('category') == 'terrain_cell']
     basin = [f for f in features if f['properties'].get('category') == 'water']
     routes = [f for f in features if f['properties'].get('category') == 'trade_route']
     rivers = [f for f in features if f['properties'].get('category') == 'river']
     points = [f for f in features if f['geometry']['type'] == 'Point']
 
-    print(f"  {len(civilizations)} civilizations, {len(routes)} routes, "
+    print(f"  {len(civilizations)} civilizations, {len(terrain_cells)} terrain cells, {len(routes)} routes, "
           f"{len(rivers)} rivers, {len(points)} points")
 
     # Create figure
@@ -469,6 +494,10 @@ def rasterize_map(
 
     print("  Drawing ocean...")
     _draw_ocean(ax)
+
+    if terrain_cells:
+        print("  Drawing terrain cells...")
+        _draw_terrain_cells(ax, terrain_cells)
 
     print("  Drawing continental regions...")
     _draw_continent_outline(ax, civilizations, rng)

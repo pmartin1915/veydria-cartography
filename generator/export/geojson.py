@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from ..core.yaml_loader import TopologyData
+from ..core.geometry import generate_voronoi
 
 
 # Output path
@@ -341,6 +342,21 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
                     "centroid": centroid,
                 },
             ))
+
+    # --- Terrain Cells (Voronoi Heightmap) ---
+    terrain_cells = generate_voronoi(CIV_POLYGONS, num_points=3000, seed=1915)
+    for i, cell in enumerate(terrain_cells):
+        features.append(_make_feature(
+            "Polygon",
+            [cell["polygon"]],
+            {
+                "id": f"terrain_cell_{i}",
+                "name": f"Terrain {i}",
+                "category": "terrain_cell",
+                "civ": cell["civ"],
+                "elevation": cell["elevation"],
+            },
+        ))
 
     # --- Chokepoints ---
     for cp_key in data.chokepoint_names:

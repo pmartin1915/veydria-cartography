@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from generator.core.yaml_loader import load_topology
 from generator.export.geojson import export_geojson
+from generator.export.azgaar import export_azgaar_heightmap
 from generator.render.rasterize import rasterize_map
 
 
@@ -140,10 +141,28 @@ def main() -> None:
         help="Resolution in DPI (default: 200)",
     )
 
+    # export-azgaar
+    p_azgaar = sub.add_parser("export-azgaar", help="Export Voronoi elevation to Azgaar heightmap PNG")
+    p_azgaar.add_argument(
+        "-o", "--output",
+        type=Path,
+        default=Path("output/azgaar-heightmap.png"),
+        help="Output PNG path (default: output/azgaar-heightmap.png)",
+    )
+    p_azgaar.add_argument(
+        "--dpi",
+        type=int,
+        default=200,
+        help="Resolution in DPI (default: 200)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "export-geojson":
         cmd_export_geojson(args)
+    elif args.command == "export-azgaar":
+        data = load_topology(args.input)
+        export_azgaar_heightmap(data, args.output, dpi=args.dpi)
     elif args.command == "render-map":
         rasterize_map(
             geojson_path=args.geojson,

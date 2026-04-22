@@ -1,4 +1,5 @@
 interface LayerVisibility {
+  terrain_cell: boolean
   civilization: boolean
   water: boolean
   chokepoint: boolean
@@ -13,6 +14,8 @@ interface LayerVisibility {
 interface LayerControlsProps {
   layers: LayerVisibility
   onToggle: (layer: keyof LayerVisibility) => void
+  isEditMode?: boolean
+  onToggleEditMode?: () => void
 }
 
 const LAYER_CONFIG: Array<{
@@ -21,6 +24,7 @@ const LAYER_CONFIG: Array<{
   color: string
   icon: string
 }> = [
+  { key: 'terrain_cell', label: 'Terrain', color: '#688c55', icon: '⛰' },
   { key: 'civilization', label: 'Regions', color: '#c4a862', icon: '🏛' },
   { key: 'water', label: 'Basin', color: '#3a7ca5', icon: '🌊' },
   { key: 'port', label: 'Ports', color: '#e8c840', icon: '⚓' },
@@ -32,9 +36,21 @@ const LAYER_CONFIG: Array<{
   { key: 'river', label: 'Rivers', color: '#4a8ab0', icon: '〜' },
 ]
 
-export default function LayerControls({ layers, onToggle }: LayerControlsProps) {
+export default function LayerControls({ layers, onToggle, isEditMode, onToggleEditMode }: LayerControlsProps) {
   return (
     <div className="layer-controls" id="layer-controls">
+      {onToggleEditMode && (
+        <button
+          className={`layer-toggle ${isEditMode ? 'active' : ''}`}
+          onClick={onToggleEditMode}
+          title="Toggle Edit Mode (Draggable Markers)"
+          style={{ marginBottom: 4, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8 }}
+        >
+          <span className="layer-toggle-icon">✏️</span>
+          <span className="layer-toggle-dot" style={{ background: isEditMode ? '#ffaa00' : 'transparent', borderColor: '#ffaa00' }} />
+          <span className="layer-toggle-label">Edit Mode</span>
+        </button>
+      )}
       <div className="layer-controls-title">Layers</div>
       {LAYER_CONFIG.map(({ key, label, color, icon }) => {
         const active = layers[key]

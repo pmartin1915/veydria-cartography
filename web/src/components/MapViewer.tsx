@@ -11,6 +11,8 @@ interface GeoJSONFeature {
   properties: Record<string, unknown>
 }
 
+import { initD3Overlay } from '../utils/d3-overlay'
+
 interface GeoJSONCollection {
   type: 'FeatureCollection'
   metadata?: Record<string, unknown>
@@ -18,6 +20,7 @@ interface GeoJSONCollection {
 }
 
 interface LayerVisibility {
+  terrain_cell: boolean
   civilization: boolean
   water: boolean
   chokepoint: boolean
@@ -29,11 +32,14 @@ interface LayerVisibility {
   river: boolean
 }
 
-interface MapViewerProps {
+export interface MapViewerProps {
   geojson: GeoJSONCollection
   layers: LayerVisibility
   onFeatureClick: (feature: GeoJSONFeature) => void
+  onFeatureSelect?: (feature: GeoJSONFeature | null) => void
   selectedFeatureId?: string
+  isEditMode?: boolean
+  onCoordinateUpdate?: (featureId: string, name: string, category: string, newCoords: [number, number]) => void
 }
 
 export interface MapViewerHandle {
@@ -47,6 +53,12 @@ const SVG_HEIGHT = 800
 // Convert SVG coordinates to Leaflet CRS.Simple (y-inverted)
 function svgToLatLng(x: number, y: number): L.LatLngExpression {
   return [SVG_HEIGHT - y, x]
+}
+
+const latLngToSvg = (latlng: L.LatLng) => {
+  const x = latlng.lng
+  const y = SVG_HEIGHT - latlng.lat
+  return { x, y }
 }
 
 // Get centroid of coordinates
@@ -87,8 +99,17 @@ const MARKER_SIZES: Record<string, [number, number]> = {
   landmark: [9, 9],
 }
 
+function getElevationColor(elev: number): string {
+  const norm = Math.max(0.25, Math.min(1.0, 0.25 + 0.75 * (elev + 500) / 3500))
+  if (norm < 0.4) return '#8ab87a' // ndjadi green
+  if (norm < 0.6) return '#c8d4a0' // kheshkai green-yellow
+  if (norm < 0.8) return '#e8d5a0' // irrah yellow-brown
+  if (norm < 0.9) return '#c9b896' // ngaru-bon plateau
+  return '#f5f5f5' // white peaks
+}
+
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, selectedFeatureId }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -144,11 +165,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       // Create layer groups for each category
       const categoryLayers: [string, GeoJSONFeature[]][] = [
-        // Render order: water first, then polys, lines, points last (on top)
         ['water', featuresByCategory['water'] || []],
+        ['terrain_cell', featuresByCategory['terrain_cell'] || []],
         ['civilization', featuresByCategory['civilization'] || []],
         ['river', featuresByCategory['river'] || []],
-        ['trade_route', featuresByCategory['trade_route'] || []],
         ['landmark', featuresByCategory['landmark'] || []],
         ['oasis', featuresByCategory['oasis'] || []],
         ['contested_site', featuresByCategory['contested_site'] || []],
@@ -167,21 +187,41 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             const coords = feature.geometry.coordinates as number[][][]
             const latlngs = coords[0].map(([x, y]) => svgToLatLng(x, y))
 
+            let fillColor = (props.fill as string) || '#888'
+            let fillOpacity = 0.2
+            let weight = 1.5
+
+            if (category === 'water') {
+              fillOpacity = 0.5
+              weight = 2
+            } else if (category === 'terrain_cell') {
+              fillColor = getElevationColor(props.elevation as number || 0)
+              fillOpacity = 0.85
+              weight = 0
+            } else if (category === 'civilization') {
+              fillOpacity = 0.15 
+            }
+
             const polygon = L.polygon(latlngs, {
-              color: (props.fill as string) || '#888',
-              fillColor: (props.fill as string) || '#888',
-              fillOpacity: category === 'water' ? 0.5 : 0.2,
-              weight: category === 'water' ? 2 : 1.5,
-              opacity: 0.5,
+              color: category === 'terrain_cell' ? 'none' : ((props.fill as string) || '#888'),
+              fillColor,
+              fillOpacity,
+              weight,
+              opacity: category === 'terrain_cell' ? 0 : 0.5,
               className: `poly-${category}`,
             })
 
-            polygon.on('click', () => onFeatureClick(feature))
+            polygon.on('click', () => {
+              onFeatureClick(feature)
+              if (onFeatureSelect) onFeatureSelect(feature)
+            })
             polygon.on('mouseover', function (this: L.Polygon) {
+              if (category === 'terrain_cell') return
               this.setStyle({ fillOpacity: category === 'water' ? 0.7 : 0.4, weight: 2.5 })
             })
             polygon.on('mouseout', function (this: L.Polygon) {
-              this.setStyle({ fillOpacity: category === 'water' ? 0.5 : 0.2, weight: category === 'water' ? 2 : 1.5 })
+              if (category === 'terrain_cell') return
+              this.setStyle({ fillOpacity: category === 'water' ? 0.5 : 0.15, weight: category === 'water' ? 2 : 1.5 })
             })
 
             polygon.bindTooltip(
@@ -206,7 +246,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             const polyline = L.polyline(latlngs, lineOpts)
 
-            polyline.on('click', () => onFeatureClick(feature))
+            polyline.on('click', () => {
+              onFeatureClick(feature)
+              if (onFeatureSelect) onFeatureSelect(feature)
+            })
             polyline.on('mouseover', function (this: L.Polyline) {
               this.setStyle({ weight: (lineOpts.weight || 2.5) + 2, opacity: 1 })
               this.bringToFront()
@@ -222,64 +265,45 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             polyline.addTo(group)
 
-            // --- Animated particles for trade routes ---
-            if (category === 'trade_route') {
-              const particleCount = 3
-              const particleMarkers: L.CircleMarker[] = []
-
-              for (let p = 0; p < particleCount; p++) {
-                const particle = L.circleMarker(latlngs[0] as L.LatLngExpression, {
-                  radius: 3,
-                  color: (props.stroke as string) || '#888',
-                  fillColor: '#fff',
-                  fillOpacity: 0.9,
-                  weight: 1,
-                  opacity: 0.8,
-                  className: 'route-particle',
-                })
-                particle.addTo(group)
-                particleMarkers.push(particle)
-              }
-
-              // Animate particles along the route
-              let t = 0
-              const totalLen = latlngs.length - 1
-              const animate = () => {
-                t += 0.003
-                for (let p = 0; p < particleCount; p++) {
-                  const offset = (t + p / particleCount) % 1
-                  const segIdx = Math.floor(offset * totalLen)
-                  const segFrac = (offset * totalLen) - segIdx
-                  if (segIdx < totalLen) {
-                    const from = latlngs[segIdx] as L.LatLng
-                    const to = latlngs[segIdx + 1] as L.LatLng
-                    const lat = (from as unknown as { lat: number }).lat + ((to as unknown as { lat: number }).lat - (from as unknown as { lat: number }).lat) * segFrac
-                    const lng = (from as unknown as { lng: number }).lng + ((to as unknown as { lng: number }).lng - (from as unknown as { lng: number }).lng) * segFrac
-                    particleMarkers[p].setLatLng([lat, lng])
-                  }
-                }
-                animFrameIdsRef.current.add(requestAnimationFrame(animate))
-              }
-              animFrameIdsRef.current.add(requestAnimationFrame(animate))
-            }
-
           } else if (geomType === 'Point') {
             const [x, y] = feature.geometry.coordinates as number[]
             const latlng = svgToLatLng(x, y)
-            const id = props.id as string
+            const id = feature.id || (props.id as string) || ''
 
             const markerClass = MARKER_CLASSES[category] || 'marker-landmark'
             const markerSize = MARKER_SIZES[category] || [9, 9]
 
             const icon = L.divIcon({
-              className: markerClass,
+              className: `${markerClass} ${isEditMode ? 'edit-mode-marker' : ''}`,
               iconSize: markerSize,
               iconAnchor: [markerSize[0] / 2, markerSize[1] / 2],
             })
 
-            const marker = L.marker(latlng, { icon })
+            const marker = L.marker(latlng, { 
+              icon,
+              draggable: isEditMode
+            })
 
-            marker.on('click', () => onFeatureClick(feature))
+            let isDragging = false
+            marker.on('dragstart', () => { isDragging = true })
+            marker.on('click', () => {
+              if (!isDragging) {
+                onFeatureClick(feature)
+                if (onFeatureSelect) onFeatureSelect(feature)
+              }
+              isDragging = false
+            })
+
+            if (isEditMode) {
+              marker.on('dragend', (e) => {
+                const newLatLng = (e.target as L.Marker).getLatLng()
+                const newSvg = latLngToSvg(newLatLng)
+                if (onCoordinateUpdate && id) {
+                  onCoordinateUpdate(id, props.name as string, category, [newSvg.x, newSvg.y])
+                }
+                setTimeout(() => { isDragging = false }, 50)
+              })
+            }
 
             const catLabel = (category || '').replace('_', ' ')
             const typeLabel = props.type ? ` · ${props.type}` : ''
@@ -289,7 +313,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             )
 
             marker.addTo(group)
-            markersRef.current.set(id, marker)
+            if (id) markersRef.current.set(id, marker)
           }
         }
 
@@ -297,9 +321,19 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         layerGroupsRef.current.set(category, group)
       }
 
+      // Initialize D3 overlay for trade routes
+      const tradeRoutes = featuresByCategory['trade_route'] || []
+      const d3Overlay = initD3Overlay(map, tradeRoutes, onFeatureClick)
+      // Store in layer groups ref so it can be toggled
+      layerGroupsRef.current.set('trade_route', {
+        addTo: () => d3Overlay.setVisibility(true),
+        removeFrom: () => d3Overlay.setVisibility(false),
+      } as any)
+
       mapRef.current = map
 
       return () => {
+        d3Overlay.destroy()
         animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
         animFrameIdsRef.current.clear()
         map.remove()
@@ -315,10 +349,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       for (const [category, group] of layerGroupsRef.current.entries()) {
         const visible = layers[category as keyof LayerVisibility]
         if (visible === undefined) continue
-        if (visible && !mapRef.current.hasLayer(group)) {
-          group.addTo(mapRef.current)
-        } else if (!visible && mapRef.current.hasLayer(group)) {
-          mapRef.current.removeLayer(group)
+        
+        if (category === 'trade_route') {
+          if (visible) group.addTo(mapRef.current)
+          else group.removeFrom(mapRef.current)
+        } else {
+          if (visible && !mapRef.current.hasLayer(group as L.LayerGroup)) {
+            (group as L.LayerGroup).addTo(mapRef.current)
+          } else if (!visible && mapRef.current.hasLayer(group as L.LayerGroup)) {
+            mapRef.current.removeLayer(group as L.LayerGroup)
+          }
         }
       }
     }, [layers])

@@ -765,3 +765,20 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-accent); }
+
+/* --- D3 Overlay --- */
+.d3-route-group {
+  pointer-events: auto;
+}
+
+.d3-route-path {
+  animation: flowRoute 15s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(212, 168, 84, 0.4));
+}
+
+@keyframes flowRoute {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
