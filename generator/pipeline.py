@@ -13,10 +13,15 @@ import argparse
 import sys
 from pathlib import Path
 
+# Force UTF-8 output on Windows to handle arrows and other Unicode in YAML data
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # Add parent to path so we can import generator modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from generator.core.yaml_loader import load_topology
+from generator.core.schema_validator import validate_topology_file
 from generator.export.geojson import export_geojson
 from generator.export.azgaar import export_azgaar_heightmap
 from generator.render.rasterize import rasterize_map
@@ -53,11 +58,28 @@ def cmd_export_geojson(args: argparse.Namespace) -> None:
         print(f"  {cat}: {count}")
 
 
+def cmd_validate(args: argparse.Namespace) -> None:
+    """Validate topology YAML against schema."""
+    path = args.input
+    if path is None:
+        from generator.core.yaml_loader import DEFAULT_TOPOLOGY_PATH
+        path = DEFAULT_TOPOLOGY_PATH
+    print(f"Validating {path}...")
+    errors = validate_topology_file(path)
+    if errors:
+        print(f"[FAIL] Validation failed with {len(errors)} error(s):")
+        for err in errors:
+            print(f"  - {err}")
+        sys.exit(1)
+    else:
+        print("[OK] Topology YAML is valid.")
+
+
 def cmd_info(args: argparse.Namespace) -> None:
     """Print a summary of the topology data."""
     data = load_topology(args.input)
     print("=" * 60)
-    print("VEYDRIA TOPOLOGY — SPATIAL SUMMARY")
+    print("VEYDRIA TOPOLOGY - SPATIAL SUMMARY")
     print("=" * 60)
     print(f"\nShape: {data.continental_shape.get('model', '?')}")
     print(f"Scale: {data.continental_shape.get('scale', '?')}")
@@ -70,7 +92,7 @@ def cmd_info(args: argparse.Namespace) -> None:
     print(f"\n--- Chokepoints ({len(data.chokepoint_names)}) ---")
     for name in data.chokepoint_names:
         cp = data.get_chokepoint(name)
-        connects = " ↔ ".join(cp.get("connects", []))
+        connects = " <-> ".join(cp.get("connects", []))
         print(f"  {name:20s}  {connects}")
 
     print(f"\n--- Trade Routes ({len(data.route_names)}) ---")
@@ -116,6 +138,9 @@ def main() -> None:
         default=None,
         help="Output GeoJSON path (default: output/veydria-spatial.geojson)",
     )
+
+    # validate
+    sub.add_parser("validate", help="Validate topology YAML against schema")
 
     # info
     sub.add_parser("info", help="Print topology summary")
@@ -169,6 +194,8 @@ def main() -> None:
             output_path=args.output,
             dpi=args.dpi,
         )
+    elif args.command == "validate":
+        cmd_validate(args)
     elif args.command == "info":
         cmd_info(args)
     else:

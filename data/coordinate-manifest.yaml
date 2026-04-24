@@ -1,0 +1,574 @@
+# ============================================================
+# Veydria Coordinate Manifest — Spatial Feature Positions
+# ============================================================
+# This file is the single source of truth for all feature
+# coordinates used in map generation. It is derived from
+# veydria-schematic.svg (1200x800 viewBox).
+#
+# EDITING: Coordinates can be adjusted via the web map's
+# edit mode (drag markers). Use the "Export Patch" button
+# to generate a YAML patch, then apply it with:
+#   python -m generator.tools.apply_patch <patch.yaml>
+# ============================================================
+
+coordinate_system:
+  type: svg_viewbox
+  width: 1200
+  height: 800
+  description: "All coordinates in SVG viewBox space. The web frontend inverts Y for Leaflet CRS.Simple."
+  source_svg: "veydria-schematic.svg"
+
+# --- Civilization Regions ---
+civilizations:
+  ngaru_bon:
+    polygon:
+      - [380, 80]
+      - [500, 60]
+      - [750, 50]
+      - [900, 80]
+      - [950, 90]
+      - [980, 110]
+      - [1000, 140]
+      - [940, 170]
+      - [860, 190]
+      - [780, 200]
+      - [680, 220]
+      - [560, 210]
+      - [460, 200]
+      - [400, 190]
+      - [370, 160]
+      - [380, 120]
+      - [380, 80]
+    centroid: [650, 120]
+    fill: "#7a6b55"
+
+  irrah:
+    polygon:
+      - [460, 200]
+      - [560, 210]
+      - [680, 220]
+      - [780, 200]
+      - [860, 190]
+      - [940, 170]
+      - [1000, 140]
+      - [1040, 180]
+      - [1080, 240]
+      - [1100, 300]
+      - [1080, 350]
+      - [1050, 400]
+      - [1000, 440]
+      - [940, 380]
+      - [860, 360]
+      - [780, 340]
+      - [680, 310]
+      - [560, 300]
+      - [460, 290]
+      - [400, 280]
+      - [370, 250]
+      - [380, 220]
+      - [400, 210]
+      - [430, 200]
+      - [460, 200]
+    centroid: [730, 270]
+    fill: "#d4a854"
+
+  kheshkai:
+    polygon:
+      - [1000, 140]
+      - [1040, 180]
+      - [1080, 240]
+      - [1100, 300]
+      - [1110, 340]
+      - [1100, 380]
+      - [1080, 420]
+      - [1050, 460]
+      - [1000, 490]
+      - [950, 510]
+      - [900, 460]
+      - [870, 400]
+      - [860, 360]
+      - [870, 320]
+      - [900, 280]
+      - [940, 250]
+      - [960, 220]
+      - [980, 180]
+      - [1000, 140]
+    centroid: [1010, 340]
+    fill: "#a8b86a"
+
+  ndjadi:
+    polygon:
+      - [460, 580]
+      - [530, 600]
+      - [620, 620]
+      - [700, 630]
+      - [780, 640]
+      - [840, 630]
+      - [880, 610]
+      - [920, 590]
+      - [950, 560]
+      - [960, 530]
+      - [930, 550]
+      - [900, 570]
+      - [860, 590]
+      - [800, 620]
+      - [700, 640]
+      - [600, 650]
+      - [520, 660]
+      - [450, 650]
+      - [400, 630]
+      - [370, 610]
+      - [360, 590]
+      - [380, 570]
+      - [410, 575]
+      - [440, 580]
+      - [460, 580]
+    centroid: [680, 610]
+    fill: "#3a8a3a"
+
+  qollari:
+    polygon:
+      - [340, 330]
+      - [330, 370]
+      - [310, 410]
+      - [300, 450]
+      - [290, 490]
+      - [300, 530]
+      - [330, 560]
+      - [360, 580]
+      - [400, 590]
+      - [440, 580]
+      - [430, 560]
+      - [420, 520]
+      - [400, 480]
+      - [380, 440]
+      - [370, 400]
+      - [360, 360]
+      - [350, 340]
+      - [340, 330]
+    centroid: [365, 470]
+    fill: "#2d6b3f"
+
+  oravan:
+    polygon:
+      - [140, 290]
+      - [180, 270]
+      - [250, 278]
+      - [270, 310]
+      - [270, 380]
+      - [250, 430]
+      - [220, 455]
+      - [190, 455]
+      - [150, 420]
+      - [130, 380]
+      - [130, 340]
+      - [140, 290]
+    centroid: [200, 365]
+    fill: "#4a9a4a"
+
+# --- Water Bodies ---
+water:
+  aethelian_basin:
+    polygon:
+      - [340, 330]
+      - [360, 310]
+      - [400, 290]
+      - [460, 280]
+      - [540, 260]
+      - [650, 270]
+      - [750, 300]
+      - [830, 330]
+      - [870, 370]
+      - [880, 420]
+      - [890, 480]
+      - [860, 540]
+      - [800, 580]
+      - [740, 620]
+      - [650, 640]
+      - [560, 650]
+      - [480, 660]
+      - [420, 640]
+      - [380, 600]
+      - [340, 560]
+      - [310, 500]
+      - [300, 450]
+      - [290, 400]
+      - [310, 360]
+      - [340, 330]
+    fill: "#3a7ca5"
+    fillOpacity: 0.6
+
+# --- Chokepoints ---
+chokepoints:
+  lam_chen_pass:
+    coords: [940, 168]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+  a_tzalan_ford:
+    coords: [960, 510]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+  smith_spring:
+    coords: [880, 200]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+  breath_of_cloud:
+    coords: [900, 440]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+  qollari_cliff_roads:
+    coords: [370, 520]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+  halkar_straits:
+    coords: [320, 390]
+    marker_color: "#f44"
+    marker_symbol: "roadblock"
+
+# --- Basin Port Zones ---
+ports:
+  ki_mbuhari:
+    coords: [650, 620]
+    marker_color: "#e8c840"
+    marker_symbol: "harbor"
+
+  tavakh_qarat:
+    coords: [600, 290]
+    marker_color: "#e8c840"
+    marker_symbol: "harbor"
+
+  halani_tamu:
+    coords: [860, 420]
+    marker_color: "#e8c840"
+    marker_symbol: "harbor"
+
+  dzong_tamu:
+    coords: [830, 560]
+    marker_color: "#e8c840"
+    marker_symbol: "harbor"
+
+# --- Contested Sacred Sites ---
+contested_sites:
+  qhabal_ur:
+    coords: [599, 444]
+    marker_color: "#adf"
+    marker_symbol: "religious-christian"
+
+  veyd_kirrha:
+    coords: [483, 576]
+    marker_color: "#adf"
+    marker_symbol: "religious-christian"
+
+# --- Irrah Oasis Cities ---
+oases:
+  qarat_al_fidda:
+    coords: [730, 260]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  ghadam_thalla:
+    coords: [590, 240]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  tin_mashraq:
+    coords: [950, 240]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  khulut:
+    coords: [680, 320]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  zin_iferis:
+    coords: [820, 230]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  ayn_salqat:
+    coords: [780, 290]
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+# --- Named Landmarks ---
+landmarks:
+  - id: zang_ri
+    name: "Zang-Ri (Copper Mountain)"
+    coords: [555, 78]
+    type: mountain
+    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: apu_yana
+    name: "Apu-Yana (Black Mountain)"
+    coords: [414, 414]
+    type: volcano
+    description: "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: kha_tepet
+    name: "Kha-Tepet (Blood Mountain)"
+    coords: [1040, 290]
+    type: mountain
+    description: "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: ki_jenga
+    name: "Ki-Jenga"
+    coords: [720, 580]
+    type: city
+    description: "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: hassag_nganin
+    name: "Hassag-Nganin (Five-Confluence)"
+    coords: [700, 540]
+    type: sacred_site
+    description: "Where the five Ndjadi channels braid together. Contested religious site."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: volata_xal
+    name: 'Volata-Xal ("Shipyard in the Dust")'
+    coords: [978, 530]
+    type: ruin
+    description: "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: wasi_puma
+    name: 'Wasi-Puma ("House of the Lion")'
+    coords: [330, 550]
+    type: fortress
+    description: "Fortified Qollari settlement built during the Obsidian Blockade."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: halkar_port
+    name: "Halkar"
+    coords: [255, 310]
+    type: port_city
+    description: "Main Oravan port island closest to Halkar Straits. Primary settlement."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: first_caldera
+    name: "First Caldera"
+    coords: [190, 370]
+    type: sacred_site
+    description: "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+  - id: kelata
+    name: "Kelata"
+    coords: [155, 340]
+    type: resource
+    description: "Obsidian-source island. Key strategic resource for Oravan naval power."
+    marker_color: "#c4a862"
+    marker_symbol: star
+
+# --- River Systems ---
+rivers:
+  ndjadi_tributary_north:
+    name: "Northern Tributary (from Kheshkai)"
+    path:
+      - [960, 510]
+      - [900, 520]
+      - [820, 530]
+      - [700, 530]
+    description: "Descends from the Kheshkai escarpment through A-Tzalan Ford."
+
+  ndjadi_tributary_west:
+    name: "Western Tributary (from Qollari)"
+    path:
+      - [440, 480]
+      - [500, 500]
+      - [600, 520]
+      - [700, 530]
+    description: "Flows from Qollari cloud forest into the delta system."
+
+  ndjadi_dist_1:
+    name: "First Distributary"
+    path:
+      - [700, 530]
+      - [680, 560]
+      - [660, 590]
+      - [640, 640]
+    description: "Westernmost channel of the five-distributary fan delta."
+
+  ndjadi_dist_2:
+    name: "Second Distributary"
+    path:
+      - [700, 530]
+      - [710, 565]
+      - [700, 600]
+      - [680, 640]
+    description: "Second channel, passing near Ki-Jenga."
+
+  ndjadi_dist_3:
+    name: "Third Distributary (Central)"
+    path:
+      - [700, 530]
+      - [720, 570]
+      - [730, 610]
+      - [720, 645]
+    description: "Central channel — the main navigable waterway."
+
+  ndjadi_dist_4:
+    name: "Fourth Distributary"
+    path:
+      - [700, 530]
+      - [740, 570]
+      - [760, 610]
+      - [760, 645]
+    description: "Fourth channel, serving the eastern granary districts."
+
+  ndjadi_dist_5:
+    name: "Fifth Distributary"
+    path:
+      - [700, 530]
+      - [750, 560]
+      - [790, 600]
+      - [800, 635]
+    description: "Easternmost channel, entering the Basin near Dzong-Tamu."
+
+# --- Trade Routes ---
+trade_routes:
+  copper_for_steel_road:
+    path:
+      - [650, 620]
+      - [750, 590]
+      - [900, 540]
+      - [960, 510]
+      - [970, 470]
+      - [960, 350]
+      - [950, 280]
+      - [945, 230]
+      - [940, 190]
+      - [940, 168]
+      - [860, 110]
+    style:
+      color: "#8b5e3c"
+      dash_array: "8,3"
+      label: "Copper-for-Steel Road"
+
+  highland_steppe_corridor:
+    path:
+      # Leg 1: Ngaru-Bon → Kheshkai
+      - [860, 110]
+      - [900, 140]
+      - [940, 160]
+      - [940, 168]
+      - [960, 200]
+      - [980, 260]
+      - [1000, 320]
+      # Leg 2: Kheshkai → Qollari
+      - [1000, 380]
+      - [970, 410]
+      - [940, 430]
+      - [900, 440]
+      - [850, 450]
+      - [750, 470]
+      - [600, 480]
+      - [500, 490]
+      - [430, 490]
+      - [400, 480]
+    style:
+      color: "#d4a017"
+      dash_array: "6,4"
+      label: "Highland-Steppe Corridor"
+
+  highland_relay:
+    path:
+      - [380, 460]
+      - [420, 500]
+      - [460, 530]
+      - [500, 560]
+      - [540, 580]
+      - [600, 600]
+      - [650, 620]
+    style:
+      color: "#3a8a3a"
+      dash_array: "3,5"
+      label: "Highland Relay"
+
+  coastal_monsoon:
+    path:
+      - [220, 360]
+      - [260, 360]
+      - [290, 370]
+      - [320, 380]
+      - [360, 390]
+      - [420, 400]
+      - [500, 410]
+      - [580, 420]
+      - [680, 430]
+      - [780, 440]
+      - [830, 445]
+      - [860, 430]
+      - [860, 420]
+    style:
+      color: "#4a8ab0"
+      dash_array: "8,2,2,2"
+      label: "Coastal Monsoon"
+
+  caravan_thread:
+    path:
+      # Smith-Spring → Qarat al-Fidda
+      - [880, 200]
+      - [840, 230]
+      - [790, 250]
+      - [730, 260]
+      # Qarat al-Fidda → Halani-Tamu
+      - [730, 260]
+      - [770, 300]
+      - [820, 360]
+      - [860, 420]
+    style:
+      color: "#d4a854"
+      dash_array: "3,4"
+      label: "Caravan Thread"
+
+  scribal_ladder:
+    path:
+      # Ki-Mbuhari → Halani-Tamu via Basin
+      - [650, 620]
+      - [680, 560]
+      - [720, 500]
+      - [780, 460]
+      - [830, 440]
+      - [860, 420]
+      # Overland into Irrah
+      - [860, 420]
+      - [840, 380]
+      - [820, 340]
+      - [790, 290]
+      # To pyramid-necropolises
+      - [790, 290]
+      - [770, 310]
+      - [760, 340]
+    style:
+      color: "#e05555"
+      dash_array: "2,5"
+      label: "Scribal Ladder (pilgrimage)"
+
+# --- Metadata ---
+metadata:
+  version: "1.0.0"
+  last_updated: "2026-04-23"
+  author: "veydria-cartography pipeline"
+  note: >
+    Coordinate values are in SVG viewBox units (0-1200 x 0-800).
+    The web map inverts the Y axis for Leaflet CRS.Simple compatibility.
+    To regenerate from SVG source: python -m generator.tools.extract_from_svg

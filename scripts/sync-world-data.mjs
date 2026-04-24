@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+/**
+ * sync-world-data.mjs — Sync canonical worldbuilder data into cartography
+ *
+ * The worldbuilder repo is the source of truth. This script copies the
+ * geography files that the cartography pipeline depends on.
+ *
+ * Usage: node scripts/sync-world-data.mjs [--check]
+ *   --check  Verify files are in sync without copying
+ */
+import { cpSync, existsSync, statSync } from 'fs';
+import { join, relative } from 'path';
+
+const WORLDBUILDER_PATH = 'C:/Users/perry/DevProjects/worldbuilder';
+const CARTOGRAPHY_PATH = 'C:/Users/perry/DevProjects/veydria-cartography';
+
+// Map of source paths in worldbuilder to destination paths in cartography
+// These are the canonical files per README.md
+const SYNC_MAP = [
+  {
+    src: 'geography/continents/veydria-topology.yaml',
+    dest: 'data/veydria-topology.yaml',
+    description: 'Spatial source of truth — civilization positions, chokepoints, trade routes'
+  },
+  {
+    src: 'geography/MAP-PROMPT.md',
+    dest: 'data/MAP-PROMPT.md',
+    description: 'Definitive visual specification for all map outputs'
+  },
+  {
+    src: 'geography/veydria-schematic.svg',
+    dest: 'data/veydria-schematic.svg',
+    description: 'Base SVG schematic from which coordinates are derived'
+  },
+];
+
+const CHECK_MODE = process.argv.includes('--check');
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function getMtime(path) {
+  try {
+    return statSync(path).mtime;
+  } catch {
+    return null;
+  }
+}
+
+console.log(CHECK_MODE
+  ? '🔍 Checking worldbuilder → cartography sync status...'
+  : '🔄 Syncing worldbuilder data to cartography engine...');
+console.log();
+
+let synced = 0;
+let stale = 0;
+let missing = 0;
+
+for (const { src, dest, description } of SYNC_MAP) {
+  const srcPath = join(WORLDBUILDER_PATH, src);
+  const destPath = join(CARTOGRAPHY_PATH, dest);
+  const relDest = relative(CARTOGRAPHY_PATH, destPath);
+
+  if (!existsSync(srcPath)) {
+    console.error(`❌ Source not found: ${srcPath}`);
+    missing++;
+    continue;
+  }
+
+  const srcMtime = getMtime(srcPath);
+  const destMtime = getMtime(destPath);
+  const srcSize = statSync(srcPath).size;
+
+  if (CHECK_MODE) {
+    if (!destMtime) {
+      console.log(`❌ ${relDest} — missing`);
+      missing++;
+    } else if (srcMtime > destMtime) {
+      const age = Math.round((srcMtime - destMtime) / 1000 / 60);
+      console.log(`⚠️  ${relDest} — stale by ${age} min (${formatBytes(srcSize)})`);
+      stale++;
+    } else {
+      console.log(`✅ ${relDest} — up to date (${formatBytes(srcSize)})`);
+      synced++;
+    }
+    continue;
+  }
+
+  // Copy mode
+  if (!destMtime || srcMtime > destMtime) {
+    cpSync(srcPath, destPath);
+    console.log(`✅ Synced: ${src} → ${relDest}`);
+    console.log(`   ${description}`);
+    synced++;
+  } else {
+    console.log(`⏭️  Skipped (up to date): ${relDest}`);
+  }
+}
+
+console.log();
+if (CHECK_MODE) {
+  const total = SYNC_MAP.length;
+  console.log(`📊 Status: ${synced}/${total} up to date, ${stale} stale, ${missing} missing`);
+  if (stale > 0 || missing > 0) {
+    console.log('   Run without --check to sync.');
+    process.exit(1);
+  }
+} else {
+  console.log('✨ Sync complete.');
+  console.log(`   Tip: Run with --check in CI to verify sync before builds.`);
+}
