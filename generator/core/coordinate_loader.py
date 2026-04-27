@@ -9,7 +9,7 @@ SVG schematic and the generated map artifacts.
 from pathlib import Path
 from typing import Any
 
-import yaml
+from .yaml_io import load_rt
 
 
 DEFAULT_MANIFEST_PATH = Path(__file__).parent.parent.parent / "data" / "coordinate-manifest.yaml"
@@ -100,8 +100,7 @@ def load_manifest(path: Path | str | None = None) -> CoordinateManifest:
     if not path.exists():
         raise FileNotFoundError(f"Coordinate manifest not found at: {path}")
 
-    with open(path, "r", encoding="utf-8") as f:
-        raw = yaml.safe_load(f)
+    raw = load_rt(path)
 
     if not isinstance(raw, dict):
         raise ValueError(f"Expected dict at top level, got {type(raw).__name__}")
