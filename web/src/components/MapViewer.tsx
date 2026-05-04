@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useRef, useMemo, forwardRef, useImperativeHandle, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -44,6 +44,7 @@ export interface MapViewerProps {
 
 export interface MapViewerHandle {
   flyToFeature: (feature: GeoJSONFeature) => void
+  flyToFeatureById: (featureId: string) => boolean
 }
 
 // SVG viewBox dimensions
@@ -81,7 +82,15 @@ function getCentroid(coords: number[] | number[][] | number[][][], geomType: str
   return [600, 400]
 }
 
-// Marker class for each category
+// SVG marker icons per category
+const MARKER_SVGS: Record<string, string> = {
+  port: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 21V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M8 12l4-3 4 3"/></svg>`,
+  chokepoint: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M10 9.5a2 2 0 0 1 4 0V21"/></svg>`,
+  oasis: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2-2-4-5-4-8a4 4 0 0 1 8 0c0 3-2 6-4 8z"/><path d="M8 22h8"/></svg>`,
+  contested_site: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  landmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12 12 2"/></svg>`,
+}
+
 const MARKER_CLASSES: Record<string, string> = {
   port: 'marker-port',
   chokepoint: 'marker-chokepoint',
@@ -90,13 +99,13 @@ const MARKER_CLASSES: Record<string, string> = {
   landmark: 'marker-landmark',
 }
 
-// Marker sizes for each category
-const MARKER_SIZES: Record<string, [number, number]> = {
-  port: [14, 14],
-  chokepoint: [12, 12],
-  oasis: [10, 10],
-  contested_site: [12, 12],
-  landmark: [9, 9],
+const MARKER_SIZE = 22
+
+// Zoom thresholds: layers hidden below this zoom level
+const ZOOM_THRESHOLDS: Partial<Record<keyof LayerVisibility, number>> = {
+  terrain_cell: -0.5,
+  river: -0.5,
+  landmark: 0,
 }
 
 function getElevationColor(elev: number): string {
@@ -127,6 +136,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       return groups
     }, [geojson])
 
+    const [zoomLevel, setZoomLevel] = useState<number>(-1)
+
+    // Build feature ID lookup for deep-linking
+    const featureById = useMemo(() => {
+      const map = new Map<string, GeoJSONFeature>()
+      for (const f of geojson.features) {
+        const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+        if (id) map.set(id, f)
+      }
+      return map
+    }, [geojson])
+
     // Expose flyToFeature to parent
     useImperativeHandle(ref, () => ({
       flyToFeature(feature: GeoJSONFeature) {
@@ -134,6 +155,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const [x, y] = getCentroid(feature.geometry.coordinates, feature.geometry.type)
         const latlng = svgToLatLng(x, y)
         mapRef.current.flyTo(latlng as L.LatLngExpression, 1.5, { duration: 0.8 })
+      },
+      flyToFeatureById(featureId: string) {
+        const feature = featureById.get(featureId)
+        if (!feature || !mapRef.current) return false
+        const [x, y] = getCentroid(feature.geometry.coordinates, feature.geometry.type)
+        const latlng = svgToLatLng(x, y)
+        mapRef.current.flyTo(latlng as L.LatLngExpression, 2, { duration: 1 })
+        return true
       },
     }))
 
@@ -154,9 +183,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // Zoom control in top-right
       L.control.zoom({ position: 'topright' }).addTo(map)
 
+      // Scale bar
+      L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map)
+
+      // Track zoom level for threshold-based visibility
+      const updateZoom = () => setZoomLevel(map.getZoom())
+      map.on('zoom', updateZoom)
+      updateZoom()
+
       const bounds: L.LatLngBoundsExpression = [
-        svgToLatLng(0, SVG_HEIGHT),
-        svgToLatLng(SVG_WIDTH, 0),
+        svgToLatLng(0, SVG_HEIGHT) as L.LatLngTuple,
+        svgToLatLng(SVG_WIDTH, 0) as L.LatLngTuple,
       ]
       map.fitBounds(bounds)
 
@@ -238,10 +275,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             const lineOpts: L.PolylineOptions = {
               color: (props.stroke as string) || '#888',
               weight: (props['stroke-width'] as number) || 2.5,
-              opacity: category === 'river' ? 0.5 : 0.7,
-              dashArray: (props['stroke-dasharray'] as string) || undefined,
+              opacity: category === 'river' ? 0.6 : 0.7,
+              dashArray: category === 'river' ? '8,6' : ((props['stroke-dasharray'] as string) || undefined),
               lineCap: 'round',
               lineJoin: 'round',
+              className: category === 'river' ? 'poly-river' : undefined,
             }
 
             const polyline = L.polyline(latlngs, lineOpts)
@@ -268,15 +306,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           } else if (geomType === 'Point') {
             const [x, y] = feature.geometry.coordinates as number[]
             const latlng = svgToLatLng(x, y)
-            const id = feature.id || (props.id as string) || ''
+            const id = (feature as unknown as Record<string, unknown>).id as string || (props.id as string) || ''
 
             const markerClass = MARKER_CLASSES[category] || 'marker-landmark'
-            const markerSize = MARKER_SIZES[category] || [9, 9]
+            const svgHtml = MARKER_SVGS[category] || MARKER_SVGS.landmark
 
             const icon = L.divIcon({
-              className: `${markerClass} ${isEditMode ? 'edit-mode-marker' : ''}`,
-              iconSize: markerSize,
-              iconAnchor: [markerSize[0] / 2, markerSize[1] / 2],
+              className: `map-marker ${markerClass} ${isEditMode ? 'edit-mode-marker' : ''}`,
+              iconSize: [MARKER_SIZE, MARKER_SIZE],
+              iconAnchor: [MARKER_SIZE / 2, MARKER_SIZE / 2],
+              html: svgHtml,
             })
 
             const marker = L.marker(latlng, { 
@@ -333,6 +372,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       mapRef.current = map
 
       return () => {
+        map.off('zoom', updateZoom)
         d3Overlay.destroy()
         animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
         animFrameIdsRef.current.clear()
@@ -343,12 +383,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
     }, [geojson, featuresByCategory, onFeatureClick])
 
-    // Toggle layer visibility
+    // Toggle layer visibility (respecting zoom thresholds)
     useEffect(() => {
       if (!mapRef.current) return
       for (const [category, group] of layerGroupsRef.current.entries()) {
-        const visible = layers[category as keyof LayerVisibility]
-        if (visible === undefined) continue
+        const userVisible = layers[category as keyof LayerVisibility]
+        if (userVisible === undefined) continue
+
+        const threshold = ZOOM_THRESHOLDS[category as keyof LayerVisibility]
+        const zoomVisible = threshold === undefined || zoomLevel >= threshold
+        const visible = userVisible && zoomVisible
         
         if (category === 'trade_route') {
           if (visible) group.addTo(mapRef.current)
@@ -361,7 +405,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           }
         }
       }
-    }, [layers])
+    }, [layers, zoomLevel])
 
     // Highlight selected marker
     useEffect(() => {
@@ -373,7 +417,25 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       })
     }, [selectedFeatureId])
 
-    return <div ref={containerRef} className="map-container" id="veydria-map" />
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div ref={containerRef} className="map-container" id="veydria-map" />
+        {/* Compass Rose Overlay */}
+        <div className="compass-rose" title="North">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">
+            <circle cx="24" cy="24" r="20" stroke-opacity="0.25" />
+            <circle cx="24" cy="24" r="14" stroke-opacity="0.12" stroke-dasharray="2 2" />
+            <path d="M24 6 L27 22 L24 24 L21 22 Z" fill="var(--text-accent)" fill-opacity="0.7" stroke="none" />
+            <path d="M24 42 L21 26 L24 24 L27 26 Z" fill="var(--text-muted)" fill-opacity="0.4" stroke="none" />
+            <line x1="24" y1="3" x2="24" y2="7" />
+            <line x1="24" y1="41" x2="24" y2="45" />
+            <line x1="3" y1="24" x2="7" y2="24" />
+            <line x1="41" y1="24" x2="45" y2="24" />
+            <text x="24" y="10" text-anchor="middle" font-size="5" fill="var(--text-accent)" stroke="none" font-family="var(--font-display)">N</text>
+          </svg>
+        </div>
+      </div>
+    )
   }
 )
 

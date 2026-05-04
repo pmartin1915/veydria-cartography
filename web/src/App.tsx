@@ -52,22 +52,62 @@ function App() {
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
   const [searchOpen, setSearchOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean } | null>(null)
 
   useEffect(() => {
     fetch('/veydria-spatial.geojson')
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) throw new Error(`Failed to load GeoJSON: ${res.status}`)
-        return res.json()
+        const contentLength = +(res.headers.get('content-length') || 0)
+        const reader = res.body?.getReader()
+        if (!reader || !contentLength) {
+          return res.json()
+        }
+        const chunks: Uint8Array[] = []
+        let received = 0
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          chunks.push(value)
+          received += value.length
+          setLoadProgress(Math.round((received / contentLength) * 100))
+        }
+        const all = new Uint8Array(received)
+        let pos = 0
+        for (const chunk of chunks) {
+          all.set(chunk, pos)
+          pos += chunk.length
+        }
+        const text = new TextDecoder().decode(all)
+        return JSON.parse(text) as GeoJSONCollection
       })
       .then((data: GeoJSONCollection) => {
         setGeojson(data)
         setLoading(false)
+        // Handle deep-linking after data loads
+        const hash = window.location.hash
+        const match = hash.match(/^#feature=(.+)$/)
+        if (match) {
+          const featureId = decodeURIComponent(match[1])
+          // Delay to let MapViewer mount
+          setTimeout(() => {
+            const found = data.features.find((f) => {
+              const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+              return id === featureId
+            })
+            if (found) {
+              setSelectedFeature(found)
+              setPanelOpen(true)
+              mapRef.current?.flyToFeatureById(featureId)
+            }
+          }, 600)
+        }
       })
       .catch((err) => {
         setError(err.message)
@@ -78,11 +118,17 @@ function App() {
   const handleFeatureClick = useCallback((feature: GeoJSONFeature) => {
     setSelectedFeature(feature)
     setPanelOpen(true)
+    // Update URL hash for deep-linking
+    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    if (id) {
+      window.history.replaceState(null, '', `#feature=${id}`)
+    }
   }, [])
 
   const handleClosePanel = useCallback(() => {
     setPanelOpen(false)
     setTimeout(() => setSelectedFeature(null), 300)
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
   }, [])
 
   const handleLayerToggle = useCallback((layer: keyof LayerVisibility) => {
@@ -94,6 +140,10 @@ function App() {
     setPanelOpen(true)
     setSearchOpen(false)
     mapRef.current?.flyToFeature(feature)
+    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    if (id) {
+      window.history.replaceState(null, '', `#feature=${id}`)
+    }
   }, [])
 
   const handleCoordinateUpdate = useCallback((featureId: string, name: string, category: string, newCoords: [number, number]) => {
@@ -102,6 +152,27 @@ function App() {
       [featureId]: { name, category, coords: newCoords }
     }))
   }, [])
+
+  const handleExportPatch = useCallback(() => {
+    const entries = Object.entries(coordinateUpdates)
+    if (entries.length === 0) return
+
+    const patches = entries.map(([id, data]) =>
+      `  - id: ${id}\n    category: ${data.category}\n    coords: [${data.coords[0].toFixed(1)}, ${data.coords[1].toFixed(1)}]`
+    ).join('\n')
+
+    const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n`
+
+    const blob = new Blob([yaml], { type: 'text/yaml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [coordinateUpdates])
 
   // Keyboard shortcut: Ctrl+K or / for search
   useEffect(() => {
@@ -122,13 +193,25 @@ function App() {
   if (loading) {
     return (
       <div className="loading-screen">
+        <div className="loading-parchment" />
         <div className="loading-content">
           <div className="loading-glow" />
+          <svg className="loading-compass" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="32" cy="32" r="28" stroke-opacity="0.3" />
+            <circle cx="32" cy="32" r="22" stroke-opacity="0.15" stroke-dasharray="2 3" />
+            <path d="M32 8 L36 28 L32 32 L28 28 Z" fill="var(--text-accent)" fill-opacity="0.8" stroke="none" />
+            <path d="M32 56 L28 36 L32 32 L36 36 Z" fill="var(--text-muted)" fill-opacity="0.5" stroke="none" />
+            <line x1="32" y1="4" x2="32" y2="10" />
+            <line x1="32" y1="54" x2="32" y2="60" />
+            <line x1="4" y1="32" x2="10" y2="32" />
+            <line x1="54" y1="32" x2="60" y2="32" />
+          </svg>
           <h1 className="loading-title">VEYDRIA</h1>
           <div className="loading-subtitle">Loading continental data...</div>
           <div className="loading-bar">
-            <div className="loading-bar-fill" />
+            <div className="loading-bar-fill" style={{ width: `${Math.max(8, loadProgress)}%` }} />
           </div>
+          <div className="loading-percent">{loadProgress}%</div>
         </div>
       </div>
     )
@@ -218,8 +301,14 @@ function App() {
               ).join('\n\n')}
             </pre>
             <button 
+              onClick={handleExportPatch} 
+              style={{ marginTop: 8, width: '100%', padding: '6px', background: 'var(--text-accent)', border: 'none', color: 'var(--bg-deep)', cursor: 'pointer', borderRadius: 4, fontWeight: 600, fontSize: 11 }}
+            >
+              Export Patch
+            </button>
+            <button 
               onClick={() => setCoordinateUpdates({})} 
-              style={{ marginTop: 8, width: '100%', padding: '4px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: 4 }}
+              style={{ marginTop: 6, width: '100%', padding: '4px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: 4, fontSize: 11 }}
             >
               Clear All
             </button>

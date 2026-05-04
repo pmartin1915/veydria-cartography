@@ -51,6 +51,17 @@ TEXT_COLOR = '#3d2b1f'
 TEXT_MUTED = '#6b5b4a'
 WATER_TEXT = '#2a5f7a'
 
+# Hypsometric tinting — custom elevation palette
+ELEVATION_COLORS = [
+    (0.00, '#8ab87a'),   # ndjadi green (low)
+    (0.25, '#a8c880'),   # low-mid green
+    (0.40, '#c8d4a0'),   # kheshkai green-yellow
+    (0.55, '#d8c890'),   # mid yellow-brown
+    (0.70, '#c9b896'),   # ngaru-bon plateau
+    (0.85, '#a09888'),   # high gray-brown
+    (0.95, '#e8e8e8'),   # white peaks
+]
+
 # Civilization fill colors (muted, watercolor-like)
 CIV_FILLS: dict[str, str] = {
     'ngaru_bon': '#c9b896',
@@ -104,7 +115,7 @@ def _load_geojson(path: Path) -> dict[str, Any]:
 
 
 def _add_parchment_texture(ax: plt.Axes, rng: np.random.Generator) -> None:
-    """Add subtle noise texture to simulate aged parchment."""
+    """Add subtle noise texture, vignette, and fold lines to simulate aged parchment."""
     # Base parchment
     ax.set_facecolor(PARCHMENT_BG)
 
@@ -134,6 +145,15 @@ def _add_parchment_texture(ax: plt.Axes, rng: np.random.Generator) -> None:
         interpolation='bilinear',
         zorder=0,
     )
+
+    # Fold lines — subtle curved lines suggesting folded parchment
+    fold_color = '#6b5b4a'
+    for fx in [SVG_WIDTH * 0.33, SVG_WIDTH * 0.66]:
+        ax.plot([fx, fx], [0, SVG_HEIGHT], color=fold_color, linewidth=0.4,
+                alpha=0.08, zorder=0)
+    for fy in [SVG_HEIGHT * 0.5]:
+        ax.plot([0, SVG_WIDTH], [fy, fy], color=fold_color, linewidth=0.4,
+                alpha=0.06, zorder=0)
 
 
 def _jitter_polygon(coords: list[list[float]], rng: np.random.Generator, amplitude: float = 3.0) -> list[list[float]]:
@@ -176,6 +196,9 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
         xs = [p[0] for p in jittered]
         ys = [SVG_HEIGHT - p[1] for p in jittered]  # Y-invert
 
+        # Ink bleed — subtle dark outline for coastline effect
+        ax.fill(xs, ys, facecolor=fill, edgecolor='#5a4535',
+                linewidth=2.5, alpha=0.12, zorder=2)
         ax.fill(xs, ys, facecolor=fill, edgecolor=BORDER_COLOR,
                 linewidth=1.2, alpha=0.15, zorder=3)
 
@@ -200,12 +223,28 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
                 ])
 
 
+def _elevation_color(elev: float, min_elev: float = -500, max_elev: float = 6000) -> str:
+    """Map elevation to hypsometric color."""
+    t = max(0.0, min(1.0, (elev - min_elev) / (max_elev - min_elev)))
+    for i in range(len(ELEVATION_COLORS) - 1):
+        t0, c0 = ELEVATION_COLORS[i]
+        t1, c1 = ELEVATION_COLORS[i + 1]
+        if t0 <= t <= t1:
+            # Linear interpolation between colors
+            ratio = (t - t0) / (t1 - t0) if t1 != t0 else 0
+            r0, g0, b0 = int(c0[1:3], 16), int(c0[3:5], 16), int(c0[5:7], 16)
+            r1, g1, b1 = int(c1[1:3], 16), int(c1[3:5], 16), int(c1[5:7], 16)
+            r = int(r0 + ratio * (r1 - r0))
+            g = int(g0 + ratio * (g1 - g0))
+            b = int(b0 + ratio * (b1 - b0))
+            return f'#{r:02x}{g:02x}{b:02x}'
+    return ELEVATION_COLORS[-1][1]
+
+
 def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict]) -> None:
-    """Draw Voronoi heightmap cells."""
+    """Draw Voronoi heightmap cells with hypsometric tinting and hillshade."""
     if not terrain_cells:
         return
-        
-    cmap = plt.get_cmap('terrain')
     
     elevations = [f['properties']['elevation'] for f in terrain_cells]
     min_elev = -500
@@ -217,12 +256,13 @@ def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict]) -> None:
         xs = [p[0] for p in coords]
         ys = [SVG_HEIGHT - p[1] for p in coords]
         
-        # Normalize elevation to 0.25-1.0 to avoid deep ocean blues on land
-        norm_elev = max(0.25, min(1.0, 0.25 + 0.75 * (elev - min_elev) / (max_elev - min_elev)))
-        color = cmap(norm_elev)
+        color = _elevation_color(elev, min_elev, max_elev)
+        
+        # Simple hillshade: darken higher elevations slightly for depth
+        hillshade_alpha = 0.88
         
         # zorder=2 so it sits above ocean(1) and under civ fills(3)
-        ax.fill(xs, ys, facecolor=color, edgecolor='none', alpha=0.85, zorder=2)
+        ax.fill(xs, ys, facecolor=color, edgecolor='none', alpha=hillshade_alpha, zorder=2)
 
 def _draw_basin(ax: plt.Axes, basin_feat: dict, rng: np.random.Generator) -> None:
     """Draw the Aethelian Basin as a translucent water body."""

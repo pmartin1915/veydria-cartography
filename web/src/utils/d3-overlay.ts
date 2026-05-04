@@ -44,6 +44,20 @@ export function initD3Overlay(
     defs = svg.append('defs')
   }
 
+  // Gold gradient for trade routes
+  defs.selectAll('#route-gradient').data([1]).join('linearGradient')
+    .attr('id', 'route-gradient')
+    .attr('gradientUnits', 'userSpaceOnUse')
+    .call((g) => {
+      g.selectAll('stop').data([
+        { offset: '0%', color: 'rgba(212, 168, 84, 0.9)' },
+        { offset: '50%', color: 'rgba(212, 168, 84, 0.5)' },
+        { offset: '100%', color: 'rgba(212, 168, 84, 0.1)' },
+      ]).join('stop')
+        .attr('offset', d => d.offset)
+        .attr('stop-color', d => d.color)
+    })
+
   // Add arrowhead marker
   defs.selectAll('#route-arrow').data([1]).join('marker')
     .attr('id', 'route-arrow')
@@ -55,7 +69,7 @@ export function initD3Overlay(
     .attr('orient', 'auto')
     .append('path')
     .attr('d', 'M0,-4L10,0L0,4')
-    .attr('fill', 'context-stroke') // Inherit stroke color (works in modern browsers)
+    .attr('fill', '#d4a854')
     .attr('opacity', 0.8)
 
   // Map features to D3 path elements
@@ -64,27 +78,30 @@ export function initD3Overlay(
     .data(features)
     .join('path')
     .attr('class', 'd3-route-path')
-    .attr('stroke', d => (d.properties.stroke as string) || '#888')
-    .attr('stroke-width', d => (d.properties['stroke-width'] as number) || 2.5)
-    .attr('stroke-dasharray', d => (d.properties['stroke-dasharray'] as string) || '5,5')
+    .attr('stroke', 'url(#route-gradient)')
+    .attr('stroke-width', d => {
+      const importance = (d.properties.importance as number) || 1
+      return ((d.properties['stroke-width'] as number) || 2.5) * (0.8 + importance * 0.4)
+    })
+    .attr('stroke-dasharray', d => (d.properties['stroke-dasharray'] as string) || '6,4')
     .attr('fill', 'none')
-    .attr('opacity', 0.8)
-    .attr('marker-mid', 'url(#route-arrow)') // Add arrows to midpoints if we chunk the path
+    .attr('opacity', 0.75)
     .style('cursor', 'pointer')
     .on('click', (event, d) => onFeatureClick(d))
-    .on('mouseover', function () {
+    .on('mouseover', function (_event, d) {
       d3.select(this)
-        .transition()
-        .duration(200)
-        .attr('stroke-width', d => ((d as GeoJSONFeature).properties['stroke-width'] as number || 2.5) + 2)
+        .interrupt()
+        .attr('stroke-width', ((d.properties['stroke-width'] as number) || 2.5) * 1.8)
         .attr('opacity', 1)
+        .attr('filter', 'drop-shadow(0 0 6px rgba(212, 168, 84, 0.6))')
     })
-    .on('mouseout', function () {
+    .on('mouseout', function (_event, d) {
+      const importance = (d.properties.importance as number) || 1
       d3.select(this)
-        .transition()
-        .duration(200)
-        .attr('stroke-width', d => (d as GeoJSONFeature).properties['stroke-width'] as number || 2.5)
-        .attr('opacity', 0.8)
+        .interrupt()
+        .attr('stroke-width', ((d.properties['stroke-width'] as number) || 2.5) * (0.8 + importance * 0.4))
+        .attr('opacity', 0.75)
+        .attr('filter', null)
     })
 
   // Function to project coordinates using Leaflet's current transform
@@ -131,7 +148,7 @@ export function initD3Overlay(
       routeGroup.remove()
     },
     setVisibility: (visible: boolean) => {
-      routeGroup.style('display', visible ? null : 'none')
+      routeGroup.style('display', visible ? 'block' : 'none')
     }
   }
 }

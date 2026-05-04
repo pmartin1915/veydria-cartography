@@ -10,6 +10,7 @@ Usage:
 """
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
@@ -56,6 +57,11 @@ def cmd_export_geojson(args: argparse.Namespace) -> None:
         cats[cat] = cats.get(cat, 0) + 1
     for cat, count in sorted(cats.items()):
         print(f"  {cat}: {count}")
+
+    # Copy to web/public so the frontend stays in sync
+    web_public = Path(__file__).parent.parent / "web" / "public" / "veydria-spatial.geojson"
+    shutil.copy2(output, web_public)
+    print(f"\nSynced to web: {web_public}")
 
 
 def cmd_validate(args: argparse.Namespace) -> None:

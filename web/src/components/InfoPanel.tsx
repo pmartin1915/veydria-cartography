@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface GeoJSONFeature {
   type: 'Feature'
   geometry: {
@@ -49,6 +51,9 @@ const FIELD_LABELS: Record<string, string> = {
   opening: 'Basin Opening',
 }
 
+// Fields that are typically long and benefit from collapsing
+const COLLAPSIBLE_FIELDS = new Set(['description', 'path_description', 'strategic_value'])
+
 // Styling keys to skip
 const SKIP_KEYS = new Set([
   'name', 'id', 'category', 'etymology',
@@ -59,6 +64,8 @@ const SKIP_KEYS = new Set([
 ])
 
 export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
   if (!feature) {
     return <div className={`info-panel ${open ? 'open' : ''}`} />
   }
@@ -69,12 +76,22 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
   const etymology = props.etymology as string | undefined
   const fields = CATEGORY_FIELDS[category] || Object.keys(props)
 
+  const toggleCollapse = (key: string) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
   return (
     <div className={`info-panel ${open ? 'open' : ''}`} id="info-panel">
-      <div className="info-panel-header">
-        <span className={`info-panel-category ${category}`}>
-          {category.replace('_', ' ')}
-        </span>
+      <div className={`info-panel-header info-panel-header--${category}`}>
+        <div className="info-panel-header-left">
+          <span className={`info-panel-category ${category}`}>
+            {category.replace('_', ' ')}
+          </span>
+          <h2 className="info-panel-name">{name}</h2>
+          {etymology && (
+            <p className="info-panel-etymology">{etymology}</p>
+          )}
+        </div>
         <button
           className="info-panel-close"
           onClick={onClose}
@@ -86,14 +103,6 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
       </div>
 
       <div className="info-panel-body">
-        <h2 className="info-panel-name">{name}</h2>
-
-        {etymology && (
-          <p className="info-panel-etymology">{etymology}</p>
-        )}
-
-        <div className="info-panel-divider" />
-
         {fields.map((fieldKey) => {
           if (SKIP_KEYS.has(fieldKey)) return null
 
@@ -101,6 +110,8 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
           if (value === undefined || value === null || value === '') return null
 
           const label = FIELD_LABELS[fieldKey] || fieldKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+          const isCollapsible = COLLAPSIBLE_FIELDS.has(fieldKey)
+          const isCollapsed = isCollapsible && collapsed[fieldKey]
 
           // Arrays
           if (Array.isArray(value)) {
@@ -116,10 +127,26 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
             )
           }
 
+          const text = String(value)
+          const shouldTruncate = isCollapsible && text.length > 180 && !isCollapsed
+
           return (
-            <div className="info-field" key={fieldKey}>
-              <div className="info-field-label">{label}</div>
-              <div className="info-field-value">{String(value)}</div>
+            <div className={`info-field ${isCollapsible ? 'info-field--collapsible' : ''}`} key={fieldKey}>
+              <div className="info-field-header">
+                <div className="info-field-label">{label}</div>
+                {isCollapsible && text.length > 180 && (
+                  <button
+                    className="info-field-toggle"
+                    onClick={() => toggleCollapse(fieldKey)}
+                    aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+                  >
+                    {isCollapsed ? '▼' : '▲'}
+                  </button>
+                )}
+              </div>
+              <div className={`info-field-value ${shouldTruncate ? 'truncated' : ''}`}>
+                {text}
+              </div>
             </div>
           )
         })}

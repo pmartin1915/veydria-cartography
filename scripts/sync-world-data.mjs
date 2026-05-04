@@ -9,10 +9,12 @@
  *   --check  Verify files are in sync without copying
  */
 import { cpSync, existsSync, statSync } from 'fs';
-import { join, relative } from 'path';
+import { dirname, join, relative, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-const WORLDBUILDER_PATH = 'C:/Users/perry/DevProjects/worldbuilder';
-const CARTOGRAPHY_PATH = 'C:/Users/perry/DevProjects/veydria-cartography';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CARTOGRAPHY_PATH = process.env.CARTOGRAPHY_PATH || resolve(__dirname, '..');
+const WORLDBUILDER_PATH = process.env.WORLDBUILDER_PATH || resolve(CARTOGRAPHY_PATH, '..', 'worldbuilder');
 
 // Map of source paths in worldbuilder to destination paths in cartography
 // These are the canonical files per README.md
