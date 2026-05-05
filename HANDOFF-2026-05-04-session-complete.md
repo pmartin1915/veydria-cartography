@@ -1,64 +1,70 @@
 # Veydria Cartography — Session Handoff
 
-**Date:** 2026-05-04
-**Commits:** `f5165c3` — feat: self-hosted fonts, layer opacity, related features, route animation, patch loader
-**Dev server:** `http://localhost:5178`
+**Date:** 2026-05-04  
+**Commits pushed to origin/master:** `5459886` (8 commits total this session)  
+**Dev server:** `http://localhost:5178` (PID 66112)
 
 ---
 
-## Completed This Session
+## What Was Built This Session
 
-### 1. Self-Hosted Fonts (Offline Support)
-- **Files:** `web/public/fonts/` (8 WOFF2 files + `fonts.css`)
-- Downloaded Cormorant Garamond (400i, 400, 600, 700) and Inter (300, 400, 500, 600) from Google Fonts
-- Replaced Google Fonts CDN link in `web/index.html` with local `/fonts/fonts.css`
-- Fonts now work offline; no external network dependency for typography
+### Features (5)
 
-### 2. Layer Opacity Sliders
-- **Files:** `web/src/components/LayerControls.tsx`, `web/src/components/MapViewer.tsx`, `web/src/App.tsx`, `web/src/App.css`
-- Added `LayerOpacity` type with per-layer defaults (terrain: 0.85, civ: 0.15, water: 0.5, routes: 0.75, rivers: 0.6)
-- `LayerControls` shows a compact slider (0-100%) for layers marked `opacityControl: true`
-- Sliders appear only when layer is toggled ON
-- `MapViewer` applies opacity dynamically via `setStyle()` on polygons/polylines and `setOpacity()` on D3 overlay
-- D3 overlay extended with `setOpacity()` method
+1. **Self-Hosted Fonts** — `web/public/fonts/` (8 WOFF2 files + `fonts.css`)  
+   Cormorant Garamond (400i, 400, 600, 700) + Inter (300, 400, 500, 600). Replaced Google Fonts CDN. Offline-capable typography.
 
-### 3. Related-Features Panel in InfoPanel
-- **Files:** `web/src/components/InfoPanel.tsx`, `web/src/utils/related-features.ts`, `web/src/App.tsx`, `web/src/App.css`
-- `InfoPanel` now accepts `allFeatures` and `onSelectFeature` props
-- `related-features.ts` computes relationships by:
-  - Trade route endpoints → connected civilizations
-  - Civilization → trade routes, chokepoints, ports
-  - Geographic proximity (nearest features, skipping terrain/water)
-- Related features render as clickable rows with relation type icon + distance
-- Clicking a related feature flies to it and updates URL hash
+2. **Layer Opacity Sliders** — `LayerControls.tsx`, `MapViewer.tsx`, `App.tsx`  
+   Per-layer opacity state (0-1) with compact sliders appearing under active toggles. Applies live to polygons, polylines, and D3 trade routes.
 
-### 4. Route Travel Animation
-- **File:** `web/src/utils/d3-overlay.ts`
-- Added animated gold particles that travel along each trade route path
-- Particles use `getPointAtLength()` + `requestAnimationFrame` for smooth movement
-- Fade in/out at path endpoints for seamless looping
-- Particle count scales with route importance (2-3 per route)
-- Animation pauses when layer is hidden, resumes when shown
+3. **Related-Features Panel** — `InfoPanel.tsx`, `related-features.ts`  
+   Shows up to 10 related features for any selected item. Relationships computed from trade route endpoints, civilization borders/ports/chokepoints, and geographic proximity. Click flies to feature.
 
-### 5. Live Patch Apply (Edit Mode)
-- **Files:** `web/src/utils/patch-parser.ts`, `web/src/App.tsx`
-- Simple YAML parser for coordinate patch files
-- Edit mode panel now has a file input to load `.yaml`/`.yml` patches
-- Patches are applied in-memory to the GeoJSON and trigger re-render
-- Toast notification shows applied/skipped counts
-- Existing export patch functionality unchanged
+4. **Route Travel Animation** — `d3-overlay.ts`  
+   Animated gold particles travel along each trade route using `getPointAtLength()` + `requestAnimationFrame`. Fade in/out at endpoints. Pauses when routes hidden.
+
+5. **Live Patch Loader** — `patch-parser.ts`, `App.tsx`  
+   Edit mode panel has file picker for YAML patch files. Parses coordinate patches, applies immutably to GeoJSON, triggers re-render. Toast shows applied/skipped counts.
+
+### Prior Session Features (Still Active)
+
+- Viewport deep-linking (`url-hash.ts`) — URL captures zoom + center + feature
+- Share button — copies current view URL to clipboard
+- Measurement tool — Backspace undo, per-segment labels, stats panel
+- Keyboard shortcuts help overlay (`Shift+?`)
+
+---
+
+## Audit Fixes Applied
+
+All 10 issues from the PAL MCP codereview were fixed in commit `5459886`:
+
+| Issue | File | Fix |
+|-------|------|-----|
+| O(n²) related features scan | `related-features.ts` | Spatial culling: skip water/terrain, max distance threshold, partial sort |
+| setTimeout memory leaks | `App.tsx` | 5 timeout refs + unmount cleanup |
+| Keyboard handler re-binding | `App.tsx` | Ref-based state access, effect deps reduced to `[handleClosePanel]` |
+| GeoJSON mutation | `patch-parser.ts` | Deep-clone features via spread before updating coordinates |
+| D3 RAF leak | `d3-overlay.ts` | `stopAnimation()` + cancel `particleRafId` before `startAnimation()` |
+| Backspace handler re-bind | `MapViewer.tsx` | Removed `measurePoints.length` from effect deps |
+| Dead code | `MapViewer.tsx` | Removed unused `animFrameIdsRef` |
+| `replaceAll` for underscores | `InfoPanel.tsx`, `related-features.ts` | `replaceAll('_', ' ')` instead of `replace` |
+| Type support | `tsconfig.json` | Added `"ES2021.String"` to lib array |
 
 ---
 
 ## Git State
-- `master`: 6 commits ahead of origin (`f5165c3`)
-- Working tree: clean
-- Dev server: running on `:5178` (PID 66112)
 
-## Files Changed (18)
+- `origin/master`: up to date with `5459886`
+- Working tree: clean
+- 8 commits ahead of previous origin (now pushed)
+
+---
+
+## File Inventory (Changed This Session)
+
 ```
 M  web/index.html
-A  web/public/fonts/*          (9 files)
+A  web/public/fonts/*               (9 files: 8 woff2 + fonts.css)
 M  web/src/App.css
 M  web/src/App.tsx
 M  web/src/components/InfoPanel.tsx
@@ -67,25 +73,55 @@ M  web/src/components/MapViewer.tsx
 M  web/src/utils/d3-overlay.ts
 A  web/src/utils/patch-parser.ts
 A  web/src/utils/related-features.ts
+M  web/tsconfig.json
 ```
 
+---
+
 ## Build
+
 - TypeScript: clean (`tsc --noEmit` passes)
-- Production build: 433 KB JS (gz: 133 KB), 41 KB CSS (gz: 12 KB)
+- Production build: 434 KB JS (gz: 133 KB), 41 KB CSS (gz: 12 KB)
+
+---
 
 ## Active Issues
-- Dev server port drift: `:5178` (5173-5177 occupied from prior sessions)
-- Stash `stash@{0}` still contains old rbush viewport culling code; can be dropped
+
+- **Dev server port drift:** `:5178` (5173-5177 occupied from prior sessions)
+- **Stash `stash@{0}`:** contains old rbush viewport culling code; can be dropped
+
+---
+
+## Architecture Notes for Next Instance
+
+### State Flow
+```
+App.tsx
+├── geojson (fetched once, mutable via patch apply)
+├── layers / opacities (LayerControls → MapViewer)
+├── selectedFeature / panelOpen (InfoPanel, deep-linking)
+├── measureMode / measureStats (MapViewer measurement overlay)
+├── viewportRef + hashUpdateTimeoutRef (URL hash throttling)
+└── coordinateUpdates (edit mode, exportable patches)
+```
+
+### Key Patterns
+- **Refs for stable values:** `viewportRef`, `measureModeRef`, `searchOpenRef` — used to avoid effect re-binding
+- **Timeout ref cleanup:** All `setTimeout` calls use refs + `clearTimeout` on unmount
+- **Immutable patches:** `patch-parser.ts` deep-clones features via `{ ...feature, geometry: { ... } }`
+- **D3 overlay lifecycle:** `initD3Overlay` returns `{ update, destroy, setVisibility, setOpacity }`. Stored duck-typed in `layerGroupsRef`.
+
+### Performance Hotspots
+- **Terrain cells:** 3,000+ polygons rendered via Canvas renderer. Do NOT recreate on opacity change.
+- **Related features:** Now capped at 250 SVG unit radius + partial sort. Was O(n²), now ~O(n log k).
+- **D3 particles:** `requestAnimationFrame` loop, pauses when trade routes hidden.
+
+---
 
 ## Recommended Next Steps
-1. Self-hosted fonts ✓ (done)
-2. Layer opacity sliders ✓ (done)
-3. Related-features panel ✓ (done)
-4. Route travel animation ✓ (done)
-5. Live patch apply ✓ (done)
 
-**Next priorities:**
-- Mini-map inset (leaflet-minimap or custom)
-- InfoPanel: show route travel time estimates
-- Search: fuzzy matching on etymology/description
-- Mobile: touch gestures for measure mode
+1. **Mini-map inset** — `leaflet-minimap` or custom overview map
+2. **Route travel time estimates** — show days/hours in InfoPanel for trade routes
+3. **Search fuzzy matching** — match on etymology/description, not just names
+4. **Mobile touch gestures** — pinch-to-measure, long-press for context menu
+5. **Export static map** — screenshot API or canvas composite of current view
