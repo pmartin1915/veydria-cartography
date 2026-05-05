@@ -13,6 +13,7 @@ interface GeoJSONFeature {
 
 import { initD3Overlay } from '../utils/d3-overlay'
 import { formatDistance } from '../utils/measure'
+import type { LayerOpacity } from '../App'
 
 interface GeoJSONCollection {
   type: 'FeatureCollection'
@@ -45,6 +46,7 @@ export interface MapViewerProps {
   initialViewport?: { zoom: number; centerX: number; centerY: number }
   onViewportChange?: (viewport: { zoom: number; centerX: number; centerY: number }) => void
   onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
+  opacities?: LayerOpacity
 }
 
 export interface MapViewerHandle {
@@ -127,10 +129,11 @@ function getElevationColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate, opacities }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
+    const layerRefsRef = useRef<Map<string, L.Layer[]>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const animFrameIdsRef = useRef<Set<number>>(new Set())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
@@ -294,6 +297,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       for (const [category, features] of categoryLayers) {
         const group = L.layerGroup()
+        const layerRefs: L.Layer[] = []
 
         for (const feature of features) {
           const props = feature.properties
@@ -307,15 +311,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             let fillOpacity = 0.2
             let weight = 1.5
 
+            const defaultOpacity = opacities?.[category as keyof LayerOpacity] ?? 1
             if (category === 'water') {
-              fillOpacity = 0.5
+              fillOpacity = defaultOpacity
               weight = 2
             } else if (category === 'terrain_cell') {
               fillColor = getElevationColor(props.elevation as number || 0)
-              fillOpacity = 0.85
+              fillOpacity = defaultOpacity
               weight = 0
             } else if (category === 'civilization') {
-              fillOpacity = 0.15 
+              fillOpacity = defaultOpacity * 0.3
             }
 
             const polygon = L.polygon(latlngs, {
@@ -323,7 +328,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
               fillColor,
               fillOpacity,
               weight,
-              opacity: category === 'terrain_cell' ? 0 : 0.5,
+              opacity: category === 'terrain_cell' ? 0 : defaultOpacity * 0.5,
               className: `poly-${category}`,
               renderer: category === 'terrain_cell' ? canvasRenderer : undefined,
             })
@@ -348,15 +353,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             )
 
             polygon.addTo(group)
+            layerRefs.push(polygon)
 
           } else if (geomType === 'LineString') {
             const coords = feature.geometry.coordinates as number[][]
             const latlngs = coords.map(([x, y]) => svgToLatLng(x, y))
 
+            const defaultLineOpacity = opacities?.[category as keyof LayerOpacity] ?? (category === 'river' ? 0.6 : 0.7)
             const lineOpts: L.PolylineOptions = {
               color: (props.stroke as string) || '#888',
               weight: (props['stroke-width'] as number) || 2.5,
-              opacity: category === 'river' ? 0.6 : 0.7,
+              opacity: defaultLineOpacity,
               dashArray: category === 'river' ? '8,6' : ((props['stroke-dasharray'] as string) || undefined),
               lineCap: 'round',
               lineJoin: 'round',
@@ -384,6 +391,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             )
 
             polyline.addTo(group)
+            layerRefs.push(polyline)
 
           } else if (geomType === 'Point') {
             const [x, y] = feature.geometry.coordinates as number[]
@@ -446,15 +454,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
         group.addTo(map)
         layerGroupsRef.current.set(category, group)
+        layerRefsRef.current.set(category, layerRefs)
       }
 
       // Initialize D3 overlay for trade routes
       const tradeRoutes = featuresByCategory['trade_route'] || []
       const d3Overlay = initD3Overlay(map, tradeRoutes, onFeatureClick)
+      d3Overlay.setOpacity(opacities?.trade_route ?? 0.75)
       // Store in layer groups ref so it can be toggled
       layerGroupsRef.current.set('trade_route', {
         addTo: () => d3Overlay.setVisibility(true),
         removeFrom: () => d3Overlay.setVisibility(false),
+        setOpacity: (o: number) => d3Overlay.setOpacity(o),
       } as any)
 
       mapRef.current = map
@@ -469,6 +480,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         map.remove()
         mapRef.current = null
         layerGroupsRef.current.clear()
+        layerRefsRef.current.clear()
         markersRef.current.clear()
       }
     }, [geojson, featuresByCategory, onFeatureClick, initialViewport, onViewportChange])
@@ -496,6 +508,28 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       }
     }, [layers, zoomLevel])
+
+    // Update layer opacity when opacities change
+    useEffect(() => {
+      if (!opacities) return
+      for (const [category, layerRefs] of layerRefsRef.current.entries()) {
+        const opacity = opacities[category as keyof LayerOpacity]
+        if (opacity === undefined) continue
+        for (const layer of layerRefs) {
+          if (layer instanceof L.Polygon) {
+            const isTerrain = category === 'terrain_cell'
+            layer.setStyle({ fillOpacity: isTerrain ? opacity : opacity * 0.3, opacity: isTerrain ? 0 : opacity * 0.5 })
+          } else if (layer instanceof L.Polyline) {
+            layer.setStyle({ opacity })
+          }
+        }
+      }
+      // D3 overlay opacity
+      const d3Group = layerGroupsRef.current.get('trade_route')
+      if (d3Group && 'setOpacity' in d3Group) {
+        (d3Group as unknown as { setOpacity: (o: number) => void }).setOpacity(opacities.trade_route)
+      }
+    }, [opacities])
 
     // Highlight selected marker
     useEffect(() => {

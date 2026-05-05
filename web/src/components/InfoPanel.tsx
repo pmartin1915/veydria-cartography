@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -11,8 +12,10 @@ interface GeoJSONFeature {
 
 interface InfoPanelProps {
   feature: GeoJSONFeature | null
+  allFeatures?: GeoJSONFeature[]
   open: boolean
   onClose: () => void
+  onSelectFeature?: (feature: GeoJSONFeature) => void
 }
 
 // Fields to display for each category
@@ -63,8 +66,39 @@ const SKIP_KEYS = new Set([
   'centroid',
 ])
 
-export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
+const RELATION_COLORS: Record<RelatedFeature['relationType'], string> = {
+  trade: 'var(--color-route)',
+  geography: 'var(--color-oasis)',
+  connection: 'var(--color-port)',
+  proximity: 'var(--text-muted)',
+}
+
+const RELATION_ICONS: Record<RelatedFeature['relationType'], string> = {
+  trade: '⤳',
+  geography: '⛰',
+  connection: '⚓',
+  proximity: '◎',
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+  port: '⚓',
+  chokepoint: '⛨',
+  oasis: '🌿',
+  contested_site: '✧',
+  civilization: '🏛',
+  trade_route: '⤳',
+  water: '🌊',
+  landmark: '◆',
+  river: '〜',
+}
+
+export default function InfoPanel({ feature, allFeatures, open, onClose, onSelectFeature }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
+  const related = useMemo(() => {
+    if (!feature || !allFeatures) return []
+    return findRelatedFeatures(feature, allFeatures)
+  }, [feature, allFeatures])
 
   if (!feature) {
     return <div className={`info-panel ${open ? 'open' : ''}`} />
@@ -150,6 +184,36 @@ export default function InfoPanel({ feature, open, onClose }: InfoPanelProps) {
             </div>
           )
         })}
+
+        {/* Related Features */}
+        {related.length > 0 && (
+          <div className="info-field" key="related-features">
+            <div className="info-field-header">
+              <div className="info-field-label">Related</div>
+            </div>
+            <div className="related-features-list">
+              {related.map(({ feature: rf, relation, relationType }) => {
+                const rCat = (rf.properties.category as string) || 'unknown'
+                const rName = (rf.properties.name as string) || 'Unknown'
+                const rId = (rf.properties.id as string) || ''
+                return (
+                  <button
+                    key={rId || rName}
+                    className="related-feature-item"
+                    onClick={() => onSelectFeature?.(rf)}
+                    title={`${rName} — ${relation}`}
+                  >
+                    <span className="related-feature-icon" style={{ color: RELATION_COLORS[relationType] }}>
+                      {RELATION_ICONS[relationType]}
+                    </span>
+                    <span className="related-feature-name">{rName}</span>
+                    <span className="related-feature-relation">{relation}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -432,6 +432,64 @@ body {
   text-align: left;
 }
 
+.layer-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Opacity Slider */
+.opacity-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px 6px 32px;
+}
+
+.opacity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 3px;
+  background: var(--bg-elevated);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--slider-color, var(--text-accent));
+  box-shadow: 0 0 4px var(--slider-color, var(--text-accent));
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.opacity-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--slider-color, var(--text-accent));
+  box-shadow: 0 0 4px var(--slider-color, var(--text-accent));
+  cursor: pointer;
+  border: none;
+}
+
+.opacity-slider-value {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+}
+
 /* Toggle Switch */
 .toggle-switch {
   position: relative;
@@ -659,6 +717,53 @@ body {
   background: rgba(196, 168, 98, 0.15);
   border-color: var(--border-accent);
   color: var(--text-primary);
+}
+
+.related-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.related-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.related-feature-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.related-feature-icon {
+  font-size: 11px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.related-feature-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.related-feature-relation {
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* --- Search Overlay --- */

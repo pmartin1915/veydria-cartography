@@ -6,6 +6,7 @@ import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import { formatDistance, type MeasureStats } from './utils/measure'
+import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -37,6 +38,19 @@ export interface LayerVisibility {
   river: boolean
 }
 
+export interface LayerOpacity {
+  terrain_cell: number
+  civilization: number
+  water: number
+  chokepoint: number
+  port: number
+  oasis: number
+  contested_site: number
+  trade_route: number
+  landmark: number
+  river: number
+}
+
 const DEFAULT_LAYERS: LayerVisibility = {
   terrain_cell: true,
   civilization: true,
@@ -50,6 +64,19 @@ const DEFAULT_LAYERS: LayerVisibility = {
   river: true,
 }
 
+const DEFAULT_OPACITY: LayerOpacity = {
+  terrain_cell: 0.85,
+  civilization: 0.15,
+  water: 0.5,
+  chokepoint: 1,
+  port: 1,
+  oasis: 1,
+  contested_site: 1,
+  trade_route: 0.75,
+  landmark: 1,
+  river: 0.6,
+}
+
 function App() {
   const [geojson, setGeojson] = useState<GeoJSONCollection | null>(null)
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null)
@@ -58,10 +85,12 @@ function App() {
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
+  const [opacities, setOpacities] = useState<LayerOpacity>(DEFAULT_OPACITY)
   const [searchOpen, setSearchOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
+  const [patchToast, setPatchToast] = useState<string | null>(null)
   const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void } | null>(null)
 
   // Viewport-aware deep-linking
@@ -154,6 +183,10 @@ function App() {
     setLayers((prev) => ({ ...prev, [layer]: !prev[layer] }))
   }, [])
 
+  const handleOpacityChange = useCallback((layer: keyof LayerOpacity, value: number) => {
+    setOpacities((prev) => ({ ...prev, [layer]: value }))
+  }, [])
+
   const handleSearchSelect = useCallback((feature: GeoJSONFeature) => {
     setSelectedFeature(feature)
     setPanelOpen(true)
@@ -194,6 +227,22 @@ function App() {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }, [coordinateUpdates])
+
+  const handleApplyPatch = useCallback(async (file: File) => {
+    if (!geojson) return
+    const text = await file.text()
+    const patches = parsePatchYaml(text)
+    if (patches.length === 0) {
+      setPatchToast('No valid patches found in file')
+      setTimeout(() => setPatchToast(null), 3000)
+      return
+    }
+    const result = applyPatches(geojson, patches)
+    // Force re-render by creating a new geojson reference
+    setGeojson({ ...geojson })
+    setPatchToast(`Applied ${result.applied} patch${result.applied !== 1 ? 'es' : ''}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`)
+    setTimeout(() => setPatchToast(null), 3000)
+  }, [geojson])
 
   const handleToggleMeasureMode = useCallback(() => {
     setMeasureMode(prev => !prev)
@@ -382,6 +431,7 @@ function App() {
             ref={mapRef}
             geojson={geojson}
             layers={layers}
+            opacities={opacities}
             onFeatureClick={handleFeatureClick}
             selectedFeatureId={selectedFeature?.properties?.id as string | undefined}
             isEditMode={isEditMode}
@@ -405,15 +455,29 @@ function App() {
 
         <LayerControls
           layers={layers}
+          opacities={opacities}
           onToggle={handleLayerToggle}
+          onOpacityChange={handleOpacityChange}
           isEditMode={isEditMode}
           onToggleEditMode={() => setIsEditMode(prev => !prev)}
         />
 
         <InfoPanel
           feature={selectedFeature}
+          allFeatures={geojson?.features}
           open={panelOpen}
           onClose={handleClosePanel}
+          onSelectFeature={(f) => {
+            setSelectedFeature(f)
+            setPanelOpen(true)
+            mapRef.current?.flyToFeature(f)
+            const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+            if (id) {
+              viewportRef.current = { ...viewportRef.current, featureId: id }
+              const hash = buildHash(viewportRef.current)
+              window.history.replaceState(null, '', hash)
+            }
+          }}
         />
 
         {measureMode && (
@@ -460,31 +524,52 @@ function App() {
           </div>
         )}
 
-        {isEditMode && Object.keys(coordinateUpdates).length > 0 && (
+        {isEditMode && (
           <div className="coordinate-panel" style={{
             position: 'absolute', top: 16, right: 16, background: 'var(--bg-card)', 
             border: '1px solid var(--border-accent)', padding: 12, borderRadius: 8,
             boxShadow: '0 8px 32px rgba(0,0,0,0.6)', zIndex: 1000, color: 'var(--text-primary)',
             maxHeight: '400px', overflowY: 'auto', width: '300px'
           }}>
-            <h3 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8, marginTop: 0 }}>Modified Coordinates</h3>
-            <pre style={{ fontSize: 10, background: 'var(--bg-deep)', padding: 8, borderRadius: 4, margin: 0, whiteSpace: 'pre-wrap' }}>
-              {Object.values(coordinateUpdates).map(update => 
-                `${update.name}:\n  location: [${update.coords[0].toFixed(1)}, ${update.coords[1].toFixed(1)}]`
-              ).join('\n\n')}
-            </pre>
-            <button 
-              onClick={handleExportPatch} 
-              style={{ marginTop: 8, width: '100%', padding: '6px', background: 'var(--text-accent)', border: 'none', color: 'var(--bg-deep)', cursor: 'pointer', borderRadius: 4, fontWeight: 600, fontSize: 11 }}
-            >
-              Export Patch
-            </button>
-            <button 
-              onClick={() => setCoordinateUpdates({})} 
-              style={{ marginTop: 6, width: '100%', padding: '4px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: 4, fontSize: 11 }}
-            >
-              Clear All
-            </button>
+            <h3 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8, marginTop: 0 }}>Edit Mode</h3>
+
+            {/* Apply Patch */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>Apply Patch</label>
+              <input
+                type="file"
+                accept=".yaml,.yml"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleApplyPatch(file)
+                  e.target.value = ''
+                }}
+                style={{ fontSize: 11, color: 'var(--text-primary)', width: '100%' }}
+              />
+            </div>
+
+            {Object.keys(coordinateUpdates).length > 0 && (
+              <>
+                <h4 style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6, marginTop: 0 }}>Modified Coordinates</h4>
+                <pre style={{ fontSize: 10, background: 'var(--bg-deep)', padding: 8, borderRadius: 4, margin: 0, whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
+                  {Object.values(coordinateUpdates).map(update => 
+                    `${update.name}:\n  location: [${update.coords[0].toFixed(1)}, ${update.coords[1].toFixed(1)}]`
+                  ).join('\n\n')}
+                </pre>
+                <button 
+                  onClick={handleExportPatch} 
+                  style={{ marginTop: 8, width: '100%', padding: '6px', background: 'var(--text-accent)', border: 'none', color: 'var(--bg-deep)', cursor: 'pointer', borderRadius: 4, fontWeight: 600, fontSize: 11 }}
+                >
+                  Export Patch
+                </button>
+                <button 
+                  onClick={() => setCoordinateUpdates({})} 
+                  style={{ marginTop: 6, width: '100%', padding: '4px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: 4, fontSize: 11 }}
+                >
+                  Clear All
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -501,13 +586,23 @@ function App() {
           onClose={() => setKeyboardHelpOpen(false)}
         />
 
-        {/* Toast notification */}
+        {/* Toast notifications */}
         {shareToast && (
           <div className="toast-notification" id="share-toast">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 6L9 17l-5-5" />
             </svg>
             <span>{shareToast}</span>
+          </div>
+        )}
+        {patchToast && (
+          <div className="toast-notification" id="patch-toast">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            <span>{patchToast}</span>
           </div>
         )}
       </main>

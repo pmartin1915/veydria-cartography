@@ -4,13 +4,6 @@
  * Renders trade routes and other vector features as D3 SVG paths
  * overlaid on the Leaflet map. This provides more flexible styling
  * than Leaflet's built-in polyline rendering.
- *
- * STUB — initial implementation uses Leaflet's native polyline rendering.
- * This module will be fleshed out when we need:
- * - Animated trade route flows
- * - Custom arrowheads and route markers
- * - Dynamic route highlighting
- * - Hover-based route info
  */
 
 import * as d3 from 'd3'
@@ -23,22 +16,25 @@ function svgToLatLng(x: number, y: number): L.LatLng {
   return L.latLng(SVG_HEIGHT - y, x)
 }
 
+interface Particle {
+  progress: number
+  speed: number
+  element: d3.Selection<SVGCircleElement, unknown, null, undefined>
+}
+
 export function initD3Overlay(
   map: L.Map,
   features: GeoJSONFeature[],
   onFeatureClick: (feature: GeoJSONFeature) => void
 ) {
-  // Use Leaflet's built-in SVG renderer pane
   L.svg().addTo(map)
-  
+
   const svg = d3.select(map.getPanes().overlayPane).select<SVGSVGElement>('svg')
   const g = svg.select<SVGGElement>('g.leaflet-zoom-hide')
-  
-  // Clean up any existing D3 routes if re-initializing
+
   g.selectAll('.d3-route-group').remove()
   const routeGroup = g.append('g').attr('class', 'd3-route-group')
 
-  // Inject defs for arrowheads and gradients
   let defs = svg.select<SVGDefsElement>('defs')
   if (defs.empty()) {
     defs = svg.append('defs')
@@ -72,9 +68,27 @@ export function initD3Overlay(
     .attr('fill', '#d4a854')
     .attr('opacity', 0.8)
 
+  // Glow filter for particles
+  defs.selectAll('#particle-glow').data([1]).join('filter')
+    .attr('id', 'particle-glow')
+    .attr('x', '-50%')
+    .attr('y', '-50%')
+    .attr('width', '200%')
+    .attr('height', '200%')
+    .call((f) => {
+      f.append('feGaussianBlur')
+        .attr('stdDeviation', '2')
+        .attr('result', 'coloredBlur')
+      f.append('feMerge')
+        .call((m) => {
+          m.append('feMergeNode').attr('in', 'coloredBlur')
+          m.append('feMergeNode').attr('in', 'SourceGraphic')
+        })
+    })
+
   // Map features to D3 path elements
   const paths = routeGroup
-    .selectAll('path')
+    .selectAll('path.d3-route-path')
     .data(features)
     .join('path')
     .attr('class', 'd3-route-path')
@@ -100,9 +114,15 @@ export function initD3Overlay(
       d3.select(this)
         .interrupt()
         .attr('stroke-width', ((d.properties['stroke-width'] as number) || 2.5) * (0.8 + importance * 0.4))
-        .attr('opacity', 0.75)
+        .attr('opacity', currentOpacity)
         .attr('filter', null)
     })
+
+  // Particle group (separate from paths so they sit on top)
+  const particleGroup = routeGroup.append('g').attr('class', 'd3-particle-group')
+
+  // Track particles per path
+  const pathParticles = new Map<string, { particles: Particle[]; pathElement: SVGPathElement }>()
 
   // Function to project coordinates using Leaflet's current transform
   function projectPoint(x: number, y: number) {
@@ -115,7 +135,95 @@ export function initD3Overlay(
   const line = d3.line<number[]>()
     .x(d => projectPoint(d[0], d[1])[0])
     .y(d => projectPoint(d[0], d[1])[1])
-    .curve(d3.curveCatmullRom.alpha(0.5)) // Smooth curves
+    .curve(d3.curveCatmullRom.alpha(0.5))
+
+  let currentOpacity = 0.75
+  let isVisible = true
+  let animFrameId: number | null = null
+  let lastTime = 0
+
+  // Create particles for each route
+  function createParticles() {
+    pathParticles.clear()
+    particleGroup.selectAll('*').remove()
+
+    paths.each(function (d, i) {
+      const pathEl = this as SVGPathElement
+      const totalLength = pathEl.getTotalLength()
+      if (!totalLength || !isVisible) return
+
+      const importance = (d.properties.importance as number) || 1
+      const particleCount = importance >= 2 ? 3 : 2
+      const particles: Particle[] = []
+
+      for (let p = 0; p < particleCount; p++) {
+        const circle = particleGroup.append('circle')
+          .attr('r', 2.5 + importance * 0.5)
+          .attr('fill', '#e8c840')
+          .attr('opacity', 0)
+          .attr('filter', 'url(#particle-glow)')
+
+        particles.push({
+          progress: p / particleCount,
+          speed: 0.00015 + Math.random() * 0.00005,
+          element: circle,
+        })
+      }
+
+      pathParticles.set(String(i), { particles, pathElement: pathEl })
+    })
+  }
+
+  // Animate particles
+  function animate(time: number) {
+    if (!isVisible) {
+      animFrameId = null
+      return
+    }
+
+    const dt = lastTime ? (time - lastTime) / 16.67 : 1
+    lastTime = time
+
+    for (const [, { particles, pathElement }] of pathParticles) {
+      const totalLength = pathElement.getTotalLength()
+      if (!totalLength) continue
+
+      for (const particle of particles) {
+        particle.progress += particle.speed * dt
+        if (particle.progress > 1) particle.progress -= 1
+
+        const point = pathElement.getPointAtLength(particle.progress * totalLength)
+        particle.element
+          .attr('cx', point.x)
+          .attr('cy', point.y)
+
+        // Fade in at start, fade out at end
+        const fadeRange = 0.08
+        let alpha = 1
+        if (particle.progress < fadeRange) {
+          alpha = particle.progress / fadeRange
+        } else if (particle.progress > 1 - fadeRange) {
+          alpha = (1 - particle.progress) / fadeRange
+        }
+        particle.element.attr('opacity', alpha * currentOpacity)
+      }
+    }
+
+    animFrameId = requestAnimationFrame(animate)
+  }
+
+  function startAnimation() {
+    if (animFrameId) return
+    lastTime = 0
+    animFrameId = requestAnimationFrame(animate)
+  }
+
+  function stopAnimation() {
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId)
+      animFrameId = null
+    }
+  }
 
   // Update function called on zoom/pan
   function update() {
@@ -126,13 +234,14 @@ export function initD3Overlay(
       }
       return null
     })
-    
-    // In D3, marker-mid only appears at vertices. We can generate sub-segments if we want more arrows,
-    // but for now we'll just draw the line. To make the line flow, we use CSS animations on the stroke-dashoffset.
+
+    // Recreate particles after path geometry changes
+    createParticles()
   }
 
   // Initial draw
   update()
+  if (isVisible) startAnimation()
 
   // Bind to Leaflet events
   map.on('zoom', update)
@@ -142,13 +251,26 @@ export function initD3Overlay(
   return {
     update,
     destroy: () => {
+      stopAnimation()
       map.off('zoom', update)
       map.off('viewreset', update)
       map.off('moveend', update)
       routeGroup.remove()
     },
     setVisibility: (visible: boolean) => {
+      isVisible = visible
       routeGroup.style('display', visible ? 'block' : 'none')
+      if (visible) {
+        createParticles()
+        startAnimation()
+      } else {
+        stopAnimation()
+      }
+    },
+    setOpacity: (opacity: number) => {
+      currentOpacity = opacity
+      paths.attr('opacity', opacity)
+      particleGroup.selectAll('circle').attr('opacity', opacity)
     }
   }
 }
