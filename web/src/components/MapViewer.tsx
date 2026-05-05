@@ -12,6 +12,7 @@ interface GeoJSONFeature {
 }
 
 import { initD3Overlay } from '../utils/d3-overlay'
+import { formatDistance } from '../utils/measure'
 
 interface GeoJSONCollection {
   type: 'FeatureCollection'
@@ -41,11 +42,16 @@ export interface MapViewerProps {
   isEditMode?: boolean
   onCoordinateUpdate?: (featureId: string, name: string, category: string, newCoords: [number, number]) => void
   measureMode?: boolean
+  initialViewport?: { zoom: number; centerX: number; centerY: number }
+  onViewportChange?: (viewport: { zoom: number; centerX: number; centerY: number }) => void
+  onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
 }
 
 export interface MapViewerHandle {
   flyToFeature: (feature: GeoJSONFeature) => void
   flyToFeatureById: (featureId: string) => boolean
+  undoMeasurePoint: () => void
+  clearMeasurePoints: () => void
 }
 
 // SVG viewBox dimensions
@@ -118,20 +124,10 @@ function getElevationColor(elev: number): string {
   return '#f5f5f5' // white peaks
 }
 
-// Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent)
-const KM_PER_SVG_UNIT = 3000 / 1200 // ≈ 2.5 km per SVG unit
-const LEAGUES_PER_KM = 1 / 4 // 1 league ≈ 4 km
 
-function formatDistance(svgDistance: number): string {
-  const km = svgDistance * KM_PER_SVG_UNIT
-  const leagues = km * LEAGUES_PER_KM
-  if (km < 1) return `${(km * 1000).toFixed(0)} m`
-  if (km < 10) return `${km.toFixed(1)} km / ${leagues.toFixed(1)} leagues`
-  return `${km.toFixed(0)} km / ${leagues.toFixed(0)} leagues`
-}
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -186,6 +182,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         mapRef.current.flyTo(latlng as L.LatLngExpression, 2, { duration: 1 })
         return true
       },
+      undoMeasurePoint() {
+        setMeasurePoints(prev => prev.slice(0, -1))
+      },
+      clearMeasurePoints() {
+        setMeasurePoints([])
+      },
     }))
 
     // Clear measure points when measure mode is turned off
@@ -194,6 +196,19 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         setMeasurePoints([])
       }
     }, [measureMode])
+
+    // Backspace to undo last point in measure mode
+    useEffect(() => {
+      if (!measureMode) return
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'Backspace' && measurePoints.length > 0) {
+          e.preventDefault()
+          setMeasurePoints(prev => prev.slice(0, -1))
+        }
+      }
+      window.addEventListener('keydown', handler)
+      return () => window.removeEventListener('keydown', handler)
+    }, [measureMode, measurePoints.length])
 
     // Initialize map
     useEffect(() => {
@@ -222,6 +237,30 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       const updateZoom = () => setZoomLevel(map.getZoom())
       map.on('zoom', updateZoom)
       updateZoom()
+
+      // Report viewport changes to parent (throttled naturally by moveend)
+      let initialMoveSkipped = false
+      const handleMoveEnd = () => {
+        if (!initialMoveSkipped) {
+          initialMoveSkipped = true
+          return // Skip the first moveend from initial fitBounds/setView
+        }
+        if (!onViewportChange) return
+        const center = map.getCenter()
+        const zoom = map.getZoom()
+        onViewportChange({
+          zoom,
+          centerX: center.lng,
+          centerY: SVG_HEIGHT - center.lat,
+        })
+      }
+      map.on('moveend', handleMoveEnd)
+
+      // Apply initial viewport after fitBounds
+      if (initialViewport) {
+        const latlng = svgToLatLng(initialViewport.centerX, initialViewport.centerY)
+        map.setView(latlng as L.LatLngExpression, initialViewport.zoom, { animate: false })
+      }
 
       // Measurement click handler
       const handleMapClick = (e: L.LeafletMouseEvent) => {
@@ -422,6 +461,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       return () => {
         map.off('zoom', updateZoom)
+        map.off('moveend', handleMoveEnd)
         map.off('click', handleMapClick)
         d3Overlay.destroy()
         animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
@@ -431,7 +471,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         layerGroupsRef.current.clear()
         markersRef.current.clear()
       }
-    }, [geojson, featuresByCategory, onFeatureClick])
+    }, [geojson, featuresByCategory, onFeatureClick, initialViewport, onViewportChange])
 
     // Toggle layer visibility (respecting zoom thresholds)
     useEffect(() => {
@@ -481,7 +521,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         measureLabelRef.current = null
       }
 
-      if (measurePoints.length === 0) return
+      if (measurePoints.length === 0) {
+        if (onMeasureUpdate) onMeasureUpdate({ pointCount: 0, totalDistance: 0, segments: [] })
+        return
+      }
 
       const group = L.layerGroup()
 
@@ -500,11 +543,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         marker.addTo(group)
       })
 
-      // Draw lines between consecutive points
+      // Draw lines between consecutive points + segment labels
+      const segmentDistances: number[] = []
       if (measurePoints.length >= 2) {
         for (let i = 1; i < measurePoints.length; i++) {
           const a = measurePoints[i - 1]
           const b = measurePoints[i]
+          const dx = b.x - a.x
+          const dy = b.y - a.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          segmentDistances.push(dist)
+
           const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
           L.polyline(latlngs, {
             color: '#e8c840',
@@ -514,50 +563,55 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             lineCap: 'round',
             className: 'measure-line',
           }).addTo(group)
+
+          // Small segment label at midpoint
+          const midX = (a.x + b.x) / 2
+          const midY = (a.y + b.y) / 2
+          const segLabel = L.divIcon({
+            className: 'measure-label measure-segment-label',
+            html: `<div class="measure-label-inner measure-segment-inner">${formatDistance(dist)}</div>`,
+            iconSize: [100, 20],
+            iconAnchor: [50, 10],
+          })
+          L.marker(svgToLatLng(midX, midY) as L.LatLngExpression, {
+            icon: segLabel,
+            interactive: false,
+            zIndexOffset: 999,
+          }).addTo(group)
         }
       }
 
       group.addTo(mapRef.current)
       measureLayerRef.current = group
 
-      // Distance label at midpoint of last segment (or at single point)
-      if (measurePoints.length >= 1) {
+      // Total distance label at last point
+      let totalSvgDist = 0
+      for (let i = 1; i < measurePoints.length; i++) {
+        const dx = measurePoints[i].x - measurePoints[i - 1].x
+        const dy = measurePoints[i].y - measurePoints[i - 1].y
+        totalSvgDist += Math.sqrt(dx * dx + dy * dy)
+      }
+
+      if (measurePoints.length >= 2) {
         const lastPt = measurePoints[measurePoints.length - 1]
-        let labelLatLng = svgToLatLng(lastPt.x, lastPt.y)
-        let labelText = ''
+        const totalLabel = L.divIcon({
+          className: 'measure-label measure-total-label',
+          html: `<div class="measure-label-inner measure-total-inner">Total: ${formatDistance(totalSvgDist)}</div>`,
+          iconSize: [160, 26],
+          iconAnchor: [80, 13],
+        })
+        const labelMarker = L.marker(svgToLatLng(lastPt.x, lastPt.y) as L.LatLngExpression, {
+          icon: totalLabel,
+          interactive: false,
+          zIndexOffset: 1001,
+        })
+        labelMarker.addTo(mapRef.current)
+        measureLabelRef.current = labelMarker
+      }
 
-        if (measurePoints.length >= 2) {
-          // Calculate total distance
-          let totalSvgDist = 0
-          for (let i = 1; i < measurePoints.length; i++) {
-            const dx = measurePoints[i].x - measurePoints[i - 1].x
-            const dy = measurePoints[i].y - measurePoints[i - 1].y
-            totalSvgDist += Math.sqrt(dx * dx + dy * dy)
-          }
-          labelText = formatDistance(totalSvgDist)
-
-          // Place label at midpoint of last segment, offset slightly
-          const prevPt = measurePoints[measurePoints.length - 2]
-          const midX = (prevPt.x + lastPt.x) / 2
-          const midY = (prevPt.y + lastPt.y) / 2
-          labelLatLng = svgToLatLng(midX, midY)
-        }
-
-        if (labelText) {
-          const labelIcon = L.divIcon({
-            className: 'measure-label',
-            html: `<div class="measure-label-inner">${labelText}</div>`,
-            iconSize: [140, 24],
-            iconAnchor: [70, 12],
-          })
-          const labelMarker = L.marker(labelLatLng as L.LatLngExpression, {
-            icon: labelIcon,
-            interactive: false,
-            zIndexOffset: 1000,
-          })
-          labelMarker.addTo(mapRef.current)
-          measureLabelRef.current = labelMarker
-        }
+      // Report stats to parent
+      if (onMeasureUpdate) {
+        onMeasureUpdate({ pointCount: measurePoints.length, totalDistance: totalSvgDist, segments: segmentDistances })
       }
 
       return () => {
@@ -568,7 +622,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           mapRef.current.removeLayer(measureLabelRef.current)
         }
       }
-    }, [measurePoints])
+    }, [measurePoints, onMeasureUpdate])
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>

@@ -1046,6 +1046,182 @@ body {
   letter-spacing: 0.3px;
 }
 
+.measure-segment-inner {
+  font-size: 9px;
+  padding: 2px 6px;
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  opacity: 0.9;
+}
+
+.measure-total-inner {
+  font-size: 12px;
+  padding: 5px 12px;
+  color: var(--color-port);
+  border-color: rgba(232, 200, 64, 0.4);
+  box-shadow: 0 2px 12px rgba(232, 200, 64, 0.15);
+}
+
+/* --- Measure Panel --- */
+.measure-panel {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  min-width: 280px;
+}
+
+.measure-panel-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.measure-panel-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.measure-stat {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.measure-stat--total {
+  color: var(--color-port);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.measure-panel-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.measure-btn {
+  padding: 5px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.measure-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.measure-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.measure-btn--primary {
+  background: rgba(232, 200, 64, 0.12);
+  border-color: rgba(232, 200, 64, 0.3);
+  color: var(--color-port);
+}
+
+.measure-btn--primary:hover {
+  background: rgba(232, 200, 64, 0.2);
+  border-color: rgba(232, 200, 64, 0.5);
+}
+
+.measure-panel-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 6px;
+}
+
+/* --- Keyboard Help --- */
+.keyboard-help-modal {
+  width: 400px;
+}
+
+.keyboard-help-body {
+  padding: 8px 0;
+}
+
+.keyboard-help-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  transition: var(--transition-fast);
+}
+
+.keyboard-help-row:hover {
+  background: var(--bg-card-hover);
+}
+
+.keyboard-help-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.keyboard-help-desc {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* --- Toast Notification --- */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: var(--text-primary);
+  font-size: 13px;
+  z-index: 3000;
+  animation: toastIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-notification svg {
+  color: var(--color-oasis);
+  flex-shrink: 0;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* ============================================================
    Mobile Responsive
    ============================================================ */
@@ -1139,6 +1315,34 @@ body {
 
   .search-overlay {
     padding-top: 8vh;
+  }
+
+  .keyboard-help-modal {
+    width: calc(100% - 24px);
+  }
+
+  .measure-panel {
+    bottom: 8px;
+    min-width: auto;
+    width: calc(100% - 16px);
+    padding: 8px 10px;
+  }
+
+  .measure-panel-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .measure-panel-actions {
+    justify-content: flex-end;
+  }
+
+  /* Toast on mobile */
+  .toast-notification {
+    bottom: 16px;
+    padding: 8px 14px;
+    font-size: 12px;
   }
 
   /* Loading screen */
