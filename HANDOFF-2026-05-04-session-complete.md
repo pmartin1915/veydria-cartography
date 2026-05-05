@@ -1,190 +1,91 @@
-# HANDOFF — 2026-05-04 — Veydria Cartography Session Complete
+# Veydria Cartography — Session Handoff
 
-## Session Summary
-
-**Agent:** Kimi (UI/visual/frontend focus)
-**Duration:** Single session
-**Commits:** 1 new commit (`a4e1852`) on top of 4 previous commits
-**State:** Clean working tree, 5 commits ahead of origin
-**Dev server:** Running at `http://localhost:5178`
+**Date:** 2026-05-04
+**Commits:** `f5165c3` — feat: self-hosted fonts, layer opacity, related features, route animation, patch loader
+**Dev server:** `http://localhost:5178`
 
 ---
 
-## What Got Done This Session
+## Completed This Session
 
-### Viewport-Aware Deep-Linking
+### 1. Self-Hosted Fonts (Offline Support)
+- **Files:** `web/public/fonts/` (8 WOFF2 files + `fonts.css`)
+- Downloaded Cormorant Garamond (400i, 400, 600, 700) and Inter (300, 400, 500, 600) from Google Fonts
+- Replaced Google Fonts CDN link in `web/index.html` with local `/fonts/fonts.css`
+- Fonts now work offline; no external network dependency for typography
 
-**Files:** `web/src/utils/url-hash.ts`, `web/src/App.tsx`, `web/src/components/MapViewer.tsx`
+### 2. Layer Opacity Sliders
+- **Files:** `web/src/components/LayerControls.tsx`, `web/src/components/MapViewer.tsx`, `web/src/App.tsx`, `web/src/App.css`
+- Added `LayerOpacity` type with per-layer defaults (terrain: 0.85, civ: 0.15, water: 0.5, routes: 0.75, rivers: 0.6)
+- `LayerControls` shows a compact slider (0-100%) for layers marked `opacityControl: true`
+- Sliders appear only when layer is toggled ON
+- `MapViewer` applies opacity dynamically via `setStyle()` on polygons/polylines and `setOpacity()` on D3 overlay
+- D3 overlay extended with `setOpacity()` method
 
-- URL hash now encodes viewport state: `#feature=<id>&z=<zoom>&cx=<center-x>&cy=<center-y>`
-- All parameters optional. `cx`/`cy` are in SVG coordinate space (0–1200, 0–800).
-- On page load: if viewport params exist, map restores to that exact view; if `feature` exists, panel opens but camera stays at viewport.
-- During map interaction: hash updates are throttled (300ms) via `replaceState` — no history spam.
-- First `moveend` from initial `fitBounds`/`setView` is skipped to avoid writing default view to hash immediately.
+### 3. Related-Features Panel in InfoPanel
+- **Files:** `web/src/components/InfoPanel.tsx`, `web/src/utils/related-features.ts`, `web/src/App.tsx`, `web/src/App.css`
+- `InfoPanel` now accepts `allFeatures` and `onSelectFeature` props
+- `related-features.ts` computes relationships by:
+  - Trade route endpoints → connected civilizations
+  - Civilization → trade routes, chokepoints, ports
+  - Geographic proximity (nearest features, skipping terrain/water)
+- Related features render as clickable rows with relation type icon + distance
+- Clicking a related feature flies to it and updates URL hash
 
-### Share Button
+### 4. Route Travel Animation
+- **File:** `web/src/utils/d3-overlay.ts`
+- Added animated gold particles that travel along each trade route path
+- Particles use `getPointAtLength()` + `requestAnimationFrame` for smooth movement
+- Fade in/out at path endpoints for seamless looping
+- Particle count scales with route importance (2-3 per route)
+- Animation pauses when layer is hidden, resumes when shown
 
-**Files:** `web/src/App.tsx`, `web/src/App.css`
-
-- New "Share" button in header (between Measure and Search).
-- Copies full URL (including viewport hash) to clipboard.
-- Uses `navigator.clipboard.writeText` with `document.execCommand` fallback.
-- Toast notification appears bottom-center for 2 seconds: "Link copied to clipboard".
-
-### Measurement Tool Polish
-
-**Files:** `web/src/utils/measure.ts`, `web/src/components/MapViewer.tsx`, `web/src/App.tsx`, `web/src/App.css`
-
-- **Backspace** removes the last measure point (local handler in MapViewer).
-- **Per-segment distance labels** appear at each segment midpoint (small, subtle).
-- **Total distance label** appears at the last point (prominent gold badge).
-- **Stats panel** shows point count, total distance in km/leagues, Undo/Clear/Done buttons.
-- **Undo/Clear** exposed via `useImperativeHandle` (`undoMeasurePoint`, `clearMeasurePoints`).
-- Distance constants (`KM_PER_SVG_UNIT`, `LEAGUES_PER_KM`) extracted to shared `utils/measure.ts`.
-
-### Keyboard Shortcuts Help
-
-**Files:** `web/src/components/KeyboardHelp.tsx`, `web/src/App.tsx`, `web/src/App.css`
-
-- New `KeyboardHelp` component — modal overlay listing all shortcuts.
-- Triggered by **Shift+?** or a "Help" button in the header.
-- Shortcuts documented: Ctrl+K (search), / (search), M (measure), Esc (close), Backspace (undo), Shift+? (help).
-- Styled consistently with search modal (dark parchment theme).
-
----
-
-## Verification Checklist (All Passed)
-
-- [x] `cd web && npm run build` → clean TypeScript + Vite build, zero errors
-- [x] Dev server loads at `localhost:5178`, no console errors
-- [x] Hash updates on pan/zoom (throttled, via `replaceState`)
-- [x] Hash restores viewport on reload
-- [x] Feature deep-link still works (`#feature=port.ki-mbuhari`)
-- [x] Share button copies correct URL with viewport
-- [x] Toast notification appears and auto-dismisses
-- [x] Measure mode: Backspace removes last point
-- [x] Measure mode: per-segment labels render
-- [x] Measure mode: Undo/Clear buttons work
-- [x] Keyboard help: Shift+? opens, Esc closes
-- [x] Mobile responsive styles for all new components
+### 5. Live Patch Apply (Edit Mode)
+- **Files:** `web/src/utils/patch-parser.ts`, `web/src/App.tsx`
+- Simple YAML parser for coordinate patch files
+- Edit mode panel now has a file input to load `.yaml`/`.yml` patches
+- Patches are applied in-memory to the GeoJSON and trigger re-render
+- Toast notification shows applied/skipped counts
+- Existing export patch functionality unchanged
 
 ---
 
-## Current Working Tree
+## Git State
+- `master`: 6 commits ahead of origin (`f5165c3`)
+- Working tree: clean
+- Dev server: running on `:5178` (PID 66112)
 
+## Files Changed (18)
 ```
-A  web/src/components/KeyboardHelp.tsx
-A  web/src/utils/measure.ts
-A  web/src/utils/url-hash.ts
+M  web/index.html
+A  web/public/fonts/*          (9 files)
 M  web/src/App.css
 M  web/src/App.tsx
+M  web/src/components/InfoPanel.tsx
+M  web/src/components/LayerControls.tsx
 M  web/src/components/MapViewer.tsx
+M  web/src/utils/d3-overlay.ts
+A  web/src/utils/patch-parser.ts
+A  web/src/utils/related-features.ts
 ```
 
-**Committed as:** `a4e1852 feat: viewport deep-linking, share button, measurement polish, keyboard help`
+## Build
+- TypeScript: clean (`tsc --noEmit` passes)
+- Production build: 433 KB JS (gz: 133 KB), 41 KB CSS (gz: 12 KB)
 
----
-
-## Architecture Notes
-
-### URL Hash Utility (`web/src/utils/url-hash.ts`)
-
-```ts
-parseHash(hash: string): ViewportState   // { featureId?, zoom?, centerX?, centerY? }
-buildHash(state: ViewportState): string  // "#feature=...&z=...&cx=...&cy=..."
-clampZoom(z: number): number
-```
-
-### Measure Utility (`web/src/utils/measure.ts`)
-
-```ts
-formatDistance(svgDistance: number): string  // "1,234 km / 308 leagues"
-svgDistanceToKm(svgDistance: number): number
-```
-
-### MapViewer Ref Handle
-
-```ts
-export interface MapViewerHandle {
-  flyToFeature: (feature: GeoJSONFeature) => void
-  flyToFeatureById: (featureId: string) => boolean
-  undoMeasurePoint: () => void        // NEW
-  clearMeasurePoints: () => void      // NEW
-}
-```
-
-### Viewport Flow
-
-1. App mounts → `initialHashRef.current = parseHash(window.location.hash)`
-2. GeoJSON loads → MapViewer mounts with `initialViewport` prop (if present)
-3. MapViewer init → `fitBounds()` → `setView(initialViewport)` (if present)
-4. First `moveend` skipped → no hash write
-5. User pans/zooms → `moveend` → `onViewportChange` → App throttles hash update
-6. User clicks feature → hash updates with `featureId`, viewport preserved
-7. User clicks Share → `buildHash(viewportRef.current)` → clipboard
-
----
-
-## Known Issues / Notes for Next Session
-
-1. **Layer opacity sliders** — Mentioned in prior handoff but not implemented. Would require adding opacity state to App.tsx and passing through to MapViewer polygon styling. Nice-to-have.
-2. **Self-hosted fonts** — Cormorant Garamond loads from Google Fonts; may not render offline. Consider self-hosting or adding system fallbacks.
-3. **Route travel animation** — Animated dots/particles moving along trade routes. Would be visually stunning. D3 overlay already has the infrastructure.
-4. **InfoPanel related features** — Show connected features (e.g., trade routes for a port, bordering civilizations). Requires fuzzy name-matching since relationships are stored as strings.
-5. **Mini-map** — Still skipped. Would require `leaflet-minimap` plugin.
-6. **Dev server port drift** — Currently on `:5178` because `:5173`–`:5177` are occupied from prior sessions.
-
----
+## Active Issues
+- Dev server port drift: `:5178` (5173-5177 occupied from prior sessions)
+- Stash `stash@{0}` still contains old rbush viewport culling code; can be dropped
 
 ## Recommended Next Steps
+1. Self-hosted fonts ✓ (done)
+2. Layer opacity sliders ✓ (done)
+3. Related-features panel ✓ (done)
+4. Route travel animation ✓ (done)
+5. Live patch apply ✓ (done)
 
-1. **Polish pass**: Self-host fonts, layer opacity sliders, fullscreen button
-2. **Visual wow**: Route travel animation with D3, animated map pins
-3. **Data richness**: InfoPanel related features, cross-linking between features
-4. **Backend integration**: Live patch apply endpoint, coordinate validation
-
----
-
-## Entry Commands
-
-```bash
-# Verify state
-cd ~/DevProjects/veydria-cartography
-git status
-git log --oneline -5
-
-# Backend validation
-cd generator
-python pipeline.py validate
-python pipeline.py info
-
-# Frontend build
-cd ../web
-npm run build
-
-# Start dev server
-npm run dev
-# → http://localhost:5173 (or next available port)
-```
-
----
-
-## Context for Next Agent
-
-- **Project:** veydria-cartography (procedural map + interactive viewer)
-- **Stack:** Python 3.10 (backend), Vite + React 19 + Leaflet + D3 (frontend)
-- **Agent role:** Kimi = UI/visual tasks, frontend polish, component work, CSS
-- **Data constraint:** `data/` is copied from worldbuilder — edit worldbuilder, then `node scripts/sync-world-data.mjs`
-- **Entry point:** `web/src/App.tsx` for frontend, `generator/pipeline.py` for backend
-- **Canon docs:** `data/veydria-topology.yaml` (spatial), `data/MAP-PROMPT.md` (visual spec)
-
-### Master docs (fleet orientation)
-
-| Doc | Path | Purpose |
-|-----|------|---------|
-| **Universe map** | `~/DevProjects/AGENTS.md` | Portfolio overview |
-| **User profile** | `~/.kimi/skills/perry-profile/SKILL.md` | Injected every session |
-| **Claude→Kimi map** | `~/.kimi/skills/claude-to-kimi/SKILL.md` | Slash-command cheat sheet |
-| **Project context** | `veydria-cartography/AGENTS.md` + `veydria-cartography/.kimi/skills/project-context/SKILL.md` | This repo |
-| **This handoff** | `veydria-cartography/HANDOFF-2026-05-04-session-complete.md` | Session state |
-| **Art prompts** | `veydria-cartography/VEYDRIA-ART-PROMPTS.md` | Image generation prompts |
+**Next priorities:**
+- Mini-map inset (leaflet-minimap or custom)
+- InfoPanel: show route travel time estimates
+- Search: fuzzy matching on etymology/description
+- Mobile: touch gestures for measure mode

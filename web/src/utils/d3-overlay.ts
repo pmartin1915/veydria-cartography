@@ -131,15 +131,22 @@ export function initD3Overlay(
     return [point.x, point.y]
   }
 
-  // D3 line generator
-  const line = d3.line<number[]>()
-    .x(d => projectPoint(d[0], d[1])[0])
-    .y(d => projectPoint(d[0], d[1])[1])
-    .curve(d3.curveCatmullRom.alpha(0.5))
+  // D3 line generator — use Catmull-Rom for smooth curves, fallback to linear for short routes
+  function makeLine(coords: number[][]) {
+    const generator = d3.line<number[]>()
+      .x(d => projectPoint(d[0], d[1])[0])
+      .y(d => projectPoint(d[0], d[1])[1])
+    // CatmullRom needs at least 3 points; fallback to linear for 2-point routes
+    if (coords.length <= 2) {
+      return generator.curve(d3.curveLinear)
+    }
+    return generator.curve(d3.curveCatmullRom.alpha(0.5))
+  }
 
   let currentOpacity = 0.75
   let isVisible = true
   let animFrameId: number | null = null
+  let particleRafId: number | null = null
   let lastTime = 0
 
   // Create particles for each route
@@ -230,13 +237,17 @@ export function initD3Overlay(
     paths.attr('d', d => {
       if (d.geometry.type === 'LineString') {
         const coords = d.geometry.coordinates as number[][]
-        return line(coords)
+        return makeLine(coords)(coords)
       }
       return null
     })
 
-    // Recreate particles after path geometry changes
-    createParticles()
+    // Defer particle creation until browser has laid out the new path data
+    if (particleRafId) cancelAnimationFrame(particleRafId)
+    particleRafId = requestAnimationFrame(() => {
+      particleRafId = null
+      createParticles()
+    })
   }
 
   // Initial draw
@@ -252,6 +263,10 @@ export function initD3Overlay(
     update,
     destroy: () => {
       stopAnimation()
+      if (particleRafId) {
+        cancelAnimationFrame(particleRafId)
+        particleRafId = null
+      }
       map.off('zoom', update)
       map.off('viewreset', update)
       map.off('moveend', update)
