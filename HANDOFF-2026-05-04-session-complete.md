@@ -4,140 +4,144 @@
 
 **Agent:** Kimi (UI/visual/frontend focus)
 **Duration:** Single session
-**Commits:** Working tree modified (10 files, +717/-196); not yet committed
-**State:** All P0 items complete, all P1 items complete, 4/6 P2 items complete, all P3 items complete
-**Dev server:** Running at `http://localhost:5174` (Vite auto-incremented from 5173)
+**Commits:** 1 new commit (`a4e1852`) on top of 4 previous commits
+**State:** Clean working tree, 5 commits ahead of origin
+**Dev server:** Running at `http://localhost:5178`
 
 ---
 
-## What Got Done
+## What Got Done This Session
 
-### P0 — Immediate Wins (4/4) ✅
+### Viewport-Aware Deep-Linking
 
-| # | Task | File(s) | Status |
-|---|------|---------|--------|
-| 1 | Wiring gap fix | `generator/pipeline.py` | `shutil.copy2()` auto-syncs GeoJSON to `web/public/` on every export. Verified: "Synced to web: ..." message appears. |
-| 2 | Export Patch button | `web/src/App.tsx` | Edit-mode panel now has gold "Export Patch" button that downloads `veydria-coordinate-patch-{date}.yaml` in the exact format `persistence.apply_patch()` expects. |
-| 3 | SVG marker redesign | `web/src/components/MapViewer.tsx`, `App.css` | Replaced CSS circles with category-specific SVG icons (⚓ anchor, ⛨ gate, 🌿 palm, ✧ star, ◆ diamond). Glow via `drop-shadow`, scale-on-hover, selection states, contested-site pulse retained. |
-| 4 | InfoPanel polish | `web/src/components/InfoPanel.tsx`, `App.css` | Category-colored header strip, collapsible sections for text >180 chars, improved tag pills with hover, better typography hierarchy, field separators. |
+**Files:** `web/src/utils/url-hash.ts`, `web/src/App.tsx`, `web/src/components/MapViewer.tsx`
 
-### P1 — Visual/Graphic (5/5) ✅
+- URL hash now encodes viewport state: `#feature=<id>&z=<zoom>&cx=<center-x>&cy=<center-y>`
+- All parameters optional. `cx`/`cy` are in SVG coordinate space (0–1200, 0–800).
+- On page load: if viewport params exist, map restores to that exact view; if `feature` exists, panel opens but camera stays at viewport.
+- During map interaction: hash updates are throttled (300ms) via `replaceState` — no history spam.
+- First `moveend` from initial `fitBounds`/`setView` is skipped to avoid writing default view to hash immediately.
 
-| # | Task | File(s) | Status |
-|---|------|---------|--------|
-| 5 | Loading screen | `web/src/App.tsx`, `App.css` | Spinning compass rose SVG, parchment noise texture background, real progress bar from streaming GeoJSON byte counter, percentage display. |
-| 6 | Trade route upgrade | `web/src/utils/d3-overlay.ts` | Gold gradient stroke (`#route-gradient`), thickness scales by `importance` property, hover glow + thickness pulse. |
-| 7 | Typography | `web/index.html`, `App.css` | Cormorant Garamond + Inter already loaded; refined text-shadows, letter-spacing, display font usage confirmed. |
-| 8 | Layer Controls | `web/src/components/LayerControls.tsx`, `App.css` | Grouped collapsible panel (Geography/Regions/Trade), animated toggle switches instead of dots, category headers with chevrons. |
-| 9 | Water/river styling | `web/src/components/MapViewer.tsx`, `App.css` | Rivers get animated `stroke-dashoffset` flow (`flowRiver` 2s loop), water polygons get coastal glow via `drop-shadow` filter. |
+### Share Button
 
-### P2 — Functional (4/6) ✅
+**Files:** `web/src/App.tsx`, `web/src/App.css`
 
-| # | Task | File(s) | Status |
-|---|------|---------|--------|
-| 10 | Viewport culling | `web/src/components/MapViewer.tsx` | Implemented **zoom-threshold hiding** instead of rbush stash: `terrain_cell` and `river` hide below zoom -0.5, `landmark` hides below zoom 0. Respects user's layer toggles. The old rbush stash (`stash@{0}`) is still present and can be dropped or revisited. |
-| 11 | Mini-map | — | **Skipped** — requires Leaflet minimap plugin dependency. Not implemented. |
-| 12 | Scale bar & compass | `web/src/components/MapViewer.tsx`, `App.css` | Leaflet `L.control.scale()` (metric) + custom SVG compass rose overlay in bottom-right with N indicator. |
-| 13 | Portable sync paths | `scripts/sync-world-data.mjs` | Replaced hardcoded paths with `process.env.WORLDBUILDER_PATH`/`CARTOGRAPHY_PATH`, falling back to relative `../worldbuilder`. |
-| 14 | Deep-linking | `web/src/App.tsx`, `web/src/components/MapViewer.tsx` | URL hash `#feature=port.ki-mbuhari` auto-selects, opens panel, flies to feature on load. Hash updates on selection, clears on panel close. `flyToFeatureById()` exposed on map ref. |
-| 15 | Measurement tool | — | **Pending** — would need new component + CRS.Simple distance math. Not implemented. |
+- New "Share" button in header (between Measure and Search).
+- Copies full URL (including viewport hash) to clipboard.
+- Uses `navigator.clipboard.writeText` with `document.execCommand` fallback.
+- Toast notification appears bottom-center for 2 seconds: "Link copied to clipboard".
 
-### P3 — Static Render (3/3) ✅
+### Measurement Tool Polish
 
-| # | Task | File(s) | Status |
-|---|------|---------|--------|
-| 16 | Parchment texture | `generator/render/rasterize.py` | Added fold lines (subtle vertical/horizontal creases) to `_add_parchment_texture()`. |
-| 17 | Better terrain coloring | `generator/render/rasterize.py` | Replaced matplotlib `'terrain'` cmap with custom hypsometric palette (`_elevation_color()`: green low → brown mid → gray high → white peaks). |
-| 18 | Ink bleed / coastlines | `generator/render/rasterize.py` | `_draw_continent_outline()` now draws darker underlying stroke to simulate ink bleed at coastlines. |
+**Files:** `web/src/utils/measure.ts`, `web/src/components/MapViewer.tsx`, `web/src/App.tsx`, `web/src/App.css`
 
-### Bonus: Art Prompts
+- **Backspace** removes the last measure point (local handler in MapViewer).
+- **Per-segment distance labels** appear at each segment midpoint (small, subtle).
+- **Total distance label** appears at the last point (prominent gold badge).
+- **Stats panel** shows point count, total distance in km/leagues, Undo/Clear/Done buttons.
+- **Undo/Clear** exposed via `useImperativeHandle` (`undoMeasurePoint`, `clearMeasurePoints`).
+- Distance constants (`KM_PER_SVG_UNIT`, `LEAGUES_PER_KM`) extracted to shared `utils/measure.ts`.
 
-Created `VEYDRIA-ART-PROMPTS.md` with 25 detailed image-generation prompts for ChatGPT/DALL-E and Gemini, organized by:
-- Civilization landscapes (6)
-- Port cities (4)
-- Character/faction portraits (6)
-- Sacred/magical scenes (4)
-- Trade/travel/chokepoints (4)
-- Artifacts/objects (3)
-- Atmospheric mood pieces (3)
+### Keyboard Shortcuts Help
 
-Each prompt is lore-grounded with named places, people, and visual details from the canonical worldbuilder data.
+**Files:** `web/src/components/KeyboardHelp.tsx`, `web/src/App.tsx`, `web/src/App.css`
+
+- New `KeyboardHelp` component — modal overlay listing all shortcuts.
+- Triggered by **Shift+?** or a "Help" button in the header.
+- Shortcuts documented: Ctrl+K (search), / (search), M (measure), Esc (close), Backspace (undo), Shift+? (help).
+- Styled consistently with search modal (dark parchment theme).
 
 ---
 
 ## Verification Checklist (All Passed)
 
-- [x] `python generator/pipeline.py validate` → `[OK] Topology YAML is valid.`
-- [x] `python generator/pipeline.py export-geojson` → 3,052 features, auto-synced to `web/public/`
-- [x] `python -m generator.core.persistence` → 29 comments preserved, sentinel intact
 - [x] `cd web && npm run build` → clean TypeScript + Vite build, zero errors
-- [x] `python generator/render/rasterize.py` (via import) → 2400×1600 PNG rendered successfully
-- [x] `npm run dev` → map loads at `localhost:5174`, no console errors
-- [x] Marker hover/selection states verified in CSS
-- [x] Layer toggle switches animate correctly
-- [x] InfoPanel collapsible sections work for long text
-- [x] Deep-linking `#feature=` hash parsing tested
+- [x] Dev server loads at `localhost:5178`, no console errors
+- [x] Hash updates on pan/zoom (throttled, via `replaceState`)
+- [x] Hash restores viewport on reload
+- [x] Feature deep-link still works (`#feature=port.ki-mbuhari`)
+- [x] Share button copies correct URL with viewport
+- [x] Toast notification appears and auto-dismisses
+- [x] Measure mode: Backspace removes last point
+- [x] Measure mode: per-segment labels render
+- [x] Measure mode: Undo/Clear buttons work
+- [x] Keyboard help: Shift+? opens, Esc closes
+- [x] Mobile responsive styles for all new components
 
 ---
 
 ## Current Working Tree
 
 ```
- M generator/pipeline.py              |   6 +
- M generator/render/rasterize.py      |  56 +++-
- M scripts/sync-world-data.mjs        |   8 +-
- M web/public/veydria-spatial.geojson |   6 +-
- M web/src/App.css                    | 405 +++++++++++++++--------
- M web/src/App.tsx                    |  99 +++++-
- M web/src/components/InfoPanel.tsx   |  57 +++-
- M web/src/components/LayerControls.tsx| 119 +++++++---
- M web/src/components/MapViewer.tsx   | 108 ++++++--
- M web/src/utils/d3-overlay.ts        |  49 +++-
- A VEYDRIA-ART-PROMPTS.md             |  (new, 25 prompts)
+A  web/src/components/KeyboardHelp.tsx
+A  web/src/utils/measure.ts
+A  web/src/utils/url-hash.ts
+M  web/src/App.css
+M  web/src/App.tsx
+M  web/src/components/MapViewer.tsx
 ```
 
-**Not committed.** Recommend committing as one or more logical commits before next session.
+**Committed as:** `a4e1852 feat: viewport deep-linking, share button, measurement polish, keyboard help`
 
 ---
 
-## Stash State
+## Architecture Notes
 
-```
-stash@{0}: On master: wip: rbush viewport culling for MapViewer + d3-overlay cleanup (broken: undefined featuresByCategory)
+### URL Hash Utility (`web/src/utils/url-hash.ts`)
+
+```ts
+parseHash(hash: string): ViewportState   // { featureId?, zoom?, centerX?, centerY? }
+buildHash(state: ViewportState): string  // "#feature=...&z=...&cx=...&cy=..."
+clampZoom(z: number): number
 ```
 
-The rbush stash is still present. It was not used — zoom-threshold hiding was implemented instead as a simpler, working alternative. The stash can be dropped (`git stash drop`) if the next agent agrees zoom-threshold is sufficient, or popped and fixed if rbush performance is still desired.
+### Measure Utility (`web/src/utils/measure.ts`)
+
+```ts
+formatDistance(svgDistance: number): string  // "1,234 km / 308 leagues"
+svgDistanceToKm(svgDistance: number): number
+```
+
+### MapViewer Ref Handle
+
+```ts
+export interface MapViewerHandle {
+  flyToFeature: (feature: GeoJSONFeature) => void
+  flyToFeatureById: (featureId: string) => boolean
+  undoMeasurePoint: () => void        // NEW
+  clearMeasurePoints: () => void      // NEW
+}
+```
+
+### Viewport Flow
+
+1. App mounts → `initialHashRef.current = parseHash(window.location.hash)`
+2. GeoJSON loads → MapViewer mounts with `initialViewport` prop (if present)
+3. MapViewer init → `fitBounds()` → `setView(initialViewport)` (if present)
+4. First `moveend` skipped → no hash write
+5. User pans/zooms → `moveend` → `onViewportChange` → App throttles hash update
+6. User clicks feature → hash updates with `featureId`, viewport preserved
+7. User clicks Share → `buildHash(viewportRef.current)` → clipboard
 
 ---
 
 ## Known Issues / Notes for Next Session
 
-1. **P2.11 Mini-map** — Skipped. Would need `leaflet-minimap` plugin or custom implementation. Low priority unless user requests.
-2. **P2.15 Measurement tool** — Skipped. Would need new React component + CRS.Simple distance calculation (SVG units → km/leagues conversion). Medium priority if user wants it.
-3. **Dev server port** — Currently on `:5174` because `:5173` was occupied from previous session. Next agent may need to kill the old process or use the new port.
-4. **GeoJSON sync** — The `web/public/veydria-spatial.geojson` file shows as modified in git because the pipeline auto-copied a fresh export. This is expected and correct — it's the wiring gap fix working.
-5. **Typography refinement** — Cormorant Garamond loads but some systems may not render it if offline. Consider self-hosting fonts or adding system fallbacks.
-6. **Layer opacity sliders** — Mentioned in P1.8 handoff but not implemented. Would require adding opacity state to App.tsx and passing through to MapViewer polygon styling. Nice-to-have.
+1. **Layer opacity sliders** — Mentioned in prior handoff but not implemented. Would require adding opacity state to App.tsx and passing through to MapViewer polygon styling. Nice-to-have.
+2. **Self-hosted fonts** — Cormorant Garamond loads from Google Fonts; may not render offline. Consider self-hosting or adding system fallbacks.
+3. **Route travel animation** — Animated dots/particles moving along trade routes. Would be visually stunning. D3 overlay already has the infrastructure.
+4. **InfoPanel related features** — Show connected features (e.g., trade routes for a port, bordering civilizations). Requires fuzzy name-matching since relationships are stored as strings.
+5. **Mini-map** — Still skipped. Would require `leaflet-minimap` plugin.
+6. **Dev server port drift** — Currently on `:5178` because `:5173`–`:5177` are occupied from prior sessions.
 
 ---
 
 ## Recommended Next Steps
 
-1. **Commit the work** — Suggested commit messages:
-   - `feat: P0 immediate wins — wiring gap, export patch, SVG markers, InfoPanel polish`
-   - `feat: P1 visual improvements — loading screen, trade routes, layer controls, water/rivers`
-   - `feat: P2 functional — zoom culling, scale/compass, deep-linking, portable sync`
-   - `feat: P3 static render — parchment folds, hypsometric terrain, ink bleed`
-   - `docs: add VEYDRIA-ART-PROMPTS.md with 25 image generation prompts`
-
-2. **Pick up P2 leftovers** if desired:
-   - Mini-map (add `react-leaflet` minimap plugin)
-   - Measurement tool (new component, CRS.Simple distance)
-
-3. **Polish pass**:
-   - Mobile viewport testing (layer controls, InfoPanel width on narrow screens)
-   - Performance profiling with 3,000+ features at low zoom
-   - Self-host Google Fonts for offline use
+1. **Polish pass**: Self-host fonts, layer opacity sliders, fullscreen button
+2. **Visual wow**: Route travel animation with D3, animated map pins
+3. **Data richness**: InfoPanel related features, cross-linking between features
+4. **Backend integration**: Live patch apply endpoint, coordinate validation
 
 ---
 
@@ -147,13 +151,12 @@ The rbush stash is still present. It was not used — zoom-threshold hiding was 
 # Verify state
 cd ~/DevProjects/veydria-cartography
 git status
-git diff --stat
+git log --oneline -5
 
 # Backend validation
 cd generator
 python pipeline.py validate
 python pipeline.py info
-python -m core.persistence
 
 # Frontend build
 cd ../web
@@ -161,7 +164,7 @@ npm run build
 
 # Start dev server
 npm run dev
-# → http://localhost:5173 (or 5174 if occupied)
+# → http://localhost:5173 (or next available port)
 ```
 
 ---
