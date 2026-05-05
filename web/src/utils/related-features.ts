@@ -30,9 +30,15 @@ function getCentroid(f: GeoJSONFeature): [number, number] | null {
   return null
 }
 
-function distance(a: [number, number], b: [number, number]): number {
-  return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+function distanceSq(a: [number, number], b: [number, number]): number {
+  const dx = a[0] - b[0]
+  const dy = a[1] - b[1]
+  return dx * dx + dy * dy
 }
+
+const PROXIMITY_MAX_DIST_SQ = 250 * 250 // 250 SVG units ≈ 625 km
+const PROXIMITY_MAX_RESULTS = 6
+const RELATED_MAX_TOTAL = 10
 
 export function findRelatedFeatures(
   feature: GeoJSONFeature,
@@ -86,8 +92,9 @@ export function findRelatedFeatures(
       }
       if (fCat === 'port') {
         const loc = (f.properties.location as string) || ''
-        if (loc.toLowerCase().includes(civId.toLowerCase().replace('_', ' ')) ||
-            loc.toLowerCase().includes((props.name as string || '').toLowerCase())) {
+        const civNameLower = (props.name as string || '').toLowerCase()
+        if (loc.toLowerCase().includes(civId.toLowerCase().replaceAll('_', ' ')) ||
+            loc.toLowerCase().includes(civNameLower)) {
           add(f, 'Port within territory', 'geography')
         }
       }
@@ -108,30 +115,35 @@ export function findRelatedFeatures(
     }
   }
 
-  // 4. Proximity-based (for all types, fill remaining slots)
-  if (centroid) {
-    const candidates: Array<{ feature: GeoJSONFeature; dist: number }> = []
+  // 4. Proximity-based — only scan if we have room and a centroid
+  if (centroid && related.length < RELATED_MAX_TOTAL) {
+    // Pre-filter to interesting categories and compute distances
+    const candidates: Array<{ feature: GeoJSONFeature; distSq: number }> = []
     for (const f of allFeatures) {
       const fId = getFeatureId(f)
-      if (fId === id) continue
+      if (fId === id || seen.has(fId)) continue
+
       const fCat = (f.properties.category as string) || ''
+      if (fCat === 'water' || fCat === 'terrain_cell') continue
+
       const fCentroid = getCentroid(f)
       if (!fCentroid) continue
-      const dist = distance(centroid, fCentroid)
-      // Skip if already added or same category (unless it's a different type within same category)
-      if (seen.has(fId)) continue
-      candidates.push({ feature: f, dist })
+
+      const distSq = distanceSq(centroid, fCentroid)
+      if (distSq > PROXIMITY_MAX_DIST_SQ) continue
+
+      candidates.push({ feature: f, distSq })
     }
-    candidates.sort((a, b) => a.dist - b.dist)
-    for (const { feature: f, dist } of candidates.slice(0, 6)) {
-      const fCat = (f.properties.category as string) || ''
-      const fName = (f.properties.name as string) || 'Unknown'
-      // Skip water and terrain cells (too many, not interesting)
-      if (fCat === 'water' || fCat === 'terrain_cell') continue
-      const distKm = Math.round(dist * 2.5)
+
+    // Partial sort: only need the closest N
+    candidates.sort((a, b) => a.distSq - b.distSq)
+    const kmPerSvgUnit = 2.5
+    for (const { feature: f, distSq } of candidates.slice(0, PROXIMITY_MAX_RESULTS)) {
+      const distKm = Math.round(Math.sqrt(distSq) * kmPerSvgUnit)
       add(f, `${distKm} km away`, 'proximity')
+      if (related.length >= RELATED_MAX_TOTAL) break
     }
   }
 
-  return related.slice(0, 10)
+  return related
 }

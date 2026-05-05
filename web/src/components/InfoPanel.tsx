@@ -119,7 +119,7 @@ export default function InfoPanel({ feature, allFeatures, open, onClose, onSelec
       <div className={`info-panel-header info-panel-header--${category}`}>
         <div className="info-panel-header-left">
           <span className={`info-panel-category ${category}`}>
-            {category.replace('_', ' ')}
+            {category.replaceAll('_', ' ')}
           </span>
           <h2 className="info-panel-name">{name}</h2>
           {etymology && (
@@ -143,7 +143,7 @@ export default function InfoPanel({ feature, allFeatures, open, onClose, onSelec
           const value = props[fieldKey]
           if (value === undefined || value === null || value === '') return null
 
-          const label = FIELD_LABELS[fieldKey] || fieldKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+          const label = FIELD_LABELS[fieldKey] || fieldKey.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
           const isCollapsible = COLLAPSIBLE_FIELDS.has(fieldKey)
           const isCollapsed = isCollapsible && collapsed[fieldKey]
 

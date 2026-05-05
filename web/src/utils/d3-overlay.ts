@@ -276,6 +276,11 @@ export function initD3Overlay(
       isVisible = visible
       routeGroup.style('display', visible ? 'block' : 'none')
       if (visible) {
+        stopAnimation()
+        if (particleRafId) {
+          cancelAnimationFrame(particleRafId)
+          particleRafId = null
+        }
         createParticles()
         startAnimation()
       } else {

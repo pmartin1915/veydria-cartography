@@ -97,9 +97,24 @@ function App() {
   const initialHashRef = useRef(parseHash(window.location.hash))
   const viewportRef = useRef(initialHashRef.current)
   const hashUpdateTimeoutRef = useRef<number | null>(null)
+  const shareToastTimeoutRef = useRef<number | null>(null)
+  const patchToastTimeoutRef = useRef<number | null>(null)
+  const panelCloseTimeoutRef = useRef<number | null>(null)
+  const flyToTimeoutRef = useRef<number | null>(null)
   const [shareToast, setShareToast] = useState<string | null>(null)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
+
+  // Cleanup all timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
+      if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
+      if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
+      if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
+      if (flyToTimeoutRef.current) clearTimeout(flyToTimeoutRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/veydria-spatial.geojson')
@@ -137,7 +152,7 @@ function App() {
         const hasExplicitViewport = hashState.zoom !== undefined && hashState.centerX !== undefined && hashState.centerY !== undefined
 
         if (featureId) {
-          setTimeout(() => {
+          flyToTimeoutRef.current = window.setTimeout(() => {
             const found = data.features.find((f) => {
               const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
               return id === featureId
@@ -173,7 +188,8 @@ function App() {
 
   const handleClosePanel = useCallback(() => {
     setPanelOpen(false)
-    setTimeout(() => setSelectedFeature(null), 300)
+    if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
+    panelCloseTimeoutRef.current = window.setTimeout(() => setSelectedFeature(null), 300)
     viewportRef.current = { ...viewportRef.current, featureId: undefined }
     const hash = buildHash(viewportRef.current)
     window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
@@ -234,14 +250,16 @@ function App() {
     const patches = parsePatchYaml(text)
     if (patches.length === 0) {
       setPatchToast('No valid patches found in file')
-      setTimeout(() => setPatchToast(null), 3000)
+      if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
+      patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
       return
     }
     const result = applyPatches(geojson, patches)
     // Force re-render by creating a new geojson reference
     setGeojson({ ...geojson })
     setPatchToast(`Applied ${result.applied} patch${result.applied !== 1 ? 'es' : ''}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`)
-    setTimeout(() => setPatchToast(null), 3000)
+    if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
+    patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
   }, [geojson])
 
   const handleToggleMeasureMode = useCallback(() => {
@@ -289,17 +307,24 @@ function App() {
       document.body.removeChild(input)
       setShareToast('Link copied to clipboard')
     }
-    window.setTimeout(() => setShareToast(null), 2000)
+    if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
+    shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
   }, [])
+
+  // Refs for keyboard handler to avoid re-binding on every state change
+  const searchOpenRef = useRef(searchOpen)
+  const measureModeRef = useRef(measureMode)
+  useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
+  useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
 
   // Keyboard shortcut: Ctrl+K or / for search, M for measure mode, Shift+? for help
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchOpen && document.activeElement === document.body)) {
+      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchOpenRef.current && document.activeElement === document.body)) {
         e.preventDefault()
         setSearchOpen(true)
       }
-      if (e.key === 'm' && !searchOpen && document.activeElement === document.body) {
+      if (e.key === 'm' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
         setMeasureMode(prev => !prev)
       }
@@ -311,12 +336,12 @@ function App() {
         setSearchOpen(false)
         setKeyboardHelpOpen(false)
         handleClosePanel()
-        if (measureMode) setMeasureMode(false)
+        if (measureModeRef.current) setMeasureMode(false)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [searchOpen, handleClosePanel, measureMode])
+  }, [handleClosePanel])
 
   if (loading) {
     return (

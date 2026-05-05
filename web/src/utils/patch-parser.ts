@@ -57,25 +57,35 @@ export function parsePatchYaml(yaml: string): CoordinatePatch[] {
 export function applyPatches(
   geojson: { features: Array<{ properties: Record<string, unknown>; geometry: { type: string; coordinates: unknown } }> },
   patches: CoordinatePatch[]
-): { applied: number; skipped: number; details: string[] } {
+): { applied: number; skipped: number; details: string[]; mutatedFeatures: Set<number> } {
   let applied = 0
   let skipped = 0
   const details: string[] = []
+  const mutatedFeatures = new Set<number>()
 
   for (const patch of patches) {
-    const feature = geojson.features.find((f) => {
+    const idx = geojson.features.findIndex((f) => {
       const fid = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
       return fid === patch.id
     })
 
-    if (!feature) {
+    if (idx === -1) {
       skipped++
       details.push(`Skipped: ${patch.id} — feature not found`)
       continue
     }
 
+    const feature = geojson.features[idx]
     if (feature.geometry.type === 'Point') {
-      feature.geometry.coordinates = patch.coords
+      // Deep-clone the feature to avoid mutating original reference
+      geojson.features[idx] = {
+        ...feature,
+        geometry: {
+          ...feature.geometry,
+          coordinates: [...patch.coords],
+        },
+      }
+      mutatedFeatures.add(idx)
       applied++
       details.push(`Applied: ${patch.id} → [${patch.coords[0].toFixed(1)}, ${patch.coords[1].toFixed(1)}]`)
     } else {
@@ -84,5 +94,5 @@ export function applyPatches(
     }
   }
 
-  return { applied, skipped, details }
+  return { applied, skipped, details, mutatedFeatures }
 }

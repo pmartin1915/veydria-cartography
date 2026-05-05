@@ -135,7 +135,6 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
     const layerRefsRef = useRef<Map<string, L.Layer[]>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
-    const animFrameIdsRef = useRef<Set<number>>(new Set())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
     const measureModeRef = useRef(measureMode)
@@ -204,14 +203,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     useEffect(() => {
       if (!measureMode) return
       const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Backspace' && measurePoints.length > 0) {
+        if (e.key === 'Backspace') {
           e.preventDefault()
-          setMeasurePoints(prev => prev.slice(0, -1))
+          setMeasurePoints(prev => prev.length > 0 ? prev.slice(0, -1) : prev)
         }
       }
       window.addEventListener('keydown', handler)
       return () => window.removeEventListener('keydown', handler)
-    }, [measureMode, measurePoints.length])
+    }, [measureMode])
 
     // Initialize map
     useEffect(() => {
@@ -475,8 +474,6 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         map.off('moveend', handleMoveEnd)
         map.off('click', handleMapClick)
         d3Overlay.destroy()
-        animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
-        animFrameIdsRef.current.clear()
         map.remove()
         mapRef.current = null
         layerGroupsRef.current.clear()
