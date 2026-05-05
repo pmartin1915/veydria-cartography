@@ -40,6 +40,7 @@ export interface MapViewerProps {
   selectedFeatureId?: string
   isEditMode?: boolean
   onCoordinateUpdate?: (featureId: string, name: string, category: string, newCoords: [number, number]) => void
+  measureMode?: boolean
 }
 
 export interface MapViewerHandle {
@@ -117,13 +118,33 @@ function getElevationColor(elev: number): string {
   return '#f5f5f5' // white peaks
 }
 
+// Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent)
+const KM_PER_SVG_UNIT = 3000 / 1200 // ≈ 2.5 km per SVG unit
+const LEAGUES_PER_KM = 1 / 4 // 1 league ≈ 4 km
+
+function formatDistance(svgDistance: number): string {
+  const km = svgDistance * KM_PER_SVG_UNIT
+  const leagues = km * LEAGUES_PER_KM
+  if (km < 1) return `${(km * 1000).toFixed(0)} m`
+  if (km < 10) return `${km.toFixed(1)} km / ${leagues.toFixed(1)} leagues`
+  return `${km.toFixed(0)} km / ${leagues.toFixed(0)} leagues`
+}
+
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const animFrameIdsRef = useRef<Set<number>>(new Set())
+    const measureLayerRef = useRef<L.LayerGroup | null>(null)
+    const measureLabelRef = useRef<L.Marker | null>(null)
+    const measureModeRef = useRef(measureMode)
+
+    // Keep ref in sync so event handlers see current value without re-binding
+    useEffect(() => {
+      measureModeRef.current = measureMode
+    }, [measureMode])
 
     // Separate features by type
     const featuresByCategory = useMemo(() => {
@@ -137,6 +158,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     }, [geojson])
 
     const [zoomLevel, setZoomLevel] = useState<number>(-1)
+    const [measurePoints, setMeasurePoints] = useState<Array<{x: number, y: number}>>([])
 
     // Build feature ID lookup for deep-linking
     const featureById = useMemo(() => {
@@ -166,6 +188,13 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       },
     }))
 
+    // Clear measure points when measure mode is turned off
+    useEffect(() => {
+      if (!measureMode) {
+        setMeasurePoints([])
+      }
+    }, [measureMode])
+
     // Initialize map
     useEffect(() => {
       if (!containerRef.current || mapRef.current) return
@@ -186,10 +215,21 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // Scale bar
       L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map)
 
+      // Canvas renderer for high-count layers (terrain_cell has 3000+ polygons)
+      const canvasRenderer = L.canvas({ padding: 0.5 })
+
       // Track zoom level for threshold-based visibility
       const updateZoom = () => setZoomLevel(map.getZoom())
       map.on('zoom', updateZoom)
       updateZoom()
+
+      // Measurement click handler
+      const handleMapClick = (e: L.LeafletMouseEvent) => {
+        if (!measureModeRef.current) return
+        const svg = latLngToSvg(e.latlng)
+        setMeasurePoints(prev => [...prev, { x: svg.x, y: svg.y }])
+      }
+      map.on('click', handleMapClick)
 
       const bounds: L.LatLngBoundsExpression = [
         svgToLatLng(0, SVG_HEIGHT) as L.LatLngTuple,
@@ -246,9 +286,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
               weight,
               opacity: category === 'terrain_cell' ? 0 : 0.5,
               className: `poly-${category}`,
+              renderer: category === 'terrain_cell' ? canvasRenderer : undefined,
             })
 
             polygon.on('click', () => {
+              if (measureModeRef.current) return
               onFeatureClick(feature)
               if (onFeatureSelect) onFeatureSelect(feature)
             })
@@ -285,6 +327,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             const polyline = L.polyline(latlngs, lineOpts)
 
             polyline.on('click', () => {
+              if (measureModeRef.current) return
               onFeatureClick(feature)
               if (onFeatureSelect) onFeatureSelect(feature)
             })
@@ -326,6 +369,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             let isDragging = false
             marker.on('dragstart', () => { isDragging = true })
             marker.on('click', () => {
+              if (measureModeRef.current) {
+                // In measure mode, clicking a marker adds its location as a point
+                const [x, y] = feature.geometry.coordinates as number[]
+                setMeasurePoints(prev => [...prev, { x, y }])
+                return
+              }
               if (!isDragging) {
                 onFeatureClick(feature)
                 if (onFeatureSelect) onFeatureSelect(feature)
@@ -373,6 +422,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       return () => {
         map.off('zoom', updateZoom)
+        map.off('click', handleMapClick)
         d3Overlay.destroy()
         animFrameIdsRef.current.forEach((id) => cancelAnimationFrame(id))
         animFrameIdsRef.current.clear()
@@ -417,9 +467,112 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       })
     }, [selectedFeatureId])
 
+    // Render measurement overlay
+    useEffect(() => {
+      if (!mapRef.current) return
+
+      // Clean up previous measure layers
+      if (measureLayerRef.current) {
+        mapRef.current.removeLayer(measureLayerRef.current)
+        measureLayerRef.current = null
+      }
+      if (measureLabelRef.current) {
+        mapRef.current.removeLayer(measureLabelRef.current)
+        measureLabelRef.current = null
+      }
+
+      if (measurePoints.length === 0) return
+
+      const group = L.layerGroup()
+
+      // Draw points
+      measurePoints.forEach((pt) => {
+        const latlng = svgToLatLng(pt.x, pt.y)
+        const marker = L.circleMarker(latlng as L.LatLngExpression, {
+          radius: 5,
+          fillColor: '#e8c840',
+          color: '#c4a862',
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.8,
+          className: 'measure-point',
+        })
+        marker.addTo(group)
+      })
+
+      // Draw lines between consecutive points
+      if (measurePoints.length >= 2) {
+        for (let i = 1; i < measurePoints.length; i++) {
+          const a = measurePoints[i - 1]
+          const b = measurePoints[i]
+          const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
+          L.polyline(latlngs, {
+            color: '#e8c840',
+            weight: 2,
+            opacity: 0.7,
+            dashArray: '6,4',
+            lineCap: 'round',
+            className: 'measure-line',
+          }).addTo(group)
+        }
+      }
+
+      group.addTo(mapRef.current)
+      measureLayerRef.current = group
+
+      // Distance label at midpoint of last segment (or at single point)
+      if (measurePoints.length >= 1) {
+        const lastPt = measurePoints[measurePoints.length - 1]
+        let labelLatLng = svgToLatLng(lastPt.x, lastPt.y)
+        let labelText = ''
+
+        if (measurePoints.length >= 2) {
+          // Calculate total distance
+          let totalSvgDist = 0
+          for (let i = 1; i < measurePoints.length; i++) {
+            const dx = measurePoints[i].x - measurePoints[i - 1].x
+            const dy = measurePoints[i].y - measurePoints[i - 1].y
+            totalSvgDist += Math.sqrt(dx * dx + dy * dy)
+          }
+          labelText = formatDistance(totalSvgDist)
+
+          // Place label at midpoint of last segment, offset slightly
+          const prevPt = measurePoints[measurePoints.length - 2]
+          const midX = (prevPt.x + lastPt.x) / 2
+          const midY = (prevPt.y + lastPt.y) / 2
+          labelLatLng = svgToLatLng(midX, midY)
+        }
+
+        if (labelText) {
+          const labelIcon = L.divIcon({
+            className: 'measure-label',
+            html: `<div class="measure-label-inner">${labelText}</div>`,
+            iconSize: [140, 24],
+            iconAnchor: [70, 12],
+          })
+          const labelMarker = L.marker(labelLatLng as L.LatLngExpression, {
+            icon: labelIcon,
+            interactive: false,
+            zIndexOffset: 1000,
+          })
+          labelMarker.addTo(mapRef.current)
+          measureLabelRef.current = labelMarker
+        }
+      }
+
+      return () => {
+        if (measureLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(measureLayerRef.current)
+        }
+        if (measureLabelRef.current && mapRef.current) {
+          mapRef.current.removeLayer(measureLabelRef.current)
+        }
+      }
+    }, [measurePoints])
+
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <div ref={containerRef} className="map-container" id="veydria-map" />
+        <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''}`} id="veydria-map" />
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">

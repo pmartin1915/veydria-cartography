@@ -57,6 +57,7 @@ function App() {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
   const [searchOpen, setSearchOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean } | null>(null)
 
@@ -174,21 +175,30 @@ function App() {
     URL.revokeObjectURL(url)
   }, [coordinateUpdates])
 
-  // Keyboard shortcut: Ctrl+K or / for search
+  const handleToggleMeasureMode = useCallback(() => {
+    setMeasureMode(prev => !prev)
+  }, [])
+
+  // Keyboard shortcut: Ctrl+K or / for search, M for measure mode
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchOpen && document.activeElement === document.body)) {
         e.preventDefault()
         setSearchOpen(true)
       }
+      if (e.key === 'm' && !searchOpen && document.activeElement === document.body) {
+        e.preventDefault()
+        setMeasureMode(prev => !prev)
+      }
       if (e.key === 'Escape') {
         setSearchOpen(false)
         handleClosePanel()
+        if (measureMode) setMeasureMode(false)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [searchOpen, handleClosePanel])
+  }, [searchOpen, handleClosePanel, measureMode])
 
   if (loading) {
     return (
@@ -245,6 +255,18 @@ function App() {
         </div>
         <div className="header-right">
           <button
+            className={`search-trigger ${measureMode ? 'active' : ''}`}
+            onClick={handleToggleMeasureMode}
+            title="Toggle measure mode (M)"
+            id="measure-trigger"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3v18h18" />
+              <path d="M7 16l4-6 4 4 6-8" />
+            </svg>
+            <span>{measureMode ? 'Measuring...' : 'Measure'}</span>
+          </button>
+          <button
             className="search-trigger"
             onClick={() => setSearchOpen(true)}
             title="Search features (Ctrl+K)"
@@ -261,7 +283,7 @@ function App() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main className={`app-main ${measureMode ? 'measure-mode' : ''}`}>
         {geojson && (
           <MapViewer
             ref={mapRef}
@@ -271,6 +293,7 @@ function App() {
             selectedFeatureId={selectedFeature?.properties?.id as string | undefined}
             isEditMode={isEditMode}
             onCoordinateUpdate={handleCoordinateUpdate}
+            measureMode={measureMode}
           />
         )}
 
@@ -286,6 +309,24 @@ function App() {
           open={panelOpen}
           onClose={handleClosePanel}
         />
+
+        {measureMode && (
+          <div className="measure-panel" style={{
+            position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+            background: 'var(--bg-card)', border: '1px solid var(--border-accent)',
+            padding: '10px 16px', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            zIndex: 1000, color: 'var(--text-primary)', display: 'flex',
+            alignItems: 'center', gap: 12, fontSize: 12,
+          }}>
+            <span style={{ color: 'var(--text-muted)' }}>Click to place points · Esc to exit</span>
+            <button
+              onClick={() => setMeasureMode(false)}
+              style={{ padding: '4px 10px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: 4, fontSize: 11 }}
+            >
+              Done
+            </button>
+          </div>
+        )}
 
         {isEditMode && Object.keys(coordinateUpdates).length > 0 && (
           <div className="coordinate-panel" style={{

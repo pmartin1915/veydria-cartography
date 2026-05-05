@@ -1003,3 +1003,189 @@ body {
   }
 }
 
+/* --- Measurement Tool --- */
+.search-trigger.active {
+  border-color: var(--color-port);
+  color: var(--color-port);
+  background: rgba(232, 200, 64, 0.08);
+}
+
+.map-container.measure-mode {
+  cursor: crosshair !important;
+}
+
+.measure-point {
+  animation: measurePulse 2s ease-in-out infinite;
+}
+
+@keyframes measurePulse {
+  0%, 100% { stroke-opacity: 0.9; fill-opacity: 0.8; }
+  50% { stroke-opacity: 0.5; fill-opacity: 0.5; }
+}
+
+.measure-line {
+  filter: drop-shadow(0 0 4px rgba(232, 200, 64, 0.4));
+}
+
+.measure-label {
+  pointer-events: none;
+}
+
+.measure-label-inner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-port);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   Mobile Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 42px;
+    --panel-width: 100vw;
+  }
+
+  .app-header {
+    padding: 0 12px;
+  }
+
+  .app-title {
+    font-size: 16px;
+    letter-spacing: 3px;
+  }
+
+  .app-subtitle {
+    display: none;
+  }
+
+  .search-trigger span:not(.layer-toggle-icon):not(.layer-group-chevron) {
+    display: none;
+  }
+
+  .search-trigger kbd {
+    display: none;
+  }
+
+  .feature-count {
+    display: none;
+  }
+
+  /* InfoPanel → bottom sheet */
+  .info-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    border-left: none;
+    border-top: 1px solid var(--border-accent);
+    border-radius: 12px 12px 0 0;
+    transform: translateY(100%);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .info-panel.open {
+    transform: translateY(0);
+  }
+
+  .info-panel-name {
+    font-size: 22px;
+  }
+
+  /* LayerControls → compact, scrollable */
+  .layer-controls {
+    bottom: 8px;
+    left: 8px;
+    max-height: 45vh;
+    overflow-y: auto;
+    padding: 6px;
+    min-width: 150px;
+  }
+
+  .layer-group-header {
+    padding: 4px 6px;
+  }
+
+  .layer-toggle {
+    padding: 4px 6px;
+  }
+
+  /* Compass rose smaller */
+  .compass-rose {
+    width: 36px;
+    height: 36px;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  /* Search modal full-width */
+  .search-modal {
+    width: calc(100% - 24px);
+    max-height: 70vh;
+  }
+
+  .search-overlay {
+    padding-top: 8vh;
+  }
+
+  /* Loading screen */
+  .loading-title {
+    font-size: 36px;
+    letter-spacing: 8px;
+  }
+
+  .loading-subtitle {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 10px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .app-title {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .search-trigger {
+    padding: 5px 8px;
+  }
+
+  .layer-controls {
+    max-height: 40vh;
+    bottom: 6px;
+    left: 6px;
+  }
+
+  .info-panel {
+    max-height: 65vh;
+  }
+
+  .info-panel-name {
+    font-size: 20px;
+  }
+
+  .info-panel-body {
+    padding: 16px;
+  }
+}
+
