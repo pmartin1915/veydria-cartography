@@ -13,6 +13,7 @@ venv/
 node_modules/
 web/node_modules/
 web/dist/
+web/dist2/
 
 # Generated output (keep .gitkeep)
 output/*.png
