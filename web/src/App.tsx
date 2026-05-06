@@ -4,7 +4,9 @@ import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
 import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
+import JourneyPlanner from './components/JourneyPlanner'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
+import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 
@@ -47,6 +49,7 @@ export interface LayerVisibility {
   landmark: boolean
   river: boolean
   faction_control: boolean
+  terrain_cost: boolean
 }
 
 export interface LayerOpacity {
@@ -61,6 +64,7 @@ export interface LayerOpacity {
   landmark: number
   river: number
   faction_control: number
+  terrain_cost: number
 }
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -75,6 +79,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   landmark: true,
   river: true,
   faction_control: false,
+  terrain_cost: false,
 }
 
 const DEFAULT_OPACITY: LayerOpacity = {
@@ -89,6 +94,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   landmark: 1,
   river: 0.6,
   faction_control: 1,
+  terrain_cost: 0.75,
 }
 
 function App() {
@@ -106,7 +112,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
@@ -119,6 +125,8 @@ function App() {
   const [shareToast, setShareToast] = useState<string | null>(null)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
+  const [journeyMode, setJourneyMode] = useState(false)
+  const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
 
   // Cleanup all timeouts on unmount
   useEffect(() => {
@@ -345,8 +353,10 @@ function App() {
   // Refs for keyboard handler to avoid re-binding on every state change
   const searchOpenRef = useRef(searchOpen)
   const measureModeRef = useRef(measureMode)
+  const journeyModeRef = useRef(journeyMode)
   useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
   useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
+  useEffect(() => { journeyModeRef.current = journeyMode }, [journeyMode])
 
   // Keyboard shortcut: Ctrl+K or / for search, M for measure mode, Shift+? for help
   useEffect(() => {
@@ -359,6 +369,10 @@ function App() {
         e.preventDefault()
         setMeasureMode(prev => !prev)
       }
+      if (e.key === 'j' && !searchOpenRef.current && document.activeElement === document.body) {
+        e.preventDefault()
+        setJourneyMode(prev => !prev)
+      }
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
@@ -368,6 +382,7 @@ function App() {
         setKeyboardHelpOpen(false)
         handleClosePanel()
         if (measureModeRef.current) setMeasureMode(false)
+        if (journeyModeRef.current) setJourneyMode(false)
       }
     }
     window.addEventListener('keydown', handler)
@@ -428,6 +443,19 @@ function App() {
           <span className="app-subtitle">Continental Reference Map</span>
         </div>
         <div className="header-right">
+          <button
+            className={`search-trigger ${journeyMode ? 'journey-active' : ''}`}
+            onClick={() => setJourneyMode(prev => !prev)}
+            title="Toggle journey planner (J)"
+            id="journey-trigger"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span>{journeyMode ? 'Planning...' : 'Journey'}</span>
+          </button>
           <button
             className={`search-trigger ${measureMode ? 'active' : ''}`}
             onClick={handleToggleMeasureMode}
@@ -506,6 +534,7 @@ function App() {
             }
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
+            route={journeyRoute}
           />
         )}
 
@@ -536,6 +565,22 @@ function App() {
             }
           }}
         />
+
+        {journeyMode && geojson && (
+          <JourneyPlanner
+            geojson={geojson}
+            active={journeyMode}
+            onClose={() => {
+              setJourneyMode(false)
+              setJourneyRoute(null)
+              mapRef.current?.clearJourneyRoute()
+            }}
+            onRouteComputed={(route) => {
+              setJourneyRoute(route)
+              if (!route) mapRef.current?.clearJourneyRoute()
+            }}
+          />
+        )}
 
         {measureMode && (
           <div className="measure-panel">

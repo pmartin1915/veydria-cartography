@@ -14,6 +14,7 @@ interface GeoJSONFeature {
 import { initD3Overlay } from '../utils/d3-overlay'
 import { formatDistance } from '../utils/measure'
 import type { LayerOpacity } from '../App'
+import type { JourneyRoute } from '../utils/journey-graph'
 
 interface GeoJSONCollection {
   type: 'FeatureCollection'
@@ -33,6 +34,7 @@ interface LayerVisibility {
   landmark: boolean
   river: boolean
   faction_control: boolean
+  terrain_cost: boolean
 }
 
 export interface MapViewerProps {
@@ -48,6 +50,7 @@ export interface MapViewerProps {
   onViewportChange?: (viewport: { zoom: number; centerX: number; centerY: number }) => void
   onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
   opacities?: LayerOpacity
+  route?: JourneyRoute | null
 }
 
 export interface MapViewerHandle {
@@ -57,6 +60,7 @@ export interface MapViewerHandle {
   clearMeasurePoints: () => void
   updateFeaturePosition: (featureId: string, coords: [number, number]) => void
   setFactionOverlay: (enabled: boolean) => void
+  clearJourneyRoute: () => void
 }
 
 // SVG viewBox dimensions
@@ -138,10 +142,21 @@ const CIV_COLORS: Record<string, string> = {
   oravan: '#4a7a9a',
 }
 
+function getTerrainCostColor(elev: number): string {
+  const cost = elev / 500
+  if (cost < 1) return '#4a9a3a'
+  if (cost < 3) return '#8ab87a'
+  if (cost < 5) return '#c8d4a0'
+  if (cost < 7) return '#e8d5a0'
+  if (cost < 9) return '#d4a060'
+  if (cost < 11) return '#c06040'
+  return '#803030'
+}
+
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate, opacities }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate, opacities, route }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -150,6 +165,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
+    const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const geojsonRef = useRef(geojson)
     useEffect(() => { geojsonRef.current = geojson }, [geojson])
 
@@ -196,7 +212,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       },
       setFactionOverlay(enabled: boolean) {
         for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
+          if (layers.terrain_cost) return // terrain_cost takes priority
           polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
+        }
+      },
+      clearJourneyRoute() {
+        if (journeyRouteLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(journeyRouteLayerRef.current)
+          journeyRouteLayerRef.current = null
         }
       },
     }))
@@ -334,9 +357,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
               weight = 2
             } else if (category === 'terrain_cell') {
               const civ = (props.civ as string) || ''
-              fillColor = layers.faction_control
-                ? (CIV_COLORS[civ] || '#888')
-                : getElevationColor(props.elevation as number || 0)
+              const elevation = props.elevation as number || 0
+              if (layers.terrain_cost) {
+                fillColor = getTerrainCostColor(elevation)
+              } else if (layers.faction_control) {
+                fillColor = CIV_COLORS[civ] || '#888'
+              } else {
+                fillColor = getElevationColor(elevation)
+              }
               fillOpacity = defaultOpacity
               weight = 0
             } else if (category === 'civilization') {
@@ -538,13 +566,22 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
     }, [layers, zoomLevel])
 
+    // Terrain cost overlay: color cells by movement difficulty
+    useEffect(() => {
+      const enabled = layers.terrain_cost
+      for (const { polygon, elevation } of terrainCellMetaRef.current.values()) {
+        polygon.setStyle({ fillColor: enabled ? getTerrainCostColor(elevation) : getElevationColor(elevation) })
+      }
+    }, [layers.terrain_cost])
+
     // Faction overlay: tint terrain cells by controlling civilization
     useEffect(() => {
       const enabled = layers.faction_control
+      if (layers.terrain_cost) return // terrain_cost takes priority
       for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
       }
-    }, [layers.faction_control])
+    }, [layers.faction_control, layers.terrain_cost])
 
     // Update layer opacity when opacities change
     useEffect(() => {
@@ -694,6 +731,99 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       }
     }, [measurePoints, onMeasureUpdate])
+
+    // Render journey route overlay
+    useEffect(() => {
+      if (!mapRef.current) return
+      if (journeyRouteLayerRef.current) {
+        mapRef.current.removeLayer(journeyRouteLayerRef.current)
+        journeyRouteLayerRef.current = null
+      }
+      if (!route || route.nodes.length < 2) return
+
+      const group = L.layerGroup()
+
+      // Draw route segments
+      for (let i = 1; i < route.nodes.length; i++) {
+        const a = route.nodes[i - 1]
+        const b = route.nodes[i]
+        const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
+        L.polyline(latlngs, {
+          color: '#c4a862',
+          weight: 4,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+          className: 'journey-route-line',
+          dashArray: '10,5',
+        }).addTo(group)
+
+        // Segment label at midpoint
+        const midX = (a.x + b.x) / 2
+        const midY = (a.y + b.y) / 2
+        const edge = route.edges[i - 1]
+        const segLabel = L.divIcon({
+          className: 'measure-label',
+          html: `<div class="measure-label-inner measure-segment-inner">${edge ? edge.name : ''}</div>`,
+          iconSize: [120, 18],
+          iconAnchor: [60, 9],
+        })
+        L.marker(svgToLatLng(midX, midY) as L.LatLngExpression, {
+          icon: segLabel,
+          interactive: false,
+          zIndexOffset: 998,
+        }).addTo(group)
+      }
+
+      // Draw node markers
+      route.nodes.forEach((node, i) => {
+        const latlng = svgToLatLng(node.x, node.y)
+        const isStart = i === 0
+        const isEnd = i === route.nodes.length - 1
+        const color = isStart ? '#4a9a3a' : isEnd ? '#f44' : '#c4a862'
+        const radius = isStart || isEnd ? 8 : 5
+
+        const circle = L.circleMarker(latlng as L.LatLngExpression, {
+          radius,
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.8,
+          className: 'journey-route-marker',
+        })
+        circle.addTo(group)
+
+        // Node label
+        const label = L.divIcon({
+          className: 'measure-label',
+          html: `<div class="measure-label-inner" style="font-size:10px;padding:3px 8px;">${node.name}</div>`,
+          iconSize: [140, 20],
+          iconAnchor: [70, 22],
+        })
+        L.marker(latlng as L.LatLngExpression, {
+          icon: label,
+          interactive: false,
+          zIndexOffset: 999,
+        }).addTo(group)
+      })
+
+      group.addTo(mapRef.current)
+      journeyRouteLayerRef.current = group
+
+      // Fly to fit the route
+      const lls = route.nodes.map(n => svgToLatLng(n.x, n.y) as L.LatLngTuple)
+      if (lls.length > 0) {
+        mapRef.current.fitBounds(L.latLngBounds(lls), { padding: [60, 60], maxZoom: 2.5, animate: true, duration: 0.8 })
+      }
+
+      return () => {
+        if (journeyRouteLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(journeyRouteLayerRef.current)
+          journeyRouteLayerRef.current = null
+        }
+      }
+    }, [route])
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>

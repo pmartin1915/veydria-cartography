@@ -29,6 +29,7 @@ const LAYER_GROUPS: LayerGroup[] = [
       { key: 'water', label: 'Basin', color: '#3a7ca5', icon: '🌊', opacityControl: true },
       { key: 'river', label: 'Rivers', color: '#4a8ab0', icon: '〜', opacityControl: true },
       { key: 'faction_control', label: 'Faction Overlay', color: '#c4a862', icon: '🏴' },
+      { key: 'terrain_cost', label: 'Terrain Cost', color: '#c06040', icon: '🥾' },
     ],
   },
   {
