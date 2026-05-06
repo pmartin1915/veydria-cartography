@@ -32,6 +32,7 @@ interface LayerVisibility {
   trade_route: boolean
   landmark: boolean
   river: boolean
+  faction_control: boolean
 }
 
 export interface MapViewerProps {
@@ -55,6 +56,7 @@ export interface MapViewerHandle {
   undoMeasurePoint: () => void
   clearMeasurePoints: () => void
   updateFeaturePosition: (featureId: string, coords: [number, number]) => void
+  setFactionOverlay: (enabled: boolean) => void
 }
 
 // SVG viewBox dimensions
@@ -127,6 +129,15 @@ function getElevationColor(elev: number): string {
   return '#f5f5f5' // white peaks
 }
 
+const CIV_COLORS: Record<string, string> = {
+  ngaru_bon: '#9a8a7a',
+  irrah: '#b8a060',
+  kheshkai: '#8a9a5a',
+  ndjadi: '#5a9a6a',
+  qollari: '#4a8a7a',
+  oravan: '#4a7a9a',
+}
+
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
@@ -135,6 +146,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
     const layerRefsRef = useRef<Map<string, L.Layer[]>>(new Map())
+    const terrainCellMetaRef = useRef<Map<string, { polygon: L.Polygon; elevation: number; civ: string }>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
@@ -180,6 +192,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const marker = markersRef.current.get(featureId)
         if (marker) {
           marker.setLatLng(svgToLatLng(coords[0], coords[1]))
+        }
+      },
+      setFactionOverlay(enabled: boolean) {
+        for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
+          polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
         }
       },
     }))
@@ -316,7 +333,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
               fillOpacity = defaultOpacity
               weight = 2
             } else if (category === 'terrain_cell') {
-              fillColor = getElevationColor(props.elevation as number || 0)
+              const civ = (props.civ as string) || ''
+              fillColor = layers.faction_control
+                ? (CIV_COLORS[civ] || '#888')
+                : getElevationColor(props.elevation as number || 0)
               fillOpacity = defaultOpacity
               weight = 0
             } else if (category === 'civilization') {
@@ -354,6 +374,15 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             polygon.addTo(group)
             layerRefs.push(polygon)
+
+            if (category === 'terrain_cell') {
+              const fid = (feature as unknown as Record<string, unknown>).id as string || (props.id as string) || ''
+              terrainCellMetaRef.current.set(fid, {
+                polygon,
+                elevation: (props.elevation as number) || 0,
+                civ: (props.civ as string) || '',
+              })
+            }
 
           } else if (geomType === 'LineString') {
             const coords = feature.geometry.coordinates as number[][]
@@ -479,6 +508,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         mapRef.current = null
         layerGroupsRef.current.clear()
         layerRefsRef.current.clear()
+        terrainCellMetaRef.current.clear()
         markersRef.current.clear()
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -507,6 +537,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       }
     }, [layers, zoomLevel])
+
+    // Faction overlay: tint terrain cells by controlling civilization
+    useEffect(() => {
+      const enabled = layers.faction_control
+      for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
+        polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
+      }
+    }, [layers.faction_control])
 
     // Update layer opacity when opacities change
     useEffect(() => {

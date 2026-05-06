@@ -46,6 +46,7 @@ export interface LayerVisibility {
   trade_route: boolean
   landmark: boolean
   river: boolean
+  faction_control: boolean
 }
 
 export interface LayerOpacity {
@@ -59,6 +60,7 @@ export interface LayerOpacity {
   trade_route: number
   landmark: number
   river: number
+  faction_control: number
 }
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -72,6 +74,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   trade_route: true,
   landmark: true,
   river: true,
+  faction_control: false,
 }
 
 const DEFAULT_OPACITY: LayerOpacity = {
@@ -85,6 +88,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
+  faction_control: 1,
 }
 
 function App() {
@@ -102,7 +106,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
