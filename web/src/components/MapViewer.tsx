@@ -12,7 +12,7 @@ interface GeoJSONFeature {
 }
 
 import { initD3Overlay } from '../utils/d3-overlay'
-import { formatDistance } from '../utils/measure'
+import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
 
@@ -732,6 +732,21 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
     }, [measurePoints, onMeasureUpdate])
 
+    // Visual styles per edge type
+    const EDGE_STYLES: Record<string, { color: string; weight: number; dashArray: string | null; glow: string }> = {
+      trade_route:   { color: '#d4a854', weight: 5, dashArray: null,        glow: 'rgba(212,168,84,0.5)' },
+      chokepoint:    { color: '#e8a030', weight: 4, dashArray: '8,6',       glow: 'rgba(232,160,48,0.45)' },
+      intra_civ:     { color: '#8a7a5a', weight: 3, dashArray: '4,4',       glow: 'rgba(138,122,90,0.35)' },
+      civ_link:      { color: '#8a7a5a', weight: 3, dashArray: null,        glow: 'rgba(138,122,90,0.35)' },
+    }
+
+    const TYPE_LABELS: Record<string, string> = {
+      trade_route: 'Trade Route',
+      chokepoint: 'Chokepoint',
+      intra_civ: 'Within Civilization',
+      civ_link: 'Border Crossing',
+    }
+
     // Render journey route overlay
     useEffect(() => {
       if (!mapRef.current) return
@@ -748,25 +763,54 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const a = route.nodes[i - 1]
         const b = route.nodes[i]
         const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
-        L.polyline(latlngs, {
-          color: '#c4a862',
-          weight: 4,
+        const edge = route.edges[i - 1]
+        const style = EDGE_STYLES[edge?.type || 'intra_civ']
+
+        const poly = L.polyline(latlngs, {
+          color: style.color,
+          weight: style.weight,
           opacity: 0.9,
           lineCap: 'round',
           lineJoin: 'round',
           className: 'journey-route-line',
-          dashArray: '10,5',
-        }).addTo(group)
+          dashArray: style.dashArray || undefined,
+        })
 
-        // Segment label at midpoint
+        // Per-segment tooltip
+        const km = edge ? svgDistanceToKm(edge.distanceSvg) : 0
+        const days = edge?.segmentDays?.toFixed(1) || '—'
+        const typeLabel = edge ? (TYPE_LABELS[edge.type] || edge.type) : ''
+        const warning = edge?.seasonal ? `<div class="journey-seg-warning">⚠ ${edge.seasonal}</div>` : ''
+        const bottleneck = edge?.bottleneck ? `<div class="journey-seg-bottleneck">▲ ${edge.bottleneck}</div>` : ''
+
+        poly.bindTooltip(
+          `<div class="journey-seg-tooltip">
+            <div class="journey-seg-name">${edge?.name || ''}</div>
+            <div class="journey-seg-meta">${typeLabel} · ${km.toFixed(1)} km · ~${days} days</div>
+            ${bottleneck}
+            ${warning}
+          </div>`,
+          { sticky: true, className: 'journey-seg-popup', direction: 'top' }
+        )
+
+        poly.on('mouseover', function (this: L.Polyline) {
+          this.setStyle({ weight: style.weight + 2, opacity: 1 })
+          this.bringToFront()
+        })
+        poly.on('mouseout', function (this: L.Polyline) {
+          this.setStyle({ weight: style.weight, opacity: 0.9 })
+        })
+
+        poly.addTo(group)
+
+        // Segment label at midpoint (subtle, hidden by default, shown on hover via CSS)
         const midX = (a.x + b.x) / 2
         const midY = (a.y + b.y) / 2
-        const edge = route.edges[i - 1]
         const segLabel = L.divIcon({
-          className: 'measure-label',
-          html: `<div class="measure-label-inner measure-segment-inner">${edge ? edge.name : ''}</div>`,
-          iconSize: [120, 18],
-          iconAnchor: [60, 9],
+          className: 'journey-seg-label',
+          html: `<div class="journey-seg-label-inner">${edge ? edge.name : ''}</div>`,
+          iconSize: [140, 16],
+          iconAnchor: [70, 8],
         })
         L.marker(svgToLatLng(midX, midY) as L.LatLngExpression, {
           icon: segLabel,

@@ -40,6 +40,7 @@ export interface JourneyEdge {
   bottleneck?: string
   seasonal?: string
   seasonalKey?: string
+  segmentDays?: number
 }
 
 export interface JourneyRoute {
@@ -406,6 +407,20 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
   // Raw geographic distance (not penalized cost)
   const rawTotalSvg = pathEdges.reduce((sum, e) => sum + e.distanceSvg, 0)
   const totalKm = svgDistanceToKm(rawTotalSvg)
+
+  // Per-segment day estimates based on edge type
+  const speedByType: Record<string, number> = {
+    trade_route: 50,
+    chokepoint: 12.5,
+    intra_civ: 25,
+    civ_link: 25,
+  }
+  for (const edge of pathEdges) {
+    const km = svgDistanceToKm(edge.distanceSvg)
+    const speed = speedByType[edge.type] || 25
+    edge.segmentDays = km / speed
+  }
+
   // Mixed travel speed: 25 km/day average for overland
   const estimatedDays = totalKm / 25
 
