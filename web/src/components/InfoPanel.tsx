@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
+import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
+import type { LoreEntry, LoreIndex } from '../App'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -13,6 +15,7 @@ interface GeoJSONFeature {
 interface InfoPanelProps {
   feature: GeoJSONFeature | null
   allFeatures?: GeoJSONFeature[]
+  lore?: LoreIndex
   open: boolean
   onClose: () => void
   onSelectFeature?: (feature: GeoJSONFeature) => void
@@ -92,13 +95,96 @@ const CATEGORY_ICONS: Record<string, string> = {
   river: '〜',
 }
 
-export default function InfoPanel({ feature, allFeatures, open, onClose, onSelectFeature }: InfoPanelProps) {
+// Lore category badge colors
+const LORE_CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  factions: { bg: 'rgba(200, 80, 60, 0.15)', text: '#d4a08c' },
+  crisis: { bg: 'rgba(200, 80, 60, 0.15)', text: '#d4a08c' },
+  magic: { bg: 'rgba(140, 100, 200, 0.15)', text: '#c4b0e0' },
+  religion: { bg: 'rgba(200, 170, 80, 0.15)', text: '#e0d0a0' },
+  geography: { bg: 'rgba(80, 140, 200, 0.15)', text: '#a0c8e8' },
+  ecology: { bg: 'rgba(100, 180, 120, 0.15)', text: '#a8d8b8' },
+  economy: { bg: 'rgba(180, 140, 80, 0.15)', text: '#d8c8a0' },
+  linguistics: { bg: 'rgba(100, 180, 180, 0.15)', text: '#a0d8d8' },
+  lore: { bg: 'rgba(140, 140, 140, 0.15)', text: '#c0c0c0' },
+}
+
+function getFeatureId(f: GeoJSONFeature): string {
+  return ((f as unknown as Record<string, unknown>).id as string) || (f.properties.id as string) || ''
+}
+
+function LoreSection({ entries }: { entries: LoreEntry[] }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  if (entries.length === 0) return null
+
+  const toggle = (key: string) => {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  return (
+    <div className="info-field" key="lore-section">
+      <div className="info-field-header">
+        <div className="info-field-label">Lore & Sources</div>
+        <span className="lore-count">{entries.length}</span>
+      </div>
+      <div className="lore-entries">
+        {entries.map((entry, i) => {
+          const key = `${entry.source}-${i}`
+          const isExpanded = expanded[key]
+          const colors = LORE_CATEGORY_COLORS[entry.category] || LORE_CATEGORY_COLORS.lore
+          const needsToggle = entry.summary.length > 140
+
+          return (
+            <div className="lore-entry" key={key}>
+              <div className="lore-entry-header">
+                <span
+                  className="lore-badge"
+                  style={{ background: colors.bg, color: colors.text }}
+                >
+                  {entry.category}
+                </span>
+                <span className="lore-title" title={entry.title}>
+                  {entry.title}
+                </span>
+                {needsToggle && (
+                  <button
+                    className="lore-toggle"
+                    onClick={() => toggle(key)}
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                  >
+                    {isExpanded ? '▲' : '▼'}
+                  </button>
+                )}
+              </div>
+              <div className={`lore-summary ${!isExpanded && needsToggle ? 'truncated' : ''}`}>
+                {entry.summary}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const related = useMemo(() => {
     if (!feature || !allFeatures) return []
     return findRelatedFeatures(feature, allFeatures)
   }, [feature, allFeatures])
+
+  const featureLore = useMemo(() => {
+    if (!feature || !lore) return []
+    const id = getFeatureId(feature)
+    return lore[id] || []
+  }, [feature, lore])
+
+  const travelEstimate = useMemo(() => {
+    if (!feature) return null
+    return estimateTravelTime(feature)
+  }, [feature])
 
   if (!feature) {
     return <div className={`info-panel ${open ? 'open' : ''}`} />
@@ -124,6 +210,12 @@ export default function InfoPanel({ feature, allFeatures, open, onClose, onSelec
           <h2 className="info-panel-name">{name}</h2>
           {etymology && (
             <p className="info-panel-etymology">{etymology}</p>
+          )}
+          {travelEstimate && (
+            <p className="info-panel-travel">
+              <span className="travel-icon">⏱</span>
+              {formatTravelEstimate(travelEstimate)}
+            </p>
           )}
         </div>
         <button
@@ -214,6 +306,9 @@ export default function InfoPanel({ feature, allFeatures, open, onClose, onSelec
             </div>
           </div>
         )}
+
+        {/* Lore & Sources */}
+        <LoreSection entries={featureLore} />
       </div>
     </div>
   )

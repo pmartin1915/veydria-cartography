@@ -24,6 +24,16 @@ export interface GeoJSONCollection {
   features: GeoJSONFeature[]
 }
 
+// Lore index types
+export interface LoreEntry {
+  title: string
+  category: string
+  source: string
+  summary: string
+}
+
+export type LoreIndex = Record<string, LoreEntry[]>
+
 // Layer visibility state
 export interface LayerVisibility {
   terrain_cell: boolean
@@ -79,6 +89,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
 
 function App() {
   const [geojson, setGeojson] = useState<GeoJSONCollection | null>(null)
+  const [loreIndex, setLoreIndex] = useState<LoreIndex>({})
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -91,7 +102,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
@@ -117,6 +128,14 @@ function App() {
   }, [])
 
   useEffect(() => {
+    // Fetch lore index in parallel with geojson
+    fetch('/veydria-lore.json')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.features) setLoreIndex(data.features as LoreIndex)
+      })
+      .catch(() => { /* lore index is optional */ })
+
     fetch('/veydria-spatial.geojson')
       .then(async (res) => {
         if (!res.ok) throw new Error(`Failed to load GeoJSON: ${res.status}`)
@@ -255,8 +274,16 @@ function App() {
       return
     }
     const result = applyPatches(geojson, patches)
-    // Force re-render by creating a new geojson reference
-    setGeojson({ ...geojson })
+    // Imperatively update marker positions to avoid a full 3000-layer rebuild
+    for (const idx of result.mutatedFeatures) {
+      const feature = result.newFeatures[idx]
+      const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+      if (id && feature.geometry.type === 'Point') {
+        mapRef.current?.updateFeaturePosition(id, feature.geometry.coordinates as [number, number])
+      }
+    }
+    // New features array reference triggers React re-renders in SearchBar / InfoPanel
+    setGeojson({ ...geojson, features: result.newFeatures as GeoJSONFeature[] })
     setPatchToast(`Applied ${result.applied} patch${result.applied !== 1 ? 'es' : ''}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`)
     if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
     patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
@@ -490,6 +517,7 @@ function App() {
         <InfoPanel
           feature={selectedFeature}
           allFeatures={geojson?.features}
+          lore={loreIndex}
           open={panelOpen}
           onClose={handleClosePanel}
           onSelectFeature={(f) => {

@@ -54,6 +54,7 @@ export interface MapViewerHandle {
   flyToFeatureById: (featureId: string) => boolean
   undoMeasurePoint: () => void
   clearMeasurePoints: () => void
+  updateFeaturePosition: (featureId: string, coords: [number, number]) => void
 }
 
 // SVG viewBox dimensions
@@ -137,6 +138,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
+    const geojsonRef = useRef(geojson)
+    useEffect(() => { geojsonRef.current = geojson }, [geojson])
+
     const measureModeRef = useRef(measureMode)
 
     // Keep ref in sync so event handlers see current value without re-binding
@@ -144,29 +148,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       measureModeRef.current = measureMode
     }, [measureMode])
 
-    // Separate features by type
-    const featuresByCategory = useMemo(() => {
-      const groups: Record<string, GeoJSONFeature[]> = {}
-      for (const feature of geojson.features) {
-        const cat = (feature.properties.category as string) || 'unknown'
-        if (!groups[cat]) groups[cat] = []
-        groups[cat].push(feature)
-      }
-      return groups
-    }, [geojson])
-
     const [zoomLevel, setZoomLevel] = useState<number>(-1)
     const [measurePoints, setMeasurePoints] = useState<Array<{x: number, y: number}>>([])
-
-    // Build feature ID lookup for deep-linking
-    const featureById = useMemo(() => {
-      const map = new Map<string, GeoJSONFeature>()
-      for (const f of geojson.features) {
-        const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
-        if (id) map.set(id, f)
-      }
-      return map
-    }, [geojson])
 
     // Expose flyToFeature to parent
     useImperativeHandle(ref, () => ({
@@ -177,7 +160,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         mapRef.current.flyTo(latlng as L.LatLngExpression, 1.5, { duration: 0.8 })
       },
       flyToFeatureById(featureId: string) {
-        const feature = featureById.get(featureId)
+        const feature = geojsonRef.current.features.find((f) => {
+          const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+          return id === featureId
+        })
         if (!feature || !mapRef.current) return false
         const [x, y] = getCentroid(feature.geometry.coordinates, feature.geometry.type)
         const latlng = svgToLatLng(x, y)
@@ -189,6 +175,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       },
       clearMeasurePoints() {
         setMeasurePoints([])
+      },
+      updateFeaturePosition(featureId: string, coords: [number, number]) {
+        const marker = markersRef.current.get(featureId)
+        if (marker) {
+          marker.setLatLng(svgToLatLng(coords[0], coords[1]))
+        }
       },
     }))
 
@@ -281,6 +273,15 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // SVG image overlay
       L.imageOverlay('/veydria-schematic.svg', bounds).addTo(map)
 
+      // Separate features by type (computed inline so geojson ref changes
+      // don't trigger a full layer rebuild)
+      const featuresByCategory: Record<string, GeoJSONFeature[]> = {}
+      for (const feature of geojsonRef.current.features) {
+        const cat = (feature.properties.category as string) || 'unknown'
+        if (!featuresByCategory[cat]) featuresByCategory[cat] = []
+        featuresByCategory[cat].push(feature)
+      }
+
       // Create layer groups for each category
       const categoryLayers: [string, GeoJSONFeature[]][] = [
         ['water', featuresByCategory['water'] || []],
@@ -347,7 +348,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             })
 
             polygon.bindTooltip(
-              `<div class="popup-name">${props.name}</div><div class="popup-category">${(category || '').replace('_', ' ')}</div>`,
+              `<div class="popup-name">${props.name}</div><div class="popup-category">${(category || '').replaceAll('_', ' ')}</div>`,
               { direction: 'center', className: 'leaflet-popup-content-wrapper' }
             )
 
@@ -439,7 +440,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
               })
             }
 
-            const catLabel = (category || '').replace('_', ' ')
+            const catLabel = (category || '').replaceAll('_', ' ')
             const typeLabel = props.type ? ` · ${props.type}` : ''
             marker.bindTooltip(
               `<div class="popup-name">${props.name}</div><div class="popup-category">${catLabel}${typeLabel}</div>`,
@@ -480,7 +481,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         layerRefsRef.current.clear()
         markersRef.current.clear()
       }
-    }, [geojson, featuresByCategory, onFeatureClick, initialViewport, onViewportChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onFeatureClick, initialViewport, onViewportChange])
 
     // Toggle layer visibility (respecting zoom thresholds)
     useEffect(() => {

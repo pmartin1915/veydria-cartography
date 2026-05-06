@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useDeferredValue } from 'react'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -33,15 +33,27 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const deferredQuery = useDeferredValue(query)
 
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  // Filter features by query
+  // Pre-built search index for fast filtering
+  const searchIndex = useMemo(() => {
+    return features.map((f) => ({
+      feature: f,
+      name: ((f.properties.name as string) || '').toLowerCase(),
+      category: ((f.properties.category as string) || '').toLowerCase(),
+      description: ((f.properties.description as string) || '').toLowerCase(),
+      etymology: ((f.properties.etymology as string) || '').toLowerCase(),
+    }))
+  }, [features])
+
+  // Filter features by deferred query (keeps input responsive)
   const results = useMemo(() => {
-    if (!query.trim()) {
+    if (!deferredQuery.trim()) {
       // Show all named features, grouped by category
       return features
         .filter((f) => f.properties.name)
@@ -57,25 +69,26 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
         })
     }
 
-    const q = query.toLowerCase()
-    return features
-      .filter((f) => {
-        const name = ((f.properties.name as string) || '').toLowerCase()
-        const category = ((f.properties.category as string) || '').toLowerCase()
-        const desc = ((f.properties.description as string) || '').toLowerCase()
-        const etymology = ((f.properties.etymology as string) || '').toLowerCase()
-        return name.includes(q) || category.includes(q) || desc.includes(q) || etymology.includes(q)
+    const q = deferredQuery.toLowerCase()
+    return searchIndex
+      .filter((entry) => {
+        return (
+          entry.name.includes(q) ||
+          entry.category.includes(q) ||
+          entry.description.includes(q) ||
+          entry.etymology.includes(q)
+        )
       })
+      .map((entry) => entry.feature)
       .sort((a, b) => {
         const aName = ((a.properties.name as string) || '').toLowerCase()
         const bName = ((b.properties.name as string) || '').toLowerCase()
-        // Prioritize name matches at start
         const aStarts = aName.startsWith(q) ? -1 : 0
         const bStarts = bName.startsWith(q) ? -1 : 0
         if (aStarts !== bStarts) return aStarts - bStarts
         return aName.localeCompare(bName)
       })
-  }, [features, query])
+  }, [searchIndex, deferredQuery])
 
   // Reset selection when results change
   useEffect(() => {

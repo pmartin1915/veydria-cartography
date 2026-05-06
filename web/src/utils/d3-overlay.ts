@@ -254,10 +254,22 @@ export function initD3Overlay(
   update()
   if (isVisible) startAnimation()
 
-  // Bind to Leaflet events
-  map.on('zoom', update)
+  // Bind to Leaflet events — use viewreset + moveend only.
+  // 'zoom' fires every frame during animation; omitting it avoids
+  // expensive path.attr('d') recalculation mid-zoom.
   map.on('viewreset', update)
   map.on('moveend', update)
+
+  // Pause animation when tab is hidden to save battery
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      stopAnimation()
+    } else if (isVisible) {
+      createParticles()
+      startAnimation()
+    }
+  }
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 
   return {
     update,
@@ -267,7 +279,7 @@ export function initD3Overlay(
         cancelAnimationFrame(particleRafId)
         particleRafId = null
       }
-      map.off('zoom', update)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       map.off('viewreset', update)
       map.off('moveend', update)
       routeGroup.remove()

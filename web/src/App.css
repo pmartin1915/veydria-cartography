@@ -644,6 +644,20 @@ body {
   margin: 4px 0 0;
 }
 
+.info-panel-travel {
+  font-size: 11px;
+  color: var(--text-accent);
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.travel-icon {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
 .info-field {
   margin-bottom: 16px;
   padding-bottom: 12px;
@@ -764,6 +778,97 @@ body {
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* --- Lore & Sources --- */
+.lore-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-accent);
+  background: rgba(196, 168, 98, 0.1);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.lore-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.lore-entry {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: var(--transition-fast);
+}
+
+.lore-entry:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-surface);
+}
+
+.lore-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.lore-badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lore-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lore-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.lore-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+}
+
+.lore-summary {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.lore-summary.truncated {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* --- Search Overlay --- */
@@ -1256,6 +1361,74 @@ body {
   text-align: center;
   border-top: 1px solid var(--border-subtle);
   padding-top: 6px;
+}
+
+/* --- Error Boundary --- */
+.error-boundary {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  text-align: center;
+  padding: 40px;
+}
+
+.error-boundary-icon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.error-boundary-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-accent);
+  margin: 0;
+}
+
+.error-boundary-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.error-boundary-btn {
+  padding: 10px 24px;
+  background: var(--text-accent);
+  border: none;
+  border-radius: 6px;
+  color: var(--bg-deep);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  margin-top: 8px;
+}
+
+.error-boundary-btn:hover {
+  background: #d4b870;
+}
+
+.error-boundary-trace {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  padding: 12px 16px;
+  border-radius: 6px;
+  max-width: 500px;
+  margin-top: 8px;
+  overflow-x: auto;
+  text-align: left;
+  border: 1px solid var(--border-subtle);
 }
 
 /* --- Keyboard Help --- */
