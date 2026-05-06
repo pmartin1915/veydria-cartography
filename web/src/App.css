@@ -1752,6 +1752,100 @@ body {
   gap: 10px;
 }
 
+/* Season selector */
+.journey-seasons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.journey-seasons-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.journey-seasons-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.journey-season-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.journey-season-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.journey-season-btn.active {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+}
+
+/* Route mode selector */
+.journey-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.journey-modes-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.journey-modes-row {
+  display: flex;
+  gap: 4px;
+}
+
+.journey-mode-btn {
+  flex: 1;
+  padding: 5px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.journey-mode-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.journey-mode-btn.active {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+}
+
 /* Field */
 .journey-field {
   display: flex;
@@ -1941,6 +2035,63 @@ body {
   cursor: not-allowed;
 }
 
+/* Waypoint field header */
+.journey-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.journey-wp-remove {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.journey-wp-remove:hover {
+  background: rgba(255, 68, 68, 0.15);
+  color: #f44;
+}
+
+/* Add waypoint button */
+.journey-add-wp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.journey-add-wp:hover:not(:disabled) {
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+  background: rgba(196, 168, 98, 0.05);
+}
+
+.journey-add-wp:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* Actions */
 .journey-actions {
   display: flex;
@@ -1990,6 +2141,61 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.journey-route-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.journey-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.journey-export-btn:hover {
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
+}
+
+.journey-export-btn svg {
+  opacity: 0.7;
+}
+
+.journey-export-toast {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-accent);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  animation: toast-in 200ms ease;
+  z-index: 10;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .journey-route-stats {

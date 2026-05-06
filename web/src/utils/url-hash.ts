@@ -10,6 +10,8 @@ export interface ViewportState {
   zoom?: number
   centerX?: number
   centerY?: number
+  journeyFrom?: string
+  journeyTo?: string
 }
 
 const SVG_WIDTH = 1200
@@ -23,6 +25,12 @@ export function parseHash(hash: string): ViewportState {
 
   const featureId = params.get('feature')
   if (featureId) result.featureId = featureId
+
+  const journeyFrom = params.get('journeyFrom')
+  if (journeyFrom) result.journeyFrom = journeyFrom
+
+  const journeyTo = params.get('journeyTo')
+  if (journeyTo) result.journeyTo = journeyTo
 
   const z = params.get('z')
   if (z !== null) {
@@ -48,6 +56,8 @@ export function parseHash(hash: string): ViewportState {
 export function buildHash(state: ViewportState): string {
   const params = new URLSearchParams()
   if (state.featureId) params.set('feature', state.featureId)
+  if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
+  if (state.journeyTo) params.set('journeyTo', state.journeyTo)
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))

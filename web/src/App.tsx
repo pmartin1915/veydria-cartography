@@ -198,6 +198,13 @@ function App() {
             }
           }, 600)
         }
+
+        // Handle journey deep-linking
+        const journeyFrom = hashState.journeyFrom
+        const journeyTo = hashState.journeyTo
+        if (journeyFrom && journeyTo) {
+          setJourneyMode(true)
+        }
       })
       .catch((err) => {
         setError(err.message)
@@ -315,6 +322,40 @@ function App() {
 
   const handleMeasureClear = useCallback(() => {
     mapRef.current?.clearMeasurePoints()
+  }, [])
+
+  const handleJourneyRouteComputed = useCallback((route: JourneyRoute | null) => {
+    setJourneyRoute(route)
+    if (!route) {
+      mapRef.current?.clearJourneyRoute()
+      viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
+    } else {
+      const startId = route.nodes[0]?.id
+      const endId = route.nodes[route.nodes.length - 1]?.id
+      viewportRef.current = { ...viewportRef.current, journeyFrom: startId, journeyTo: endId }
+    }
+    // Trigger hash update
+    if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
+    hashUpdateTimeoutRef.current = window.setTimeout(() => {
+      const hash = buildHash(viewportRef.current)
+      if (hash !== window.location.hash) {
+        window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
+      }
+    }, 300)
+  }, [])
+
+  const handleJourneyClose = useCallback(() => {
+    setJourneyMode(false)
+    setJourneyRoute(null)
+    mapRef.current?.clearJourneyRoute()
+    viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
+    if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
+    hashUpdateTimeoutRef.current = window.setTimeout(() => {
+      const hash = buildHash(viewportRef.current)
+      if (hash !== window.location.hash) {
+        window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
+      }
+    }, 300)
   }, [])
 
   // Report viewport changes from MapViewer (throttled)
@@ -570,15 +611,10 @@ function App() {
           <JourneyPlanner
             geojson={geojson}
             active={journeyMode}
-            onClose={() => {
-              setJourneyMode(false)
-              setJourneyRoute(null)
-              mapRef.current?.clearJourneyRoute()
-            }}
-            onRouteComputed={(route) => {
-              setJourneyRoute(route)
-              if (!route) mapRef.current?.clearJourneyRoute()
-            }}
+            defaultStartId={initialHashRef.current.journeyFrom}
+            defaultEndId={initialHashRef.current.journeyTo}
+            onClose={handleJourneyClose}
+            onRouteComputed={handleJourneyRouteComputed}
           />
         )}
 

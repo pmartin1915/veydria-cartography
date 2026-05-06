@@ -22,6 +22,15 @@ export interface JourneyNode {
   civ?: string
 }
 
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
+export type RouteMode = 'direct' | 'fastest' | 'safest' | 'cheapest'
+
+export interface SeasonalRestriction {
+  warning: string
+  blockedIn: Season[]
+  riskyIn: Season[]
+}
+
 export interface JourneyEdge {
   from: string
   to: string
@@ -30,6 +39,7 @@ export interface JourneyEdge {
   name: string
   bottleneck?: string
   seasonal?: string
+  seasonalKey?: string
 }
 
 export interface JourneyRoute {
@@ -69,6 +79,20 @@ function findNearestCiv(
     }
   }
   return nearest
+}
+
+// Seasonal restrictions keyed by route/chokepoint id
+const SEASONAL_DATA: Record<string, SeasonalRestriction> = {
+  'coastal_monsoon': {
+    warning: 'Monsoon-gated: SE trade season (late spring–early autumn) only. NW monsoon (Nov–Mar) is marginal with cyclone risk.',
+    blockedIn: ['winter'],
+    riskyIn: [],
+  },
+  'caravan_thread': {
+    warning: 'Desert crossing: Irrah caravans avoid high summer. Qalībin escorts required for Basin leg.',
+    blockedIn: ['summer'],
+    riskyIn: [],
+  },
 }
 
 // Build the routable graph from GeoJSON
@@ -128,12 +152,6 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   const ID_ALIASES: Record<string, string> = {
     basin: 'aethelian_basin',
   }
-
-// Seasonal restrictions keyed by trade route name (lowercase, spaces→underscores)
-const SEASONAL_DATA: Record<string, string> = {
-  'coastal_monsoon': 'Monsoon-gated: SE trade season (late spring–early autumn) only. NW monsoon (Nov–Mar) is marginal with cyclone risk.',
-  'caravan_thread': 'Desert crossing: Irrah caravans avoid high summer. Qalībin escorts required for Basin leg.',
-}
 
   // ── 2. Point features (ports, oases, landmarks, chokepoints, contested sites) ──
   const pointFeatures: Array<{ feature: GeoJSONFeature; node: JourneyNode }> = []
@@ -199,9 +217,9 @@ const SEASONAL_DATA: Record<string, string> = {
       }
     }
 
-    // Look up seasonal warning by route name
+    // Look up seasonal restriction by route name
     const routeKey = (f.properties.id as string || '').toLowerCase()
-    const routeSeasonal = SEASONAL_DATA[routeKey]
+    const routeSeasonalInfo = SEASONAL_DATA[routeKey]
 
     // If route has no geometry length, estimate from centroid-to-centroid
     if (routeLen === 0) {
@@ -222,7 +240,8 @@ const SEASONAL_DATA: Record<string, string> = {
         type: 'trade_route',
         name: f.properties.name as string || 'Trade Route',
         bottleneck: f.properties.bottleneck as string | undefined,
-        seasonal: routeSeasonal,
+        seasonal: routeSeasonalInfo?.warning,
+        seasonalKey: routeSeasonalInfo ? routeKey : undefined,
       })
     }
   }
@@ -233,9 +252,10 @@ const SEASONAL_DATA: Record<string, string> = {
     const connects = f.properties.connects as string[] | undefined
     if (!connects || connects.length < 2) continue
 
-    // Seasonal warning for maritime chokepoints
-    const chokeSeasonal = f.properties.type === 'maritime_strait'
-      ? 'Maritime passage subject to monsoon windows and naval patrols.'
+    // Seasonal restriction for maritime chokepoints
+    const isMaritimeStrait = f.properties.type === 'maritime_strait'
+    const chokeSeasonalInfo: SeasonalRestriction | undefined = isMaritimeStrait
+      ? { warning: 'Maritime passage subject to monsoon windows and naval patrols.', blockedIn: ['winter'], riskyIn: [] }
       : undefined
 
     // Connect all pairs in the connects list
@@ -259,7 +279,8 @@ const SEASONAL_DATA: Record<string, string> = {
           type: 'chokepoint',
           name: f.properties.name as string || 'Chokepoint',
           bottleneck: f.properties.strategic_value as string | undefined,
-          seasonal: chokeSeasonal,
+          seasonal: chokeSeasonalInfo?.warning,
+          seasonalKey: chokeSeasonalInfo ? `choke_${f.properties.id as string}` : undefined,
         })
       }
     }
@@ -276,8 +297,42 @@ const SEASONAL_DATA: Record<string, string> = {
   return { nodes, adj }
 }
 
-// Dijkstra shortest path
-export function findRoute(graph: Graph, startId: string, endId: string): JourneyRoute | null {
+function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
+  if (mode === 'direct') return edge.distanceSvg
+
+  const distance = edge.distanceSvg
+
+  if (mode === 'fastest') {
+    const speed = edge.type === 'trade_route' ? 2.0 :
+                  edge.type === 'chokepoint' ? 0.5 :
+                  edge.type === 'intra_civ' ? 1.0 :
+                  1.0
+    return distance / speed
+  }
+
+  if (mode === 'safest') {
+    const risk = edge.type === 'trade_route' ? 1.0 :
+                 edge.type === 'chokepoint' ? 3.0 :
+                 edge.type === 'intra_civ' ? 1.2 :
+                 1.5
+    return distance * risk
+  }
+
+  if (mode === 'cheapest') {
+    const cost = edge.type === 'trade_route' ? 1.0 :
+                 edge.type === 'chokepoint' ? 2.0 :
+                 edge.type === 'intra_civ' ? 1.0 :
+                 1.5
+    return distance * cost
+  }
+
+  return distance
+}
+
+/** Dijkstra shortest path with optional seasonal filtering and route mode.
+ *  If a season is given, edges blocked in that season get a 10× penalty.
+ */
+export function findRoute(graph: Graph, startId: string, endId: string, season?: Season, mode: RouteMode = 'direct'): JourneyRoute | null {
   if (!graph.nodes.has(startId) || !graph.nodes.has(endId)) return null
   if (startId === endId) {
     const node = graph.nodes.get(startId)!
@@ -314,7 +369,14 @@ export function findRoute(graph: Graph, startId: string, endId: string): Journey
     const neighbors = graph.adj.get(u) || []
     for (const { to: v, edge } of neighbors) {
       if (visited.has(v)) continue
-      const alt = (distMap.get(u) || Infinity) + edge.distanceSvg
+      let edgeCost = getEdgeWeight(edge, mode)
+      if (season && edge.seasonalKey) {
+        const restriction = SEASONAL_DATA[edge.seasonalKey]
+        if (restriction?.blockedIn.includes(season)) {
+          edgeCost *= 10
+        }
+      }
+      const alt = (distMap.get(u) || Infinity) + edgeCost
       if (alt < (distMap.get(v) || Infinity)) {
         distMap.set(v, alt)
         prev.set(v, { node: u, edge })
@@ -341,9 +403,10 @@ export function findRoute(graph: Graph, startId: string, endId: string): Journey
     }
   }
 
-  const totalSvg = distMap.get(endId) || 0
-  const totalKm = svgDistanceToKm(totalSvg)
-  // Mixed travel speed: 25 km/day average for overland + mountain/chokepoint penalties
+  // Raw geographic distance (not penalized cost)
+  const rawTotalSvg = pathEdges.reduce((sum, e) => sum + e.distanceSvg, 0)
+  const totalKm = svgDistanceToKm(rawTotalSvg)
+  // Mixed travel speed: 25 km/day average for overland
   const estimatedDays = totalKm / 25
 
   const bottlenecks: string[] = []
@@ -360,11 +423,62 @@ export function findRoute(graph: Graph, startId: string, endId: string): Journey
   return {
     nodes: pathNodes,
     edges: pathEdges,
-    totalDistanceSvg: totalSvg,
+    totalDistanceSvg: rawTotalSvg,
     totalKm,
     estimatedDays,
     bottlenecks,
     seasonalWarnings,
+  }
+}
+
+/** Compute a multi-stop route through a series of waypoints.
+ *  Returns null if any leg is unreachable.
+ */
+export function findMultiStopRoute(
+  graph: Graph,
+  stops: string[],
+  season?: Season,
+  mode: RouteMode = 'direct'
+): JourneyRoute | null {
+  if (stops.length < 2) return null
+
+  const allNodes: JourneyNode[] = []
+  const allEdges: JourneyEdge[] = []
+  const allBottlenecks: string[] = []
+  const allSeasonal: string[] = []
+  let totalRawSvg = 0
+
+  for (let i = 0; i < stops.length - 1; i++) {
+    const leg = findRoute(graph, stops[i], stops[i + 1], season, mode)
+    if (!leg) return null
+
+    if (i === 0) {
+      allNodes.push(...leg.nodes)
+    } else {
+      // Skip the first node of subsequent legs (it's the last node of previous leg)
+      allNodes.push(...leg.nodes.slice(1))
+    }
+    allEdges.push(...leg.edges)
+    totalRawSvg += leg.totalDistanceSvg
+    for (const b of leg.bottlenecks) {
+      if (!allBottlenecks.includes(b)) allBottlenecks.push(b)
+    }
+    for (const s of leg.seasonalWarnings) {
+      if (!allSeasonal.includes(s)) allSeasonal.push(s)
+    }
+  }
+
+  const totalKm = svgDistanceToKm(totalRawSvg)
+  const estimatedDays = totalKm / 25
+
+  return {
+    nodes: allNodes,
+    edges: allEdges,
+    totalDistanceSvg: totalRawSvg,
+    totalKm,
+    estimatedDays,
+    bottlenecks: allBottlenecks,
+    seasonalWarnings: allSeasonal,
   }
 }
 
