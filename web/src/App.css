@@ -2452,3 +2452,181 @@ body {
 
 /* Pulse animation varies slightly by edge type — keep base animation,
    but we can tune per-type if we switch to class-based rendering later */
+
+/* --- Journey History Sidebar --- */
+
+.journey-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.journey-history-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.journey-history-toggle:hover {
+  border-color: var(--border-accent);
+  color: var(--text-secondary);
+  background: var(--bg-card-hover);
+}
+
+.journey-history-toggle.active {
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+  background: rgba(196, 168, 98, 0.1);
+}
+
+.journey-history-panel {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.journey-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.journey-history-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.journey-history-clear {
+  font-size: 10px;
+  color: var(--color-chokepoint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: var(--transition-fast);
+}
+
+.journey-history-clear:hover {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.journey-history-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.journey-history-list {
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.journey-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: var(--transition-fast);
+}
+
+.journey-history-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.journey-history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.journey-history-route {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journey-history-from,
+.journey-history-to {
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.journey-history-via {
+  color: var(--text-secondary);
+}
+
+.journey-history-arrow {
+  color: var(--text-muted);
+}
+
+.journey-history-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.journey-history-season {
+  text-transform: capitalize;
+}
+
+.journey-history-mode {
+  text-transform: capitalize;
+}
+
+.journey-history-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.journey-history-load,
+.journey-history-delete {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.journey-history-load:hover {
+  border-color: var(--border-accent);
+  color: var(--text-accent);
+  background: rgba(196, 168, 98, 0.1);
+}
+
+.journey-history-delete:hover {
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #f44;
+  background: rgba(255, 68, 68, 0.08);
+}

@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import type { GeoJSONCollection } from '../App'
 import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
+import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 
@@ -50,6 +51,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [waypoints, setWaypoints] = useState<string[]>([])
   const [wpSearch, setWpSearch] = useState('')
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
+  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -238,6 +241,55 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
+  async function handleCopyMarkdown() {
+    if (!route) return
+    const fromName = route.nodes[0]?.name || 'Unknown'
+    const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'
+    const wpNames = route.nodes.slice(1, -1).map(n => n.name)
+    const routeTitle = wpNames.length > 0
+      ? `${fromName} → ${wpNames.join(' → ')} → ${toName}`
+      : `${fromName} → ${toName}`
+
+    let md = `## Journey: ${routeTitle}\n\n`
+    md += `**Distance:** ${Math.round(route.totalKm)} km  \n`
+    md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
+    md += `**Mode:** ${mode}  \n`
+    if (season) md += `**Season:** ${season}  \n`
+    md += `\n### Route\n\n`
+
+    for (let i = 0; i < route.nodes.length; i++) {
+      const node = route.nodes[i]
+      md += `${i + 1}. **${node.name}** (${node.category.replace('_', ' ')})\n`
+      if (i < route.edges.length) {
+        const edge = route.edges[i]
+        const edgeKm = route.totalDistanceSvg > 0
+          ? Math.round(route.totalKm * (edge.distanceSvg / route.totalDistanceSvg))
+          : 0
+        const edgeDays = edge.segmentDays ? ` · ~${edge.segmentDays.toFixed(1)} days` : ''
+        const icon = edge.type === 'trade_route' ? '📜' :
+                     edge.type === 'chokepoint' ? '⛰' : '→'
+        md += `   ${icon} ${edge.name} (${edge.type.replace('_', '-')}) · ${edgeKm} km${edgeDays}\n`
+      }
+    }
+
+    const allWarnings = [...route.bottlenecks, ...route.seasonalWarnings]
+    if (allWarnings.length > 0) {
+      md += `\n### Warnings\n\n`
+      for (const w of allWarnings) {
+        md += `⚠️ ${w}\n`
+      }
+    }
+
+    md += `\n---\n*Exported from [Veydria Cartography](${window.location.href.split('#')[0]})*`
+
+    try {
+      await navigator.clipboard.writeText(md)
+      showExportToast('Markdown copied to clipboard')
+    } catch {
+      showExportToast('Failed to copy markdown')
+    }
+  }
+
   function handleSwap() {
     const tmp = startId
     setStartId(endId)
@@ -262,6 +314,61 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
+  function handleSaveRoute() {
+    if (!route) return
+    const entry: HistoryEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      savedAt: Date.now(),
+      fromName: route.nodes[0]?.name || '',
+      toName: route.nodes[route.nodes.length - 1]?.name || '',
+      waypoints: route.nodes.slice(1, -1).map(n => n.name),
+      season,
+      mode,
+      totalKm: route.totalKm,
+      estimatedDays: route.estimatedDays,
+      nodeIds: route.nodes.map(n => n.id),
+      edgeCount: route.edges.length,
+      bottlenecks: route.bottlenecks,
+      seasonalWarnings: route.seasonalWarnings,
+    }
+    const updated = addHistoryEntry(entry)
+    setHistory(updated)
+    showExportToast('Route saved to history')
+  }
+
+  function handleLoadHistory(entry: HistoryEntry) {
+    if (entry.nodeIds.length < 2) return
+    const [start, ...rest] = entry.nodeIds
+    const end = rest[rest.length - 1]
+    const wps = rest.slice(0, -1)
+    setStartId(start)
+    setEndId(end)
+    setWaypoints(wps)
+    setSeason(entry.season)
+    setMode(entry.mode)
+    setStartSearch('')
+    setEndSearch('')
+    setWpSearch('')
+    setWpOpenIdx(null)
+    const result = wps.length > 0
+      ? findMultiStopRoute(graph, entry.nodeIds, entry.season, entry.mode)
+      : findRoute(graph, start, end, entry.season, entry.mode)
+    setRoute(result)
+    onRouteComputed(result)
+    showExportToast('Route restored')
+  }
+
+  function handleDeleteHistory(id: string) {
+    const updated = deleteHistoryEntry(id)
+    setHistory(updated)
+  }
+
+  function handleClearHistory() {
+    const updated = clearHistory()
+    setHistory(updated)
+    showExportToast('History cleared')
+  }
+
   if (!active) return null
 
   return (
@@ -271,8 +378,65 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           <span className="journey-planner-icon">🧭</span>
           Journey Planner
         </h3>
-        <button className="journey-planner-close" onClick={onClose} title="Close (Esc)">×</button>
+        <div className="journey-header-actions">
+          <button
+            className={`journey-history-toggle ${historyOpen ? 'active' : ''}`}
+            onClick={() => setHistoryOpen(!historyOpen)}
+            title="Saved routes"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span>{history.length}</span>
+          </button>
+          <button className="journey-planner-close" onClick={onClose} title="Close (Esc)">×</button>
+        </div>
       </div>
+
+      {/* History panel */}
+      {historyOpen && (
+        <div className="journey-history-panel">
+          <div className="journey-history-header">
+            <span className="journey-history-title">Saved Routes</span>
+            {history.length > 0 && (
+              <button className="journey-history-clear" onClick={handleClearHistory}>Clear all</button>
+            )}
+          </div>
+          {history.length === 0 && (
+            <div className="journey-history-empty">No saved routes yet. Compute a route and click Save.</div>
+          )}
+          <div className="journey-history-list">
+            {history.map(entry => (
+              <div key={entry.id} className="journey-history-item">
+                <div className="journey-history-info">
+                  <div className="journey-history-route">
+                    <span className="journey-history-from">{entry.fromName}</span>
+                    {entry.waypoints.length > 0 && (
+                      <span className="journey-history-via"> → {entry.waypoints.join(' → ')}</span>
+                    )}
+                    <span className="journey-history-arrow"> → </span>
+                    <span className="journey-history-to">{entry.toName}</span>
+                  </div>
+                  <div className="journey-history-meta">
+                    {entry.season && <span className="journey-history-season">{entry.season}</span>}
+                    <span className="journey-history-mode">{entry.mode}</span>
+                    <span>{Math.round(entry.totalKm)} km</span>
+                    <span>~{formatDays(entry.estimatedDays)}</span>
+                  </div>
+                </div>
+                <div className="journey-history-actions">
+                  <button className="journey-history-load" onClick={() => handleLoadHistory(entry)} title="Load route">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M12 3l9 9-9 9"/></svg>
+                  </button>
+                  <button className="journey-history-delete" onClick={() => handleDeleteHistory(entry.id)} title="Delete">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="journey-planner-body">
         {/* Season selector */}
@@ -527,9 +691,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         {route && (
           <div className="journey-route">
             <div className="journey-route-actions">
+              <button className="journey-export-btn" onClick={handleSaveRoute} title="Save to history">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Save
+              </button>
               <button className="journey-export-btn" onClick={handleCopyLink} title="Copy shareable link">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 Link
+              </button>
+              <button className="journey-export-btn" onClick={handleCopyMarkdown} title="Copy as markdown">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Markdown
               </button>
               <button className="journey-export-btn" onClick={handleCopyJSON} title="Copy route JSON">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
