@@ -11,6 +11,7 @@ import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown } from './utils/annotations'
+import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -463,6 +464,33 @@ function App() {
     shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
   }, [])
 
+  // Snapshot button: capture the visible map as a PNG. Tries clipboard
+  // first (one-click for Discord paste); falls back to a download.
+  const handleSnapshot = useCallback(async () => {
+    const container = document.querySelector('.leaflet-container') as HTMLElement | null
+    if (!container) {
+      setShareToast('Map not ready for snapshot')
+      if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
+      shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
+      return
+    }
+    setShareToast('Capturing snapshot…')
+    try {
+      const dataUrl = await captureMapPng({ target: container })
+      const copied = await copyPngToClipboard(dataUrl)
+      if (copied) {
+        setShareToast('Snapshot copied to clipboard')
+      } else {
+        downloadPng(dataUrl, suggestSnapshotFilename())
+        setShareToast('Snapshot downloaded')
+      }
+    } catch {
+      setShareToast('Snapshot failed')
+    }
+    if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
+    shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2200)
+  }, [])
+
   // Refs for keyboard handler to avoid re-binding on every state change
   const searchOpenRef = useRef(searchOpen)
   const measureModeRef = useRef(measureMode)
@@ -646,6 +674,18 @@ function App() {
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
             <span>Share</span>
+          </button>
+          <button
+            className="search-trigger"
+            onClick={handleSnapshot}
+            title="Capture the current map view as PNG"
+            id="snapshot-trigger"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span>Snapshot</span>
           </button>
           {!shareMode && (
             <button
