@@ -308,6 +308,23 @@ body {
   color: var(--text-muted);
 }
 
+.popup-etymology {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.3;
+  max-width: 220px;
+}
+
+.popup-function {
+  font-size: 10px;
+  color: #a0c8e8;
+  margin-top: 2px;
+  line-height: 1.3;
+  max-width: 220px;
+}
+
 /* --- Layer Controls --- */
 .layer-controls {
   position: absolute;
@@ -2229,6 +2246,46 @@ body {
   font-family: var(--font-mono);
 }
 
+.journey-difficulty {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.journey-difficulty-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.journey-difficulty-badge.merchant {
+  color: #a8d8b8;
+  border-color: rgba(100, 180, 120, 0.35);
+  background: rgba(100, 180, 120, 0.08);
+}
+
+.journey-difficulty-badge.explorer {
+  color: #e8a030;
+  border-color: rgba(232, 160, 48, 0.35);
+  background: rgba(232, 160, 48, 0.08);
+}
+
+.journey-difficulty-badge.mixed {
+  color: #c4b0e0;
+  border-color: rgba(140, 100, 200, 0.35);
+  background: rgba(140, 100, 200, 0.08);
+}
+
+.journey-difficulty-badge.trivial {
+  color: var(--text-muted);
+  border-color: var(--border-subtle);
+  background: transparent;
+}
+
 /* Path timeline */
 .journey-route-path {
   position: relative;
@@ -2302,6 +2359,146 @@ body {
   font-size: 10px;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* Tabs */
+.journey-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 10px;
+}
+
+.journey-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.journey-tab:hover {
+  color: var(--text-secondary);
+}
+
+.journey-tab.active {
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
+}
+
+/* Encounters */
+.journey-encounters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journey-encounters-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.journey-encounters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.journey-encounters-count {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.journey-encounters-seed {
+  font-style: italic;
+}
+
+.journey-encounter {
+  background: rgba(13, 15, 20, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.journey-encounter.mild {
+  border-left: 3px solid #8ab87a;
+}
+
+.journey-encounter.moderate {
+  border-left: 3px solid #e8a030;
+}
+
+.journey-encounter.severe {
+  border-left: 3px solid #c06040;
+}
+
+.journey-encounter-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.journey-encounter-icon {
+  font-size: 12px;
+}
+
+.journey-encounter-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+}
+
+.journey-encounter-severity {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.journey-encounter-severity.mild {
+  background: rgba(100, 180, 120, 0.12);
+  color: #a8d8b8;
+}
+
+.journey-encounter-severity.moderate {
+  background: rgba(232, 160, 48, 0.12);
+  color: #e8c860;
+}
+
+.journey-encounter-severity.severe {
+  background: rgba(192, 96, 64, 0.12);
+  color: #d4a08c;
+}
+
+.journey-encounter-segment {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: auto;
+}
+
+.journey-encounter-beat {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
 }
 
 /* Bottlenecks */
@@ -2421,6 +2618,23 @@ body {
   color: var(--color-chokepoint);
   margin-top: 2px;
   line-height: 1.4;
+}
+
+.journey-seg-lore {
+  font-size: 10px;
+  color: #c4b898;
+  margin-top: 3px;
+  line-height: 1.4;
+  max-width: 260px;
+}
+
+.journey-seg-consequence {
+  font-size: 10px;
+  color: #d4a08c;
+  margin-top: 3px;
+  line-height: 1.4;
+  font-style: italic;
+  max-width: 260px;
 }
 
 /* Subtle segment labels on the map */
@@ -2629,4 +2843,362 @@ body {
   border-color: rgba(255, 68, 68, 0.3);
   color: #f44;
   background: rgba(255, 68, 68, 0.08);
+}
+
+/* ============================================================
+   Map Annotations
+   ============================================================ */
+
+/* Pin mode cursor */
+.map-container.pin-mode {
+  cursor: crosshair !important;
+}
+
+/* Annotation marker on map */
+.annotation-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annotation-pin {
+  position: relative;
+  width: 20px;
+  height: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  transition: transform var(--transition-fast);
+}
+
+.annotation-pin-head {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pin-color, var(--text-accent));
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 6px var(--pin-color, var(--text-accent));
+}
+
+.annotation-pin-stem {
+  width: 3px;
+  height: 10px;
+  background: var(--pin-color, var(--text-accent));
+  border-radius: 0 0 2px 2px;
+  margin-top: -2px;
+}
+
+.annotation-marker:hover .annotation-pin {
+  transform: scale(1.2) translateY(-2px);
+}
+
+.annotation-marker {
+  cursor: grab;
+}
+
+.annotation-marker:active {
+  cursor: grabbing;
+}
+
+/* Popup wrapper */
+.annotation-popup-wrapper .leaflet-popup-content-wrapper {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-accent) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  padding: 0 !important;
+}
+
+.annotation-popup-wrapper .leaflet-popup-content {
+  margin: 0 !important;
+  width: 220px !important;
+}
+
+.annotation-popup-wrapper .leaflet-popup-tip {
+  background: var(--bg-card) !important;
+}
+
+/* Popup form */
+.annotation-popup {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annotation-popup-label {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  outline: none;
+  width: 100%;
+}
+
+.annotation-popup-label:focus {
+  border-color: var(--border-accent);
+}
+
+.annotation-popup-body {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: var(--font-body);
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.annotation-popup-body:focus {
+  border-color: var(--border-accent);
+}
+
+.annotation-popup-colors {
+  display: flex;
+  gap: 6px;
+}
+
+.annotation-color-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  padding: 0;
+}
+
+.annotation-color-btn:hover {
+  transform: scale(1.15);
+}
+
+.annotation-color-btn.active {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3px var(--text-primary);
+}
+
+.annotation-popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.annotation-popup-save,
+.annotation-popup-cancel,
+.annotation-popup-delete {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: 1px solid var(--border-subtle);
+}
+
+.annotation-popup-save {
+  background: rgba(196, 168, 98, 0.12);
+  color: var(--text-accent);
+  border-color: rgba(196, 168, 98, 0.35);
+}
+
+.annotation-popup-save:hover {
+  background: rgba(196, 168, 98, 0.2);
+  border-color: rgba(196, 168, 98, 0.5);
+}
+
+.annotation-popup-cancel {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+.annotation-popup-cancel:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.annotation-popup-delete {
+  background: transparent;
+  color: var(--color-chokepoint);
+  border-color: rgba(255, 68, 68, 0.25);
+}
+
+.annotation-popup-delete:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.4);
+}
+
+.annotation-popup-time {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Annotations sidebar in JourneyPlanner */
+.journey-annotations-section {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+
+.journey-annotations-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: left;
+}
+
+.journey-annotations-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+}
+
+.journey-annotations-toggle.active {
+  color: var(--text-accent);
+  background: rgba(196, 168, 98, 0.05);
+}
+
+.journey-annotations-icon {
+  font-size: 13px;
+}
+
+.journey-annotations-title {
+  font-weight: 500;
+  flex: 1;
+}
+
+.journey-annotations-count {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(196, 168, 98, 0.1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-accent);
+}
+
+.journey-annotations-chevron {
+  font-size: 10px;
+  transition: transform var(--transition-fast);
+  color: var(--text-muted);
+}
+
+.journey-annotations-chevron.open {
+  transform: rotate(180deg);
+}
+
+.journey-annotations-panel {
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.journey-annotations-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.journey-annotations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.journey-annotation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.journey-annotation-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.journey-annotation-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px currentColor;
+}
+
+.journey-annotation-label {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 120px;
+}
+
+.journey-annotation-snippet {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.journey-annotation-export {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.journey-annotation-export:hover {
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
+}
+
+.journey-annotation-export svg {
+  opacity: 0.7;
 }

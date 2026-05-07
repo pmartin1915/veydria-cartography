@@ -41,6 +41,8 @@ export interface JourneyEdge {
   seasonal?: string
   seasonalKey?: string
   segmentDays?: number
+  commodities?: string
+  consequenceIfClosed?: string
 }
 
 export interface JourneyRoute {
@@ -243,6 +245,8 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         bottleneck: f.properties.bottleneck as string | undefined,
         seasonal: routeSeasonalInfo?.warning,
         seasonalKey: routeSeasonalInfo ? routeKey : undefined,
+        commodities: f.properties.commodities as string | undefined,
+        consequenceIfClosed: f.properties.consequence_if_closed as string | undefined,
       })
     }
   }
@@ -495,6 +499,20 @@ export function findMultiStopRoute(
     bottlenecks: allBottlenecks,
     seasonalWarnings: allSeasonal,
   }
+}
+
+/** Derive a difficulty class from edge composition. */
+export function getRouteDifficulty(route: JourneyRoute): { class: string; label: string } {
+  if (route.edges.length === 0) return { class: 'trivial', label: 'Trivial' }
+  const tradeCount = route.edges.filter(e => e.type === 'trade_route').length
+  const chokeCount = route.edges.filter(e => e.type === 'chokepoint').length
+  const tradeRatio = tradeCount / route.edges.length
+  const chokeRatio = chokeCount / route.edges.length
+
+  if (chokeRatio >= 0.5) return { class: 'explorer', label: 'Explorer-grade' }
+  if (tradeRatio >= 0.7) return { class: 'merchant', label: 'Merchant-grade' }
+  if (chokeRatio >= 0.25) return { class: 'mixed', label: 'Mixed-trail' }
+  return { class: 'merchant', label: 'Merchant-grade' }
 }
 
 // Get all selectable journey nodes (named points + civilizations)

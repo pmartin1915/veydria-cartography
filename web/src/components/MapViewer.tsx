@@ -15,6 +15,8 @@ import { initD3Overlay } from '../utils/d3-overlay'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
+import type { MapAnnotation } from '../utils/annotations'
+import { createAnnotation, ANNOTATION_COLORS } from '../utils/annotations'
 
 interface GeoJSONCollection {
   type: 'FeatureCollection'
@@ -46,6 +48,11 @@ export interface MapViewerProps {
   isEditMode?: boolean
   onCoordinateUpdate?: (featureId: string, name: string, category: string, newCoords: [number, number]) => void
   measureMode?: boolean
+  pinMode?: boolean
+  annotations?: MapAnnotation[]
+  onAnnotationAdd?: (annotation: MapAnnotation) => void
+  onAnnotationUpdate?: (id: string, updates: Partial<Omit<MapAnnotation, 'id' | 'createdAt'>>) => void
+  onAnnotationDelete?: (id: string) => void
   initialViewport?: { zoom: number; centerX: number; centerY: number }
   onViewportChange?: (viewport: { zoom: number; centerX: number; centerY: number }) => void
   onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
@@ -56,6 +63,7 @@ export interface MapViewerProps {
 export interface MapViewerHandle {
   flyToFeature: (feature: GeoJSONFeature) => void
   flyToFeatureById: (featureId: string) => boolean
+  flyToAnnotation: (annotation: MapAnnotation) => void
   undoMeasurePoint: () => void
   clearMeasurePoints: () => void
   updateFeaturePosition: (featureId: string, coords: [number, number]) => void
@@ -76,6 +84,43 @@ const latLngToSvg = (latlng: L.LatLng) => {
   const x = latlng.lng
   const y = SVG_HEIGHT - latlng.lat
   return { x, y }
+}
+
+const latLngToSvgClamped = (latlng: L.LatLng) => {
+  const raw = latLngToSvg(latlng)
+  return {
+    x: Math.max(0, Math.min(SVG_WIDTH, raw.x)),
+    y: Math.max(0, Math.min(SVG_HEIGHT, raw.y)),
+  }
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function buildAnnotationPopupContent(ann: MapAnnotation): string {
+  const colorsHtml = ANNOTATION_COLORS.map(c =>
+    `<button type="button" class="annotation-color-btn ${c.value === ann.color ? 'active' : ''}" data-color="${escapeHtml(c.value)}" style="background:${escapeHtml(c.value)}" title="${escapeHtml(c.label)}"></button>`
+  ).join('')
+  const timeStr = new Date(ann.createdAt).toLocaleString()
+  return `
+    <div class="annotation-popup" data-id="${escapeHtml(ann.id)}">
+      <input class="annotation-popup-label" type="text" value="${escapeHtml(ann.label)}" placeholder="Label..." />
+      <textarea class="annotation-popup-body" rows="3" placeholder="Notes...">${escapeHtml(ann.body)}</textarea>
+      <div class="annotation-popup-colors">${colorsHtml}</div>
+      <div class="annotation-popup-actions">
+        <button class="annotation-popup-save" type="button">Save</button>
+        <button class="annotation-popup-cancel" type="button">Cancel</button>
+        <button class="annotation-popup-delete" type="button">Delete</button>
+      </div>
+      <div class="annotation-popup-time">${timeStr}</div>
+    </div>
+  `
 }
 
 // Get centroid of coordinates
@@ -156,7 +201,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, initialViewport, onViewportChange, onMeasureUpdate, opacities, route }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -166,15 +211,24 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
     const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
+    const annotationLayerRef = useRef<L.LayerGroup | null>(null)
     const geojsonRef = useRef(geojson)
     useEffect(() => { geojsonRef.current = geojson }, [geojson])
 
     const measureModeRef = useRef(measureMode)
+    const pinModeRef = useRef(pinMode)
+    const onAnnotationAddRef = useRef(onAnnotationAdd)
+    const onAnnotationUpdateRef = useRef(onAnnotationUpdate)
+    const onAnnotationDeleteRef = useRef(onAnnotationDelete)
+    const openPopupIdRef = useRef<string | null>(null)
+    const annotationMarkersRef = useRef<Map<string, L.Marker>>(new Map())
 
-    // Keep ref in sync so event handlers see current value without re-binding
-    useEffect(() => {
-      measureModeRef.current = measureMode
-    }, [measureMode])
+    // Keep refs in sync so event handlers see current value without re-binding
+    useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
+    useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
+    useEffect(() => { onAnnotationAddRef.current = onAnnotationAdd }, [onAnnotationAdd])
+    useEffect(() => { onAnnotationUpdateRef.current = onAnnotationUpdate }, [onAnnotationUpdate])
+    useEffect(() => { onAnnotationDeleteRef.current = onAnnotationDelete }, [onAnnotationDelete])
 
     const [zoomLevel, setZoomLevel] = useState<number>(-1)
     const [measurePoints, setMeasurePoints] = useState<Array<{x: number, y: number}>>([])
@@ -197,6 +251,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const latlng = svgToLatLng(x, y)
         mapRef.current.flyTo(latlng as L.LatLngExpression, 2, { duration: 1 })
         return true
+      },
+      flyToAnnotation(annotation: MapAnnotation) {
+        if (!mapRef.current) return
+        const latlng = svgToLatLng(annotation.x, annotation.y)
+        mapRef.current.flyTo(latlng as L.LatLngExpression, 2.5, { duration: 0.8 })
       },
       undoMeasurePoint() {
         setMeasurePoints(prev => prev.slice(0, -1))
@@ -296,11 +355,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         map.setView(latlng as L.LatLngExpression, initialViewport.zoom, { animate: false })
       }
 
-      // Measurement click handler
+      // Measurement / pin click handler
       const handleMapClick = (e: L.LeafletMouseEvent) => {
-        if (!measureModeRef.current) return
-        const svg = latLngToSvg(e.latlng)
-        setMeasurePoints(prev => [...prev, { x: svg.x, y: svg.y }])
+        if (measureModeRef.current) {
+          const svg = latLngToSvg(e.latlng)
+          setMeasurePoints(prev => [...prev, { x: svg.x, y: svg.y }])
+          return
+        }
+        if (pinModeRef.current && onAnnotationAddRef.current) {
+          const svg = latLngToSvgClamped(e.latlng)
+          onAnnotationAddRef.current(createAnnotation(svg.x, svg.y))
+          return
+        }
       }
       map.on('click', handleMapClick)
 
@@ -499,8 +565,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             const catLabel = (category || '').replaceAll('_', ' ')
             const typeLabel = props.type ? ` · ${props.type}` : ''
+            const etymology = props.etymology ? `<div class="popup-etymology">${props.etymology}</div>` : ''
+            const func = props.function ? `<div class="popup-function">${props.function}</div>` : ''
             marker.bindTooltip(
-              `<div class="popup-name">${props.name}</div><div class="popup-category">${catLabel}${typeLabel}</div>`,
+              `<div class="popup-name">${props.name}</div><div class="popup-category">${catLabel}${typeLabel}</div>${etymology}${func}`,
               { direction: 'top', offset: [0, -8], className: 'leaflet-popup-content-wrapper' }
             )
 
@@ -538,6 +606,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         layerRefsRef.current.clear()
         terrainCellMetaRef.current.clear()
         markersRef.current.clear()
+        annotationLayerRef.current = null
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onFeatureClick, initialViewport, onViewportChange])
@@ -782,13 +851,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const typeLabel = edge ? (TYPE_LABELS[edge.type] || edge.type) : ''
         const warning = edge?.seasonal ? `<div class="journey-seg-warning">⚠ ${edge.seasonal}</div>` : ''
         const bottleneck = edge?.bottleneck ? `<div class="journey-seg-bottleneck">▲ ${edge.bottleneck}</div>` : ''
+        const commodities = edge?.commodities ? `<div class="journey-seg-lore">📦 ${edge.commodities}</div>` : ''
+        const consequence = edge?.consequenceIfClosed ? `<div class="journey-seg-consequence">⚡ ${edge.consequenceIfClosed}</div>` : ''
 
         poly.bindTooltip(
           `<div class="journey-seg-tooltip">
             <div class="journey-seg-name">${edge?.name || ''}</div>
             <div class="journey-seg-meta">${typeLabel} · ${km.toFixed(1)} km · ~${days} days</div>
+            ${commodities}
             ${bottleneck}
             ${warning}
+            ${consequence}
           </div>`,
           { sticky: true, className: 'journey-seg-popup', direction: 'top' }
         )
@@ -869,9 +942,149 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
     }, [route])
 
+    // Render annotation pins
+    useEffect(() => {
+      if (!mapRef.current) return
+
+      if (annotationLayerRef.current) {
+        mapRef.current.removeLayer(annotationLayerRef.current)
+        annotationLayerRef.current = null
+      }
+      annotationMarkersRef.current.clear()
+
+      const group = L.layerGroup()
+
+      for (const ann of (annotations || [])) {
+        const latlng = svgToLatLng(ann.x, ann.y)
+
+        const icon = L.divIcon({
+          className: 'annotation-marker',
+          html: `<div class="annotation-pin" style="--pin-color:${escapeHtml(ann.color)}"><div class="annotation-pin-head"></div><div class="annotation-pin-stem"></div></div>`,
+          iconSize: [20, 28],
+          iconAnchor: [10, 28],
+        })
+
+        const marker = L.marker(latlng as L.LatLngExpression, {
+          icon,
+          draggable: true,
+          zIndexOffset: 500,
+        })
+
+        marker.bindPopup(buildAnnotationPopupContent(ann), {
+          closeButton: false,
+          className: 'annotation-popup-wrapper',
+          offset: [0, -10],
+        })
+
+        marker.on('popupopen', () => {
+          openPopupIdRef.current = ann.id
+          const popup = marker.getPopup()
+          const container = popup?.getElement()
+          if (!container) return
+
+          const saveBtn = container.querySelector('.annotation-popup-save')
+          const cancelBtn = container.querySelector('.annotation-popup-cancel')
+          const deleteBtn = container.querySelector('.annotation-popup-delete')
+          const labelInput = container.querySelector('.annotation-popup-label') as HTMLInputElement | null
+          const bodyTextarea = container.querySelector('.annotation-popup-body') as HTMLTextAreaElement | null
+          const colorBtns = container.querySelectorAll('.annotation-color-btn')
+
+          let selectedColor = ann.color
+
+          const handleSave = () => {
+            // Clear ref before state update so layer rebuild won't reopen this popup
+            openPopupIdRef.current = null
+            onAnnotationUpdateRef.current?.(ann.id, {
+              label: labelInput?.value.trim() || ann.label,
+              body: bodyTextarea?.value || '',
+              color: selectedColor,
+            })
+            marker.closePopup()
+          }
+
+          const handleCancel = () => {
+            marker.closePopup()
+          }
+
+          const handleDelete = () => {
+            onAnnotationDeleteRef.current?.(ann.id)
+            marker.closePopup()
+          }
+
+          const handleColorClick = (e: Event) => {
+            const btn = e.currentTarget as HTMLButtonElement
+            selectedColor = btn.dataset.color || ann.color
+            colorBtns.forEach(b => b.classList.toggle('active', b === btn))
+          }
+
+          const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSave()
+            }
+            if (e.key === 'Escape') {
+              e.stopPropagation()
+              handleCancel()
+            }
+          }
+
+          saveBtn?.addEventListener('click', handleSave)
+          cancelBtn?.addEventListener('click', handleCancel)
+          deleteBtn?.addEventListener('click', handleDelete)
+          colorBtns.forEach(btn => btn.addEventListener('click', handleColorClick))
+          labelInput?.addEventListener('keydown', handleKeyDown)
+          bodyTextarea?.addEventListener('keydown', handleKeyDown)
+
+          marker.once('popupclose', () => {
+            openPopupIdRef.current = null
+            saveBtn?.removeEventListener('click', handleSave)
+            cancelBtn?.removeEventListener('click', handleCancel)
+            deleteBtn?.removeEventListener('click', handleDelete)
+            colorBtns.forEach(btn => btn.removeEventListener('click', handleColorClick))
+            labelInput?.removeEventListener('keydown', handleKeyDown)
+            bodyTextarea?.removeEventListener('keydown', handleKeyDown)
+          })
+        })
+
+        marker.on('dragstart', () => {
+          marker.closePopup()
+        })
+
+        marker.on('dragend', (e) => {
+          const newLatLng = (e.target as L.Marker).getLatLng()
+          const newSvg = latLngToSvgClamped(newLatLng)
+          onAnnotationUpdateRef.current?.(ann.id, { x: newSvg.x, y: newSvg.y })
+        })
+
+        marker.addTo(group)
+        annotationMarkersRef.current.set(ann.id, marker)
+      }
+
+      group.addTo(mapRef.current)
+      annotationLayerRef.current = group
+
+      // If a popup was open before rebuild (e.g. external update), reopen it
+      if (openPopupIdRef.current) {
+        const markerToOpen = annotationMarkersRef.current.get(openPopupIdRef.current)
+        if (markerToOpen) {
+          markerToOpen.openPopup()
+        } else {
+          openPopupIdRef.current = null
+        }
+      }
+
+      return () => {
+        if (annotationLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(annotationLayerRef.current)
+          annotationLayerRef.current = null
+        }
+        annotationMarkersRef.current.clear()
+      }
+    }, [annotations])
+
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''}`} id="veydria-map" />
+        <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''} ${pinMode ? 'pin-mode' : ''}`} id="veydria-map" />
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">

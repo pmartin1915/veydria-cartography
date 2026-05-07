@@ -9,6 +9,8 @@ import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
+import type { MapAnnotation } from './utils/annotations'
+import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown } from './utils/annotations'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -112,7 +114,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
@@ -122,11 +124,15 @@ function App() {
   const patchToastTimeoutRef = useRef<number | null>(null)
   const panelCloseTimeoutRef = useRef<number | null>(null)
   const flyToTimeoutRef = useRef<number | null>(null)
+  const annotationToastTimeoutRef = useRef<number | null>(null)
   const [shareToast, setShareToast] = useState<string | null>(null)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
+  const [pinMode, setPinMode] = useState(false)
+  const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
+  const [annotationToast, setAnnotationToast] = useState<string | null>(null)
 
   // Cleanup all timeouts on unmount
   useEffect(() => {
@@ -136,6 +142,7 @@ function App() {
       if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
       if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
       if (flyToTimeoutRef.current) clearTimeout(flyToTimeoutRef.current)
+      if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
     }
   }, [])
 
@@ -309,8 +316,48 @@ function App() {
   }, [geojson])
 
   const handleToggleMeasureMode = useCallback(() => {
-    setMeasureMode(prev => !prev)
+    setMeasureMode(prev => {
+      const next = !prev
+      if (next) setPinMode(false)
+      return next
+    })
   }, [])
+
+  const handleTogglePinMode = useCallback(() => {
+    setPinMode(prev => {
+      const next = !prev
+      if (next) {
+        setMeasureMode(false)
+        setJourneyMode(false)
+      }
+      return next
+    })
+  }, [])
+
+  const handleAnnotationAdd = useCallback((annotation: MapAnnotation) => {
+    setAnnotations(prev => addAnnotation(prev, annotation))
+    setPinMode(false)
+  }, [])
+
+  const handleAnnotationUpdate = useCallback((id: string, updates: Partial<Omit<MapAnnotation, 'id' | 'createdAt'>>) => {
+    setAnnotations(prev => updateAnnotation(prev, id, updates))
+  }, [])
+
+  const handleAnnotationDelete = useCallback((id: string) => {
+    setAnnotations(prev => deleteAnnotation(prev, id))
+  }, [])
+
+  const handleExportAnnotations = useCallback(async () => {
+    const md = exportAnnotationsMarkdown(annotations)
+    try {
+      await navigator.clipboard.writeText(md)
+      setAnnotationToast('Campaign notes copied')
+    } catch {
+      setAnnotationToast('Failed to copy notes')
+    }
+    if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
+    annotationToastTimeoutRef.current = window.setTimeout(() => setAnnotationToast(null), 2000)
+  }, [annotations])
 
   const handleMeasureUpdate = useCallback((stats: MeasureStats) => {
     setMeasureStats(stats)
@@ -395,9 +442,11 @@ function App() {
   const searchOpenRef = useRef(searchOpen)
   const measureModeRef = useRef(measureMode)
   const journeyModeRef = useRef(journeyMode)
+  const pinModeRef = useRef(pinMode)
   useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
   useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
   useEffect(() => { journeyModeRef.current = journeyMode }, [journeyMode])
+  useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
 
   // Keyboard shortcut: Ctrl+K or / for search, M for measure mode, Shift+? for help
   useEffect(() => {
@@ -408,22 +457,48 @@ function App() {
       }
       if (e.key === 'm' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
-        setMeasureMode(prev => !prev)
+        setMeasureMode(prev => {
+          const next = !prev
+          if (next) setPinMode(false)
+          return next
+        })
+      }
+      if (e.key === 'p' && !searchOpenRef.current && document.activeElement === document.body) {
+        e.preventDefault()
+        setPinMode(prev => {
+          const next = !prev
+          if (next) {
+            setMeasureMode(false)
+            setJourneyMode(false)
+          }
+          return next
+        })
       }
       if (e.key === 'j' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
-        setJourneyMode(prev => !prev)
+        setJourneyMode(prev => {
+          const next = !prev
+          if (next) setPinMode(false)
+          return next
+        })
       }
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
       }
       if (e.key === 'Escape') {
+        const target = e.target as HTMLElement
+        const tag = target?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+          target.blur()
+          return
+        }
         setSearchOpen(false)
         setKeyboardHelpOpen(false)
         handleClosePanel()
         if (measureModeRef.current) setMeasureMode(false)
         if (journeyModeRef.current) setJourneyMode(false)
+        if (pinModeRef.current) setPinMode(false)
       }
     }
     window.addEventListener('keydown', handler)
@@ -486,7 +561,13 @@ function App() {
         <div className="header-right">
           <button
             className={`search-trigger ${journeyMode ? 'journey-active' : ''}`}
-            onClick={() => setJourneyMode(prev => !prev)}
+            onClick={() => {
+              setJourneyMode(prev => {
+                const next = !prev
+                if (next) setPinMode(false)
+                return next
+              })
+            }}
             title="Toggle journey planner (J)"
             id="journey-trigger"
           >
@@ -496,6 +577,18 @@ function App() {
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
             </svg>
             <span>{journeyMode ? 'Planning...' : 'Journey'}</span>
+          </button>
+          <button
+            className={`search-trigger ${pinMode ? 'active' : ''}`}
+            onClick={handleTogglePinMode}
+            title="Toggle pin mode (P)"
+            id="pin-trigger"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
+            <span>{pinMode ? 'Drop pin...' : 'Pin'}</span>
           </button>
           <button
             className={`search-trigger ${measureMode ? 'active' : ''}`}
@@ -562,6 +655,11 @@ function App() {
             isEditMode={isEditMode}
             onCoordinateUpdate={handleCoordinateUpdate}
             measureMode={measureMode}
+            pinMode={pinMode}
+            annotations={annotations}
+            onAnnotationAdd={handleAnnotationAdd}
+            onAnnotationUpdate={handleAnnotationUpdate}
+            onAnnotationDelete={handleAnnotationDelete}
             initialViewport={
               initialHashRef.current.zoom !== undefined &&
               initialHashRef.current.centerX !== undefined &&
@@ -615,6 +713,9 @@ function App() {
             defaultEndId={initialHashRef.current.journeyTo}
             onClose={handleJourneyClose}
             onRouteComputed={handleJourneyRouteComputed}
+            annotations={annotations}
+            onFlyToAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
+            onExportAnnotations={handleExportAnnotations}
           />
         )}
 
@@ -741,6 +842,15 @@ function App() {
               <path d="M2 12l10 5 10-5" />
             </svg>
             <span>{patchToast}</span>
+          </div>
+        )}
+        {annotationToast && (
+          <div className="toast-notification" id="annotation-toast">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
+            <span>{annotationToast}</span>
           </div>
         )}
       </main>

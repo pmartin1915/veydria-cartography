@@ -8,6 +8,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: '/', description: 'Open search (when not typing)' },
   { keys: 'J', description: 'Toggle journey planner' },
   { keys: 'M', description: 'Toggle measure mode' },
+  { keys: 'P', description: 'Toggle pin mode' },
   { keys: 'Esc', description: 'Close panel / search / measure mode' },
   { keys: 'Backspace', description: 'Undo last measure point' },
   { keys: 'Shift + ?', description: 'Show this help' },

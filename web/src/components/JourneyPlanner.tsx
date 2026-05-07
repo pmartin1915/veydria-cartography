@@ -1,9 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import type { GeoJSONCollection } from '../App'
-import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from '../utils/encounters'
 import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
+import type { MapAnnotation } from '../utils/annotations'
+import { exportRouteGmNotes } from '../utils/annotations'
 
 interface JourneyPlannerProps {
   geojson: GeoJSONCollection
@@ -12,6 +15,9 @@ interface JourneyPlannerProps {
   defaultEndId?: string
   onClose: () => void
   onRouteComputed: (route: JourneyRoute | null) => void
+  annotations?: MapAnnotation[]
+  onFlyToAnnotation?: (annotation: MapAnnotation) => void
+  onExportAnnotations?: () => void
 }
 
 function formatDays(days: number): string {
@@ -37,7 +43,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon">{icons[category] || '📍'}</span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onExportAnnotations }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -53,6 +59,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [routeTab, setRouteTab] = useState<'route' | 'encounters'>('route')
+  const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -250,10 +258,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       ? `${fromName} → ${wpNames.join(' → ')} → ${toName}`
       : `${fromName} → ${toName}`
 
+    const diff = getRouteDifficulty(route)
     let md = `## Journey: ${routeTitle}\n\n`
     md += `**Distance:** ${Math.round(route.totalKm)} km  \n`
     md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
     md += `**Mode:** ${mode}  \n`
+    md += `**Difficulty:** ${diff.label}  \n`
     if (season) md += `**Season:** ${season}  \n`
     md += `\n### Route\n\n`
 
@@ -278,6 +288,21 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       for (const w of allWarnings) {
         md += `⚠️ ${w}\n`
       }
+    }
+
+    const encounters = generateEncounters(route, season, mode)
+    if (encounters.length > 0) {
+      md += `\n### Encounters\n\n`
+      for (const enc of encounters) {
+        const segName = route.edges[enc.segmentIdx]?.name || 'Unknown segment'
+        md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)} · *${segName}*\n\n`
+        md += `${enc.beat}\n\n`
+      }
+    }
+
+    const gmNotes = exportRouteGmNotes(annotations, route.nodes)
+    if (gmNotes) {
+      md += gmNotes
     }
 
     md += `\n---\n*Exported from [Veydria Cartography](${window.location.href.split('#')[0]})*`
@@ -722,8 +747,32 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 <span className="journey-stat-value">{route.edges.length}</span>
               </div>
             </div>
+            <div className="journey-difficulty">
+              {(() => {
+                const diff = getRouteDifficulty(route)
+                return <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
+              })()}
+            </div>
 
-            {/* Path timeline */}
+            {/* Tabs */}
+            <div className="journey-tabs">
+              <button
+                className={`journey-tab ${routeTab === 'route' ? 'active' : ''}`}
+                onClick={() => setRouteTab('route')}
+              >
+                Route
+              </button>
+              <button
+                className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
+                onClick={() => setRouteTab('encounters')}
+              >
+                Encounters
+              </button>
+            </div>
+
+            {routeTab === 'route' && (
+              <>
+                {/* Path timeline */}
             <div className="journey-route-path">
               <div className="journey-path-line" />
               {route.nodes.map((node, i) => (
@@ -771,6 +820,40 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 ))}
               </div>
             )}
+              </>
+            )}
+
+            {routeTab === 'encounters' && (
+              <div className="journey-encounters">
+                {(() => {
+                  const encounters = generateEncounters(route, season, mode)
+                  if (encounters.length === 0) {
+                    return <div className="journey-encounters-empty">No encounters generated for this route.</div>
+                  }
+                  return (
+                    <>
+                      <div className="journey-encounters-header">
+                        <span className="journey-encounters-count">{encounters.length} beat{encounters.length !== 1 ? 's' : ''}</span>
+                        <span className="journey-encounters-seed">Seeded by route signature</span>
+                      </div>
+                      {encounters.map((enc, i) => (
+                        <div key={i} className={`journey-encounter ${enc.severity}`}>
+                          <div className="journey-encounter-meta">
+                            <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
+                            <span className="journey-encounter-type">{enc.type}</span>
+                            <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            {route.edges[enc.segmentIdx] && (
+                              <span className="journey-encounter-segment">{route.edges[enc.segmentIdx].name}</span>
+                            )}
+                          </div>
+                          <div className="journey-encounter-beat">{enc.beat}</div>
+                        </div>
+                      ))}
+                    </>
+                  )
+                })()}
+              </div>
+            )}
           </div>
         )}
 
@@ -779,6 +862,67 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             No route found between these locations.
           </div>
         )}
+
+        {/* Annotations list */}
+        <div className="journey-annotations-section">
+          <button
+            className={`journey-annotations-toggle ${annotationsOpen ? 'active' : ''}`}
+            onClick={() => setAnnotationsOpen(!annotationsOpen)}
+          >
+            <span className="journey-annotations-icon">📍</span>
+            <span className="journey-annotations-title">Campaign Notes</span>
+            <span className="journey-annotations-count">{annotations.length}</span>
+            <span className={`journey-annotations-chevron ${annotationsOpen ? 'open' : ''}`}>▾</span>
+          </button>
+          {annotationsOpen && (
+            <div className="journey-annotations-panel">
+              {annotations.length === 0 && (
+                <div className="journey-annotations-empty">
+                  No pins yet. Click the Pin button in the header, then click the map to drop one.
+                </div>
+              )}
+              {annotations.length > 0 && (
+                <>
+                  <div className="journey-annotations-list">
+                    {annotations.map(ann => (
+                      <button
+                        key={ann.id}
+                        className="journey-annotation-item"
+                        onClick={() => onFlyToAnnotation?.(ann)}
+                        title="Fly to pin"
+                      >
+                        <span
+                          className="journey-annotation-dot"
+                          style={{ background: ann.color }}
+                        />
+                        <span className="journey-annotation-label">{ann.label}</span>
+                        {ann.body && (
+                          <span className="journey-annotation-snippet">
+                            {ann.body.slice(0, 40)}{ann.body.length > 40 ? '…' : ''}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {onExportAnnotations && (
+                    <button
+                      className="journey-annotation-export"
+                      onClick={onExportAnnotations}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                      </svg>
+                      Export Notes
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Export toast */}
         {exportToast && (
