@@ -2,6 +2,7 @@ import { useState, useMemo, type ReactNode } from 'react'
 import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
 import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
+import type { MapAnnotation } from '../utils/annotations'
 import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock } from './icons'
 
 interface GeoJSONFeature {
@@ -20,6 +21,8 @@ interface InfoPanelProps {
   open: boolean
   onClose: () => void
   onSelectFeature?: (feature: GeoJSONFeature) => void
+  annotations?: MapAnnotation[]
+  onSelectAnnotation?: (annotation: MapAnnotation) => void
 }
 
 // Fields to display for each category
@@ -156,7 +159,7 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
   )
 }
 
-export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature }: InfoPanelProps) {
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const related = useMemo(() => {
@@ -169,6 +172,13 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
     const id = getFeatureId(feature)
     return lore[id] || []
   }, [feature, lore])
+
+  const linkedAnnotations = useMemo(() => {
+    if (!feature || !annotations || annotations.length === 0) return []
+    const id = getFeatureId(feature)
+    if (!id) return []
+    return annotations.filter((a) => a.featureId === id)
+  }, [feature, annotations])
 
   const travelEstimate = useMemo(() => {
     if (!feature) return null
@@ -289,6 +299,41 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
                     </span>
                     <span className="related-feature-name">{rName}</span>
                     <span className="related-feature-relation">{relation}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Linked Notes */}
+        {linkedAnnotations.length > 0 && (
+          <div className="info-field" key="linked-notes">
+            <div className="info-field-header">
+              <div className="info-field-label">Linked Notes</div>
+              <span className="lore-count">{linkedAnnotations.length}</span>
+            </div>
+            <div className="related-features-list">
+              {linkedAnnotations.map((ann) => {
+                const snippet = ann.body
+                  ? ann.body.slice(0, 50) + (ann.body.length > 50 ? '…' : '')
+                  : ''
+                return (
+                  <button
+                    key={ann.id}
+                    className="related-feature-item linked-note-item"
+                    onClick={() => onSelectAnnotation?.(ann)}
+                    title={ann.label}
+                  >
+                    <span
+                      className="linked-note-dot"
+                      style={{ background: ann.color }}
+                      aria-hidden="true"
+                    />
+                    <span className="related-feature-name">{ann.label}</span>
+                    {snippet && (
+                      <span className="related-feature-relation">{snippet}</span>
+                    )}
                   </button>
                 )
               })}

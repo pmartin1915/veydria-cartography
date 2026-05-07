@@ -3293,6 +3293,84 @@ body {
   text-align: center;
 }
 
+/* Feature link row in annotation popup */
+.annotation-popup-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.annotation-popup-link--bound {
+  justify-content: space-between;
+}
+
+.annotation-popup-link-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-popup-link-label strong {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+
+.annotation-popup-link-nearest,
+.annotation-popup-unlink {
+  padding: 3px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: var(--transition-fast);
+}
+
+.annotation-popup-link-nearest:hover:not(:disabled),
+.annotation-popup-unlink:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--text-accent);
+}
+
+.annotation-popup-link-nearest:disabled,
+.annotation-popup-unlink:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.annotation-popup-link-pending {
+  border-color: var(--border-accent) !important;
+  color: var(--text-accent) !important;
+}
+
+/* Linked-note items in InfoPanel */
+.linked-note-item {
+  align-items: center;
+}
+
+.linked-note-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+/* Linked feature subtitle in JourneyPlanner annotation list */
+.journey-annotation-linked {
+  display: block;
+  font-size: 10px;
+  color: var(--text-accent);
+  font-style: italic;
+  margin-top: 2px;
+}
+
 /* Annotations sidebar in JourneyPlanner */
 .journey-annotations-section {
   border-top: 1px solid var(--border-subtle);

@@ -16,7 +16,7 @@ import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
-import { createAnnotation, ANNOTATION_COLORS } from '../utils/annotations'
+import { createAnnotation, ANNOTATION_COLORS, findNearestFeature } from '../utils/annotations'
 import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
 
 interface GeoJSONCollection {
@@ -109,11 +109,20 @@ function buildAnnotationPopupContent(ann: MapAnnotation): string {
     `<button type="button" class="annotation-color-btn ${c.value === ann.color ? 'active' : ''}" data-color="${escapeHtml(c.value)}" style="background:${escapeHtml(c.value)}" title="${escapeHtml(c.label)}"></button>`
   ).join('')
   const timeStr = new Date(ann.createdAt).toLocaleString()
+  const linkRow = ann.featureId
+    ? `<div class="annotation-popup-link annotation-popup-link--bound">
+         <span class="annotation-popup-link-label">Linked: <strong>${escapeHtml(ann.featureName || ann.featureId)}</strong></span>
+         <button type="button" class="annotation-popup-unlink">Unlink</button>
+       </div>`
+    : `<div class="annotation-popup-link">
+         <button type="button" class="annotation-popup-link-nearest">Link to nearest feature</button>
+       </div>`
   return `
     <div class="annotation-popup" data-id="${escapeHtml(ann.id)}">
       <input class="annotation-popup-label" type="text" value="${escapeHtml(ann.label)}" placeholder="Label..." />
       <textarea class="annotation-popup-body" rows="3" placeholder="Notes...">${escapeHtml(ann.body)}</textarea>
       <div class="annotation-popup-colors">${colorsHtml}</div>
+      ${linkRow}
       <div class="annotation-popup-actions">
         <button class="annotation-popup-save" type="button">Save</button>
         <button class="annotation-popup-cancel" type="button">Cancel</button>
@@ -375,7 +384,13 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
         if (pinModeRef.current && onAnnotationAddRef.current) {
           const svg = latLngToSvgClamped(e.latlng)
-          onAnnotationAddRef.current(createAnnotation(svg.x, svg.y))
+          const ann = createAnnotation(svg.x, svg.y)
+          const nearest = findNearestFeature(svg.x, svg.y, geojsonRef.current.features)
+          if (nearest) {
+            ann.featureId = nearest.id
+            ann.featureName = nearest.name
+          }
+          onAnnotationAddRef.current(ann)
           return
         }
       }
@@ -1006,17 +1021,29 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           const labelInput = container.querySelector('.annotation-popup-label') as HTMLInputElement | null
           const bodyTextarea = container.querySelector('.annotation-popup-body') as HTMLTextAreaElement | null
           const colorBtns = container.querySelectorAll('.annotation-color-btn')
+          const linkBtn = container.querySelector('.annotation-popup-link-nearest') as HTMLButtonElement | null
+          const unlinkBtn = container.querySelector('.annotation-popup-unlink') as HTMLButtonElement | null
 
           let selectedColor = ann.color
+          let linkAction: 'none' | 'link' | 'unlink' = 'none'
 
           const handleSave = () => {
             // Clear ref before state update so layer rebuild won't reopen this popup
             openPopupIdRef.current = null
-            onAnnotationUpdateRef.current?.(ann.id, {
+            const updates: Partial<Omit<MapAnnotation, 'id' | 'createdAt'>> = {
               label: labelInput?.value.trim() || ann.label,
               body: bodyTextarea?.value || '',
               color: selectedColor,
-            })
+            }
+            if (linkAction === 'link') {
+              const nearest = findNearestFeature(ann.x, ann.y, geojsonRef.current.features)
+              updates.featureId = nearest?.id
+              updates.featureName = nearest?.name
+            } else if (linkAction === 'unlink') {
+              updates.featureId = undefined
+              updates.featureName = undefined
+            }
+            onAnnotationUpdateRef.current?.(ann.id, updates)
             marker.closePopup()
           }
 
@@ -1046,12 +1073,39 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             }
           }
 
+          const handleLinkClick = () => {
+            const nearest = findNearestFeature(ann.x, ann.y, geojsonRef.current.features)
+            if (!nearest) {
+              if (linkBtn) {
+                linkBtn.textContent = 'No feature in range'
+                linkBtn.disabled = true
+              }
+              linkAction = 'none'
+              return
+            }
+            linkAction = 'link'
+            if (linkBtn) {
+              linkBtn.textContent = `Will link: ${nearest.name}`
+              linkBtn.classList.add('annotation-popup-link-pending')
+            }
+          }
+
+          const handleUnlinkClick = () => {
+            linkAction = 'unlink'
+            if (unlinkBtn) {
+              unlinkBtn.textContent = 'Will unlink'
+              unlinkBtn.disabled = true
+            }
+          }
+
           saveBtn?.addEventListener('click', handleSave)
           cancelBtn?.addEventListener('click', handleCancel)
           deleteBtn?.addEventListener('click', handleDelete)
           colorBtns.forEach(btn => btn.addEventListener('click', handleColorClick))
           labelInput?.addEventListener('keydown', handleKeyDown)
           bodyTextarea?.addEventListener('keydown', handleKeyDown)
+          linkBtn?.addEventListener('click', handleLinkClick)
+          unlinkBtn?.addEventListener('click', handleUnlinkClick)
 
           marker.once('popupclose', () => {
             openPopupIdRef.current = null
@@ -1061,6 +1115,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             colorBtns.forEach(btn => btn.removeEventListener('click', handleColorClick))
             labelInput?.removeEventListener('keydown', handleKeyDown)
             bodyTextarea?.removeEventListener('keydown', handleKeyDown)
+            linkBtn?.removeEventListener('click', handleLinkClick)
+            unlinkBtn?.removeEventListener('click', handleUnlinkClick)
           })
         })
 

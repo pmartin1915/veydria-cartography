@@ -270,6 +270,20 @@ function App() {
     }
   }, [])
 
+  const handleSelectFeatureById = useCallback((featureId: string) => {
+    if (!geojson) return
+    const feature = geojson.features.find((f) => {
+      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      return id === featureId
+    })
+    if (!feature) return
+    setSelectedFeature(feature)
+    setPanelOpen(true)
+    viewportRef.current = { ...viewportRef.current, featureId }
+    const hash = buildHash(viewportRef.current)
+    window.history.replaceState(null, '', hash)
+  }, [geojson])
+
   const handleCoordinateUpdate = useCallback((featureId: string, name: string, category: string, newCoords: [number, number]) => {
     setCoordinateUpdates((prev) => ({
       ...prev,
@@ -739,6 +753,8 @@ function App() {
               window.history.replaceState(null, '', hash)
             }
           }}
+          annotations={shareMode ? [] : annotations}
+          onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
         />
 
         {journeyMode && geojson && (
@@ -751,6 +767,7 @@ function App() {
             onRouteComputed={handleJourneyRouteComputed}
             annotations={shareMode ? [] : annotations}
             onFlyToAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
+            onSelectFeatureById={handleSelectFeatureById}
             onExportAnnotations={handleExportAnnotations}
             shareMode={shareMode}
           />

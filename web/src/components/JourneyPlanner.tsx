@@ -22,6 +22,7 @@ interface JourneyPlannerProps {
   onRouteComputed: (route: JourneyRoute | null) => void
   annotations?: MapAnnotation[]
   onFlyToAnnotation?: (annotation: MapAnnotation) => void
+  onSelectFeatureById?: (featureId: string) => void
   onExportAnnotations?: () => void
   shareMode?: boolean
 }
@@ -41,7 +42,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onExportAnnotations, shareMode = false }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -1012,14 +1013,20 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                       <button
                         key={ann.id}
                         className="journey-annotation-item"
-                        onClick={() => onFlyToAnnotation?.(ann)}
-                        title="Fly to pin"
+                        onClick={() => {
+                          onFlyToAnnotation?.(ann)
+                          if (ann.featureId) onSelectFeatureById?.(ann.featureId)
+                        }}
+                        title={ann.featureName ? `Fly to pin · linked to ${ann.featureName}` : 'Fly to pin'}
                       >
                         <span
                           className="journey-annotation-dot"
                           style={{ background: ann.color }}
                         />
                         <span className="journey-annotation-label">{ann.label}</span>
+                        {ann.featureName && (
+                          <span className="journey-annotation-linked">Linked: {ann.featureName}</span>
+                        )}
                         {ann.body && (
                           <span className="journey-annotation-snippet">
                             {ann.body.slice(0, 40)}{ann.body.length > 40 ? '…' : ''}
