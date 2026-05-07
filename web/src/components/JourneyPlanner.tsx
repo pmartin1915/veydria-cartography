@@ -6,6 +6,7 @@ import {
 } from './icons'
 import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from '../utils/encounters'
+import { buildDailyBreakdown } from '../utils/journey-days'
 import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
@@ -55,7 +56,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [routeTab, setRouteTab] = useState<'route' | 'encounters'>('route')
+  const [routeTab, setRouteTab] = useState<'route' | 'days' | 'encounters'>('route')
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
@@ -293,6 +294,25 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         const segName = route.edges[enc.segmentIdx]?.name || 'Unknown segment'
         md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)} · *${segName}*\n\n`
         md += `${enc.beat}\n\n`
+      }
+    }
+
+    const days = buildDailyBreakdown(route, season, mode)
+    if (days.length > 0) {
+      md += `\n### Day-by-Day\n\n`
+      for (const day of days) {
+        md += `**Day ${day.dayNum}** · ${Math.round(day.kmCovered)} km\n\n`
+        md += `- Start: ${day.startLabel}\n`
+        md += `- Weather: ${day.weather}\n`
+        if (day.notable.length > 0) {
+          for (const n of day.notable) md += `- Notable: ${n}\n`
+        }
+        if (day.encounters.length > 0) {
+          for (const enc of day.encounters) {
+            md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}): ${enc.beat}\n`
+          }
+        }
+        md += `- Camp: ${day.campLabel}\n\n`
       }
     }
 
@@ -759,6 +779,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 Route
               </button>
               <button
+                className={`journey-tab ${routeTab === 'days' ? 'active' : ''}`}
+                onClick={() => setRouteTab('days')}
+              >
+                Days
+              </button>
+              <button
                 className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
                 onClick={() => setRouteTab('encounters')}
               >
@@ -817,6 +843,53 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             )}
               </>
             )}
+
+            {routeTab === 'days' && (() => {
+              const days = buildDailyBreakdown(route, season, mode)
+              if (days.length === 0) {
+                return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
+              }
+              return (
+                <div className="journey-days">
+                  <div className="journey-encounters-header">
+                    <span className="journey-encounters-count">{days.length} day{days.length !== 1 ? 's' : ''}</span>
+                    <span className="journey-encounters-seed">Deterministic by route + season</span>
+                  </div>
+                  {days.map((day) => (
+                    <div key={day.dayNum} className="journey-day">
+                      <div className="journey-day-header">
+                        <span className="journey-day-num">Day {day.dayNum}</span>
+                        <span className="journey-day-km">{Math.round(day.kmCovered)} km</span>
+                      </div>
+                      <div className="journey-day-line"><span className="journey-day-label">Start:</span> {day.startLabel}</div>
+                      <div className="journey-day-line journey-day-weather"><IconCloudRain /> {day.weather}</div>
+                      {day.notable.length > 0 && (
+                        <ul className="journey-day-notable">
+                          {day.notable.map((n, i) => (
+                            <li key={i}>{n}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {day.encounters.length > 0 && (
+                        <div className="journey-day-encounters">
+                          {day.encounters.map((enc, i) => (
+                            <div key={i} className={`journey-encounter ${enc.severity}`}>
+                              <div className="journey-encounter-meta">
+                                <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
+                                <span className="journey-encounter-type">{enc.type}</span>
+                                <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                              </div>
+                              <div className="journey-encounter-beat">{enc.beat}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="journey-day-line journey-day-camp"><IconPin /> {day.campLabel}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
 
             {routeTab === 'encounters' && (
               <div className="journey-encounters">

@@ -2501,6 +2501,108 @@ body {
   color: var(--text-primary);
 }
 
+/* Day-by-day */
+.journey-days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journey-day {
+  background: rgba(13, 15, 20, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--color-route, #d4a854);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.journey-day-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.journey-day-num {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--text-primary);
+}
+
+.journey-day-km {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.journey-day-line {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.journey-day-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.journey-day-weather {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.journey-day-camp {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 6px;
+}
+
+.journey-day-notable {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journey-day-notable li {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-left: 10px;
+  position: relative;
+}
+
+.journey-day-notable li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+}
+
+.journey-day-encounters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.journey-day-encounters .journey-encounter {
+  padding: 8px 10px;
+  background: rgba(13, 15, 20, 0.7);
+}
+
 /* Bottlenecks */
 .journey-bottlenecks {
   background: rgba(255, 68, 68, 0.06);
