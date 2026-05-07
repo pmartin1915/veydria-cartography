@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useDeferredValue } from 'react'
+import { NodeIcon } from './icons'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -13,19 +14,6 @@ interface SearchBarProps {
   features: GeoJSONFeature[]
   onSelect: (feature: GeoJSONFeature) => void
   onClose: () => void
-}
-
-// Category icons
-const CATEGORY_ICONS: Record<string, string> = {
-  civilization: '🏛',
-  port: '⚓',
-  chokepoint: '⛨',
-  oasis: '🌿',
-  contested_site: '✧',
-  trade_route: '⤳',
-  landmark: '◆',
-  river: '〜',
-  water: '🌊',
 }
 
 export default function SearchBar({ features, onSelect, onClose }: SearchBarProps) {
@@ -152,7 +140,6 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
         <div className="search-results" ref={listRef}>
           {results.slice(0, 30).map((feature, i) => {
             const category = (feature.properties.category as string) || 'unknown'
-            const icon = CATEGORY_ICONS[category] || '•'
             const name = (feature.properties.name as string) || 'Unknown'
             const type = (feature.properties.type as string) || ''
 
@@ -163,7 +150,7 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
                 onClick={() => onSelect(feature)}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
-                <span className="search-result-icon">{icon}</span>
+                <span className="search-result-icon"><NodeIcon category={category} size={14} /></span>
                 <div className="search-result-text">
                   <span className="search-result-name">{name}</span>
                   <span className="search-result-meta">

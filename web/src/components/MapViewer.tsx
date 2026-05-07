@@ -17,6 +17,7 @@ import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
 import { createAnnotation, ANNOTATION_COLORS } from '../utils/annotations'
+import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
 
 interface GeoJSONCollection {
   type: 'FeatureCollection'
@@ -637,19 +638,23 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
     // Terrain cost overlay: color cells by movement difficulty
     useEffect(() => {
+      if (!mapRef.current) return
       const enabled = layers.terrain_cost
       for (const { polygon, elevation } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? getTerrainCostColor(elevation) : getElevationColor(elevation) })
       }
+      mapRef.current.fire('viewreset')
     }, [layers.terrain_cost])
 
     // Faction overlay: tint terrain cells by controlling civilization
     useEffect(() => {
+      if (!mapRef.current) return
       const enabled = layers.faction_control
       if (layers.terrain_cost) return // terrain_cost takes priority
       for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
       }
+      mapRef.current.fire('viewreset')
     }, [layers.faction_control, layers.terrain_cost])
 
     // Update layer opacity when opacities change
@@ -849,10 +854,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const km = edge ? svgDistanceToKm(edge.distanceSvg) : 0
         const days = edge?.segmentDays?.toFixed(1) || '—'
         const typeLabel = edge ? (TYPE_LABELS[edge.type] || edge.type) : ''
-        const warning = edge?.seasonal ? `<div class="journey-seg-warning">⚠ ${edge.seasonal}</div>` : ''
+        const warning = edge?.seasonal ? `<div class="journey-seg-warning">${iconWarningHtml()} ${edge.seasonal}</div>` : ''
         const bottleneck = edge?.bottleneck ? `<div class="journey-seg-bottleneck">▲ ${edge.bottleneck}</div>` : ''
-        const commodities = edge?.commodities ? `<div class="journey-seg-lore">📦 ${edge.commodities}</div>` : ''
-        const consequence = edge?.consequenceIfClosed ? `<div class="journey-seg-consequence">⚡ ${edge.consequenceIfClosed}</div>` : ''
+        const commodities = edge?.commodities ? `<div class="journey-seg-lore">${iconBoxHtml()} ${edge.commodities}</div>` : ''
+        const consequence = edge?.consequenceIfClosed ? `<div class="journey-seg-consequence">${iconBoltHtml()} ${edge.consequenceIfClosed}</div>` : ''
 
         poly.bindTooltip(
           `<div class="journey-seg-tooltip">

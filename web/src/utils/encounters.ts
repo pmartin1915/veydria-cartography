@@ -170,10 +170,10 @@ export function generateEncounters(
 
 export function encounterTypeIcon(type: Encounter['type']): string {
   switch (type) {
-    case 'social': return '🗣'
-    case 'environmental': return '🌿'
-    case 'combat': return '⚔'
-    case 'opportunity': return '✦'
+    case 'social': return '◎'
+    case 'environmental': return '❋'
+    case 'combat': return '✦'
+    case 'opportunity': return '◈'
     default: return '•'
   }
 }

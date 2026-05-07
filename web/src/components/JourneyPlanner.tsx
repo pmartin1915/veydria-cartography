@@ -1,5 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import type { GeoJSONCollection } from '../App'
+import {
+  NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
+  IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
+} from './icons'
 import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from '../utils/encounters'
 import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
@@ -32,15 +36,7 @@ function formatDays(days: number): string {
 }
 
 function NodeIcon({ category }: { category: string }) {
-  const icons: Record<string, string> = {
-    civilization: '🏛',
-    port: '⚓',
-    oasis: '🌿',
-    landmark: '◆',
-    chokepoint: '⛨',
-    contested_site: '✧',
-  }
-  return <span className="journey-node-icon">{icons[category] || '📍'}</span>
+  return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
 export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onExportAnnotations }: JourneyPlannerProps) {
@@ -70,11 +66,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const nodes = useMemo(() => getJourneyNodes(geojson), [geojson])
   const graph = useMemo(() => buildGraph(geojson), [geojson])
 
-  const SEASONS: { key: Season; label: string; icon: string }[] = [
-    { key: 'spring', label: 'Spring', icon: '🌸' },
-    { key: 'summer', label: 'Summer', icon: '☀️' },
-    { key: 'autumn', label: 'Autumn', icon: '🍂' },
-    { key: 'winter', label: 'Winter', icon: '❄️' },
+  const SEASONS: { key: Season; label: string; icon: ReactNode }[] = [
+    { key: 'spring', label: 'Spring', icon: <IconFlower /> },
+    { key: 'summer', label: 'Summer', icon: <IconSun /> },
+    { key: 'autumn', label: 'Autumn', icon: <IconLeafFall /> },
+    { key: 'winter', label: 'Winter', icon: <IconSnowflake /> },
   ]
 
   const MODES: { key: RouteMode; label: string; desc: string }[] = [
@@ -276,8 +272,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           ? Math.round(route.totalKm * (edge.distanceSvg / route.totalDistanceSvg))
           : 0
         const edgeDays = edge.segmentDays ? ` · ~${edge.segmentDays.toFixed(1)} days` : ''
-        const icon = edge.type === 'trade_route' ? '📜' :
-                     edge.type === 'chokepoint' ? '⛰' : '→'
+        const icon = edge.type === 'trade_route' ? '≡' :
+                     edge.type === 'chokepoint' ? '▲' : '→'
         md += `   ${icon} ${edge.name} (${edge.type.replace('_', '-')}) · ${edgeKm} km${edgeDays}\n`
       }
     }
@@ -286,7 +282,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     if (allWarnings.length > 0) {
       md += `\n### Warnings\n\n`
       for (const w of allWarnings) {
-        md += `⚠️ ${w}\n`
+        md += `[!] ${w}\n`
       }
     }
 
@@ -400,7 +396,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     <div className="journey-planner">
       <div className="journey-planner-header">
         <h3 className="journey-planner-title">
-          <span className="journey-planner-icon">🧭</span>
+          <span className="journey-planner-icon"><IconCompass /></span>
           Journey Planner
         </h3>
         <div className="journey-header-actions">
@@ -473,7 +469,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               onClick={() => handleSeasonChange(undefined)}
               title="All seasons"
             >
-              🗓️ Any
+              <IconCalendar /> Any
             </button>
             {SEASONS.map(s => (
               <button
@@ -785,10 +781,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     </span>
                     {i < route.edges.length && (
                       <span className="journey-path-edge">
-                        {route.edges[i].type === 'trade_route' && '📜'}
-                        {route.edges[i].type === 'chokepoint' && '⛰'}
-                        {route.edges[i].type === 'intra_civ' && '→'}
-                        {route.edges[i].type === 'civ_link' && '→'}
+                        {route.edges[i].type === 'trade_route' && <IconScroll />}
+                        {route.edges[i].type === 'chokepoint' && <IconMountain />}
+                        {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
                         {' '}{route.edges[i].name}
                       </span>
                     )}
@@ -800,7 +795,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             {/* Bottlenecks */}
             {route.bottlenecks.length > 0 && (
               <div className="journey-bottlenecks">
-                <div className="journey-bottlenecks-title">⚠️ Bottlenecks & Risks</div>
+                <div className="journey-bottlenecks-title"><IconWarning /> Bottlenecks & Risks</div>
                 {route.bottlenecks.map((b, i) => (
                   <div key={i} className="journey-bottleneck">{b}</div>
                 ))}
@@ -814,7 +809,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             {/* Seasonal warnings */}
             {route.seasonalWarnings.length > 0 && (
               <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
-                <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}>🌦️ Seasonal Restrictions</div>
+                <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconCloudRain /> Seasonal Restrictions</div>
                 {route.seasonalWarnings.map((w, i) => (
                   <div key={i} className="journey-bottleneck">{w}</div>
                 ))}
@@ -869,7 +864,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             className={`journey-annotations-toggle ${annotationsOpen ? 'active' : ''}`}
             onClick={() => setAnnotationsOpen(!annotationsOpen)}
           >
-            <span className="journey-annotations-icon">📍</span>
+            <span className="journey-annotations-icon"><IconPin /></span>
             <span className="journey-annotations-title">Campaign Notes</span>
             <span className="journey-annotations-count">{annotations.length}</span>
             <span className={`journey-annotations-chevron ${annotationsOpen ? 'open' : ''}`}>▾</span>

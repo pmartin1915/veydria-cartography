@@ -1,5 +1,10 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { LayerVisibility, LayerOpacity } from '../App'
+import {
+  IconMountain, IconWaves, IconRiver, IconFlag, IconFootsteps,
+  IconPillars, IconLandmark, IconLeaf, IconStar, IconAnchor,
+  IconShield, IconRoute, IconPencil,
+} from './icons'
 
 interface LayerControlsProps {
   layers: LayerVisibility
@@ -16,7 +21,7 @@ interface LayerGroup {
     key: keyof LayerVisibility
     label: string
     color: string
-    icon: string
+    icon: ReactNode
     opacityControl?: boolean
   }>
 }
@@ -25,28 +30,28 @@ const LAYER_GROUPS: LayerGroup[] = [
   {
     title: 'Geography',
     layers: [
-      { key: 'terrain_cell', label: 'Terrain', color: '#688c55', icon: '⛰', opacityControl: true },
-      { key: 'water', label: 'Basin', color: '#3a7ca5', icon: '🌊', opacityControl: true },
-      { key: 'river', label: 'Rivers', color: '#4a8ab0', icon: '〜', opacityControl: true },
-      { key: 'faction_control', label: 'Faction Overlay', color: '#c4a862', icon: '🏴' },
-      { key: 'terrain_cost', label: 'Terrain Cost', color: '#c06040', icon: '🥾' },
+      { key: 'terrain_cell', label: 'Terrain', color: '#688c55', icon: <IconMountain />, opacityControl: true },
+      { key: 'water', label: 'Basin', color: '#3a7ca5', icon: <IconWaves />, opacityControl: true },
+      { key: 'river', label: 'Rivers', color: '#4a8ab0', icon: <IconRiver />, opacityControl: true },
+      { key: 'faction_control', label: 'Faction Overlay', color: '#c4a862', icon: <IconFlag /> },
+      { key: 'terrain_cost', label: 'Terrain Cost', color: '#c06040', icon: <IconFootsteps /> },
     ],
   },
   {
     title: 'Regions',
     layers: [
-      { key: 'civilization', label: 'Civilizations', color: '#c4a862', icon: '🏛', opacityControl: true },
-      { key: 'landmark', label: 'Landmarks', color: '#c4a862', icon: '◆' },
-      { key: 'oasis', label: 'Oases', color: '#4a9a3a', icon: '🌿' },
-      { key: 'contested_site', label: 'Sacred Sites', color: '#88ccff', icon: '✧' },
+      { key: 'civilization', label: 'Civilizations', color: '#c4a862', icon: <IconPillars />, opacityControl: true },
+      { key: 'landmark', label: 'Landmarks', color: '#c4a862', icon: <IconLandmark /> },
+      { key: 'oasis', label: 'Oases', color: '#4a9a3a', icon: <IconLeaf /> },
+      { key: 'contested_site', label: 'Sacred Sites', color: '#88ccff', icon: <IconStar /> },
     ],
   },
   {
     title: 'Trade',
     layers: [
-      { key: 'port', label: 'Ports', color: '#e8c840', icon: '⚓' },
-      { key: 'chokepoint', label: 'Chokepoints', color: '#f44', icon: '⛨' },
-      { key: 'trade_route', label: 'Trade Routes', color: '#d4a854', icon: '⤳', opacityControl: true },
+      { key: 'port', label: 'Ports', color: '#e8c840', icon: <IconAnchor /> },
+      { key: 'chokepoint', label: 'Chokepoints', color: '#f44', icon: <IconShield /> },
+      { key: 'trade_route', label: 'Trade Routes', color: '#d4a854', icon: <IconRoute />, opacityControl: true },
     ],
   },
 ]
@@ -92,7 +97,7 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
           onClick={onToggleEditMode}
           title="Toggle Edit Mode (Draggable Markers)"
         >
-          <span className="layer-toggle-icon">✏️</span>
+          <span className="layer-toggle-icon"><IconPencil /></span>
           <ToggleSwitch active={!!isEditMode} color="#ffaa00" />
           <span className="layer-toggle-label">Edit Mode</span>
         </button>

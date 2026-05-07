@@ -381,8 +381,8 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
           edgeCost *= 10
         }
       }
-      const alt = (distMap.get(u) || Infinity) + edgeCost
-      if (alt < (distMap.get(v) || Infinity)) {
+      const alt = (distMap.get(u) ?? Infinity) + edgeCost
+      if (alt < (distMap.get(v) ?? Infinity)) {
         distMap.set(v, alt)
         prev.set(v, { node: u, edge })
         pq.push({ id: v, d: alt })

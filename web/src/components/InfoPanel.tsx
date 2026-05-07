@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
 import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
+import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock } from './icons'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -76,23 +77,11 @@ const RELATION_COLORS: Record<RelatedFeature['relationType'], string> = {
   proximity: 'var(--text-muted)',
 }
 
-const RELATION_ICONS: Record<RelatedFeature['relationType'], string> = {
-  trade: '⤳',
-  geography: '⛰',
-  connection: '⚓',
-  proximity: '◎',
-}
-
-const CATEGORY_ICONS: Record<string, string> = {
-  port: '⚓',
-  chokepoint: '⛨',
-  oasis: '🌿',
-  contested_site: '✧',
-  civilization: '🏛',
-  trade_route: '⤳',
-  water: '🌊',
-  landmark: '◆',
-  river: '〜',
+const RELATION_ICONS: Record<RelatedFeature['relationType'], ReactNode> = {
+  trade: <IconRoute size={12} />,
+  geography: <IconMountain size={12} />,
+  connection: <IconAnchor size={12} />,
+  proximity: <IconCircleDot size={12} />,
 }
 
 // Lore category badge colors
@@ -213,7 +202,7 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
           )}
           {travelEstimate && (
             <p className="info-panel-travel">
-              <span className="travel-icon">⏱</span>
+              <span className="travel-icon"><IconClock size={12} /></span>
               {formatTravelEstimate(travelEstimate)}
             </p>
           )}
