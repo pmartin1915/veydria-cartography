@@ -12,6 +12,7 @@ export interface ViewportState {
   centerY?: number
   journeyFrom?: string
   journeyTo?: string
+  share?: boolean
 }
 
 const SVG_WIDTH = 1200
@@ -50,6 +51,8 @@ export function parseHash(hash: string): ViewportState {
     if (!isNaN(y)) result.centerY = y
   }
 
+  if (params.get('share') === '1') result.share = true
+
   return result
 }
 
@@ -61,6 +64,7 @@ export function buildHash(state: ViewportState): string {
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))
+  if (state.share) params.set('share', '1')
 
   const str = params.toString()
   return str ? `#${str}` : ''

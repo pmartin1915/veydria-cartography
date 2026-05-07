@@ -23,6 +23,7 @@ interface JourneyPlannerProps {
   annotations?: MapAnnotation[]
   onFlyToAnnotation?: (annotation: MapAnnotation) => void
   onExportAnnotations?: () => void
+  shareMode?: boolean
 }
 
 function formatDays(days: number): string {
@@ -40,7 +41,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onExportAnnotations }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onExportAnnotations, shareMode = false }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -118,6 +119,30 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       onRouteComputed(result)
     }
   }, [active, defaultStartId, defaultEndId, nodes, graph, onRouteComputed])
+
+  // Auto-recompute when stops/season/mode change. Debounced so a fast
+  // dropdown selection doesn't churn through partial states.
+  useEffect(() => {
+    if (!active || !startId || !endId) return
+    const t = window.setTimeout(() => {
+      const stops = [startId, ...waypoints.filter(Boolean), endId]
+      let result: JourneyRoute | null
+      let pivots: JourneyNode[] = []
+      if (stops.length > 2) {
+        result = findMultiStopRoute(graph, stops, season, mode)
+      } else {
+        const fb = findRouteWithFallback(graph, startId, endId, season, mode)
+        result = fb.route
+        pivots = fb.pivots
+      }
+      setRoute(result)
+      setAutoPivots(pivots)
+      setAttempted(true)
+      onRouteComputed(result)
+    }, 250)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, startId, endId, waypoints, season, mode, graph])
 
   // Reset route when closed
   useEffect(() => {
@@ -813,12 +838,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               >
                 Days
               </button>
-              <button
-                className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
-                onClick={() => setRouteTab('encounters')}
-              >
-                Encounters
-              </button>
+              {!shareMode && (
+                <button
+                  className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
+                  onClick={() => setRouteTab('encounters')}
+                >
+                  Encounters
+                </button>
+              )}
             </div>
 
             {routeTab === 'route' && (
@@ -899,7 +926,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                           ))}
                         </ul>
                       )}
-                      {day.encounters.length > 0 && (
+                      {!shareMode && day.encounters.length > 0 && (
                         <div className="journey-day-encounters">
                           {day.encounters.map((enc, i) => (
                             <div key={i} className={`journey-encounter ${enc.severity}`}>
@@ -920,7 +947,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               )
             })()}
 
-            {routeTab === 'encounters' && (
+            {!shareMode && routeTab === 'encounters' && (
               <div className="journey-encounters">
                 {(() => {
                   const encounters = generateEncounters(route, season, mode)
@@ -960,8 +987,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         )}
 
-        {/* Annotations list */}
-        <div className="journey-annotations-section">
+        {/* Annotations list — GM only */}
+        {!shareMode && <div className="journey-annotations-section">
           <button
             className={`journey-annotations-toggle ${annotationsOpen ? 'active' : ''}`}
             onClick={() => setAnnotationsOpen(!annotationsOpen)}
@@ -1019,7 +1046,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               )}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Export toast */}
         {exportToast && (

@@ -1,16 +1,18 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import type { LayerVisibility, LayerOpacity } from '../App'
 import {
   IconMountain, IconWaves, IconRiver, IconFlag, IconFootsteps,
   IconPillars, IconLandmark, IconLeaf, IconStar, IconAnchor,
   IconShield, IconRoute, IconPencil,
 } from './icons'
+import { BUILT_IN_PRESETS, loadCustomPresets, saveCustomPresets, newPresetId, type LayerPreset } from '../utils/layer-presets'
 
 interface LayerControlsProps {
   layers: LayerVisibility
   opacities?: LayerOpacity
   onToggle: (layer: keyof LayerVisibility) => void
   onOpacityChange?: (layer: keyof LayerOpacity, value: number) => void
+  onApplyPreset?: (preset: LayerPreset) => void
   isEditMode?: boolean
   onToggleEditMode?: () => void
 }
@@ -82,8 +84,47 @@ function OpacitySlider({ value, color, onChange }: { value: number; color: strin
   )
 }
 
-export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, isEditMode, onToggleEditMode }: LayerControlsProps) {
+export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, onApplyPreset, isEditMode, onToggleEditMode }: LayerControlsProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [presetMenuOpen, setPresetMenuOpen] = useState(false)
+  const [customPresets, setCustomPresets] = useState<LayerPreset[]>(loadCustomPresets)
+  const presetMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (presetMenuRef.current && !presetMenuRef.current.contains(e.target as Node)) {
+        setPresetMenuOpen(false)
+      }
+    }
+    if (presetMenuOpen) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [presetMenuOpen])
+
+  const handleApply = (preset: LayerPreset) => {
+    onApplyPreset?.(preset)
+    setPresetMenuOpen(false)
+  }
+
+  const handleSaveCurrent = () => {
+    if (!opacities) return
+    const name = window.prompt('Name this preset:')
+    if (!name?.trim()) return
+    const preset: LayerPreset = {
+      id: newPresetId(),
+      name: name.trim().slice(0, 40),
+      layers: { ...layers },
+      opacities: { ...opacities },
+    }
+    const next = [...customPresets, preset]
+    setCustomPresets(next)
+    saveCustomPresets(next)
+  }
+
+  const handleDeleteCustom = (id: string) => {
+    const next = customPresets.filter(p => p.id !== id)
+    setCustomPresets(next)
+    saveCustomPresets(next)
+  }
 
   const toggleGroup = (title: string) => {
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }))
@@ -103,7 +144,54 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
         </button>
       )}
 
-      <div className="layer-controls-title">Layers</div>
+      <div className="layer-controls-title-row">
+        <span className="layer-controls-title">Layers</span>
+        {onApplyPreset && (
+          <div className="layer-presets-anchor" ref={presetMenuRef}>
+            <button
+              className={`layer-presets-toggle ${presetMenuOpen ? 'active' : ''}`}
+              onClick={() => setPresetMenuOpen(o => !o)}
+              title="Apply layer preset"
+            >
+              Presets ▾
+            </button>
+            {presetMenuOpen && (
+              <div className="layer-presets-menu">
+                <div className="layer-presets-section">Built-in</div>
+                {BUILT_IN_PRESETS.map(p => (
+                  <button key={p.id} className="layer-presets-item" onClick={() => handleApply(p)}>
+                    {p.name}
+                  </button>
+                ))}
+                {customPresets.length > 0 && (
+                  <>
+                    <div className="layer-presets-section">Custom</div>
+                    {customPresets.map(p => (
+                      <div key={p.id} className="layer-presets-item-row">
+                        <button className="layer-presets-item" onClick={() => handleApply(p)}>
+                          {p.name}
+                        </button>
+                        <button
+                          className="layer-presets-delete"
+                          onClick={() => handleDeleteCustom(p.id)}
+                          title="Delete preset"
+                          aria-label="Delete preset"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+                <div className="layer-presets-divider" />
+                <button className="layer-presets-save" onClick={handleSaveCurrent}>
+                  + Save current as preset…
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {LAYER_GROUPS.map((group) => {
         const isCollapsed = collapsed[group.title]

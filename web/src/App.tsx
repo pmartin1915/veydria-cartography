@@ -133,6 +133,7 @@ function App() {
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
+  const shareMode = !!initialHashRef.current.share
 
   // Cleanup all timeouts on unmount
   useEffect(() => {
@@ -425,13 +426,15 @@ function App() {
     }, 300)
   }, [])
 
-  // Share button: copy current URL to clipboard
-  const handleShare = useCallback(async () => {
-    const hash = buildHash(viewportRef.current)
+  // Share button: copy current URL to clipboard. If `playerView` is true,
+  // the URL has share=1 set, which strips annotations/encounters/edit
+  // controls when opened.
+  const handleShare = useCallback(async (playerView = false) => {
+    const hash = buildHash({ ...viewportRef.current, share: playerView || undefined })
     const url = window.location.origin + window.location.pathname + window.location.search + hash
     try {
       await navigator.clipboard.writeText(url)
-      setShareToast('Link copied to clipboard')
+      setShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
     } catch {
       // Fallback for browsers without clipboard API
       const input = document.createElement('input')
@@ -440,7 +443,7 @@ function App() {
       input.select()
       document.execCommand('copy')
       document.body.removeChild(input)
-      setShareToast('Link copied to clipboard')
+      setShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
     }
     if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
     shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
@@ -560,7 +563,12 @@ function App() {
   const featureCount = geojson?.features.length ?? 0
 
   return (
-    <div className="app">
+    <div className={`app ${shareMode ? 'share-mode' : ''}`}>
+      {shareMode && (
+        <div className="player-view-banner" role="status" aria-live="polite">
+          Player view — annotations and encounter notes are hidden
+        </div>
+      )}
       <header className="app-header">
         <div className="header-left">
           <h1 className="app-title">VEYDRIA</h1>
@@ -586,18 +594,20 @@ function App() {
             </svg>
             <span>{journeyMode ? 'Planning...' : 'Journey'}</span>
           </button>
-          <button
-            className={`search-trigger ${pinMode ? 'active' : ''}`}
-            onClick={handleTogglePinMode}
-            title="Toggle pin mode (P)"
-            id="pin-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z" />
-              <circle cx="12" cy="9" r="2.5" />
-            </svg>
-            <span>{pinMode ? 'Drop pin...' : 'Pin'}</span>
-          </button>
+          {!shareMode && (
+            <button
+              className={`search-trigger ${pinMode ? 'active' : ''}`}
+              onClick={handleTogglePinMode}
+              title="Toggle pin mode (P)"
+              id="pin-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z" />
+                <circle cx="12" cy="9" r="2.5" />
+              </svg>
+              <span>{pinMode ? 'Drop pin...' : 'Pin'}</span>
+            </button>
+          )}
           <button
             className={`search-trigger ${measureMode ? 'active' : ''}`}
             onClick={handleToggleMeasureMode}
@@ -612,7 +622,7 @@ function App() {
           </button>
           <button
             className="search-trigger"
-            onClick={handleShare}
+            onClick={() => handleShare(false)}
             title="Copy shareable link"
             id="share-trigger"
           >
@@ -623,6 +633,20 @@ function App() {
             </svg>
             <span>Share</span>
           </button>
+          {!shareMode && (
+            <button
+              className="search-trigger"
+              onClick={() => handleShare(true)}
+              title="Copy a player-facing link (hides annotations and encounters)"
+              id="player-share-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
+              </svg>
+              <span>Player Link</span>
+            </button>
+          )}
           <button
             className="search-trigger"
             onClick={() => setKeyboardHelpOpen(true)}
@@ -664,7 +688,7 @@ function App() {
             onCoordinateUpdate={handleCoordinateUpdate}
             measureMode={measureMode}
             pinMode={pinMode}
-            annotations={annotations}
+            annotations={shareMode ? [] : annotations}
             onAnnotationAdd={handleAnnotationAdd}
             onAnnotationUpdate={handleAnnotationUpdate}
             onAnnotationDelete={handleAnnotationDelete}
@@ -690,8 +714,12 @@ function App() {
           opacities={opacities}
           onToggle={handleLayerToggle}
           onOpacityChange={handleOpacityChange}
+          onApplyPreset={(preset) => {
+            setLayers({ ...preset.layers })
+            setOpacities({ ...preset.opacities })
+          }}
           isEditMode={isEditMode}
-          onToggleEditMode={() => setIsEditMode(prev => !prev)}
+          onToggleEditMode={shareMode ? undefined : () => setIsEditMode(prev => !prev)}
         />
 
         <InfoPanel
@@ -721,9 +749,10 @@ function App() {
             defaultEndId={initialHashRef.current.journeyTo}
             onClose={handleJourneyClose}
             onRouteComputed={handleJourneyRouteComputed}
-            annotations={annotations}
+            annotations={shareMode ? [] : annotations}
             onFlyToAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
             onExportAnnotations={handleExportAnnotations}
+            shareMode={shareMode}
           />
         )}
 
