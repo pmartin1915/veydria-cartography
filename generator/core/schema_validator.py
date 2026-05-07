@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from jsonschema import Draft7Validator
 
 
 # Schema for veydria-topology.yaml
@@ -182,28 +183,28 @@ def validate_topology(data: dict[str, Any]) -> list[str]:
     """
     Validate topology data against the schema.
 
-    Returns a list of error messages (empty if valid).
+    Returns a list of error messages (empty if valid). Runs JSON Schema
+    structural validation first (shape, types, required keys, regex-keyed
+    sub-objects), then semantic checks for the specific civ / chokepoint /
+    port / route names the pipeline depends on. The schema cannot express
+    "must contain these *specific* names" — that's the semantic layer's job.
     """
     errors: list[str] = []
 
-    # Check required top-level keys
-    for key in TOPOLOGY_SCHEMA["required"]:
-        if key not in data:
-            errors.append(f"Missing required top-level key: '{key}'")
+    # Structural validation via JSON Schema — catches misspelled fields,
+    # wrong types, unexpected keys, missing required keys, etc.
+    validator = Draft7Validator(TOPOLOGY_SCHEMA)
+    for err in sorted(validator.iter_errors(data), key=lambda e: list(e.absolute_path)):
+        path = ".".join(str(p) for p in err.absolute_path) or "<root>"
+        errors.append(f"{path}: {err.message}")
 
-    # Check civilizations
-    civs = data.get("civilization_positions", {})
+    # Semantic validation — specific names the pipeline expects to find.
     expected_civs = {"ngaru_bon", "irrah", "kheshkai", "ndjadi", "qollari", "oravan"}
-    actual_civs = set(civs.keys())
+    actual_civs = set(data.get("civilization_positions", {}).keys())
     if not expected_civs.issubset(actual_civs):
         missing = expected_civs - actual_civs
         errors.append(f"Missing expected civilizations: {sorted(missing)}")
-    for civ_key, civ_data in civs.items():
-        if "borders" in civ_data and not isinstance(civ_data["borders"], list):
-            errors.append(f"civilization_positions.{civ_key}.borders must be a list")
 
-    # Check chokepoints
-    cps = data.get("chokepoints", {})
     expected_cps = {
         "lam_chen_pass",
         "a_tzalan_ford",
@@ -212,26 +213,19 @@ def validate_topology(data: dict[str, Any]) -> list[str]:
         "smith_spring",
         "breath_of_cloud",
     }
-    actual_cps = set(cps.keys())
+    actual_cps = set(data.get("chokepoints", {}).keys())
     if not expected_cps.issubset(actual_cps):
         missing = expected_cps - actual_cps
         errors.append(f"Missing expected chokepoints: {sorted(missing)}")
-    for cp_key, cp_data in cps.items():
-        connects = cp_data.get("connects", [])
-        if len(connects) < 2:
-            errors.append(f"chokepoints.{cp_key}.connects must have at least 2 entries")
 
-    # Check basin port zones
-    basin = data.get("aethelian_basin", {})
-    zones = basin.get("functional_zones", {})
     expected_ports = {"ki_mbuhari", "tavakh_qarat", "halani_tamu", "dzong_tamu"}
-    actual_ports = set(zones.keys())
+    actual_ports = set(
+        data.get("aethelian_basin", {}).get("functional_zones", {}).keys()
+    )
     if not expected_ports.issubset(actual_ports):
         missing = expected_ports - actual_ports
         errors.append(f"Missing expected port zones: {sorted(missing)}")
 
-    # Check trade routes
-    routes = data.get("trade_routes", {})
     expected_routes = {
         "copper_for_steel_road",
         "highland_steppe_corridor",
@@ -239,17 +233,18 @@ def validate_topology(data: dict[str, Any]) -> list[str]:
         "coastal_monsoon",
         "caravan_thread",
     }
-    actual_routes = set(routes.keys())
+    actual_routes = set(data.get("trade_routes", {}).keys())
     if not expected_routes.issubset(actual_routes):
         missing = expected_routes - actual_routes
         errors.append(f"Missing expected trade routes: {sorted(missing)}")
 
-    # Check elevation profile
-    elev = data.get("elevation_profile", {})
-    bands = elev.get("bands", [])
-    band_regions = {b.get("region") for b in bands}
+    bands = data.get("elevation_profile", {}).get("bands", [])
+    band_regions = {b.get("region") for b in bands if isinstance(b, dict)}
     if len(band_regions) < 6:
-        errors.append(f"elevation_profile.bands should cover at least 6 regions, found {len(band_regions)}")
+        errors.append(
+            f"elevation_profile.bands should cover at least 6 regions, "
+            f"found {len(band_regions)}"
+        )
 
     return errors
 
