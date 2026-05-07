@@ -241,7 +241,15 @@ function App() {
   }, [])
 
   const handleLayerToggle = useCallback((layer: keyof LayerVisibility) => {
-    setLayers((prev) => ({ ...prev, [layer]: !prev[layer] }))
+    setLayers((prev) => {
+      const next = { ...prev, [layer]: !prev[layer] }
+      // Faction overlay and terrain cost tint the terrain_cell layer, so make
+      // sure that layer is visible when either overlay is being enabled.
+      if ((layer === 'faction_control' || layer === 'terrain_cost') && next[layer]) {
+        next.terrain_cell = true
+      }
+      return next
+    })
   }, [])
 
   const handleOpacityChange = useCallback((layer: keyof LayerOpacity, value: number) => {

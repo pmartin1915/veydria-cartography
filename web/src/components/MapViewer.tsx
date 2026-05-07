@@ -223,6 +223,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const onAnnotationDeleteRef = useRef(onAnnotationDelete)
     const openPopupIdRef = useRef<string | null>(null)
     const annotationMarkersRef = useRef<Map<string, L.Marker>>(new Map())
+    const canvasRendererRef = useRef<L.Canvas | null>(null)
 
     // Keep refs in sync so event handlers see current value without re-binding
     useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
@@ -271,10 +272,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       },
       setFactionOverlay(enabled: boolean) {
+        if (layers.terrain_cost) return // terrain_cost takes priority
         for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
-          if (layers.terrain_cost) return // terrain_cost takes priority
           polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
         }
+        ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
       },
       clearJourneyRoute() {
         if (journeyRouteLayerRef.current && mapRef.current) {
@@ -312,8 +314,13 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         crs: L.CRS.Simple,
         minZoom: -2,
         maxZoom: 4,
-        zoomSnap: 0.25,
-        zoomDelta: 0.5,
+        zoomSnap: 0.5,
+        zoomDelta: 1,
+        wheelPxPerZoomLevel: 120,
+        wheelDebounceTime: 30,
+        zoomAnimation: true,
+        markerZoomAnimation: true,
+        fadeAnimation: true,
         attributionControl: false,
         zoomControl: false,
       })
@@ -324,8 +331,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // Scale bar
       L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map)
 
-      // Canvas renderer for high-count layers (terrain_cell has 3000+ polygons)
-      const canvasRenderer = L.canvas({ padding: 0.5 })
+      // Canvas renderer for high-count layers (terrain_cell has 3000+ polygons).
+      // Lower padding: 0.1 keeps the off-screen buffer small so pan/zoom redraws
+      // fewer cells.
+      const canvasRenderer = L.canvas({ padding: 0.1 })
+      canvasRendererRef.current = canvasRenderer
 
       // Track zoom level for threshold-based visibility
       const updateZoom = () => setZoomLevel(map.getZoom())
@@ -643,7 +653,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       for (const { polygon, elevation } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? getTerrainCostColor(elevation) : getElevationColor(elevation) })
       }
-      mapRef.current.fire('viewreset')
+      // Force the canvas to discard cached strokes and repaint with new fillColor.
+      // setStyle alone schedules a deferred redraw that often fails to flush
+      // because the canvas renderer batches redraws by frame.
+      ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
     }, [layers.terrain_cost])
 
     // Faction overlay: tint terrain cells by controlling civilization
@@ -654,7 +667,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
       }
-      mapRef.current.fire('viewreset')
+      ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
     }, [layers.faction_control, layers.terrain_cost])
 
     // Update layer opacity when opacities change
