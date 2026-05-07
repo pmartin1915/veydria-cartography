@@ -2501,6 +2501,17 @@ body {
   color: var(--text-primary);
 }
 
+.journey-auto-pivot {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: rgba(212, 168, 84, 0.06);
+  border: 1px solid rgba(212, 168, 84, 0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin: 6px 0;
+}
+
 /* Day-by-day */
 .journey-days {
   display: flex;

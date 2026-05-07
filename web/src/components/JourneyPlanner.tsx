@@ -4,7 +4,7 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from '../utils/encounters'
 import { buildDailyBreakdown } from '../utils/journey-days'
 import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
@@ -57,6 +57,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [routeTab, setRouteTab] = useState<'route' | 'days' | 'encounters'>('route')
+  const [attempted, setAttempted] = useState(false)
+  const [autoPivots, setAutoPivots] = useState<JourneyNode[]>([])
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
@@ -151,11 +153,20 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
   function computeRoute(s?: Season, m?: RouteMode) {
     if (!startId || !endId) return
-    const stops = [startId, ...waypoints, endId]
-    const result = stops.length > 2
-      ? findMultiStopRoute(graph, stops, s, m)
-      : findRoute(graph, startId, endId, s, m)
+    const stops = [startId, ...waypoints.filter(Boolean), endId]
+    let result: JourneyRoute | null
+    let pivots: JourneyNode[] = []
+    if (stops.length > 2) {
+      // User specified waypoints — honour them exactly.
+      result = findMultiStopRoute(graph, stops, s, m)
+    } else {
+      const fb = findRouteWithFallback(graph, startId, endId, s, m)
+      result = fb.route
+      pivots = fb.pivots
+    }
     setRoute(result)
+    setAutoPivots(pivots)
+    setAttempted(true)
     onRouteComputed(result)
   }
 
@@ -173,6 +184,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setWaypoints([])
     setWpSearch('')
     setWpOpenIdx(null)
+    setAttempted(false)
+    setAutoPivots([])
   }
 
   function handleAddWaypoint() {
@@ -185,6 +198,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setWaypoints(prev => prev.filter((_, i) => i !== idx))
     setRoute(null)
     onRouteComputed(null)
+    setAttempted(false)
+    setAutoPivots([])
   }
 
   function handleSetWaypoint(idx: number, nodeId: string) {
@@ -197,6 +212,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setWpSearch('')
     setRoute(null)
     onRouteComputed(null)
+    setAttempted(false)
+    setAutoPivots([])
   }
 
   function showExportToast(msg: string) {
@@ -339,6 +356,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setEndSearch(startNode?.name || '')
     setRoute(null)
     onRouteComputed(null)
+    setAttempted(false)
+    setAutoPivots([])
   }
 
   function handleSeasonChange(newSeason: Season | undefined) {
@@ -561,6 +580,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                         setStartOpen(false)
                         setRoute(null)
                         onRouteComputed(null)
+                        setAttempted(false)
+                        setAutoPivots([])
                       }}
                     >
                       <NodeIcon category={n.category} />
@@ -629,6 +650,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                         setEndOpen(false)
                         setRoute(null)
                         onRouteComputed(null)
+                        setAttempted(false)
+                        setAutoPivots([])
                       }}
                     >
                       <NodeIcon category={n.category} />
@@ -769,6 +792,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 return <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
               })()}
             </div>
+
+            {autoPivots.length > 0 && (
+              <div className="journey-auto-pivot">
+                No direct route — auto-routed via {autoPivots.map(p => p.name).join(' and ')}.
+              </div>
+            )}
 
             {/* Tabs */}
             <div className="journey-tabs">
@@ -925,9 +954,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         )}
 
-        {route === null && startId && endId && (
+        {attempted && route === null && startId && endId && (
           <div className="journey-no-route">
-            No route found between these locations.
+            No route found between these locations, even after trying intermediate civilizations. Add a manual waypoint to bridge the gap.
           </div>
         )}
 

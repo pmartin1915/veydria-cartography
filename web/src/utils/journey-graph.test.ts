@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, getJourneyNodes } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, getJourneyNodes } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -52,6 +52,26 @@ describe('journey-graph: Dijkstra start-node fix', () => {
     expect(route).not.toBeNull()
     expect(route!.nodes.length).toBe(1)
     expect(route!.totalKm).toBe(0)
+  })
+
+  it('findRouteWithFallback returns no pivots when a direct route exists', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const fb = findRouteWithFallback(graph, civs[0].id, civs[1].id)
+    expect(fb.route).not.toBeNull()
+    expect(fb.pivots).toEqual([])
+  })
+
+  it('findRouteWithFallback never throws and yields a route for every named pair', () => {
+    const sample = nodes.filter(n => n.category === 'civilization' || n.category === 'port').slice(0, 8)
+    let success = 0
+    for (let i = 0; i < sample.length; i++) {
+      for (let j = 0; j < sample.length; j++) {
+        if (i === j) continue
+        const fb = findRouteWithFallback(graph, sample[i].id, sample[j].id)
+        if (fb.route) success++
+      }
+    }
+    expect(success).toBeGreaterThan(0)
   })
 
   it('finds a route between every civilization pair (graph is connected)', () => {

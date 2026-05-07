@@ -501,6 +501,54 @@ export function findMultiStopRoute(
   }
 }
 
+/** Find a route, falling back to single- or double-civ pivots if a direct
+ *  Dijkstra search returns null. The graph is mostly connected through
+ *  civilization centroids, so when the direct call fails we look for the
+ *  cheapest single intermediate civ that bridges start and end, and if
+ *  none works, the cheapest pair of intermediate civs.
+ *
+ *  Returns the best route found and the list of pivots used (so the UI can
+ *  surface "auto-routed via X").
+ */
+export function findRouteWithFallback(
+  graph: Graph,
+  startId: string,
+  endId: string,
+  season?: Season,
+  mode: RouteMode = 'direct'
+): { route: JourneyRoute | null; pivots: JourneyNode[] } {
+  const direct = findRoute(graph, startId, endId, season, mode)
+  if (direct) return { route: direct, pivots: [] }
+
+  const civs = Array.from(graph.nodes.values()).filter(n =>
+    n.category === 'civilization' && n.id !== startId && n.id !== endId
+  )
+
+  // Try single-civ pivots
+  let best: { route: JourneyRoute; pivots: JourneyNode[] } | null = null
+  for (const c of civs) {
+    const r = findMultiStopRoute(graph, [startId, c.id, endId], season, mode)
+    if (r && (!best || r.totalKm < best.route.totalKm)) {
+      best = { route: r, pivots: [c] }
+    }
+  }
+  if (best) return best
+
+  // Two-civ pivots — bounded combinatorial since civs.length is small (≤6)
+  for (const c1 of civs) {
+    for (const c2 of civs) {
+      if (c1.id === c2.id) continue
+      const r = findMultiStopRoute(graph, [startId, c1.id, c2.id, endId], season, mode)
+      if (r && (!best || r.totalKm < (best as { route: JourneyRoute }).route.totalKm)) {
+        best = { route: r, pivots: [c1, c2] }
+      }
+    }
+  }
+  if (best) return best
+
+  return { route: null, pivots: [] }
+}
+
 /** Derive a difficulty class from edge composition. */
 export function getRouteDifficulty(route: JourneyRoute): { class: string; label: string } {
   if (route.edges.length === 0) return { class: 'trivial', label: 'Trivial' }
