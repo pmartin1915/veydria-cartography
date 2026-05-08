@@ -15,11 +15,23 @@ interface SnapshotOptions {
   target: HTMLElement
 }
 
+// Cap output at ~6 MP. Above this, clipboard writes start to silently fail
+// in some browsers, and the resulting file (~5–10 MB at 6 MP) is already
+// big enough to hurt anyone trying to drop the image into chat. On a 4K
+// window with pixelRatio: 2 we'd otherwise hit ~16 MP / 30 MB.
+const MAX_OUTPUT_MEGAPIXELS = 6
+
 export async function captureMapPng(opts: SnapshotOptions): Promise<string> {
-  // html-to-image renders at the element's CSS size × pixelRatio.
-  // Filter out Leaflet controls so the snapshot is clean (no zoom buttons).
+  const rect = opts.target.getBoundingClientRect()
+  const requestedRatio = opts.pixelRatio ?? 2
+  const requestedPixels = rect.width * rect.height * requestedRatio * requestedRatio
+  const cap = MAX_OUTPUT_MEGAPIXELS * 1_000_000
+  const ratio = requestedPixels > cap && rect.width > 0 && rect.height > 0
+    ? Math.sqrt(cap / (rect.width * rect.height))
+    : requestedRatio
+
   return toPng(opts.target, {
-    pixelRatio: opts.pixelRatio ?? 2,
+    pixelRatio: ratio,
     cacheBust: true,
     filter: (node) => {
       if (!(node instanceof HTMLElement)) return true

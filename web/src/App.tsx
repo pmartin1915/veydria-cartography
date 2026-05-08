@@ -769,8 +769,12 @@ function App() {
           onToggle={handleLayerToggle}
           onOpacityChange={handleOpacityChange}
           onApplyPreset={(preset) => {
-            setLayers({ ...preset.layers })
-            setOpacities({ ...preset.opacities })
+            // Merge against current state so a preset only overrides keys it
+            // carries; new keys added to LayerVisibility/LayerOpacity after a
+            // preset was saved keep their current value rather than going
+            // undefined.
+            setLayers((prev) => ({ ...prev, ...preset.layers }))
+            setOpacities((prev) => ({ ...prev, ...preset.opacities }))
           }}
           isEditMode={isEditMode}
           onToggleEditMode={shareMode ? undefined : () => setIsEditMode(prev => !prev)}
