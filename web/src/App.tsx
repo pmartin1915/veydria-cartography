@@ -655,18 +655,20 @@ function App() {
               <span>{pinMode ? 'Drop pin...' : 'Pin'}</span>
             </button>
           )}
-          <button
-            className={`search-trigger ${measureMode ? 'active' : ''}`}
-            onClick={handleToggleMeasureMode}
-            title="Toggle measure mode (M)"
-            id="measure-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3v18h18" />
-              <path d="M7 16l4-6 4 4 6-8" />
-            </svg>
-            <span>{measureMode ? 'Measuring...' : 'Measure'}</span>
-          </button>
+          {!shareMode && (
+            <button
+              className={`search-trigger ${measureMode ? 'active' : ''}`}
+              onClick={handleToggleMeasureMode}
+              title="Toggle measure mode (M)"
+              id="measure-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18" />
+                <path d="M7 16l4-6 4 4 6-8" />
+              </svg>
+              <span>{measureMode ? 'Measuring...' : 'Measure'}</span>
+            </button>
+          )}
           <button
             className="search-trigger"
             onClick={() => handleShare(false)}
@@ -790,6 +792,7 @@ function App() {
           }}
           isEditMode={isEditMode}
           onToggleEditMode={shareMode ? undefined : () => setIsEditMode(prev => !prev)}
+          shareMode={shareMode}
         />
 
         <InfoPanel

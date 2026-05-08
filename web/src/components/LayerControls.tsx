@@ -15,6 +15,12 @@ interface LayerControlsProps {
   onApplyPreset?: (preset: LayerPreset) => void
   isEditMode?: boolean
   onToggleEditMode?: () => void
+  /**
+   * Player-share mode (#share=1). On a narrow viewport we collapse the
+   * panel into a small launcher so a phone player doesn't see the GM-
+   * grade layer controls by default; tapping the launcher expands them.
+   */
+  shareMode?: boolean
 }
 
 interface LayerGroup {
@@ -84,11 +90,29 @@ function OpacitySlider({ value, color, onChange }: { value: number; color: strin
   )
 }
 
-export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, onApplyPreset, isEditMode, onToggleEditMode }: LayerControlsProps) {
+export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, onApplyPreset, isEditMode, onToggleEditMode, shareMode }: LayerControlsProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [presetMenuOpen, setPresetMenuOpen] = useState(false)
   const [customPresets, setCustomPresets] = useState<LayerPreset[]>(loadCustomPresets)
   const presetMenuRef = useRef<HTMLDivElement>(null)
+
+  // Mobile-share launcher: when shareMode is on AND the viewport is
+  // narrow, collapse the entire panel to a small pill the player can
+  // tap to open. Desktop share-mode keeps the full panel — only mobile
+  // gets the launcher treatment.
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  const [panelOpen, setPanelOpen] = useState<boolean>(!(shareMode && isMobile))
+  // Re-evaluate on viewport changes (e.g. orientation rotation).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 768px)')
+    const handler = () => {
+      // Only auto-collapse — never auto-expand, so a user choice sticks.
+      if (shareMode && mq.matches) setPanelOpen(false)
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [shareMode])
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -130,8 +154,32 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }))
   }
 
+  // Collapsed launcher (mobile + share mode only)
+  if (!panelOpen) {
+    return (
+      <button
+        className="layer-controls-launcher"
+        onClick={() => setPanelOpen(true)}
+        aria-label="Open layers panel"
+      >
+        <span aria-hidden>≣</span>
+        <span>Layers</span>
+      </button>
+    )
+  }
+
   return (
     <div className="layer-controls" id="layer-controls">
+      {shareMode && isMobile && (
+        <button
+          className="layer-controls-collapse"
+          onClick={() => setPanelOpen(false)}
+          aria-label="Hide layers panel"
+          title="Hide"
+        >
+          ×
+        </button>
+      )}
       {onToggleEditMode && (
         <button
           className={`layer-toggle edit-mode-toggle ${isEditMode ? 'active' : ''}`}

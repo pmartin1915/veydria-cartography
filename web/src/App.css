@@ -1804,6 +1804,64 @@ body {
   }
 }
 
+/* --- Mobile share-mode launcher --- */
+.layer-controls-launcher {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-accent);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  z-index: 600;
+  transition: var(--transition-fast);
+}
+
+.layer-controls-launcher:hover,
+.layer-controls-launcher:focus-visible {
+  background: var(--bg-elevated, var(--bg-card));
+  border-color: var(--text-accent, var(--border-accent));
+  outline: none;
+}
+
+.layer-controls-launcher span[aria-hidden] {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.layer-controls-collapse {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.layer-controls-collapse:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
 @media (max-width: 480px) {
   .app-header {
     padding: 0 10px;
@@ -1819,7 +1877,10 @@ body {
   }
 
   .search-trigger {
-    padding: 5px 8px;
+    /* Bump touch target — Apple HIG recommends 44x44, this gets us
+       to ~36 high without bloating tablet/desktop. */
+    padding: 8px 10px;
+    min-height: 36px;
   }
 
   .layer-controls {
