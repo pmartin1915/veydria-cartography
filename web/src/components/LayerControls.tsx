@@ -96,23 +96,27 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
   const [customPresets, setCustomPresets] = useState<LayerPreset[]>(loadCustomPresets)
   const presetMenuRef = useRef<HTMLDivElement>(null)
 
-  // Mobile-share launcher: when shareMode is on AND the viewport is
-  // narrow, collapse the entire panel to a small pill the player can
-  // tap to open. Desktop share-mode keeps the full panel — only mobile
-  // gets the launcher treatment.
+  // Mobile launcher: on a narrow viewport, collapse the panel into a
+  // small pill the user taps to open. Applies to BOTH GM and share
+  // modes — the panel covers too much of a phone screen otherwise.
+  // Desktop is unaffected.
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-  const [panelOpen, setPanelOpen] = useState<boolean>(!(shareMode && isMobile))
-  // Re-evaluate on viewport changes (e.g. orientation rotation).
+  const [panelOpen, setPanelOpen] = useState<boolean>(!isMobile)
+  // Re-evaluate on viewport changes (orientation rotation, dev-tools
+  // resize). Auto-collapse only — never auto-expand, so a user choice
+  // sticks.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const mq = window.matchMedia('(max-width: 768px)')
     const handler = () => {
-      // Only auto-collapse — never auto-expand, so a user choice sticks.
-      if (shareMode && mq.matches) setPanelOpen(false)
+      if (mq.matches) setPanelOpen(false)
     }
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
-  }, [shareMode])
+  }, [])
+  // shareMode no longer drives collapse but is still accepted by the
+  // component for future use.
+  void shareMode
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -170,7 +174,7 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
 
   return (
     <div className="layer-controls" id="layer-controls">
-      {shareMode && isMobile && (
+      {isMobile && (
         <button
           className="layer-controls-collapse"
           onClick={() => setPanelOpen(false)}

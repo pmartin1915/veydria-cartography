@@ -65,6 +65,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* dvh tracks the live viewport on mobile Safari as the address bar shows/hides */
   width: 100vw;
   overflow: hidden;
 }

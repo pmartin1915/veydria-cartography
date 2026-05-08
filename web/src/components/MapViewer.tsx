@@ -621,7 +621,26 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       mapRef.current = map
 
+      // Mobile Safari measures the container before the address bar settles,
+      // so Leaflet's first sizing pass can be wrong — the map then sits in a
+      // small slice of the visible viewport with the rest blank. Force a
+      // re-measure once the layout has settled, and again on window resize
+      // (orientation change, address-bar show/hide). pan: false avoids the
+      // animated re-center that would otherwise jolt the user.
+      const resyncSize = () => {
+        if (!mapRef.current) return
+        mapRef.current.invalidateSize({ pan: false })
+      }
+      const t1 = window.setTimeout(resyncSize, 0)
+      const t2 = window.setTimeout(resyncSize, 250)
+      window.addEventListener('resize', resyncSize)
+      window.addEventListener('orientationchange', resyncSize)
+
       return () => {
+        clearTimeout(t1)
+        clearTimeout(t2)
+        window.removeEventListener('resize', resyncSize)
+        window.removeEventListener('orientationchange', resyncSize)
         map.off('zoom', updateZoom)
         map.off('moveend', handleMoveEnd)
         map.off('click', handleMapClick)
