@@ -725,7 +725,14 @@ function App() {
             <span>Search...</span>
             <kbd>⌘K</kbd>
           </button>
-          <span className="feature-count">{featureCount} features</span>
+          <button
+            className="feature-count"
+            onClick={() => setSearchOpen(true)}
+            title="Search features (Ctrl+K)"
+            type="button"
+          >
+            {featureCount} features
+          </button>
         </div>
       </header>
 
