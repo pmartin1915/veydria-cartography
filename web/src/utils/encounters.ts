@@ -38,7 +38,7 @@ function mulberry32(a: number) {
 
 /* ─── Beat pools ─── */
 
-interface Beat {
+export interface Beat {
   text: string
   type: Encounter['type']
   severity: Encounter['severity']
@@ -46,7 +46,7 @@ interface Beat {
   excludeSeasons?: Season[]
 }
 
-const TRADE_ROUTE_BEATS: Beat[] = [
+export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Copper merchant from the Irrah salt-flats offers passage in exchange for a letter of introduction.', type: 'social', severity: 'mild' },
   { text: 'Khazadari money-changer sets up a folding table at the crossroads; rates favour khatti credit over coin.', type: 'social', severity: 'mild' },
   { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate' },
@@ -61,7 +61,7 @@ const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Winter ice sheaths the mountain road; a Khazadari patrol passes in silence, their yak-hair boots making no sound.', type: 'environmental', severity: 'mild', seasons: ['winter'] },
 ]
 
-const CHOKEPOINT_BEATS: Beat[] = [
+export const CHOKEPOINT_BEATS: Beat[] = [
   { text: 'Lam-Chen pass guards demand toll in Qalībin salt-cubes, not coin. They weigh each cube on a brass scale.', type: 'social', severity: 'moderate' },
   { text: 'Rockfall blocks the trail; voices echo from above — survivors of yesterday\'s slide, or scavengers already picking?', type: 'environmental', severity: 'severe' },
   { text: 'Smith-pilgrim seeks an escort through the pass; carries ingots stamped with a dead khatt\'s seal. Trouble follows.', type: 'opportunity', severity: 'moderate' },
@@ -74,7 +74,7 @@ const CHOKEPOINT_BEATS: Beat[] = [
   { text: 'A Khazadari outpost offers hot tea and stale bread; the commander wants news from the southern road.', type: 'opportunity', severity: 'mild' },
 ]
 
-const INTRA_CIV_BEATS: Beat[] = [
+export const INTRA_CIV_BEATS: Beat[] = [
   { text: 'Oasis hospitality: the headman insists on three cups of sweet tea before any business is discussed.', type: 'social', severity: 'mild' },
   { text: 'Qalībin path-finder negotiation: she won\'t guide without a blood-oath, but her rate is half the khatt standard.', type: 'social', severity: 'moderate' },
   { text: 'Salt caravan crossing at dawn; the Irrah drivers sing a mourning hymn for the desert they left three weeks ago.', type: 'social', severity: 'mild' },
@@ -93,7 +93,7 @@ const NOTHING_BEATS: Beat[] = [
   { text: 'The trail is well-maintained and well-travelled. You make good time.', type: 'environmental', severity: 'mild' },
 ]
 
-function poolForEdgeType(type: string): Beat[] {
+export function poolForEdgeType(type: string): Beat[] {
   switch (type) {
     case 'trade_route': return TRADE_ROUTE_BEATS
     case 'chokepoint': return CHOKEPOINT_BEATS
@@ -102,7 +102,7 @@ function poolForEdgeType(type: string): Beat[] {
   }
 }
 
-function filterBySeason(pool: Beat[], season?: Season): Beat[] {
+export function filterBySeason(pool: Beat[], season?: Season): Beat[] {
   if (!season) return pool
   const general = pool.filter(b => !b.seasons && !b.excludeSeasons)
   const specific = pool.filter(b => {
