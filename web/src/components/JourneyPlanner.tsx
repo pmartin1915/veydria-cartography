@@ -5,7 +5,8 @@ import {
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
 import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from '../utils/encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
+import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
 import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
 import { formatDistance } from '../utils/measure'
@@ -62,6 +63,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [attempted, setAttempted] = useState(false)
   const [autoPivots, setAutoPivots] = useState<JourneyNode[]>([])
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
+  const [oneOffRolls, setOneOffRolls] = useState<Encounter[]>([])
+  // Reset impromptu rolls whenever the route identity changes — they're
+  // mid-session detours bound to a specific trip, not persistent history.
+  const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
+  useEffect(() => { setOneOffRolls([]) }, [routeSig])
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -952,15 +958,46 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               <div className="journey-encounters">
                 {(() => {
                   const encounters = generateEncounters(route, season, mode)
-                  if (encounters.length === 0) {
-                    return <div className="journey-encounters-empty">No encounters generated for this route.</div>
+                  const handleRoll = () => {
+                    if (route.edges.length === 0) return
+                    // Pick a random edge from the route and roll for its type.
+                    // For unscripted detours mid-session, the segment doesn't
+                    // really matter — what matters is the kind of terrain.
+                    const edge = route.edges[Math.floor(Math.random() * route.edges.length)]
+                    const edgeType = edge.type === 'civ_link' ? 'intra_civ' : edge.type as 'trade_route' | 'chokepoint' | 'intra_civ'
+                    const rolled = rollOneOff({ edgeType, season })
+                    if (rolled) setOneOffRolls(prev => [rolled, ...prev])
                   }
                   return (
                     <>
                       <div className="journey-encounters-header">
-                        <span className="journey-encounters-count">{encounters.length} beat{encounters.length !== 1 ? 's' : ''}</span>
-                        <span className="journey-encounters-seed">Seeded by route signature</span>
+                        <span className="journey-encounters-count">
+                          {encounters.length} beat{encounters.length !== 1 ? 's' : ''}
+                          {oneOffRolls.length > 0 && ` + ${oneOffRolls.length} impromptu`}
+                        </span>
+                        <button
+                          type="button"
+                          className="journey-encounter-roll-btn"
+                          onClick={handleRoll}
+                          title="Roll a fresh, non-deterministic encounter for an unscripted detour"
+                        >
+                          ⟳ Roll one-off
+                        </button>
                       </div>
+                      {oneOffRolls.map((enc, i) => (
+                        <div key={`oneoff-${oneOffRolls.length - i}`} className={`journey-encounter journey-encounter--impromptu ${enc.severity}`}>
+                          <div className="journey-encounter-meta">
+                            <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
+                            <span className="journey-encounter-type">{enc.type}</span>
+                            <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            <span className="journey-encounter-segment journey-encounter-segment--impromptu">Impromptu</span>
+                          </div>
+                          <div className="journey-encounter-beat">{enc.beat}</div>
+                        </div>
+                      ))}
+                      {encounters.length === 0 && oneOffRolls.length === 0 && (
+                        <div className="journey-encounters-empty">No encounters generated. Try Roll one-off.</div>
+                      )}
                       {encounters.map((enc, i) => (
                         <div key={i} className={`journey-encounter ${enc.severity}`}>
                           <div className="journey-encounter-meta">

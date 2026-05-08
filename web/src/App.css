@@ -2774,6 +2774,46 @@ body {
   margin-left: auto;
 }
 
+/* Roll-button + impromptu-encounter styles. The button replaces the
+   "Seeded by route signature" hint in the encounters tab header — the
+   hint was decorative; the button is functional. */
+.journey-encounter-roll-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: 1px solid rgba(212, 168, 84, 0.45);
+  border-radius: 4px;
+  background: rgba(212, 168, 84, 0.08);
+  color: #d4a854;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: var(--transition-fast);
+}
+.journey-encounter-roll-btn:hover,
+.journey-encounter-roll-btn:focus-visible {
+  background: rgba(212, 168, 84, 0.18);
+  border-color: rgba(212, 168, 84, 0.75);
+  outline: none;
+}
+
+.journey-encounter--impromptu {
+  border-left: 3px solid #d4a854;
+}
+
+.journey-encounter-segment--impromptu {
+  color: #d4a854;
+  font-style: normal;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 9px;
+}
+
 .journey-encounter-beat {
   font-size: 12px;
   line-height: 1.5;
