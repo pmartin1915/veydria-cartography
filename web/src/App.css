@@ -1802,6 +1802,70 @@ body {
   .loading-subtitle {
     font-size: 12px;
   }
+
+  /* Header: let buttons scroll horizontally rather than crush together
+     when the row exceeds the viewport. Hide the scrollbar — feel is
+     touch-pan, not scroll-aware. */
+  .header-right {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .header-right::-webkit-scrollbar { display: none; }
+  .header-right > * { flex-shrink: 0; }
+
+  /* Journey planner → bottom sheet on phone. The default 320px fixed
+     panel at top:60px;left:16px was eating the map and was hard to
+     dismiss with a thumb. Bottom-sheet feels native and the X button
+     stays in reach. */
+  .journey-planner {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    max-height: 78vh;
+    border-radius: 12px 12px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+    /* Reset the slide-down keyframe — slide up from below instead. */
+    animation: journeyInMobile 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Drag-affordance handle at the top of the sheet. Decorative —
+     Leaflet captures touchmove inside the panel anyway. */
+  .journey-planner::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 6px auto 2px;
+    border-radius: 2px;
+    background: var(--border-subtle);
+  }
+
+  .journey-planner-header {
+    padding: 8px 14px 10px;
+  }
+
+  /* Tab row scrolls horizontally if Route / Days / Encounters / etc.
+     don't fit. Same scrollbar-hiding treatment as the header. */
+  .journey-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .journey-tabs::-webkit-scrollbar { display: none; }
+  .journey-tab { flex-shrink: 0; }
+}
+
+@keyframes journeyInMobile {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- Mobile share-mode launcher --- */
