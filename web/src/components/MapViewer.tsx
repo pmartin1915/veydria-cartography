@@ -12,6 +12,7 @@ interface GeoJSONFeature {
 }
 
 import { initD3Overlay } from '../utils/d3-overlay'
+import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
@@ -33,6 +34,7 @@ interface LayerVisibility {
   port: boolean
   oasis: boolean
   contested_site: boolean
+  hex_grid: boolean
   trade_route: boolean
   landmark: boolean
   river: boolean
@@ -222,6 +224,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const measureLabelRef = useRef<L.Marker | null>(null)
     const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const annotationLayerRef = useRef<L.LayerGroup | null>(null)
+    const hexOverlayRef = useRef<HexOverlay | null>(null)
+    const hexTooltipRef = useRef<HTMLDivElement | null>(null)
     const geojsonRef = useRef(geojson)
     useEffect(() => { geojsonRef.current = geojson }, [geojson])
 
@@ -619,6 +623,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         setOpacity: (o: number) => d3Overlay.setOpacity(o),
       } as any)
 
+      // Hex grid overlay — ALL features sampled, not a category subset.
+      const hexOverlay = initHexOverlay(map, geojson.features)
+      hexOverlay.setOpacity(opacities?.hex_grid ?? 0.7)
+      hexOverlayRef.current = hexOverlay
+      layerGroupsRef.current.set('hex_grid', {
+        addTo: () => hexOverlay.setVisibility(true),
+        removeFrom: () => hexOverlay.setVisibility(false),
+        setOpacity: (o: number) => hexOverlay.setOpacity(o),
+      } as any)
+
       mapRef.current = map
 
       // Mobile Safari measures the container before the address bar settles,
@@ -636,6 +650,38 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       window.addEventListener('resize', resyncSize)
       window.addEventListener('orientationchange', resyncSize)
 
+      // Hex-grid hover tooltip. One floating div, not one Leaflet tooltip
+      // per hex — at ~220 hexes the latter is wasteful. We map mouse to
+      // SVG coords and ask the overlay which hex contains it.
+      const tip = document.createElement('div')
+      tip.className = 'hex-tooltip'
+      tip.style.display = 'none'
+      if (containerRef.current) containerRef.current.appendChild(tip)
+      hexTooltipRef.current = tip
+      const handleMouseMove = (e: L.LeafletMouseEvent) => {
+        if (!hexOverlayRef.current) return
+        // Convert lat/lng → SVG (CRS.Simple flips Y; svgY = SVG_HEIGHT - lat).
+        const svgX = e.latlng.lng
+        const svgYCoord = SVG_HEIGHT - e.latlng.lat
+        const hit = hexOverlayRef.current.getHexAtSvg(svgX, svgYCoord)
+        if (!hit) {
+          tip.style.display = 'none'
+          return
+        }
+        tip.style.display = 'block'
+        tip.innerHTML = `<strong>${hit.hex.label}</strong>${hit.descriptors.length ? ' &middot; ' + hit.descriptors.join(', ') : ''}`
+        // Position via the original DOM event so we get container-local coords.
+        if (!containerRef.current) return
+        const rect = containerRef.current.getBoundingClientRect()
+        const mx = (e.originalEvent as MouseEvent).clientX - rect.left
+        const my = (e.originalEvent as MouseEvent).clientY - rect.top
+        tip.style.left = `${mx + 14}px`
+        tip.style.top = `${my + 14}px`
+      }
+      const handleMouseOut = () => { if (tip) tip.style.display = 'none' }
+      map.on('mousemove', handleMouseMove)
+      map.on('mouseout', handleMouseOut)
+
       return () => {
         clearTimeout(t1)
         clearTimeout(t2)
@@ -644,7 +690,15 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         map.off('zoom', updateZoom)
         map.off('moveend', handleMoveEnd)
         map.off('click', handleMapClick)
+        map.off('mousemove', handleMouseMove)
+        map.off('mouseout', handleMouseOut)
         d3Overlay.destroy()
+        if (hexOverlayRef.current) {
+          hexOverlayRef.current.destroy()
+          hexOverlayRef.current = null
+        }
+        if (tip.parentNode) tip.parentNode.removeChild(tip)
+        hexTooltipRef.current = null
         map.remove()
         mapRef.current = null
         layerGroupsRef.current.clear()

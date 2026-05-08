@@ -3,7 +3,7 @@ import type { LayerVisibility, LayerOpacity } from '../App'
 import {
   IconMountain, IconWaves, IconRiver, IconFlag, IconFootsteps,
   IconPillars, IconLandmark, IconLeaf, IconStar, IconAnchor,
-  IconShield, IconRoute, IconPencil,
+  IconShield, IconRoute, IconPencil, IconHex,
 } from './icons'
 import { BUILT_IN_PRESETS, loadCustomPresets, saveCustomPresets, newPresetId, type LayerPreset } from '../utils/layer-presets'
 
@@ -43,6 +43,7 @@ const LAYER_GROUPS: LayerGroup[] = [
       { key: 'river', label: 'Rivers', color: '#4a8ab0', icon: <IconRiver />, opacityControl: true },
       { key: 'faction_control', label: 'Faction Overlay', color: '#c4a862', icon: <IconFlag /> },
       { key: 'terrain_cost', label: 'Terrain Cost', color: '#c06040', icon: <IconFootsteps /> },
+      { key: 'hex_grid', label: 'Hex Grid', color: '#d4a854', icon: <IconHex />, opacityControl: true },
     ],
   },
   {

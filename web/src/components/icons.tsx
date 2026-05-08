@@ -51,6 +51,9 @@ export const IconRoute = ({ size = 14 }: { size?: number } = {}) =>
 export const IconPencil = ({ size = 14 }: { size?: number } = {}) =>
   <svg {...svgFor(size)}><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
 
+export const IconHex = ({ size = 14 }: { size?: number } = {}) =>
+  <svg {...svgFor(size)}><polygon points="12,3 21,8 21,16 12,21 3,16 3,8"/></svg>
+
 export const IconCompass = ({ size = 15 }: { size?: number } = {}) =>
   <svg {...svgFor(size)}><circle cx="12" cy="12" r="10"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/></svg>
 

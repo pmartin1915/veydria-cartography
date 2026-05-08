@@ -49,6 +49,7 @@ export interface LayerVisibility {
   port: boolean
   oasis: boolean
   contested_site: boolean
+  hex_grid: boolean
   trade_route: boolean
   landmark: boolean
   river: boolean
@@ -64,6 +65,7 @@ export interface LayerOpacity {
   port: number
   oasis: number
   contested_site: number
+  hex_grid: number
   trade_route: number
   landmark: number
   river: number
@@ -79,6 +81,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   port: true,
   oasis: true,
   contested_site: true,
+  hex_grid: false,
   trade_route: true,
   landmark: true,
   river: true,
@@ -94,6 +97,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   port: 1,
   oasis: 1,
   contested_site: 1,
+  hex_grid: 0.7,
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
