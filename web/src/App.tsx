@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from 'react'
 import MapViewer from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -466,7 +466,10 @@ function App() {
 
   // Snapshot button: capture the visible map as a PNG. Tries clipboard
   // first (one-click for Discord paste); falls back to a download.
-  const handleSnapshot = useCallback(async () => {
+  // Shift+click captures a player-facing variant (annotation pins
+  // excluded), so a GM can produce a clean export without toggling
+  // share-mode first.
+  const handleSnapshot = useCallback(async (e?: ReactMouseEvent) => {
     const container = document.querySelector('.leaflet-container') as HTMLElement | null
     if (!container) {
       setShareToast('Map not ready for snapshot')
@@ -474,15 +477,17 @@ function App() {
       shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
       return
     }
-    setShareToast('Capturing snapshot…')
+    const playerVariant = !!e?.shiftKey
+    setShareToast(playerVariant ? 'Capturing player snapshot…' : 'Capturing snapshot…')
     try {
-      const dataUrl = await captureMapPng({ target: container })
+      const dataUrl = await captureMapPng({ target: container, excludeAnnotations: playerVariant })
       const copied = await copyPngToClipboard(dataUrl)
+      const label = playerVariant ? 'Player snapshot' : 'Snapshot'
       if (copied) {
-        setShareToast('Snapshot copied to clipboard')
+        setShareToast(`${label} copied to clipboard`)
       } else {
         downloadPng(dataUrl, suggestSnapshotFilename())
-        setShareToast('Snapshot downloaded')
+        setShareToast(`${label} downloaded`)
       }
     } catch {
       setShareToast('Snapshot failed')
@@ -678,7 +683,7 @@ function App() {
           <button
             className="search-trigger"
             onClick={handleSnapshot}
-            title="Capture the current map view as PNG"
+            title="Capture the current map view as PNG  ·  Shift+click for player view (no pins)"
             id="snapshot-trigger"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

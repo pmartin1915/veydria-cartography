@@ -13,6 +13,12 @@ interface SnapshotOptions {
   pixelRatio?: number
   /** CSS selector or HTMLElement of the map container. */
   target: HTMLElement
+  /**
+   * If true, exclude annotation pins from the captured image so a GM
+   * can produce a clean player-facing snapshot without first toggling
+   * #share=1. Toolbar maps this to Shift+click on Snapshot.
+   */
+  excludeAnnotations?: boolean
 }
 
 // Cap output at ~6 MP. Above this, clipboard writes start to silently fail
@@ -39,6 +45,8 @@ export async function captureMapPng(opts: SnapshotOptions): Promise<string> {
       // Strip Leaflet's UI chrome from the snapshot.
       if (cls.includes('leaflet-control-zoom')) return false
       if (cls.includes('leaflet-control-attribution')) return false
+      // Drop annotation pins for a player-facing capture.
+      if (opts.excludeAnnotations && cls.includes('annotation-marker')) return false
       return true
     },
   })
