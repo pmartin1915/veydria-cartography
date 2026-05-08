@@ -4,6 +4,7 @@ import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
 import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
+import FactionGraph from './components/FactionGraph'
 import JourneyPlanner from './components/JourneyPlanner'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
@@ -129,6 +130,7 @@ function App() {
   const [shareToast, setShareToast] = useState<string | null>(null)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
+  const [graphOpen, setGraphOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
   const [pinMode, setPinMode] = useState(false)
@@ -708,6 +710,24 @@ function App() {
               <span>Player Link</span>
             </button>
           )}
+          {!shareMode && (
+            <button
+              className="search-trigger"
+              onClick={() => setGraphOpen(true)}
+              title="Open the faction relationship graph"
+              id="graph-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="6" cy="6" r="2.5" />
+                <circle cx="18" cy="6" r="2.5" />
+                <circle cx="12" cy="18" r="2.5" />
+                <line x1="6" y1="6" x2="18" y2="6" />
+                <line x1="6" y1="6" x2="12" y2="18" />
+                <line x1="18" y1="6" x2="12" y2="18" />
+              </svg>
+              <span>Graph</span>
+            </button>
+          )}
           <button
             className="search-trigger"
             onClick={() => setKeyboardHelpOpen(true)}
@@ -936,6 +956,19 @@ function App() {
         <KeyboardHelp
           open={keyboardHelpOpen}
           onClose={() => setKeyboardHelpOpen(false)}
+        />
+
+        <FactionGraph
+          open={graphOpen}
+          geojson={geojson}
+          onClose={() => setGraphOpen(false)}
+          onSelectFaction={(civId) => {
+            const feature = geojson?.features.find(f =>
+              ((f.properties?.id as string) === civId) ||
+              ((f as unknown as { id?: string }).id === civId)
+            )
+            if (feature) handleFeatureClick(feature)
+          }}
         />
 
         {/* Toast notifications */}

@@ -2805,6 +2805,141 @@ body {
   border-left: 3px solid #d4a854;
 }
 
+/* --- Faction Graph modal --- */
+.faction-graph-modal {
+  width: min(820px, 92vw);
+  max-height: 88vh;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: factionGraphIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes factionGraphIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.faction-graph-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, var(--bg-card) 0%, rgba(26, 31, 42, 0.97) 100%);
+}
+
+.faction-graph-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.faction-graph-meta {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.faction-graph-close {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.faction-graph-close:hover {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+.faction-graph-svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg-deep);
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.faction-graph-node {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.faction-graph-node:hover .faction-graph-node-circle,
+.faction-graph-node:focus-visible .faction-graph-node-circle {
+  fill: rgba(212, 168, 84, 0.4);
+  stroke: #f4dca0;
+}
+
+.faction-graph-node-circle {
+  fill: rgba(196, 168, 98, 0.18);
+  stroke: #c4a862;
+  stroke-width: 2;
+}
+
+.faction-graph-node-label {
+  fill: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.faction-graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(13, 15, 20, 0.5);
+}
+
+.faction-graph-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: capitalize;
+}
+
+.faction-graph-legend-swatch {
+  flex-shrink: 0;
+}
+
+.faction-graph-legend-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.faction-graph-legend-empty {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.faction-graph-empty {
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
 .journey-encounter-segment--impromptu {
   color: #d4a854;
   font-style: normal;
