@@ -8,7 +8,8 @@ import FactionGraph from './components/FactionGraph'
 import JourneyPlanner from './components/JourneyPlanner'
 import HexCoordChip from './components/HexCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
-import type { HexCell } from './utils/hex-grid'
+import type { AxialCoord, HexCell } from './utils/hex-grid'
+import { axialDistance, hexLineBetween, labelHex } from './utils/hex-grid'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
@@ -145,6 +146,8 @@ function App() {
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
   const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
+  const [hexMeasureMode, setHexMeasureMode] = useState(false)
+  const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [hexSize, setHexSize] = useState<number>(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
     const n = stored ? Number.parseInt(stored, 10) : NaN
@@ -379,7 +382,10 @@ function App() {
   const handleToggleMeasureMode = useCallback(() => {
     setMeasureMode(prev => {
       const next = !prev
-      if (next) setPinMode(false)
+      if (next) {
+        setPinMode(false)
+        setHexMeasureMode(false)
+      }
       return next
     })
   }, [])
@@ -390,10 +396,42 @@ function App() {
       if (next) {
         setMeasureMode(false)
         setJourneyMode(false)
+        setHexMeasureMode(false)
       }
       return next
     })
   }, [])
+
+  const handleToggleHexMeasureMode = useCallback(() => {
+    setHexMeasureMode(prev => {
+      const next = !prev
+      if (next) {
+        setMeasureMode(false)
+        setPinMode(false)
+        setJourneyMode(false)
+        setSelectedHex(null)
+        setLayers((prevLayers) => prevLayers.hex_grid ? prevLayers : { ...prevLayers, hex_grid: true })
+      } else {
+        setHexMeasurePoints([])
+      }
+      return next
+    })
+  }, [])
+
+  const handleHexMeasureClear = useCallback(() => {
+    setHexMeasurePoints([])
+  }, [])
+
+  // Path derived from the two clicked endpoints. Empty array means nothing
+  // to render. We pass null (not []) to clear, so the overlay can distinguish.
+  const hexMeasurePath = hexMeasurePoints.length === 2
+    ? hexLineBetween(hexMeasurePoints[0], hexMeasurePoints[1]).map(labelHex)
+    : hexMeasurePoints.length === 1
+      ? [labelHex(hexMeasurePoints[0])]
+      : null
+  const hexMeasureDistance = hexMeasurePoints.length === 2
+    ? axialDistance(hexMeasurePoints[0], hexMeasurePoints[1])
+    : 0
 
   const handleAnnotationAdd = useCallback((annotation: MapAnnotation) => {
     setAnnotations(prev => addAnnotation(prev, annotation))
@@ -594,6 +632,7 @@ function App() {
         if (measureModeRef.current) setMeasureMode(false)
         if (journeyModeRef.current) setJourneyMode(false)
         if (pinModeRef.current) setPinMode(false)
+        setHexMeasureMode(false)
       }
     }
     window.addEventListener('keydown', handler)
@@ -664,7 +703,10 @@ function App() {
             onClick={() => {
               setJourneyMode(prev => {
                 const next = !prev
-                if (next) setPinMode(false)
+                if (next) {
+                  setPinMode(false)
+                  setHexMeasureMode(false)
+                }
                 return next
               })
             }}
@@ -704,6 +746,19 @@ function App() {
                 <path d="M7 16l4-6 4 4 6-8" />
               </svg>
               <span>{measureMode ? 'Measuring...' : 'Measure'}</span>
+            </button>
+          )}
+          {!shareMode && (
+            <button
+              className={`search-trigger ${hexMeasureMode ? 'active' : ''}`}
+              onClick={handleToggleHexMeasureMode}
+              title="Two-click hex distance"
+              id="hex-measure-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+                <polygon points="12,3 21,8 21,16 12,21 3,16 3,8" />
+              </svg>
+              <span>{hexMeasureMode ? 'Pick hexes...' : 'Hex'}</span>
             </button>
           )}
           <button
@@ -831,6 +886,14 @@ function App() {
             route={journeyRoute}
             onHoverHex={setHoverHex}
             onSelectHex={(hit) => {
+              if (hexMeasureMode) {
+                // Two-point measurement. Third click resets to the new point
+                // so the path always reflects the most recent pair.
+                setHexMeasurePoints(prev =>
+                  prev.length >= 2 ? [hit.hex.coord] : [...prev, hit.hex.coord]
+                )
+                return
+              }
               setSelectedHex(hit)
               setPanelOpen(false)
               viewportRef.current = { ...viewportRef.current, hexLabel: hit.hex.label, featureId: undefined }
@@ -839,6 +902,7 @@ function App() {
             }}
             hexSize={hexSize}
             selectedHexLabel={selectedHex?.hex.label ?? null}
+            hexMeasurePath={hexMeasurePath}
           />
         )}
 
@@ -961,6 +1025,44 @@ function App() {
             </div>
             <div className="measure-panel-hint">
               Click to place · Backspace to undo · Esc to exit
+            </div>
+          </div>
+        )}
+
+        {hexMeasureMode && (
+          <div className="measure-panel">
+            <div className="measure-panel-main">
+              <div className="measure-panel-stats">
+                <span className="measure-stat">
+                  {hexMeasurePoints.length === 0 && 'Pick start hex'}
+                  {hexMeasurePoints.length === 1 && `${labelHex(hexMeasurePoints[0])} → ?`}
+                  {hexMeasurePoints.length === 2 && `${labelHex(hexMeasurePoints[0])} → ${labelHex(hexMeasurePoints[1])}`}
+                </span>
+                {hexMeasurePoints.length === 2 && (
+                  <span className="measure-stat measure-stat--total">
+                    {hexMeasureDistance} hex{hexMeasureDistance === 1 ? '' : 'es'}
+                  </span>
+                )}
+              </div>
+              <div className="measure-panel-actions">
+                <button
+                  className="measure-btn"
+                  onClick={handleHexMeasureClear}
+                  disabled={hexMeasurePoints.length === 0}
+                  title="Clear endpoints"
+                >
+                  Clear
+                </button>
+                <button
+                  className="measure-btn measure-btn--primary"
+                  onClick={() => setHexMeasureMode(false)}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+            <div className="measure-panel-hint">
+              Click two hexes to measure · Click a third to start over
             </div>
           </div>
         )}

@@ -41,6 +41,7 @@ export interface HexOverlay {
   setOpacity: (opacity: number) => void
   setHexSize: (size: number) => void
   setSelectedLabel: (label: string | null) => void
+  setMeasurePath: (labels: string[] | null) => void
   getHexAtSvg: (svgX: number, svgY: number) => { hex: HexCell; descriptors: string[] } | null
   getHexByLabel: (label: string) => { hex: HexCell; descriptors: string[] } | null
 }
@@ -64,6 +65,10 @@ export function initHexOverlay(
   const cellByAxial = new Map<string, HexCell>()
   let isVisible = false
   let selectedLabel: string | null = null
+  // Measure-path state. `measurePathSet` is every cell along the line;
+  // `measureEndpoints` is just the two clicked ends (drawn brighter).
+  const measurePathSet = new Set<string>()
+  const measureEndpoints = new Set<string>()
 
   function svgY(y: number): number {
     // Leaflet CRS.Simple flips Y. hex-grid produces SVG-space coords
@@ -120,19 +125,28 @@ export function initHexOverlay(
   }
 
   function applySelectionStyle() {
+    // Priority: measure endpoint > selectedLabel > measure mid-path > default.
     hexGroup.selectAll<SVGPolygonElement, HexCell>('polygon')
       .attr('fill', function () {
-        return this.getAttribute('data-label') === selectedLabel
-          ? 'rgba(212, 168, 84, 0.22)'
-          : 'rgba(212, 168, 84, 0.04)'
+        const label = this.getAttribute('data-label') ?? ''
+        if (measureEndpoints.has(label)) return 'rgba(126, 196, 230, 0.34)'
+        if (label === selectedLabel) return 'rgba(212, 168, 84, 0.22)'
+        if (measurePathSet.has(label)) return 'rgba(126, 196, 230, 0.16)'
+        return 'rgba(212, 168, 84, 0.04)'
       })
       .attr('stroke', function () {
-        return this.getAttribute('data-label') === selectedLabel
-          ? 'rgba(244, 220, 160, 0.95)'
-          : 'rgba(212, 168, 84, 0.45)'
+        const label = this.getAttribute('data-label') ?? ''
+        if (measureEndpoints.has(label)) return 'rgba(186, 226, 244, 0.95)'
+        if (label === selectedLabel) return 'rgba(244, 220, 160, 0.95)'
+        if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.7)'
+        return 'rgba(212, 168, 84, 0.45)'
       })
       .attr('stroke-width', function () {
-        return this.getAttribute('data-label') === selectedLabel ? 1.6 : 0.6
+        const label = this.getAttribute('data-label') ?? ''
+        if (measureEndpoints.has(label)) return 1.8
+        if (label === selectedLabel) return 1.6
+        if (measurePathSet.has(label)) return 1.0
+        return 0.6
       })
   }
 
@@ -179,6 +193,16 @@ export function initHexOverlay(
     },
     setSelectedLabel: (label: string | null) => {
       selectedLabel = label
+      applySelectionStyle()
+    },
+    setMeasurePath: (labels: string[] | null) => {
+      measurePathSet.clear()
+      measureEndpoints.clear()
+      if (labels && labels.length > 0) {
+        for (const l of labels) measurePathSet.add(l)
+        measureEndpoints.add(labels[0])
+        if (labels.length > 1) measureEndpoints.add(labels[labels.length - 1])
+      }
       applySelectionStyle()
     },
     getHexAtSvg: (svgX, svgYIn) => {
