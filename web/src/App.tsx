@@ -413,6 +413,7 @@ function App() {
       if (next) {
         setPinMode(false)
         setHexMeasureMode(false)
+        setHexMeasurePoints([])
         clearHexMeasureFromHash()
       }
       return next
@@ -426,6 +427,7 @@ function App() {
         setMeasureMode(false)
         setJourneyMode(false)
         setHexMeasureMode(false)
+        setHexMeasurePoints([])
         clearHexMeasureFromHash()
       }
       return next
@@ -678,6 +680,7 @@ function App() {
         if (journeyModeRef.current) setJourneyMode(false)
         if (pinModeRef.current) setPinMode(false)
         setHexMeasureMode(false)
+        setHexMeasurePoints([])
         clearHexMeasureFromHash()
       }
     }
@@ -752,6 +755,7 @@ function App() {
                 if (next) {
                   setPinMode(false)
                   setHexMeasureMode(false)
+                  setHexMeasurePoints([])
                   clearHexMeasureFromHash()
                 }
                 return next
