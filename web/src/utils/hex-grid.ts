@@ -132,6 +132,37 @@ export function hexNeighbors(coord: AxialCoord): AxialCoord[] {
   return AXIAL_DIRECTIONS.map((d) => ({ q: coord.q + d.q, r: coord.r + d.r }))
 }
 
+// ---------- Distance & line ----------
+
+/**
+ * Hex distance in cube space. s = -q-r, so
+ *   |dq| + |dr| + |dq+dr| = |dq| + |dr| + |ds|, divided by 2.
+ */
+export function axialDistance(a: AxialCoord, b: AxialCoord): number {
+  const dq = a.q - b.q
+  const dr = a.r - b.r
+  return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2
+}
+
+/**
+ * Cells along the straight line from `a` to `b`, inclusive at both ends.
+ * Returns `[a]` when a equals b, otherwise `distance + 1` cells where each
+ * consecutive pair are neighbours. Uses fractional cube interpolation +
+ * roundAxial — same approach used in pixelToAxial / hover lookup.
+ */
+export function hexLineBetween(a: AxialCoord, b: AxialCoord): AxialCoord[] {
+  const N = axialDistance(a, b)
+  if (N === 0) return [{ q: a.q, r: a.r }]
+  const out: AxialCoord[] = []
+  for (let i = 0; i <= N; i++) {
+    const t = i / N
+    const q = a.q + (b.q - a.q) * t
+    const r = a.r + (b.r - a.r) * t
+    out.push(roundAxial({ q, r }))
+  }
+  return out
+}
+
 // ---------- Labels ----------
 
 /**

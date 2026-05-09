@@ -9,6 +9,9 @@ import {
   labelHex,
   generateHexGrid,
   sampleHexFeatures,
+  axialDistance,
+  hexLineBetween,
+  type AxialCoord,
   type HexCell,
 } from './hex-grid'
 import type { GeoJSONFeature } from '../App'
@@ -297,5 +300,86 @@ describe('sampleHexFeatures', () => {
     const out = sampleHexFeatures(hex, features)
     expect(out[0]).toBe('Plains')
     expect(out).toContain('River')
+  })
+})
+
+describe('axialDistance', () => {
+  it('is zero for the same cell', () => {
+    expect(axialDistance({ q: 0, r: 0 }, { q: 0, r: 0 })).toBe(0)
+    expect(axialDistance({ q: 5, r: -3 }, { q: 5, r: -3 })).toBe(0)
+  })
+
+  it('is one for direct neighbours', () => {
+    const origin: AxialCoord = { q: 0, r: 0 }
+    for (const n of hexNeighbors(origin)) {
+      expect(axialDistance(origin, n)).toBe(1)
+    }
+  })
+
+  it('is symmetric', () => {
+    const a: AxialCoord = { q: 4, r: -2 }
+    const b: AxialCoord = { q: -1, r: 3 }
+    expect(axialDistance(a, b)).toBe(axialDistance(b, a))
+  })
+
+  it('satisfies the triangle inequality on a sample of triples', () => {
+    const samples: AxialCoord[] = [
+      { q: 0, r: 0 },
+      { q: 3, r: -1 },
+      { q: -2, r: 4 },
+      { q: 5, r: 5 },
+      { q: -4, r: -2 },
+    ]
+    for (const a of samples) {
+      for (const b of samples) {
+        for (const c of samples) {
+          expect(axialDistance(a, c)).toBeLessThanOrEqual(
+            axialDistance(a, b) + axialDistance(b, c),
+          )
+        }
+      }
+    }
+  })
+
+  it('matches a known coord pair', () => {
+    // (0,0) → (3,-2): cube delta is (3, -2, -1) → (3+2+1)/2 = 3.
+    expect(axialDistance({ q: 0, r: 0 }, { q: 3, r: -2 })).toBe(3)
+  })
+})
+
+describe('hexLineBetween', () => {
+  it('returns just the start when start equals end', () => {
+    const out = hexLineBetween({ q: 2, r: -1 }, { q: 2, r: -1 })
+    expect(out).toEqual([{ q: 2, r: -1 }])
+  })
+
+  it('returns distance + 1 cells', () => {
+    const a: AxialCoord = { q: 0, r: 0 }
+    const b: AxialCoord = { q: 4, r: -2 }
+    const out = hexLineBetween(a, b)
+    expect(out.length).toBe(axialDistance(a, b) + 1)
+  })
+
+  it('starts at a and ends at b', () => {
+    const a: AxialCoord = { q: -3, r: 5 }
+    const b: AxialCoord = { q: 4, r: -1 }
+    const line = hexLineBetween(a, b)
+    expect(line[0]).toEqual(a)
+    expect(line[line.length - 1]).toEqual(b)
+  })
+
+  it('produces only neighbour-adjacent steps', () => {
+    const cases: Array<[AxialCoord, AxialCoord]> = [
+      [{ q: 0, r: 0 }, { q: 5, r: 0 }],
+      [{ q: 0, r: 0 }, { q: 3, r: -2 }],
+      [{ q: -2, r: 4 }, { q: 4, r: -3 }],
+      [{ q: 7, r: 0 }, { q: 0, r: 7 }],
+    ]
+    for (const [a, b] of cases) {
+      const line = hexLineBetween(a, b)
+      for (let i = 1; i < line.length; i++) {
+        expect(axialDistance(line[i - 1], line[i])).toBe(1)
+      }
+    }
   })
 })
