@@ -5,15 +5,29 @@ interface Props {
   hex: HexCell
   descriptors: string[]
   onClose: () => void
+  onCentre?: () => void
 }
 
-export default function HexInfoPanel({ hex, descriptors, onClose }: Props) {
+export default function HexInfoPanel({ hex, descriptors, onClose, onCentre }: Props) {
   const neighbours = hexNeighbors(hex.coord).map(labelHex)
   return (
     <aside className="hex-info-panel" role="dialog" aria-label={`Hex ${hex.label}`}>
       <header className="hex-info-panel-header">
         <span className="hex-info-panel-coord">{hex.label}</span>
-        <button type="button" className="hex-info-panel-close" onClick={onClose} aria-label="Close hex panel">×</button>
+        <div className="hex-info-panel-actions">
+          {onCentre && (
+            <button
+              type="button"
+              className="hex-info-panel-action"
+              onClick={onCentre}
+              aria-label={`Centre map on hex ${hex.label}`}
+              title="Centre on hex"
+            >
+              ⊙
+            </button>
+          )}
+          <button type="button" className="hex-info-panel-close" onClick={onClose} aria-label="Close hex panel">×</button>
+        </div>
       </header>
       <div className="hex-info-panel-body">
         <div className="hex-info-panel-row">

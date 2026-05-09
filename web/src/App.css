@@ -3058,7 +3058,9 @@ body {
   color: var(--text-accent);
   letter-spacing: 0.6px;
 }
-.hex-info-panel-close {
+.hex-info-panel-actions { display: flex; align-items: center; gap: 2px; }
+.hex-info-panel-close,
+.hex-info-panel-action {
   background: transparent;
   border: 0;
   color: var(--text-muted);
@@ -3068,7 +3070,9 @@ body {
   padding: 2px 6px;
   border-radius: 3px;
 }
-.hex-info-panel-close:hover { color: var(--text-accent); background: var(--bg-card-hover); }
+.hex-info-panel-action { font-size: 15px; }
+.hex-info-panel-close:hover,
+.hex-info-panel-action:hover { color: var(--text-accent); background: var(--bg-card-hover); }
 .hex-info-panel-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .hex-info-panel-row { display: flex; flex-direction: column; gap: 2px; }
 .hex-info-panel-key {

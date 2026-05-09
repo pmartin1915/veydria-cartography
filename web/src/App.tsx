@@ -123,7 +123,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void; selectHexByLabel: (label: string) => boolean } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void; selectHexByLabel: (label: string) => boolean; flyToHex: (label: string) => boolean } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
@@ -853,6 +853,7 @@ function App() {
           <HexInfoPanel
             hex={selectedHex.hex}
             descriptors={selectedHex.descriptors}
+            onCentre={() => mapRef.current?.flyToHex(selectedHex.hex.label)}
             onClose={() => {
               setSelectedHex(null)
               viewportRef.current = { ...viewportRef.current, hexLabel: undefined }
