@@ -128,6 +128,24 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
     opacities: { ...FULL_OPACITY, terrain_cell: 0.9 },
   },
   {
+    id: 'tactical',
+    name: 'Tactical',
+    builtIn: true,
+    layers: {
+      ...ALL_OFF,
+      terrain_cell: true,
+      water: true,
+      river: true,
+      port: true,
+      oasis: true,
+      chokepoint: true,
+      landmark: true,
+      hex_grid: true,
+    },
+    // Dim terrain so the hex grid reads as the primary structure.
+    opacities: { ...FULL_OPACITY, terrain_cell: 0.3, water: 0.4, hex_grid: 0.9 },
+  },
+  {
     id: 'player',
     name: 'Player-facing',
     builtIn: true,

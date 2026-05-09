@@ -105,6 +105,19 @@ describe('preset-apply defensive merge', () => {
     expect(opacities).toEqual(CURRENT_OPACITIES)
   })
 
+  it('Tactical preset dims terrain and prioritizes the hex grid', () => {
+    const tactical = BUILT_IN_PRESETS.find(p => p.id === 'tactical')
+    expect(tactical, 'tactical preset should exist').toBeDefined()
+    expect(tactical!.layers.hex_grid).toBe(true)
+    expect(tactical!.layers.terrain_cell).toBe(true)
+    // Hex grid should be more prominent than terrain so the cells read first.
+    expect(tactical!.opacities.hex_grid).toBeGreaterThan(tactical!.opacities.terrain_cell)
+    // Politics/story noise stays out of tactical view.
+    expect(tactical!.layers.civilization).toBe(false)
+    expect(tactical!.layers.trade_route).toBe(false)
+    expect(tactical!.layers.faction_control).toBe(false)
+  })
+
   it('all built-in presets carry every schema key (no built-in goes stale silently)', () => {
     const requiredLayerKeys = Object.keys(CURRENT_LAYERS) as (keyof LayerVisibility)[]
     const requiredOpacityKeys = Object.keys(CURRENT_OPACITIES) as (keyof LayerOpacity)[]
