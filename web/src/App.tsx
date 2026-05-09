@@ -6,6 +6,9 @@ import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
 import FactionGraph from './components/FactionGraph'
 import JourneyPlanner from './components/JourneyPlanner'
+import HexCoordChip from './components/HexCoordChip'
+import HexInfoPanel from './components/HexInfoPanel'
+import type { HexCell } from './utils/hex-grid'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
@@ -140,6 +143,8 @@ function App() {
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
+  const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
+  const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const shareMode = !!initialHashRef.current.share
 
   // Cleanup all timeouts on unmount
@@ -230,6 +235,8 @@ function App() {
   const handleFeatureClick = useCallback((feature: GeoJSONFeature) => {
     setSelectedFeature(feature)
     setPanelOpen(true)
+    // The hex panel is a sibling bottom sheet on mobile; only one at a time.
+    setSelectedHex(null)
     // Update URL hash for deep-linking
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
     if (id) {
@@ -798,6 +805,26 @@ function App() {
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
             route={journeyRoute}
+            onHoverHex={setHoverHex}
+            onSelectHex={(hit) => {
+              setSelectedHex(hit)
+              setPanelOpen(false)
+            }}
+          />
+        )}
+
+        {layers.hex_grid && (selectedHex || hoverHex) && (
+          <HexCoordChip
+            label={(selectedHex ?? hoverHex)!.hex.label}
+            descriptors={(selectedHex ?? hoverHex)!.descriptors}
+          />
+        )}
+
+        {selectedHex && (
+          <HexInfoPanel
+            hex={selectedHex.hex}
+            descriptors={selectedHex.descriptors}
+            onClose={() => setSelectedHex(null)}
           />
         )}
 

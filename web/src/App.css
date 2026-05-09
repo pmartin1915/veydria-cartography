@@ -2962,6 +2962,114 @@ body {
   letter-spacing: 0.6px;
 }
 
+/* --- Hex coord chip (persistent) ---
+   Top-left of the map area: bottom-left is taken by the layer panel /
+   launcher pill, bottom-right by the scale bar + compass. */
+.hex-coord-chip {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(13, 15, 20, 0.88);
+  border: 1px solid rgba(212, 168, 84, 0.5);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  max-width: calc(100% - 80px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hex-coord-chip-label {
+  color: #f4dca0;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+.hex-coord-chip-sep { color: var(--text-muted); }
+.hex-coord-chip-descriptors { color: var(--text-primary); }
+
+/* --- Hex info panel (click-to-select) --- */
+.hex-info-panel {
+  position: absolute;
+  top: 72px;
+  right: 12px;
+  width: 240px;
+  z-index: 999;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+.hex-info-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-accent);
+}
+.hex-info-panel-coord {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
+  letter-spacing: 0.6px;
+}
+.hex-info-panel-close {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.hex-info-panel-close:hover { color: var(--text-accent); background: var(--bg-card-hover); }
+.hex-info-panel-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.hex-info-panel-row { display: flex; flex-direction: column; gap: 2px; }
+.hex-info-panel-key {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+.hex-info-panel-val { font-size: 12px; line-height: 1.4; }
+.hex-info-panel-neighbours {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 11px;
+  color: var(--text-accent);
+  letter-spacing: 0.4px;
+}
+
+/* On phones, slide it up from the bottom like the journey planner. */
+@media (max-width: 768px) {
+  .hex-info-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 0;
+    max-height: 40vh;
+    animation: hexPanelInMobile 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+@keyframes hexPanelInMobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 .journey-encounter-segment--impromptu {
   color: #d4a854;
   font-style: normal;

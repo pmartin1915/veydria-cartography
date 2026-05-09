@@ -13,6 +13,7 @@ interface GeoJSONFeature {
 
 import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
+import type { HexCell } from '../utils/hex-grid'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
@@ -61,6 +62,8 @@ export interface MapViewerProps {
   onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
   opacities?: LayerOpacity
   route?: JourneyRoute | null
+  onHoverHex?: (hex: { hex: HexCell; descriptors: string[] } | null) => void
+  onSelectHex?: (hex: { hex: HexCell; descriptors: string[] }) => void
 }
 
 export interface MapViewerHandle {
@@ -213,7 +216,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -237,10 +240,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const openPopupIdRef = useRef<string | null>(null)
     const annotationMarkersRef = useRef<Map<string, L.Marker>>(new Map())
     const canvasRendererRef = useRef<L.Canvas | null>(null)
+    const onHoverHexRef = useRef(onHoverHex)
+    const onSelectHexRef = useRef(onSelectHex)
+    const layersRef = useRef(layers)
 
     // Keep refs in sync so event handlers see current value without re-binding
     useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
     useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
+    useEffect(() => { onHoverHexRef.current = onHoverHex }, [onHoverHex])
+    useEffect(() => { onSelectHexRef.current = onSelectHex }, [onSelectHex])
+    useEffect(() => { layersRef.current = layers }, [layers])
     useEffect(() => { onAnnotationAddRef.current = onAnnotationAdd }, [onAnnotationAdd])
     useEffect(() => { onAnnotationUpdateRef.current = onAnnotationUpdate }, [onAnnotationUpdate])
     useEffect(() => { onAnnotationDeleteRef.current = onAnnotationDelete }, [onAnnotationDelete])
@@ -345,9 +354,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map)
 
       // Canvas renderer for high-count layers (terrain_cell has 3000+ polygons).
-      // Lower padding: 0.1 keeps the off-screen buffer small so pan/zoom redraws
-      // fewer cells.
-      const canvasRenderer = L.canvas({ padding: 0.1 })
+      // padding 0.3 reduces tile pop-in mid-pinch on phone at the cost of a
+      // slightly larger off-screen buffer.
+      const canvasRenderer = L.canvas({ padding: 0.3 })
       canvasRendererRef.current = canvasRenderer
 
       // Track zoom level for threshold-based visibility
@@ -379,7 +388,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         map.setView(latlng as L.LatLngExpression, initialViewport.zoom, { animate: false })
       }
 
-      // Measurement / pin click handler
+      // Measurement / pin / hex-select click handler. Markers don't bubble
+      // to map clicks, so reaching this handler means the click missed a
+      // feature — that's our cue to offer hex-select as a fallback.
       const handleMapClick = (e: L.LeafletMouseEvent) => {
         if (measureModeRef.current) {
           const svg = latLngToSvg(e.latlng)
@@ -397,6 +408,33 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           onAnnotationAddRef.current(ann)
           return
         }
+        // Hex select: only when the hex grid is visible and a callback is
+        // wired. Skipped if the click landed in sea-only space (no hex hit).
+        if (layersRef.current.hex_grid && onSelectHexRef.current && hexOverlayRef.current) {
+          const svgX = e.latlng.lng
+          const svgYCoord = SVG_HEIGHT - e.latlng.lat
+          const hit = hexOverlayRef.current.getHexAtSvg(svgX, svgYCoord)
+          if (hit) {
+            onSelectHexRef.current(hit)
+            // Mirror the mobile feature-select flyTo so the hex doesn't get
+            // buried under the bottom sheet.
+            if (window.innerWidth <= 768 && mapRef.current) {
+              const [cx, cy] = hit.hex.centroid
+              const latlng = svgToLatLng(cx, cy) as [number, number]
+              const eps = 0.5
+              const fbounds = L.latLngBounds(
+                [latlng[0] - eps, latlng[1] - eps],
+                [latlng[0] + eps, latlng[1] + eps]
+              )
+              mapRef.current.flyToBounds(fbounds, {
+                paddingBottomRight: [0, Math.round(window.innerHeight * 0.4)],
+                maxZoom: Math.max(mapRef.current.getZoom(), 1),
+                duration: 0.35,
+              })
+            }
+            return
+          }
+        }
       }
       map.on('click', handleMapClick)
 
@@ -404,7 +442,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         svgToLatLng(0, SVG_HEIGHT) as L.LatLngTuple,
         svgToLatLng(SVG_WIDTH, 0) as L.LatLngTuple,
       ]
-      map.fitBounds(bounds)
+      // Cap initial fit so a tall phone viewport doesn't over-zoom past
+      // landmark/threshold visibility. Mirrors the route fitBounds at L1040.
+      map.fitBounds(bounds, { padding: [20, 20], maxZoom: 1.5 })
 
       // SVG image overlay
       L.imageOverlay('/veydria-schematic.svg', bounds).addTo(map)
@@ -666,6 +706,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const hit = hexOverlayRef.current.getHexAtSvg(svgX, svgYCoord)
         if (!hit) {
           tip.style.display = 'none'
+          onHoverHexRef.current?.(null)
           return
         }
         tip.style.display = 'block'
@@ -677,10 +718,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const my = (e.originalEvent as MouseEvent).clientY - rect.top
         tip.style.left = `${mx + 14}px`
         tip.style.top = `${my + 14}px`
+        onHoverHexRef.current?.(hit)
       }
-      const handleMouseOut = () => { if (tip) tip.style.display = 'none' }
-      map.on('mousemove', handleMouseMove)
-      map.on('mouseout', handleMouseOut)
+      const handleMouseOut = () => {
+        if (tip) tip.style.display = 'none'
+        onHoverHexRef.current?.(null)
+      }
+      // On phones the hover tooltip steals tap-to-select. Mousemove also
+      // fires on touch on many devices. Skip it entirely on mobile.
+      if (!L.Browser.mobile) {
+        map.on('mousemove', handleMouseMove)
+        map.on('mouseout', handleMouseOut)
+      }
 
       return () => {
         clearTimeout(t1)
@@ -787,6 +836,32 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         if (el) {
           el.classList.toggle('selected', id === selectedFeatureId)
         }
+      })
+    }, [selectedFeatureId])
+
+    // On mobile, the InfoPanel slides up and covers ~65vh. Pan the map so
+    // the selected feature stays visible above the panel. flyToBounds
+    // (not flyTo) supports paddingBottomRight.
+    useEffect(() => {
+      if (!selectedFeatureId || !mapRef.current) return
+      if (window.innerWidth > 768) return
+      const feature = geojsonRef.current.features.find((f) => {
+        const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+        return id === selectedFeatureId
+      })
+      if (!feature) return
+      const [x, y] = getCentroid(feature.geometry.coordinates, feature.geometry.type)
+      const latlng = svgToLatLng(x, y) as [number, number]
+      const targetZoom = Math.max(mapRef.current.getZoom(), 1)
+      const eps = 0.5 // tiny bounds around the feature; padding does the work
+      const fbounds = L.latLngBounds(
+        [latlng[0] - eps, latlng[1] - eps],
+        [latlng[0] + eps, latlng[1] + eps]
+      )
+      mapRef.current.flyToBounds(fbounds, {
+        paddingBottomRight: [0, Math.round(window.innerHeight * 0.55)],
+        maxZoom: targetZoom,
+        duration: 0.35,
       })
     }, [selectedFeatureId])
 
