@@ -194,6 +194,26 @@ export function labelHex(coord: AxialCoord): string {
   return `${rowToLetters(row)}${col + 1}`
 }
 
+/**
+ * Inverse of `labelHex`. "G7" → { q, r }. Returns null for malformed input
+ * (lowercase, missing digits, leading zeros). Does NOT validate that the
+ * coord lands inside the rendered grid — callers that need that should
+ * resolve through HexOverlay.getHexByLabel instead.
+ */
+export function parseHexLabel(label: string): AxialCoord | null {
+  const m = /^([A-Z]+)(\d+)$/.exec(label)
+  if (!m) return null
+  const letters = m[1]
+  let row = 0
+  for (const ch of letters) {
+    row = row * 26 + (ch.charCodeAt(0) - 64) // A=1, B=2, …
+  }
+  row -= 1 // bijective base-26 → 0-indexed
+  const col = parseInt(m[2], 10) - 1
+  if (col < 0) return null
+  return offsetToAxial({ col, row })
+}
+
 // ---------- Corners ----------
 
 function hexCorners(centerX: number, centerY: number, hexSize: number): [number, number][] {

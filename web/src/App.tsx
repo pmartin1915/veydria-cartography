@@ -9,7 +9,7 @@ import JourneyPlanner from './components/JourneyPlanner'
 import HexCoordChip from './components/HexCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
-import { axialDistance, hexLineBetween, labelHex } from './utils/hex-grid'
+import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
@@ -249,6 +249,26 @@ function App() {
             mapRef.current?.selectHexByLabel(hexLabel)
           }, featureId ? 1100 : 700)
         }
+
+        // Hex measure deep-link. Both endpoints required; if only one is
+        // present in the URL we ignore it (insufficient to enter measure
+        // mode meaningfully). Coords come from parseHexLabel — pure math,
+        // no overlay dependency — so we can prime state before the map
+        // is ready, then fit-bounds once it is.
+        const hexA = hashState.hexA
+        const hexB = hashState.hexB
+        if (hexA && hexB) {
+          const coordA = parseHexLabel(hexA)
+          const coordB = parseHexLabel(hexB)
+          if (coordA && coordB) {
+            setLayers((prev) => prev.hex_grid ? prev : { ...prev, hex_grid: true })
+            setHexMeasureMode(true)
+            setHexMeasurePoints([coordA, coordB])
+            window.setTimeout(() => {
+              mapRef.current?.fitBoundsToHexes([hexA, hexB])
+            }, hexLabel ? 1300 : (featureId ? 1100 : 700))
+          }
+        }
       })
       .catch((err) => {
         setError(err.message)
@@ -379,16 +399,25 @@ function App() {
     patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
   }, [geojson])
 
+  // Drop hex measure endpoints from the URL. Called from every code path
+  // that flips hexMeasureMode off, so the URL doesn't lie about the mode.
+  const clearHexMeasureFromHash = useCallback(() => {
+    if (!viewportRef.current.hexA && !viewportRef.current.hexB) return
+    viewportRef.current = { ...viewportRef.current, hexA: undefined, hexB: undefined }
+    window.history.replaceState(null, '', buildHash(viewportRef.current))
+  }, [])
+
   const handleToggleMeasureMode = useCallback(() => {
     setMeasureMode(prev => {
       const next = !prev
       if (next) {
         setPinMode(false)
         setHexMeasureMode(false)
+        clearHexMeasureFromHash()
       }
       return next
     })
-  }, [])
+  }, [clearHexMeasureFromHash])
 
   const handleTogglePinMode = useCallback(() => {
     setPinMode(prev => {
@@ -397,10 +426,11 @@ function App() {
         setMeasureMode(false)
         setJourneyMode(false)
         setHexMeasureMode(false)
+        clearHexMeasureFromHash()
       }
       return next
     })
-  }, [])
+  }, [clearHexMeasureFromHash])
 
   const handleToggleHexMeasureMode = useCallback(() => {
     setHexMeasureMode(prev => {
@@ -411,16 +441,27 @@ function App() {
         setJourneyMode(false)
         setSelectedHex(null)
         setLayers((prevLayers) => prevLayers.hex_grid ? prevLayers : { ...prevLayers, hex_grid: true })
+        // Entering: clear single-hex / feature deep-link, no endpoints yet.
+        viewportRef.current = {
+          ...viewportRef.current,
+          featureId: undefined,
+          hexLabel: undefined,
+          hexA: undefined,
+          hexB: undefined,
+        }
+        window.history.replaceState(null, '', buildHash(viewportRef.current))
       } else {
         setHexMeasurePoints([])
+        clearHexMeasureFromHash()
       }
       return next
     })
-  }, [])
+  }, [clearHexMeasureFromHash])
 
   const handleHexMeasureClear = useCallback(() => {
     setHexMeasurePoints([])
-  }, [])
+    clearHexMeasureFromHash()
+  }, [clearHexMeasureFromHash])
 
   // Path derived from the two clicked endpoints. Empty array means nothing
   // to render. We pass null (not []) to clear, so the overlay can distinguish.
@@ -637,11 +678,12 @@ function App() {
         if (journeyModeRef.current) setJourneyMode(false)
         if (pinModeRef.current) setPinMode(false)
         setHexMeasureMode(false)
+        clearHexMeasureFromHash()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleClosePanel, handleToggleHexMeasureMode])
+  }, [handleClosePanel, handleToggleHexMeasureMode, clearHexMeasureFromHash])
 
   if (loading) {
     return (
@@ -710,6 +752,7 @@ function App() {
                 if (next) {
                   setPinMode(false)
                   setHexMeasureMode(false)
+                  clearHexMeasureFromHash()
                 }
                 return next
               })
@@ -893,9 +936,18 @@ function App() {
               if (hexMeasureMode) {
                 // Two-point measurement. Third click resets to the new point
                 // so the path always reflects the most recent pair.
-                setHexMeasurePoints(prev =>
-                  prev.length >= 2 ? [hit.hex.coord] : [...prev, hit.hex.coord]
-                )
+                const next = hexMeasurePoints.length >= 2
+                  ? [hit.hex.coord]
+                  : [...hexMeasurePoints, hit.hex.coord]
+                setHexMeasurePoints(next)
+                viewportRef.current = {
+                  ...viewportRef.current,
+                  hexA: next[0] ? labelHex(next[0]) : undefined,
+                  hexB: next[1] ? labelHex(next[1]) : undefined,
+                  featureId: undefined,
+                  hexLabel: undefined,
+                }
+                window.history.replaceState(null, '', buildHash(viewportRef.current))
                 return
               }
               setSelectedHex(hit)
@@ -1060,7 +1112,7 @@ function App() {
                 </button>
                 <button
                   className="measure-btn measure-btn--primary"
-                  onClick={() => setHexMeasureMode(false)}
+                  onClick={handleToggleHexMeasureMode}
                 >
                   Done
                 </button>

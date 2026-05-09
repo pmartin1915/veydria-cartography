@@ -7,6 +7,7 @@ import {
   offsetToAxial,
   hexNeighbors,
   labelHex,
+  parseHexLabel,
   generateHexGrid,
   sampleHexFeatures,
   axialDistance,
@@ -137,6 +138,41 @@ describe('labelHex', () => {
   it('rolls into AA/AB beyond Z', () => {
     expect(labelHex(offsetToAxial({ col: 0, row: 26 }))).toBe('AA1')
     expect(labelHex(offsetToAxial({ col: 0, row: 27 }))).toBe('AB1')
+  })
+})
+
+describe('parseHexLabel', () => {
+  it('round-trips with labelHex across the in-grid range', () => {
+    for (let row = 0; row < 30; row++) {
+      for (let col = 0; col < 40; col++) {
+        const coord = offsetToAxial({ col, row })
+        const label = labelHex(coord)
+        const parsed = parseHexLabel(label)
+        expect(parsed).not.toBeNull()
+        expect(parsed!.q).toBe(coord.q)
+        expect(parsed!.r).toBe(coord.r)
+      }
+    }
+  })
+
+  it('parses A1 as the origin', () => {
+    expect(parseHexLabel('A1')).toEqual({ q: 0, r: 0 })
+  })
+
+  it('parses double-letter rows', () => {
+    const aa1 = parseHexLabel('AA1')
+    expect(aa1).toEqual(offsetToAxial({ col: 0, row: 26 }))
+    const ab1 = parseHexLabel('AB1')
+    expect(ab1).toEqual(offsetToAxial({ col: 0, row: 27 }))
+  })
+
+  it('returns null for malformed labels', () => {
+    expect(parseHexLabel('g7')).toBeNull()       // lowercase
+    expect(parseHexLabel('A')).toBeNull()        // no digits
+    expect(parseHexLabel('7')).toBeNull()        // no letters
+    expect(parseHexLabel('A0')).toBeNull()       // 1-indexed columns
+    expect(parseHexLabel('A 1')).toBeNull()      // whitespace
+    expect(parseHexLabel('')).toBeNull()
   })
 })
 

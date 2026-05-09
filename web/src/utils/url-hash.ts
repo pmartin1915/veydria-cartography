@@ -1,13 +1,20 @@
 /**
  * url-hash.ts — Viewport-aware URL hash serialization
  *
- * Format: #feature=<id>&hex=<label>&z=<zoom>&cx=<center-x>&cy=<center-y>
+ * Format: #feature=<id>&hex=<label>&hexA=<label>&hexB=<label>&z=<zoom>&cx=<center-x>&cy=<center-y>
  * All params optional. cx/cy are in SVG coordinate space (0–1200, 0–800).
+ *
+ * `hex` selects a single hex (info panel). `hexA`/`hexB` describe the two
+ * endpoints of a hex distance measurement; both must be present for the
+ * App to enter measure mode on load. `hex` and `hexA`/`hexB` are mutually
+ * exclusive at the App level (single bottom sheet rule).
  */
 
 export interface ViewportState {
   featureId?: string
   hexLabel?: string
+  hexA?: string
+  hexB?: string
   zoom?: number
   centerX?: number
   centerY?: number
@@ -33,6 +40,12 @@ export function parseHash(hash: string): ViewportState {
 
   const hexLabel = params.get('hex')
   if (hexLabel && HEX_LABEL_RE.test(hexLabel)) result.hexLabel = hexLabel
+
+  const hexA = params.get('hexA')
+  if (hexA && HEX_LABEL_RE.test(hexA)) result.hexA = hexA
+
+  const hexB = params.get('hexB')
+  if (hexB && HEX_LABEL_RE.test(hexB)) result.hexB = hexB
 
   const journeyFrom = params.get('journeyFrom')
   if (journeyFrom) result.journeyFrom = journeyFrom
@@ -67,6 +80,8 @@ export function buildHash(state: ViewportState): string {
   const params = new URLSearchParams()
   if (state.featureId) params.set('feature', state.featureId)
   if (state.hexLabel) params.set('hex', state.hexLabel)
+  if (state.hexA) params.set('hexA', state.hexA)
+  if (state.hexB) params.set('hexB', state.hexB)
   if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
   if (state.journeyTo) params.set('journeyTo', state.journeyTo)
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))

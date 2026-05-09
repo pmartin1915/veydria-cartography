@@ -81,6 +81,7 @@ export interface MapViewerHandle {
   clearJourneyRoute: () => void
   selectHexByLabel: (label: string) => boolean
   flyToHex: (label: string) => boolean
+  fitBoundsToHexes: (labels: string[]) => boolean
 }
 
 // SVG viewBox dimensions
@@ -329,6 +330,29 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         if (!hit) return false
         const [cx, cy] = hit.hex.centroid
         mapRef.current.flyTo(svgToLatLng(cx, cy) as L.LatLngExpression, 2, { duration: 0.6 })
+        return true
+      },
+      fitBoundsToHexes(labels: string[]) {
+        if (!hexOverlayRef.current || !mapRef.current || labels.length === 0) return false
+        const lls: L.LatLngTuple[] = []
+        for (const label of labels) {
+          const hit = hexOverlayRef.current.getHexByLabel(label)
+          if (!hit) continue
+          const [cx, cy] = hit.hex.centroid
+          lls.push(svgToLatLng(cx, cy) as L.LatLngTuple)
+        }
+        if (lls.length === 0) return false
+        if (lls.length === 1) {
+          mapRef.current.flyTo(lls[0] as L.LatLngExpression, 2, { duration: 0.6 })
+          return true
+        }
+        // Two or more endpoints: fit so the whole pair is visible. Cap the zoom
+        // so a tightly-packed pair doesn't snap to max.
+        mapRef.current.flyToBounds(L.latLngBounds(lls), {
+          padding: [60, 60],
+          maxZoom: 2.5,
+          duration: 0.8,
+        })
         return true
       },
     }))

@@ -48,4 +48,33 @@ describe('url-hash', () => {
       expect(hash).not.toContain('hex=')
     })
   })
+
+  describe('hex measure deep-link (hexA / hexB)', () => {
+    it('round-trips both endpoints', () => {
+      const hash = buildHash({ hexA: 'G7', hexB: 'K12' })
+      const parsed = parseHash(hash)
+      expect(parsed.hexA).toBe('G7')
+      expect(parsed.hexB).toBe('K12')
+    })
+
+    it('drops malformed endpoint labels independently', () => {
+      const parsed = parseHash('#hexA=G7&hexB=k12')
+      expect(parsed.hexA).toBe('G7')
+      expect(parsed.hexB).toBeUndefined()
+    })
+
+    it('builder omits hexA / hexB when not set', () => {
+      const hash = buildHash({ hexLabel: 'G7' })
+      expect(hash).not.toContain('hexA=')
+      expect(hash).not.toContain('hexB=')
+    })
+
+    it('coexists with zoom/center', () => {
+      const hash = buildHash({ hexA: 'A1', hexB: 'B3', zoom: 1.5, centerX: 600, centerY: 400 })
+      const parsed = parseHash(hash)
+      expect(parsed.hexA).toBe('A1')
+      expect(parsed.hexB).toBe('B3')
+      expect(parsed.zoom).toBe(1.5)
+    })
+  })
 })
