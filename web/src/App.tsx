@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from 'react'
-import MapViewer from './components/MapViewer'
+import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
 import LayerControls from './components/LayerControls'
@@ -124,7 +124,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void; selectHexByLabel: (label: string) => boolean; flyToHex: (label: string) => boolean } | null>(null)
+  const mapRef = useRef<MapViewerHandle | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
