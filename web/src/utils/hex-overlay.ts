@@ -118,6 +118,7 @@ export function initHexOverlay(
       .attr('font-size', fontSize)
       .attr('font-family', 'Georgia, serif')
       .attr('pointer-events', 'none')
+      .attr('data-label', (d) => d.label)
       .text((d) => d.label)
 
     applyZoomLabels()
@@ -148,6 +149,39 @@ export function initHexOverlay(
         if (measurePathSet.has(label)) return 1.0
         return 0.6
       })
+
+    // Labels mirror the cell-fill priority. Reset everyone first, then
+    // brighten the highlighted ones — selectedLabel and endpoints get
+    // bold weight; mid-path stays normal but cyan-tinted.
+    const labels = hexGroup.selectAll<SVGTextElement, HexCell>('text.hex-label')
+    labels
+      .attr('fill', 'rgba(244, 220, 160, 0.55)')
+      .attr('font-weight', null)
+    if (measurePathSet.size > 0) {
+      labels
+        .filter(function () {
+          const l = this.getAttribute('data-label') ?? ''
+          return measurePathSet.has(l) && !measureEndpoints.has(l)
+        })
+        .attr('fill', 'rgba(186, 226, 244, 0.85)')
+    }
+    if (measureEndpoints.size > 0) {
+      labels
+        .filter(function () {
+          const l = this.getAttribute('data-label') ?? ''
+          return measureEndpoints.has(l)
+        })
+        .attr('fill', 'rgba(220, 240, 255, 1)')
+        .attr('font-weight', '700')
+    }
+    if (selectedLabel) {
+      labels
+        .filter(function () {
+          return this.getAttribute('data-label') === selectedLabel
+        })
+        .attr('fill', 'rgba(255, 232, 168, 1)')
+        .attr('font-weight', '700')
+    }
   }
 
   function applyZoomLabels() {
