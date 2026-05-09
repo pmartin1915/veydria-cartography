@@ -145,7 +145,14 @@ function App() {
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
   const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
-  const [hexSize, setHexSize] = useState<number>(50)
+  const [hexSize, setHexSize] = useState<number>(() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
+    const n = stored ? Number.parseInt(stored, 10) : NaN
+    return [30, 50, 70].includes(n) ? n : 50
+  })
+  useEffect(() => {
+    try { window.localStorage.setItem('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
+  }, [hexSize])
   const shareMode = !!initialHashRef.current.share
 
   // Cleanup all timeouts on unmount
@@ -812,6 +819,7 @@ function App() {
               setPanelOpen(false)
             }}
             hexSize={hexSize}
+            selectedHexLabel={selectedHex?.hex.label ?? null}
           />
         )}
 

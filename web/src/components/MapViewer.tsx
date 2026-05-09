@@ -65,6 +65,7 @@ export interface MapViewerProps {
   onHoverHex?: (hex: { hex: HexCell; descriptors: string[] } | null) => void
   onSelectHex?: (hex: { hex: HexCell; descriptors: string[] }) => void
   hexSize?: number
+  selectedHexLabel?: string | null
 }
 
 export interface MapViewerHandle {
@@ -217,7 +218,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize, selectedHexLabel }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -845,6 +846,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (!hexOverlayRef.current || hexSize === undefined) return
       hexOverlayRef.current.setHexSize(hexSize)
     }, [hexSize])
+
+    // Highlight the currently-selected hex.
+    useEffect(() => {
+      if (!hexOverlayRef.current) return
+      hexOverlayRef.current.setSelectedLabel(selectedHexLabel ?? null)
+    }, [selectedHexLabel])
 
     // On mobile, the InfoPanel slides up and covers ~65vh. Pan the map so
     // the selected feature stays visible above the panel. flyToBounds

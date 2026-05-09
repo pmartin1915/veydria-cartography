@@ -40,6 +40,7 @@ export interface HexOverlay {
   setVisibility: (visible: boolean) => void
   setOpacity: (opacity: number) => void
   setHexSize: (size: number) => void
+  setSelectedLabel: (label: string | null) => void
   getHexAtSvg: (svgX: number, svgY: number) => { hex: HexCell; descriptors: string[] } | null
 }
 
@@ -61,6 +62,7 @@ export function initHexOverlay(
   const descriptorsByLabel = new Map<string, string[]>()
   const cellByAxial = new Map<string, HexCell>()
   let isVisible = false
+  let selectedLabel: string | null = null
 
   function svgY(y: number): number {
     // Leaflet CRS.Simple flips Y. hex-grid produces SVG-space coords
@@ -95,6 +97,7 @@ export function initHexOverlay(
       .attr('stroke', 'rgba(212, 168, 84, 0.45)')
       .attr('stroke-width', 0.6)
       .attr('vector-effect', 'non-scaling-stroke')
+      .attr('data-label', (d) => d.label)
 
     // Scale label size with hex radius so smaller hexes don't crowd.
     const fontSize = Math.max(5, Math.round(size * 0.16))
@@ -112,6 +115,24 @@ export function initHexOverlay(
       .text((d) => d.label)
 
     applyZoomLabels()
+    applySelectionStyle()
+  }
+
+  function applySelectionStyle() {
+    hexGroup.selectAll<SVGPolygonElement, HexCell>('polygon')
+      .attr('fill', function () {
+        return this.getAttribute('data-label') === selectedLabel
+          ? 'rgba(212, 168, 84, 0.22)'
+          : 'rgba(212, 168, 84, 0.04)'
+      })
+      .attr('stroke', function () {
+        return this.getAttribute('data-label') === selectedLabel
+          ? 'rgba(244, 220, 160, 0.95)'
+          : 'rgba(212, 168, 84, 0.45)'
+      })
+      .attr('stroke-width', function () {
+        return this.getAttribute('data-label') === selectedLabel ? 1.6 : 0.6
+      })
   }
 
   function applyZoomLabels() {
@@ -154,6 +175,10 @@ export function initHexOverlay(
       rebuild(size)
       // Preserve visibility state across rebuild.
       hexGroup.style('display', isVisible ? 'block' : 'none')
+    },
+    setSelectedLabel: (label: string | null) => {
+      selectedLabel = label
+      applySelectionStyle()
     },
     getHexAtSvg: (svgX, svgYIn) => {
       if (!isVisible) return null
