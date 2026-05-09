@@ -903,6 +903,7 @@ function App() {
             hexSize={hexSize}
             selectedHexLabel={selectedHex?.hex.label ?? null}
             hexMeasurePath={hexMeasurePath}
+            hexMeasureMode={hexMeasureMode}
           />
         )}
 

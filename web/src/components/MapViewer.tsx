@@ -67,6 +67,7 @@ export interface MapViewerProps {
   hexSize?: number
   selectedHexLabel?: string | null
   hexMeasurePath?: string[] | null
+  hexMeasureMode?: boolean
 }
 
 export interface MapViewerHandle {
@@ -221,7 +222,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -239,6 +240,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
     const measureModeRef = useRef(measureMode)
     const pinModeRef = useRef(pinMode)
+    const hexMeasureModeRef = useRef(hexMeasureMode)
     const onAnnotationAddRef = useRef(onAnnotationAdd)
     const onAnnotationUpdateRef = useRef(onAnnotationUpdate)
     const onAnnotationDeleteRef = useRef(onAnnotationDelete)
@@ -252,6 +254,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     // Keep refs in sync so event handlers see current value without re-binding
     useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
     useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
+    useEffect(() => { hexMeasureModeRef.current = hexMeasureMode }, [hexMeasureMode])
     useEffect(() => { onHoverHexRef.current = onHoverHex }, [onHoverHex])
     useEffect(() => { onSelectHexRef.current = onSelectHex }, [onSelectHex])
     useEffect(() => { layersRef.current = layers }, [layers])
@@ -439,8 +442,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           if (hit) {
             onSelectHexRef.current(hit)
             // Mirror the mobile feature-select flyTo so the hex doesn't get
-            // buried under the bottom sheet.
-            if (window.innerWidth <= 768 && mapRef.current) {
+            // buried under the bottom sheet. Skipped in hex-measure mode:
+            // no sheet opens there, and a fly to the second endpoint would
+            // push the first one off-screen.
+            if (window.innerWidth <= 768 && mapRef.current && !hexMeasureModeRef.current) {
               const [cx, cy] = hit.hex.centroid
               const latlng = svgToLatLng(cx, cy) as [number, number]
               const eps = 0.5
