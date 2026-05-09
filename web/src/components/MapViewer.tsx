@@ -64,6 +64,7 @@ export interface MapViewerProps {
   route?: JourneyRoute | null
   onHoverHex?: (hex: { hex: HexCell; descriptors: string[] } | null) => void
   onSelectHex?: (hex: { hex: HexCell; descriptors: string[] }) => void
+  hexSize?: number
 }
 
 export interface MapViewerHandle {
@@ -216,7 +217,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -664,7 +665,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       } as any)
 
       // Hex grid overlay — ALL features sampled, not a category subset.
-      const hexOverlay = initHexOverlay(map, geojson.features)
+      const hexOverlay = initHexOverlay(map, geojson.features, hexSize)
       hexOverlay.setOpacity(opacities?.hex_grid ?? 0.7)
       hexOverlayRef.current = hexOverlay
       layerGroupsRef.current.set('hex_grid', {
@@ -838,6 +839,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       })
     }, [selectedFeatureId])
+
+    // Rebuild hex grid when the user changes hex size.
+    useEffect(() => {
+      if (!hexOverlayRef.current || hexSize === undefined) return
+      hexOverlayRef.current.setHexSize(hexSize)
+    }, [hexSize])
 
     // On mobile, the InfoPanel slides up and covers ~65vh. Pan the map so
     // the selected feature stays visible above the panel. flyToBounds

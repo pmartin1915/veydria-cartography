@@ -145,6 +145,7 @@ function App() {
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
   const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
+  const [hexSize, setHexSize] = useState<number>(50)
   const shareMode = !!initialHashRef.current.share
 
   // Cleanup all timeouts on unmount
@@ -810,6 +811,7 @@ function App() {
               setSelectedHex(hit)
               setPanelOpen(false)
             }}
+            hexSize={hexSize}
           />
         )}
 
@@ -844,6 +846,8 @@ function App() {
           isEditMode={isEditMode}
           onToggleEditMode={shareMode ? undefined : () => setIsEditMode(prev => !prev)}
           shareMode={shareMode}
+          hexSize={hexSize}
+          onHexSizeChange={setHexSize}
         />
 
         <InfoPanel

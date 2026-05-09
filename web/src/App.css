@@ -616,6 +616,40 @@ body {
   padding: 2px 8px 6px 32px;
 }
 
+.hex-size-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 6px 32px;
+}
+.hex-size-picker-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+.hex-size-picker-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-family: var(--font-body);
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.hex-size-picker-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+}
+.hex-size-picker-btn.active {
+  background: rgba(212, 168, 84, 0.18);
+  border-color: rgba(212, 168, 84, 0.7);
+  color: #f4dca0;
+}
+
 .opacity-slider {
   -webkit-appearance: none;
   appearance: none;

@@ -21,6 +21,8 @@ interface LayerControlsProps {
    * grade layer controls by default; tapping the launcher expands them.
    */
   shareMode?: boolean
+  hexSize?: number
+  onHexSizeChange?: (size: number) => void
 }
 
 interface LayerGroup {
@@ -91,7 +93,27 @@ function OpacitySlider({ value, color, onChange }: { value: number; color: strin
   )
 }
 
-export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, onApplyPreset, isEditMode, onToggleEditMode, shareMode }: LayerControlsProps) {
+const HEX_SIZE_OPTIONS = [30, 50, 70] as const
+function HexSizePicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="hex-size-picker" onClick={(e) => e.stopPropagation()}>
+      <span className="hex-size-picker-label">Cell</span>
+      {HEX_SIZE_OPTIONS.map((s) => (
+        <button
+          key={s}
+          type="button"
+          className={`hex-size-picker-btn ${s === value ? 'active' : ''}`}
+          onClick={() => onChange(s)}
+          title={`${s === 30 ? '~600' : s === 50 ? '~220' : '~110'} hexes`}
+        >
+          {s}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export default function LayerControls({ layers, opacities, onToggle, onOpacityChange, onApplyPreset, isEditMode, onToggleEditMode, shareMode, hexSize, onHexSizeChange }: LayerControlsProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [presetMenuOpen, setPresetMenuOpen] = useState(false)
   const [customPresets, setCustomPresets] = useState<LayerPreset[]>(loadCustomPresets)
@@ -281,6 +303,9 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
                           color={color}
                           onChange={(v) => onOpacityChange(key, v)}
                         />
+                      )}
+                      {active && key === 'hex_grid' && onHexSizeChange && (
+                        <HexSizePicker value={hexSize ?? 50} onChange={onHexSizeChange} />
                       )}
                     </div>
                   )
