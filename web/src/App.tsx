@@ -615,6 +615,10 @@ function App() {
           return next
         })
       }
+      if (e.key === 'h' && !searchOpenRef.current && document.activeElement === document.body) {
+        e.preventDefault()
+        handleToggleHexMeasureMode()
+      }
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
@@ -637,7 +641,7 @@ function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleClosePanel])
+  }, [handleClosePanel, handleToggleHexMeasureMode])
 
   if (loading) {
     return (

@@ -6,6 +6,7 @@ interface Shortcut {
 const SHORTCUTS: Shortcut[] = [
   { keys: 'Ctrl + K', description: 'Open search' },
   { keys: '/', description: 'Open search (when not typing)' },
+  { keys: 'H', description: 'Toggle hex distance measure' },
   { keys: 'J', description: 'Toggle journey planner' },
   { keys: 'M', description: 'Toggle measure mode' },
   { keys: 'P', description: 'Toggle pin mode' },
