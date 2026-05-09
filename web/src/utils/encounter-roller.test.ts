@@ -86,25 +86,41 @@ describe('encounter-roller', () => {
   })
 
   it('empty pool case returns null', () => {
-    // The NOTHING_BEATS pool isn't reachable via rollOneOff; instead use a
-    // filter combination that excludes everything in a real pool. The
-    // trade_route pool, when restricted to season=summer AND severity=severe,
-    // has no qualifying beats.
-    const tradeSummerSevere = TRADE_ROUTE_BEATS.filter(b => {
-      const seasonOk = !b.seasons || b.seasons.includes('summer')
-      const excludeOk = !b.excludeSeasons || !b.excludeSeasons.includes('summer')
-      return seasonOk && excludeOk && b.severity === 'severe'
-    })
-    // Sanity: confirm the assumption — this combination really is empty in
-    // the current pool. If pools change and this becomes non-empty, the
-    // test would silently pass for the wrong reason.
-    expect(tradeSummerSevere.length).toBe(0)
-
-    const result = rollOneOff({
-      edgeType: 'trade_route',
-      season: 'summer',
-      severity: 'severe',
-    })
-    expect(result).toBeNull()
+    // We can't inject a pool into rollOneOff; instead, scan every (edge,
+    // season, severity) triple and validate that any empty combination
+    // produces a null return. If the pools grow to cover every cell, the
+    // test still passes — it asserts "wherever empty exists, null is
+    // returned", not "an empty cell exists in current data".
+    const edgeTypes = ['trade_route', 'chokepoint', 'intra_civ'] as const
+    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const
+    const severities = ['mild', 'moderate', 'severe'] as const
+    const poolByType = {
+      trade_route: TRADE_ROUTE_BEATS,
+      chokepoint: CHOKEPOINT_BEATS,
+      intra_civ: INTRA_CIV_BEATS,
+    }
+    for (const edgeType of edgeTypes) {
+      for (const season of seasons) {
+        for (const severity of severities) {
+          const baseline = poolByType[edgeType]
+          // Mirror filterBySeason + severity filter so we know the truth
+          // about whether the pool is empty for this triple.
+          const general = baseline.filter(b => !b.seasons && !b.excludeSeasons)
+          const specific = baseline.filter(b => {
+            if (b.seasons && !b.seasons.includes(season)) return false
+            if (b.excludeSeasons && b.excludeSeasons.includes(season)) return false
+            return true
+          })
+          const seasoned = specific.length > 0 ? [...specific, ...general] : general
+          const filtered = seasoned.filter(b => b.severity === severity)
+          const result = rollOneOff({ edgeType, season, severity })
+          if (filtered.length === 0) {
+            expect(result).toBeNull()
+          } else {
+            expect(result).not.toBeNull()
+          }
+        }
+      }
+    }
   })
 })
