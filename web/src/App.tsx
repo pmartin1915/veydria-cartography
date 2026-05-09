@@ -123,7 +123,7 @@ function App() {
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const [patchToast, setPatchToast] = useState<string | null>(null)
-  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void } | null>(null)
+  const mapRef = useRef<{ flyToFeature: (feature: GeoJSONFeature) => void; flyToFeatureById: (featureId: string) => boolean; flyToAnnotation: (annotation: MapAnnotation) => void; undoMeasurePoint: () => void; clearMeasurePoints: () => void; updateFeaturePosition: (featureId: string, coords: [number, number]) => void; setFactionOverlay: (enabled: boolean) => void; clearJourneyRoute: () => void; selectHexByLabel: (label: string) => boolean } | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
@@ -233,6 +233,19 @@ function App() {
         if (journeyFrom && journeyTo) {
           setJourneyMode(true)
         }
+
+        // Handle hex deep-linking. Needs hex_grid layer on; the overlay only
+        // resolves labels when visible (lookup map is rebuilt on visibility
+        // toggle but the cells array is always present, so getHexByLabel is
+        // safe regardless). Fly happens slightly after feature fly to avoid
+        // a tug-of-war when both are set in the same hash.
+        const hexLabel = hashState.hexLabel
+        if (hexLabel) {
+          setLayers((prev) => prev.hex_grid ? prev : { ...prev, hex_grid: true })
+          window.setTimeout(() => {
+            mapRef.current?.selectHexByLabel(hexLabel)
+          }, featureId ? 1100 : 700)
+        }
       })
       .catch((err) => {
         setError(err.message)
@@ -245,10 +258,11 @@ function App() {
     setPanelOpen(true)
     // The hex panel is a sibling bottom sheet on mobile; only one at a time.
     setSelectedHex(null)
-    // Update URL hash for deep-linking
+    // Update URL hash for deep-linking. Feature and hex selections are
+    // mutually exclusive in the URL — same rule as the bottom sheet.
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
     if (id) {
-      viewportRef.current = { ...viewportRef.current, featureId: id }
+      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
       const hash = buildHash(viewportRef.current)
       window.history.replaceState(null, '', hash)
     }
@@ -283,10 +297,11 @@ function App() {
     setSelectedFeature(feature)
     setPanelOpen(true)
     setSearchOpen(false)
+    setSelectedHex(null)
     mapRef.current?.flyToFeature(feature)
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
     if (id) {
-      viewportRef.current = { ...viewportRef.current, featureId: id }
+      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
       const hash = buildHash(viewportRef.current)
       window.history.replaceState(null, '', hash)
     }
@@ -301,7 +316,8 @@ function App() {
     if (!feature) return
     setSelectedFeature(feature)
     setPanelOpen(true)
-    viewportRef.current = { ...viewportRef.current, featureId }
+    setSelectedHex(null)
+    viewportRef.current = { ...viewportRef.current, featureId, hexLabel: undefined }
     const hash = buildHash(viewportRef.current)
     window.history.replaceState(null, '', hash)
   }, [geojson])
@@ -817,6 +833,9 @@ function App() {
             onSelectHex={(hit) => {
               setSelectedHex(hit)
               setPanelOpen(false)
+              viewportRef.current = { ...viewportRef.current, hexLabel: hit.hex.label, featureId: undefined }
+              const hash = buildHash(viewportRef.current)
+              window.history.replaceState(null, '', hash)
             }}
             hexSize={hexSize}
             selectedHexLabel={selectedHex?.hex.label ?? null}
@@ -834,7 +853,12 @@ function App() {
           <HexInfoPanel
             hex={selectedHex.hex}
             descriptors={selectedHex.descriptors}
-            onClose={() => setSelectedHex(null)}
+            onClose={() => {
+              setSelectedHex(null)
+              viewportRef.current = { ...viewportRef.current, hexLabel: undefined }
+              const hash = buildHash(viewportRef.current)
+              window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
+            }}
           />
         )}
 
@@ -867,10 +891,11 @@ function App() {
           onSelectFeature={(f) => {
             setSelectedFeature(f)
             setPanelOpen(true)
+            setSelectedHex(null)
             mapRef.current?.flyToFeature(f)
             const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
             if (id) {
-              viewportRef.current = { ...viewportRef.current, featureId: id }
+              viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash)
             }

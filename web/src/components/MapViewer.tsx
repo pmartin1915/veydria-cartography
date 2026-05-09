@@ -77,6 +77,7 @@ export interface MapViewerHandle {
   updateFeaturePosition: (featureId: string, coords: [number, number]) => void
   setFactionOverlay: (enabled: boolean) => void
   clearJourneyRoute: () => void
+  selectHexByLabel: (label: string) => boolean
 }
 
 // SVG viewBox dimensions
@@ -307,6 +308,15 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           mapRef.current.removeLayer(journeyRouteLayerRef.current)
           journeyRouteLayerRef.current = null
         }
+      },
+      selectHexByLabel(label: string) {
+        if (!hexOverlayRef.current || !mapRef.current) return false
+        const hit = hexOverlayRef.current.getHexByLabel(label)
+        if (!hit) return false
+        onSelectHexRef.current?.(hit)
+        const [cx, cy] = hit.hex.centroid
+        mapRef.current.flyTo(svgToLatLng(cx, cy) as L.LatLngExpression, 2, { duration: 1 })
+        return true
       },
     }))
 

@@ -42,6 +42,7 @@ export interface HexOverlay {
   setHexSize: (size: number) => void
   setSelectedLabel: (label: string | null) => void
   getHexAtSvg: (svgX: number, svgY: number) => { hex: HexCell; descriptors: string[] } | null
+  getHexByLabel: (label: string) => { hex: HexCell; descriptors: string[] } | null
 }
 
 export function initHexOverlay(
@@ -185,6 +186,13 @@ export function initHexOverlay(
       const continuous = pixelToAxial(svgX, svgYIn, currentHexSize, [0, 0])
       const rounded: AxialCoord = roundAxial(continuous)
       const cell = cellByAxial.get(`${rounded.q},${rounded.r}`)
+      if (!cell) return null
+      return { hex: cell, descriptors: descriptorsByLabel.get(cell.label) || [] }
+    },
+    getHexByLabel: (label) => {
+      // Linear scan — N ≤ ~600 even at the smallest hex size, and this is
+      // only called on deep-link resolution.
+      const cell = cells.find((c) => c.label === label)
       if (!cell) return null
       return { hex: cell, descriptors: descriptorsByLabel.get(cell.label) || [] }
     },

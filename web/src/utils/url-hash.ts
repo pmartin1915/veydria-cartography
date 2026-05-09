@@ -1,12 +1,13 @@
 /**
  * url-hash.ts — Viewport-aware URL hash serialization
  *
- * Format: #feature=<id>&z=<zoom>&cx=<center-x>&cy=<center-y>
+ * Format: #feature=<id>&hex=<label>&z=<zoom>&cx=<center-x>&cy=<center-y>
  * All params optional. cx/cy are in SVG coordinate space (0–1200, 0–800).
  */
 
 export interface ViewportState {
   featureId?: string
+  hexLabel?: string
   zoom?: number
   centerX?: number
   centerY?: number
@@ -14,6 +15,9 @@ export interface ViewportState {
   journeyTo?: string
   share?: boolean
 }
+
+// Spreadsheet-style hex labels: row letters (one or more) + 1-based column.
+const HEX_LABEL_RE = /^[A-Z]+\d+$/
 
 const SVG_WIDTH = 1200
 const SVG_HEIGHT = 800
@@ -26,6 +30,9 @@ export function parseHash(hash: string): ViewportState {
 
   const featureId = params.get('feature')
   if (featureId) result.featureId = featureId
+
+  const hexLabel = params.get('hex')
+  if (hexLabel && HEX_LABEL_RE.test(hexLabel)) result.hexLabel = hexLabel
 
   const journeyFrom = params.get('journeyFrom')
   if (journeyFrom) result.journeyFrom = journeyFrom
@@ -59,6 +66,7 @@ export function parseHash(hash: string): ViewportState {
 export function buildHash(state: ViewportState): string {
   const params = new URLSearchParams()
   if (state.featureId) params.set('feature', state.featureId)
+  if (state.hexLabel) params.set('hex', state.hexLabel)
   if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
   if (state.journeyTo) params.set('journeyTo', state.journeyTo)
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))
