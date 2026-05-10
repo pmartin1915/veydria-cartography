@@ -127,6 +127,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Tour step 4 fallback** — if `aethelian_basin` is missing (schema drift), the tour falls back to the first water / civilization feature so the InfoPanel spotlight still has a valid target.
 - **Hex annotation deep-link polish** — `#hexNote=G7` now scrolls the notes section into view and plays a brief amber highlight flash on first open.
 - **JourneyPlanner day-to-segment link** — clicking a day in the Days tab switches to the Encounters tab and pre-selects the corresponding route segment.
+- **Saved journeys** — canonical localStorage key `veydria.journeys.v1`; "My journeys" panel with inline rename, auto-generated default names (`A → B`), and defensive migration from legacy `veydria-journey-history`.
 
 ### In Progress / Next
 
@@ -140,7 +141,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 Larger bets and exploratory directions:
 
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
-- **Saved journeys** *(medium)* — persist journeys to `localStorage:veydria.journeys.v1`; list under "My journeys" in the planner.
 - **Better Cmd-K** *(small)* — recent items, recently-linked annotation section, jump-to-civ shortcuts.
 - **Time-of-day overlay** *(small)* — dawn/dusk/night tint slider for mood; affects nothing else.
 - **Export markdown campaign log** *(medium)* — bundle active journey + dropped pins + visited features into a single session-log export.

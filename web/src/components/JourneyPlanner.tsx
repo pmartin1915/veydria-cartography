@@ -8,7 +8,7 @@ import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, getJo
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
-import { loadHistory, addHistoryEntry, deleteHistoryEntry, clearHistory, type HistoryEntry } from '../utils/journey-history'
+import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -63,8 +63,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [waypoints, setWaypoints] = useState<string[]>([])
   const [wpSearch, setWpSearch] = useState('')
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
-  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
-  const [historyOpen, setHistoryOpen] = useState(false)
+  const [savedJourneys, setSavedJourneys] = useState<SavedJourney[]>(loadSavedJourneys)
+  const [savedOpen, setSavedOpen] = useState(false)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
   const [routeTab, setRouteTab] = useState<'route' | 'days' | 'encounters'>('route')
   const [attempted, setAttempted] = useState(false)
   const [autoPivots, setAutoPivots] = useState<JourneyNode[]>([])
@@ -433,12 +435,19 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
   function handleSaveRoute() {
     if (!route) return
-    const entry: HistoryEntry = {
+    const fromName = route.nodes[0]?.name || ''
+    const toName = route.nodes[route.nodes.length - 1]?.name || ''
+    const waypoints = route.nodes.slice(1, -1).map(n => n.name)
+    const defaultName = waypoints.length > 0
+      ? `${fromName} → ${waypoints.join(' → ')} → ${toName}`
+      : `${fromName} → ${toName}`
+    const entry: SavedJourney = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       savedAt: Date.now(),
-      fromName: route.nodes[0]?.name || '',
-      toName: route.nodes[route.nodes.length - 1]?.name || '',
-      waypoints: route.nodes.slice(1, -1).map(n => n.name),
+      name: defaultName,
+      fromName,
+      toName,
+      waypoints,
       season,
       mode,
       totalKm: route.totalKm,
@@ -448,12 +457,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       bottlenecks: route.bottlenecks,
       seasonalWarnings: route.seasonalWarnings,
     }
-    const updated = addHistoryEntry(entry)
-    setHistory(updated)
-    showExportToast('Route saved to history')
+    const updated = addSavedJourney(entry)
+    setSavedJourneys(updated)
+    showExportToast('Saved to My journeys')
   }
 
-  function handleLoadHistory(entry: HistoryEntry) {
+  function handleLoadSaved(entry: SavedJourney) {
     if (entry.nodeIds.length < 2) return
     const [start, ...rest] = entry.nodeIds
     const end = rest[rest.length - 1]
@@ -472,18 +481,18 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       : findRoute(graph, start, end, entry.season, entry.mode)
     setRoute(result)
     onRouteComputed(result)
-    showExportToast('Route restored')
+    showExportToast('Journey restored')
   }
 
-  function handleDeleteHistory(id: string) {
-    const updated = deleteHistoryEntry(id)
-    setHistory(updated)
+  function handleDeleteSaved(id: string) {
+    const updated = deleteSavedJourney(id)
+    setSavedJourneys(updated)
   }
 
-  function handleClearHistory() {
-    const updated = clearHistory()
-    setHistory(updated)
-    showExportToast('History cleared')
+  function handleClearSaved() {
+    const updated = clearSavedJourneys()
+    setSavedJourneys(updated)
+    showExportToast('My journeys cleared')
   }
 
   if (!active) return null
@@ -497,43 +506,67 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         </h3>
         <div className="journey-header-actions">
           <button
-            className={`journey-history-toggle ${historyOpen ? 'active' : ''}`}
-            onClick={() => setHistoryOpen(!historyOpen)}
-            title="Saved routes"
+            className={`journey-history-toggle ${savedOpen ? 'active' : ''}`}
+            onClick={() => setSavedOpen(!savedOpen)}
+            title="My journeys"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            <span>{history.length}</span>
+            <span>{savedJourneys.length}</span>
           </button>
           <button className="journey-planner-close" onClick={onClose} title="Close (Esc)">×</button>
         </div>
       </div>
 
-      {/* History panel */}
-      {historyOpen && (
+      {/* My journeys panel */}
+      {savedOpen && (
         <div className="journey-history-panel">
           <div className="journey-history-header">
-            <span className="journey-history-title">Saved Routes</span>
-            {history.length > 0 && (
-              <button className="journey-history-clear" onClick={handleClearHistory}>Clear all</button>
+            <span className="journey-history-title">My journeys</span>
+            {savedJourneys.length > 0 && (
+              <button className="journey-history-clear" onClick={handleClearSaved}>Clear all</button>
             )}
           </div>
-          {history.length === 0 && (
-            <div className="journey-history-empty">No saved routes yet. Compute a route and click Save.</div>
+          {savedJourneys.length === 0 && (
+            <div className="journey-history-empty">No saved journeys yet. Compute a route and click Save.</div>
           )}
           <div className="journey-history-list">
-            {history.map(entry => (
+            {savedJourneys.map(entry => (
               <div key={entry.id} className="journey-history-item">
                 <div className="journey-history-info">
-                  <div className="journey-history-route">
-                    <span className="journey-history-from">{entry.fromName}</span>
-                    {entry.waypoints.length > 0 && (
-                      <span className="journey-history-via"> → {entry.waypoints.join(' → ')}</span>
-                    )}
-                    <span className="journey-history-arrow"> → </span>
-                    <span className="journey-history-to">{entry.toName}</span>
-                  </div>
+                  {renamingId === entry.id ? (
+                    <input
+                      className="journey-history-name-input"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => {
+                        setSavedJourneys(renameSavedJourney(entry.id, renameValue))
+                        setRenamingId(null)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setSavedJourneys(renameSavedJourney(entry.id, renameValue))
+                          setRenamingId(null)
+                        }
+                        if (e.key === 'Escape') {
+                          setRenamingId(null)
+                        }
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      className="journey-history-name"
+                      onClick={() => {
+                        setRenamingId(entry.id)
+                        setRenameValue(entry.name || '')
+                      }}
+                      title="Click to rename"
+                    >
+                      {entry.name || `${entry.fromName} → ${entry.waypoints.length > 0 ? entry.waypoints.join(' → ') + ' → ' : ''}${entry.toName}`}
+                    </div>
+                  )}
                   <div className="journey-history-meta">
                     {entry.season && <span className="journey-history-season">{entry.season}</span>}
                     <span className="journey-history-mode">{entry.mode}</span>
@@ -542,10 +575,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                   </div>
                 </div>
                 <div className="journey-history-actions">
-                  <button className="journey-history-load" onClick={() => handleLoadHistory(entry)} title="Load route">
+                  <button className="journey-history-load" onClick={() => handleLoadSaved(entry)} title="Load journey">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M12 3l9 9-9 9"/></svg>
                   </button>
-                  <button className="journey-history-delete" onClick={() => handleDeleteHistory(entry.id)} title="Delete">
+                  <button className="journey-history-delete" onClick={() => handleDeleteSaved(entry.id)} title="Delete">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   </button>
                 </div>
