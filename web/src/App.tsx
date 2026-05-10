@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useEffect, useCallback, useRef, useReducer, useMemo, type MouseEvent as ReactMouseEvent } from 'react'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -14,9 +14,12 @@ import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
+import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
+import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
+import TourOverlay from './components/TourOverlay'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -144,6 +147,94 @@ function App() {
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
+
+  const tourSteps: TourStep[] = useMemo(() => [
+    {
+      id: 'welcome',
+      title: 'Welcome to Veydria',
+      body: 'Veydria is a fantasy continent wrapped around the Aethelian Basin. This map holds 3,052 features. Let me show you the six things you\u2019ll actually use.',
+    },
+    {
+      id: 'layers',
+      targetSelector: '[data-tour="layers"]',
+      title: 'Layers',
+      body: 'Toggle map layers on and off. Try a preset \u2014 Politics view is a good start.',
+      placement: 'right',
+      onEnter: () => {
+        // Programmatically apply Politics preset
+        const preset = BUILT_IN_PRESETS.find(p => p.id === 'politics')
+        if (preset) setLayers(preset.layers)
+      },
+    },
+    {
+      id: 'search',
+      targetSelector: '[data-tour="search"]',
+      title: 'Search',
+      body: 'Anything in the world is two keystrokes away. Press Cmd-K (or Ctrl-K) and type a city name.',
+      placement: 'bottom',
+      onEnter: () => setSearchOpen(true),
+      onLeave: () => setSearchOpen(false),
+    },
+    {
+      id: 'info-panel',
+      targetSelector: '[data-tour="info-panel"]',
+      title: 'Feature lore cards',
+      body: 'Click any feature for its lore card. Notice related features at the bottom \u2014 you can chain through them.',
+      placement: 'left',
+      onEnter: () => {
+        // Programmatically open the Aethelian Basin
+        handleSelectFeatureById('aethelian_basin')
+      },
+    },
+    {
+      id: 'journey',
+      targetSelector: '[data-tour="journey"]',
+      title: 'Journey planner',
+      body: 'Pick two places and the planner finds a route, breaks it into days, and rolls weather and encounters per leg.',
+      placement: 'bottom',
+      onEnter: () => setJourneyMode(true),
+      onLeave: () => setJourneyMode(false),
+    },
+    {
+      id: 'pins',
+      targetSelector: '[data-tour="pin"]',
+      title: 'Session notes',
+      body: 'Drop a pin near a feature and it auto-links. Use these for NPCs, scenes, and loot.',
+      placement: 'bottom',
+      onEnter: () => setPinMode(true),
+      onLeave: () => setPinMode(false),
+    },
+    {
+      id: 'share',
+      targetSelector: '[data-tour="share"]',
+      title: 'Player view',
+      body: 'Toggle this and your annotations and encounter notes hide. Send the URL to your players.',
+      placement: 'bottom',
+    },
+    {
+      id: 'done',
+      title: 'That\u2019s the tour',
+      body: 'Press ? for keyboard help any time. Have fun exploring Veydria.',
+    },
+  ], [])
+
+  const [tourState, tourDispatch] = useReducer(
+    (state: { active: boolean; stepIndex: number }, action: { type: string }) =>
+      tourReducer(state, action as import('./utils/tour').TourAction, tourSteps.length),
+    { active: false, stepIndex: 0 }
+  )
+
+  const cleanupTour = useCallback(() => {
+    setSearchOpen(false)
+    setJourneyMode(false)
+    setPinMode(false)
+    setPanelOpen(false)
+    setSelectedFeature(null)
+    setSelectedHex(null)
+    setGraphOpen(false)
+    setKeyboardHelpOpen(false)
+  }, [])
+
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
@@ -272,6 +363,16 @@ function App() {
               mapRef.current?.fitBoundsToHexes([hexA, hexB])
             }, hexLabel ? 1300 : (featureId ? 1100 : 700))
           }
+        }
+
+        // Auto-start guided tour for first-time visitors, but only if there's
+        // no deep-link state (the user is following a specific link, not
+        // exploring organically) and we're not in share mode.
+        const hasDeepLink = !!(featureId || hexLabel || hashState.hexA || hashState.hexB || journeyFrom || journeyTo)
+        if (!hasDeepLink && !hashState.share && !isTourCompleted()) {
+          window.setTimeout(() => {
+            tourDispatch({ type: 'START' })
+          }, 1200)
         }
       })
       .catch((err) => {
@@ -787,6 +888,7 @@ function App() {
         <div className="header-right">
           <button
             className={`search-trigger ${journeyMode ? 'journey-active' : ''}`}
+            data-tour="journey"
             onClick={handleToggleJourneyMode}
             title="Toggle journey planner (J)"
             id="journey-trigger"
@@ -801,6 +903,7 @@ function App() {
           {!shareMode && (
             <button
               className={`search-trigger ${pinMode ? 'active' : ''}`}
+              data-tour="pin"
               onClick={handleTogglePinMode}
               title="Toggle pin mode (P)"
               id="pin-trigger"
@@ -867,6 +970,7 @@ function App() {
           {!shareMode && (
             <button
               className="search-trigger"
+              data-tour="share"
               onClick={() => handleShare(true)}
               title="Copy a player-facing link (hides annotations and encounters)"
               id="player-share-trigger"
@@ -909,6 +1013,7 @@ function App() {
           </button>
           <button
             className="search-trigger"
+            data-tour="search"
             onClick={() => setSearchOpen(true)}
             title="Search features (Ctrl+K)"
             id="search-trigger"
@@ -1236,6 +1341,21 @@ function App() {
         <KeyboardHelp
           open={keyboardHelpOpen}
           onClose={() => setKeyboardHelpOpen(false)}
+          onReplayTour={() => {
+            cleanupTour()
+            tourDispatch({ type: 'START' })
+          }}
+        />
+
+        <TourOverlay
+          steps={tourSteps}
+          state={tourState}
+          dispatch={(action) => {
+            if (action.type === 'SKIP' || action.type === 'COMPLETE') {
+              cleanupTour()
+            }
+            tourDispatch(action)
+          }}
         />
 
         <FactionGraph

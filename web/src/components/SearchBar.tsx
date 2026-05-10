@@ -128,6 +128,7 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
             ref={inputRef}
             type="text"
             className="search-input"
+            data-tour="search-input"
             placeholder="Search features by name, type, or description..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}

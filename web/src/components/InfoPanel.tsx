@@ -201,7 +201,7 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
   }
 
   return (
-    <div className={`info-panel ${open ? 'open' : ''}`} id="info-panel">
+    <div className={`info-panel ${open ? 'open' : ''}`} id="info-panel" data-tour="info-panel">
       <div className={`info-panel-header info-panel-header--${category}`}>
         <div className="info-panel-header-left">
           <span className={`info-panel-category ${category}`}>

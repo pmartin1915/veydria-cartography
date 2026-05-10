@@ -19,9 +19,10 @@ const SHORTCUTS: Shortcut[] = [
 interface KeyboardHelpProps {
   open: boolean
   onClose: () => void
+  onReplayTour?: () => void
 }
 
-export default function KeyboardHelp({ open, onClose }: KeyboardHelpProps) {
+export default function KeyboardHelp({ open, onClose, onReplayTour }: KeyboardHelpProps) {
   if (!open) return null
 
   return (
@@ -56,6 +57,11 @@ export default function KeyboardHelp({ open, onClose }: KeyboardHelpProps) {
 
         <div className="search-footer">
           <span><kbd>Esc</kbd> Close</span>
+          {onReplayTour && (
+            <button type="button" className="keyboard-help-replay" onClick={onReplayTour}>
+              Replay tour
+            </button>
+          )}
         </div>
       </div>
     </div>

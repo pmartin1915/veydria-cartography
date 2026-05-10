@@ -197,7 +197,7 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
   }
 
   return (
-    <div className="layer-controls" id="layer-controls">
+    <div className="layer-controls" id="layer-controls" data-tour="layers">
       {isMobile && (
         <button
           className="layer-controls-collapse"
@@ -235,7 +235,7 @@ export default function LayerControls({ layers, opacities, onToggle, onOpacityCh
               <div className="layer-presets-menu">
                 <div className="layer-presets-section">Built-in</div>
                 {BUILT_IN_PRESETS.map(p => (
-                  <button key={p.id} className="layer-presets-item" onClick={() => handleApply(p)}>
+                  <button key={p.id} className="layer-presets-item" onClick={() => handleApply(p)} data-tour={p.id === 'politics' ? 'preset-politics' : undefined}>
                     {p.name}
                   </button>
                 ))}
