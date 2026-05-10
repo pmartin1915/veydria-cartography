@@ -1354,6 +1354,7 @@ function App() {
         {searchOpen && geojson && (
           <SearchBar
             features={geojson.features}
+            annotations={annotations}
             onSelect={handleSearchSelect}
             onClose={() => setSearchOpen(false)}
           />

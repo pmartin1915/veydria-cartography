@@ -1251,6 +1251,54 @@ body {
   margin-right: 4px;
 }
 
+.search-footer-hint {
+  margin-left: auto;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.search-section-header {
+  padding: 6px 16px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  user-select: none;
+}
+
+.search-civ-chips {
+  display: flex;
+  gap: 6px;
+  padding: 6px 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-subtle);
+  scrollbar-width: none;
+}
+
+.search-civ-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.search-civ-chip {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.search-civ-chip:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
 /* --- Loading Screen --- */
 .loading-screen {
   width: 100vw;

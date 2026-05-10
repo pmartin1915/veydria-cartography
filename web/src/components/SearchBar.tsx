@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useDeferredValue } from 'react'
 import { NodeIcon } from './icons'
+import { loadRecentItems, pushRecentItem, type RecentItem } from '../utils/search-recent'
+import type { MapAnnotation } from '../utils/annotations'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -12,16 +14,18 @@ interface GeoJSONFeature {
 
 interface SearchBarProps {
   features: GeoJSONFeature[]
+  annotations?: MapAnnotation[]
   onSelect: (feature: GeoJSONFeature) => void
   onClose: () => void
 }
 
-export default function SearchBar({ features, onSelect, onClose }: SearchBarProps) {
+export default function SearchBar({ features, annotations = [], onSelect, onClose }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const deferredQuery = useDeferredValue(query)
+  const [recentItems, setRecentItems] = useState<RecentItem[]>(() => loadRecentItems())
 
   // Focus input on mount
   useEffect(() => {
@@ -39,10 +43,52 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
     }))
   }, [features])
 
-  // Filter features by deferred query (keeps input responsive)
+  // Civilization names for quick chips
+  const civNames = useMemo(() => {
+    const names = features
+      .filter((f) => f.properties.category === 'civilization' && f.properties.name)
+      .map((f) => (f.properties.name as string))
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+  }, [features])
+
+  // Linked pins: annotations with a resolved feature
+  const linkedPins = useMemo(() => {
+    const featureMap = new Map<string, GeoJSONFeature>()
+    for (const f of features) {
+      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      if (id) featureMap.set(id, f)
+    }
+    const pins: { annotation: MapAnnotation; feature: GeoJSONFeature }[] = []
+    for (const a of annotations) {
+      if (a.featureId && a.featureName && featureMap.has(a.featureId)) {
+        pins.push({ annotation: a, feature: featureMap.get(a.featureId)! })
+      }
+    }
+    // Most recent first
+    return pins.sort((a, b) => b.annotation.createdAt - a.annotation.createdAt).slice(0, 5)
+  }, [annotations, features])
+
+  // Resolve recent items to actual features (defensive against stale IDs)
+  const recentFeatures = useMemo(() => {
+    const featureMap = new Map<string, GeoJSONFeature>()
+    for (const f of features) {
+      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      if (id) featureMap.set(id, f)
+    }
+    const out: GeoJSONFeature[] = []
+    for (const item of recentItems) {
+      const f = featureMap.get(item.id)
+      if (f) out.push(f)
+    }
+    return out
+  }, [recentItems, features])
+
+  // Filter features by deferred query
   const results = useMemo(() => {
-    if (!deferredQuery.trim()) {
-      // Show all named features, grouped by category
+    const trimmed = deferredQuery.trim()
+    if (!trimmed) {
+      // When empty, we show sections (Recent, Linked pins, All features).
+      // Return the full browsable list as the "all features" section.
       return features
         .filter((f) => f.properties.name)
         .sort((a, b) => {
@@ -57,26 +103,61 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
         })
     }
 
-    const q = deferredQuery.toLowerCase()
+    const lower = trimmed.toLowerCase()
+
+    // civ: prefix → filter to civilization features
+    if (lower.startsWith('civ:')) {
+      const rest = lower.slice(4).trim()
+      return searchIndex
+        .filter((entry) => entry.category === 'civilization' && (!rest || entry.name.includes(rest)))
+        .map((entry) => entry.feature)
+        .sort((a, b) => {
+          const aName = ((a.properties.name as string) || '').toLowerCase()
+          const bName = ((b.properties.name as string) || '').toLowerCase()
+          if (!rest) return aName.localeCompare(bName)
+          const aStarts = aName.startsWith(rest) ? -1 : 0
+          const bStarts = bName.startsWith(rest) ? -1 : 0
+          if (aStarts !== bStarts) return aStarts - bStarts
+          return aName.localeCompare(bName)
+        })
+    }
+
+    // pin: prefix → filter to linked pins by label/body/featureName
+    if (lower.startsWith('pin:')) {
+      const rest = lower.slice(4).trim()
+      return linkedPins
+        .filter(({ annotation }) => {
+          if (!rest) return true
+          const q = rest
+          return (
+            annotation.label.toLowerCase().includes(q) ||
+            annotation.body.toLowerCase().includes(q) ||
+            (annotation.featureName || '').toLowerCase().includes(q)
+          )
+        })
+        .map(({ feature }) => feature)
+    }
+
+    // Default fuzzy search
     return searchIndex
       .filter((entry) => {
         return (
-          entry.name.includes(q) ||
-          entry.category.includes(q) ||
-          entry.description.includes(q) ||
-          entry.etymology.includes(q)
+          entry.name.includes(lower) ||
+          entry.category.includes(lower) ||
+          entry.description.includes(lower) ||
+          entry.etymology.includes(lower)
         )
       })
       .map((entry) => entry.feature)
       .sort((a, b) => {
         const aName = ((a.properties.name as string) || '').toLowerCase()
         const bName = ((b.properties.name as string) || '').toLowerCase()
-        const aStarts = aName.startsWith(q) ? -1 : 0
-        const bStarts = bName.startsWith(q) ? -1 : 0
+        const aStarts = aName.startsWith(lower) ? -1 : 0
+        const bStarts = bName.startsWith(lower) ? -1 : 0
         if (aStarts !== bStarts) return aStarts - bStarts
         return aName.localeCompare(bName)
       })
-  }, [searchIndex, deferredQuery])
+  }, [searchIndex, deferredQuery, features, linkedPins])
 
   // Reset selection when results change
   useEffect(() => {
@@ -93,6 +174,17 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
     }
   }, [selectedIndex])
 
+  const handleSelect = (feature: GeoJSONFeature) => {
+    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    const name = (feature.properties.name as string) || 'Unknown'
+    const category = (feature.properties.category as string) || 'unknown'
+    if (id) {
+      pushRecentItem(id, name, category)
+      setRecentItems(loadRecentItems())
+    }
+    onSelect(feature)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'ArrowDown':
@@ -106,7 +198,7 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
       case 'Enter':
         e.preventDefault()
         if (results[selectedIndex]) {
-          onSelect(results[selectedIndex])
+          handleSelect(results[selectedIndex])
         }
         break
       case 'Escape':
@@ -114,6 +206,78 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
         onClose()
         break
     }
+  }
+
+  const isEmptyQuery = !deferredQuery.trim()
+  const showRecent = isEmptyQuery && recentFeatures.length > 0
+  const showLinkedPins = isEmptyQuery && linkedPins.length > 0
+  const showCivChips = isEmptyQuery && civNames.length > 0
+  const showAllHeader = isEmptyQuery && (showRecent || showLinkedPins)
+
+  const renderFeatureRow = (feature: GeoJSONFeature, i: number, opts?: { icon?: React.ReactNode; metaOverride?: string }) => {
+    const category = (feature.properties.category as string) || 'unknown'
+    const name = (feature.properties.name as string) || 'Unknown'
+    const type = (feature.properties.type as string) || ''
+    return (
+      <button
+        key={`${feature.properties.id}-${i}`}
+        className={`search-result-item ${i === selectedIndex ? 'selected' : ''}`}
+        onClick={() => handleSelect(feature)}
+        onMouseEnter={() => setSelectedIndex(i)}
+      >
+        <span className="search-result-icon">{opts?.icon ?? <NodeIcon category={category} size={14} />}</span>
+        <div className="search-result-text">
+          <span className="search-result-name">{name}</span>
+          <span className="search-result-meta">
+            {opts?.metaOverride ?? category.replace('_', ' ')}
+            {type ? ` · ${type}` : ''}
+          </span>
+        </div>
+      </button>
+    )
+  }
+
+  // Build flat list with section headers for display
+  let displayIndex = 0
+  const displayItems: React.ReactNode[] = []
+
+  if (showRecent) {
+    displayItems.push(
+      <div key="recent-header" className="search-section-header">Recent</div>
+    )
+    for (const f of recentFeatures) {
+      displayItems.push(renderFeatureRow(f, displayIndex++))
+    }
+  }
+
+  if (showLinkedPins) {
+    displayItems.push(
+      <div key="pins-header" className="search-section-header">Linked pins</div>
+    )
+    for (const { annotation, feature } of linkedPins) {
+      displayItems.push(
+        renderFeatureRow(feature, displayIndex++, {
+          icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.7 2 6 4.7 6 8c0 4.5 6 14 6 14s6-9.5 6-14c0-3.3-2.7-6-6-6z"/><circle cx="12" cy="8" r="2.5"/></svg>,
+          metaOverride: `Pin · ${annotation.label}`,
+        })
+      )
+    }
+  }
+
+  if (showAllHeader) {
+    displayItems.push(
+      <div key="all-header" className="search-section-header">All features</div>
+    )
+  }
+
+  for (let i = 0; i < results.slice(0, 30).length; i++) {
+    displayItems.push(renderFeatureRow(results[i], displayIndex++))
+  }
+
+  if (results.length === 0 && !isEmptyQuery) {
+    displayItems.push(
+      <div key="empty" className="search-empty">No features match "{query}"</div>
+    )
   }
 
   return (
@@ -138,39 +302,31 @@ export default function SearchBar({ features, onSelect, onClose }: SearchBarProp
           <span className="search-count">{results.length}</span>
         </div>
 
-        <div className="search-results" ref={listRef}>
-          {results.slice(0, 30).map((feature, i) => {
-            const category = (feature.properties.category as string) || 'unknown'
-            const name = (feature.properties.name as string) || 'Unknown'
-            const type = (feature.properties.type as string) || ''
-
-            return (
+        {showCivChips && (
+          <div className="search-civ-chips">
+            {civNames.map((name) => (
               <button
-                key={`${feature.properties.id}-${i}`}
-                className={`search-result-item ${i === selectedIndex ? 'selected' : ''}`}
-                onClick={() => onSelect(feature)}
-                onMouseEnter={() => setSelectedIndex(i)}
+                key={name}
+                className="search-civ-chip"
+                onClick={() => setQuery(`civ:${name.toLowerCase()}`)}
+                tabIndex={-1}
               >
-                <span className="search-result-icon"><NodeIcon category={category} size={14} /></span>
-                <div className="search-result-text">
-                  <span className="search-result-name">{name}</span>
-                  <span className="search-result-meta">
-                    {category.replace('_', ' ')}
-                    {type ? ` · ${type}` : ''}
-                  </span>
-                </div>
+                {name}
               </button>
-            )
-          })}
-          {results.length === 0 && (
-            <div className="search-empty">No features match "{query}"</div>
-          )}
+            ))}
+          </div>
+        )}
+
+        <div className="search-results" ref={listRef}>
+          {displayItems}
         </div>
 
         <div className="search-footer">
           <span><kbd>↑↓</kbd> Navigate</span>
           <span><kbd>↵</kbd> Select</span>
           <span><kbd>Esc</kbd> Close</span>
+          {query.toLowerCase().startsWith('civ:') && <span className="search-footer-hint">civ filter</span>}
+          {query.toLowerCase().startsWith('pin:') && <span className="search-footer-hint">pin filter</span>}
         </div>
       </div>
     </div>

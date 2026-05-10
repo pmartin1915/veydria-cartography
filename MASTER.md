@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 264/264 | vitest, 16 files |
+| Tests | ✅ 297/297 | vitest, 18 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -128,6 +128,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Hex annotation deep-link polish** — `#hexNote=G7` now scrolls the notes section into view and plays a brief amber highlight flash on first open.
 - **JourneyPlanner day-to-segment link** — clicking a day in the Days tab switches to the Encounters tab and pre-selects the corresponding route segment.
 - **Saved journeys** — canonical localStorage key `veydria.journeys.v1`; "My journeys" panel with inline rename, auto-generated default names (`A → B`), and defensive migration from legacy `veydria-journey-history`.
+- **Better Cmd-K** — recent items (last 5 selections, persisted to `veydria.search.recent.v1`), "Linked pins" section for annotations with `featureId`, civilization quick-filter chips when empty, `civ:` prefix filtering, `pin:` prefix filtering.
 
 ### In Progress / Next
 
@@ -141,7 +142,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 Larger bets and exploratory directions:
 
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
-- **Better Cmd-K** *(small)* — recent items, recently-linked annotation section, jump-to-civ shortcuts.
 - **Time-of-day overlay** *(small)* — dawn/dusk/night tint slider for mood; affects nothing else.
 - **Export markdown campaign log** *(medium)* — bundle active journey + dropped pins + visited features into a single session-log export.
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
