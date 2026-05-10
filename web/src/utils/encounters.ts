@@ -136,6 +136,17 @@ export const NOTHING_BEATS: Beat[] = [
   { text: 'The cliff face is sheer and silent. A hawk turns on an updraft, then is gone.', type: 'environmental', severity: 'mild', biome: 'Escarpment' },
   { text: 'The gorge holds the river in shadow. The water mutters to itself, nothing more.', type: 'environmental', severity: 'mild', biome: 'River gorge' },
   { text: 'Tussock grass and stone. The air is thin and still, and the sky very close.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath' },
+  // Biome + season specific nothing beats
+  { text: 'The sand burns through boot-soles at noon. Even the flies have gone to ground.', type: 'environmental', severity: 'mild', biome: 'Desert', seasons: ['summer'] },
+  { text: 'Frost rimes the dune-shadows at dawn. The desert does not forgive the cold either.', type: 'environmental', severity: 'mild', biome: 'Desert', seasons: ['winter'] },
+  { text: 'Snow has erased the horizon. The wind carries nothing but the memory of grass.', type: 'environmental', severity: 'mild', biome: 'Steppe', seasons: ['winter'] },
+  { text: 'Dry thunder rumbles to the north. The grass is brown and brittle underfoot.', type: 'environmental', severity: 'mild', biome: 'Steppe', seasons: ['summer'] },
+  { text: 'Snow settles into the tussocks. The world has narrowed to the next cairn and the next.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath', seasons: ['winter'] },
+  { text: 'Alpine gentians star the meadow. The silence is different here — thinner, older.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath', seasons: ['summer'] },
+  { text: 'Rain does not fall; it simply is. Every surface weeps and the trail is mud.', type: 'environmental', severity: 'mild', biome: 'Cloud forest', seasons: ['winter'] },
+  { text: 'Mist burns off by midday. For an hour the canopy is gold-green and loud with unseen birds.', type: 'environmental', severity: 'mild', biome: 'Cloud forest', seasons: ['summer'] },
+  { text: 'The paddies are lakes. Rain falls in sheets that blur the boundary between sky and water.', type: 'environmental', severity: 'mild', biome: 'Monsoon delta', seasons: ['summer'] },
+  { text: 'Harvest stubble smokes on the bunds. The channels run low and the mud holds the heat.', type: 'environmental', severity: 'mild', biome: 'Monsoon delta', seasons: ['winter'] },
 ]
 
 export function poolForEdgeType(type: string): Beat[] {
@@ -179,11 +190,11 @@ export function filterByBiome(pool: Beat[], biome?: string): Beat[] {
  * return only those. Otherwise return the generic (untagged) beats.
  * If no biome is provided, only generic beats are returned.
  */
-export function filterNothingBeats(biome?: string): Beat[] {
+export function filterNothingBeats(biome?: string, season?: Season): Beat[] {
   const generic = NOTHING_BEATS.filter(b => !b.biome)
-  if (!biome) return generic
+  if (!biome) return filterBySeason(generic, season)
   const matched = NOTHING_BEATS.filter(b => b.biome === biome)
-  return matched.length > 0 ? matched : generic
+  return filterBySeason(matched.length > 0 ? matched : generic, season)
 }
 
 /* ─── Public API ─── */
@@ -207,7 +218,7 @@ export function generateEncounters(
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
     if (rng() < nothingChance) {
-      const nothingPool = filterNothingBeats(edgeBiomes?.[i])
+      const nothingPool = filterNothingBeats(edgeBiomes?.[i], season)
       const nothing = nothingPool[Math.floor(rng() * nothingPool.length)]
       encounters.push({
         segmentIdx: i,

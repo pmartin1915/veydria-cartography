@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, NOTHING_BEATS } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, NOTHING_BEATS, filterNothingBeats } from './encounters'
 import type { JourneyRoute } from './journey-graph'
 
 function fakeRoute(): JourneyRoute {
@@ -147,5 +147,38 @@ describe('encounters', () => {
     for (const e of nothingEncs) {
       expect(e.biome).toBeUndefined()
     }
+  })
+
+  it('selects season-specific nothing beats when biome and season both match', () => {
+    const desertSummer = NOTHING_BEATS.filter(b => b.biome === 'Desert' && b.seasons?.includes('summer'))
+    expect(desertSummer.length).toBeGreaterThan(0)
+    const r = fakeRouteManyEdges(30, 'intra_civ')
+    const encs = generateEncounters(r, 'summer', 'direct', Array(30).fill('Desert'))
+    const matched = encs.filter(e => desertSummer.some(b => b.text === e.beat))
+    expect(matched.length).toBeGreaterThan(0)
+    for (const e of matched) {
+      expect(e.biome).toBe('Desert')
+    }
+  })
+
+  it('falls back to biome-only nothing beats when season has no specific entries', () => {
+    // Sabkha has biome-specific but no season-specific nothing beats
+    const sabkhaBeats = NOTHING_BEATS.filter(b => b.biome === 'Sabkha')
+    expect(sabkhaBeats.length).toBe(1)
+    expect(sabkhaBeats[0].seasons).toBeUndefined()
+    const r = fakeRouteManyEdges(30, 'intra_civ')
+    const encs = generateEncounters(r, 'summer', 'direct', Array(30).fill('Sabkha'))
+    const matched = encs.filter(e => sabkhaBeats.some(b => b.text === e.beat))
+    expect(matched.length).toBeGreaterThan(0)
+    for (const e of matched) {
+      expect(e.biome).toBe('Sabkha')
+    }
+  })
+
+  it('filterNothingBeats returns only generic beats when no biome given regardless of season', () => {
+    const result = filterNothingBeats(undefined, 'summer')
+    expect(result.every(b => !b.biome)).toBe(true)
+    const genericTexts = NOTHING_BEATS.filter(b => !b.biome).map(b => b.text)
+    expect(result.map(b => b.text)).toEqual(expect.arrayContaining(genericTexts))
   })
 })
