@@ -99,46 +99,56 @@ data/                                          ← read-only here
 
 ## 5. Roadmap
 
-Three horizons. Each item is sized "small" (a session) / "medium" (2–3 sessions) / "large" (multi-week).
+Three horizons, reorganised by state rather than time. Each item is sized **small** (a session) / **medium** (2–3 sessions) / **large** (multi-week).
 
-### Near term — finish what's started (small)
+### Shipped
 
-These polish items came out of the 2026-05-07 audit and the 2026-05-08 in-app review:
+Recent sessions (2026-05-08 → 2026-05-09) cleared the previous near-term list and added significant GM utility:
 
-- **Snapshot in share mode is not enforced.** GM clicking Snapshot from a normal URL captures annotations. Add a "Snapshot for players" variant that toggles share-state for the duration of the capture.
-- **Annotation popup has 3 button rows.** Consolidate into a single-row toolbar.
-- **Right info panel is a fixed 30% width.** Make it a collapsible drawer; on narrow viewports auto-collapse.
-- **Feature count chip ("3052 features")** in the header is a static label. Make it a button that opens the search palette.
-- **Player banner** is a thin strip; raise contrast slightly so it survives a screenshot at low brightness.
-- **Bundle warning at 530 kB / 162 kB gzip.** Code-split d3 + leaflet into separate chunks. Not urgent but trivial.
+- **Hex grid overlay** — pointy-top odd-r grid (~110–600 cells via 30/50/70 size slider), A1/G7 labels, hover tooltip with terrain descriptors, click-to-select with `HexInfoPanel`, coord chip, deep-link via `#hex=G7`, variable size persisted to `localStorage`.
+- **Hex-distance measurement** — two-click axial-distance mode, path highlighting with tinted endpoint/mid-path labels, "H" shortcut, URL persistence (`#hexA=G7&hexB=K12`), mobile fly-to gate.
+- **Tactical preset** — built-in layer preset that pairs with hex distance (hex grid prominent, terrain dimmed).
+- **Faction graph** — modal SVG view with civ nodes positioned by centroid, trade + shared-chokepoint edges, click → InfoPanel integration.
+- **Random encounter roller** — "⟳ Roll one-off" in Encounters tab, gold-bordered Impromptu cards; severe trade-route beats now populated.
+- **Mobile shape** — `100dvh` root, `invalidateSize` fixes, layer-controls collapsible pill, journey planner as bottom sheet, share-mode banner + Measure hide, 36px tap targets, feature fly-to with bottom-sheet padding.
+- **Zoom polish** — `maxZoom: 1.5` on init fit, canvas padding 0.3, tooltip gated on mobile, `flyToBounds` with padding on feature/hex select.
+- **Snapshot player variant** — Shift+click drops annotation pins before capture.
+- **Bundle & UI polish** — code-split d3/leaflet/html-to-image into separate chunks, feature-count chip opens search palette, brighter player banner, annotation toolbar consolidated.
 
-### Mid term — GM utility (small–medium each)
+### In Progress / Next
 
-In rough priority order; each is a few hours to a couple of sessions:
+Immediate gaps and plausible next-session moves, in rough priority order:
 
-1. **Random encounter roller** — within an active route, a "Roll" button that picks one beat from the appropriate seasonal/biome pool for the current segment. Mid-session use.
-2. **Annotation categories** — tag pins with `category` (NPC / scene / loot / hazard); colour them by category and add a filter row above the layer panel.
-3. **Multi-route comparison** — overlay two routes (Direct vs Safest vs Cheapest) on the map at once, distinct colours, side-by-side stat blocks in the planner.
-4. **Saved journeys** — persist the current journey to `localStorage:veydria.journeys.v1`; list them under a "My journeys" section in the planner.
-5. **Better Cmd-K** — recent items, "recently linked annotation" section, jump-to-civ shortcuts.
-6. **Time-of-day overlay** — slider that tints the map (dawn / dusk / night) for mood; affects nothing else.
-7. **Export markdown campaign log** — the planner already exports per-journey; add a "session log" that bundles the active journey + dropped pins + visited features into one export.
+- **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
+- **Per-hex annotations** *(medium)* — optional `hexLabel` on `MapAnnotation`; pin UI shows "Linked to G7" instead of a feature name. Schema is additive; storage layer ready.
+- **Variable-hexSize-aware route highlighting** *(medium)* — reuse `hexLineBetween` across consecutive journey nodes to highlight traversed hexes and add a "hexes traversed: N" stat. Recompute on hex size change.
+- **"Roll one-off" defaults to current edge type** *(small)* — pre-select the edge type of the active journey segment instead of always defaulting.
+- **Keyboard-shortcut cleanup** *(small)* — route `m`/`j`/`p` through the proper mutual-exclusion toggle handlers (same pattern as `h`) so they clear `hexMeasureMode` and URL state consistently.
+- **Hex labels on the journey route** *(small)* — re-use the `data-label` hook to show "crosses G7 → H8 → I9 …" at a glance.
+- **Snapshot URL** *(medium)* — compose a clipboardable link capturing `feature=` / `hex=` / `hexA=` / `hexB=` / `journeyFrom=` / `journeyTo=` / zoom + center.
+- **Undo for Hex Measure** *(small)* — Backspace peels back the last endpoint (mirrors regular Measure mode).
+- **Biome words + faction relationships** *(medium, upstream-blocked)* — requires `worldbuilder` edits (`biome` field on terrain_cell, `relationships:` block in topology YAML) followed by `npm run sync:data`. `hex-grid.ts` and `faction-graph.ts` are shape-ready.
 
-### Exploratory — larger bets (medium–large)
+### Backlog
 
-- **Onboarding / guided tour.** Detailed sketch in §6 below — flagged as a near-term mid-sized project once a few of the QoL polish items above are done.
-- **Hex grid overlay** for tactical-scale travel within a region. Toggleable; only activates above a zoom threshold.
-- **Faction relationship graph view** — toggleable second pane that shows civs as nodes and trade routes / hostilities as edges. Selecting a faction in the graph filters the map to its territory and trade.
-- **Generative content per feature** — feed a feature's lore card into Claude API to produce a per-session "rumours, hooks, NPCs" panel. Cached per feature ID. Optional — needs a key, not a default.
-- **Mobile read-only player mode** — share-mode URL renders cleanly on phone; no editing, just panning, info panels, and the journey path. Could be the killer feature for at-the-table use.
-- **Time / calendar layer** — overlay civilizational calendar dates on the journey breakdown (festivals, monsoons, harvest). Pulls from worldbuilder's calendar YAML.
-- **Static map regeneration from current layer state** — "Render this view as parchment" button that hands the layer state to the Python pipeline and produces a high-DPI PNG.
+Larger bets and exploratory directions:
+
+- **Guided tour / onboarding** *(medium)* — first-visit walkthrough (5–7 steps) with backdrop-filter highlighting, `data-tour` attributes, and `localStorage` completion tracking. Detailed design sketch in §6.
+- **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
+- **Saved journeys** *(medium)* — persist journeys to `localStorage:veydria.journeys.v1`; list under "My journeys" in the planner.
+- **Better Cmd-K** *(small)* — recent items, recently-linked annotation section, jump-to-civ shortcuts.
+- **Time-of-day overlay** *(small)* — dawn/dusk/night tint slider for mood; affects nothing else.
+- **Export markdown campaign log** *(medium)* — bundle active journey + dropped pins + visited features into a single session-log export.
+- **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
+- **Dedicated mobile player mode** *(medium)* — share-mode URL renders cleanly on phone with no editing, just panning, info panels, and journey path. Potentially the killer at-the-table feature.
+- **Time / calendar layer** *(medium)* — overlay civilizational calendar dates (festivals, monsoons, harvest) on the journey breakdown. Pulls from worldbuilder's calendar YAML.
+- **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
 
 ### Health / infrastructure (always-on)
 
 - Keep CI green. Don't ship if `npm test` is red.
-- Whenever a new piece of state or schema lands, write the test alongside it. The session-2026-05-07 audit added 7 tests to retroactively pin behaviour the merge fix relied on; that gap shouldn't be the norm.
-- Avoid `localStorage` schema breakage by versioning storage keys (`...v1` → `...v2`). Defensive merges on read are forward-compatible for additive changes; bump the key for breaking ones.
+- Write tests alongside new state or schema. The 2026-05-07 audit added 7 retroactive tests; that gap shouldn't be the norm.
+- Avoid `localStorage` schema breakage by versioning keys (`...v1` → `...v2`). Defensive merges on read are forward-compatible for additive changes; bump the key for breaking ones.
 
 ## 6. Guided tour — design sketch
 

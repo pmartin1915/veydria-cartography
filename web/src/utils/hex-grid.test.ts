@@ -12,6 +12,10 @@ import {
   sampleHexFeatures,
   axialDistance,
   hexLineBetween,
+  getRouteHexLabels,
+  getHexBiomeColor,
+  getBiomeAtPoint,
+  BIOME_COLORS,
   type AxialCoord,
   type HexCell,
 } from './hex-grid'
@@ -234,7 +238,13 @@ function makeHex(cx: number, cy: number, size: number): HexCell {
   }
 }
 
-function makeTerrainCell(cx: number, cy: number, size: number, elevation: number): GeoJSONFeature {
+function makeTerrainCell(
+  cx: number,
+  cy: number,
+  size: number,
+  elevation: number,
+  biome?: string,
+): GeoJSONFeature {
   // A small square polygon centred at (cx, cy).
   const half = size
   const ring = [
@@ -244,10 +254,19 @@ function makeTerrainCell(cx: number, cy: number, size: number, elevation: number
     [cx - half, cy + half],
     [cx - half, cy - half],
   ]
+  const props: Record<string, unknown> = {
+    category: 'terrain_cell',
+    elevation,
+    civ: 'irrah',
+    id: `tc_${cx}_${cy}`,
+  }
+  if (biome !== undefined) {
+    props.biome = biome
+  }
   return {
     type: 'Feature',
     geometry: { type: 'Polygon', coordinates: [ring] },
-    properties: { category: 'terrain_cell', elevation, civ: 'irrah', id: `tc_${cx}_${cy}` },
+    properties: props,
   }
 }
 
@@ -279,6 +298,21 @@ describe('sampleHexFeatures', () => {
     const cell = makeTerrainCell(600, 400, 80, 400)
     const out = sampleHexFeatures(hex, [cell])
     expect(out).toContain('Hill')
+  })
+
+  it('uses biome prop when present instead of elevation bucket', () => {
+    const hex = makeHex(600, 400, 40)
+    const cell = makeTerrainCell(600, 400, 80, 400, 'Cloud forest')
+    const out = sampleHexFeatures(hex, [cell])
+    expect(out).toContain('Cloud forest')
+    expect(out).not.toContain('Hill')
+  })
+
+  it('falls back to elevation bucket when biome prop is missing', () => {
+    const hex = makeHex(600, 400, 40)
+    const cell = makeTerrainCell(600, 400, 80, 50) // no biome
+    const out = sampleHexFeatures(hex, [cell])
+    expect(out).toContain('Plains')
   })
 
   it('treats a low-elevation cell as Plains', () => {
@@ -416,6 +450,116 @@ describe('hexLineBetween', () => {
       for (let i = 1; i < line.length; i++) {
         expect(axialDistance(line[i - 1], line[i])).toBe(1)
       }
+    }
+  })
+})
+
+describe('getHexBiomeColor', () => {
+  it('returns the biome color when hex centroid is inside a terrain_cell with biome', () => {
+    const hex = makeHex(600, 400, 40)
+    const cell = makeTerrainCell(600, 400, 80, 400, 'Cloud forest')
+    expect(getHexBiomeColor(hex, [cell])).toBe(BIOME_COLORS['Cloud forest'])
+  })
+
+  it('returns null when no terrain_cell contains the hex', () => {
+    const hex = makeHex(600, 400, 40)
+    const far = makePoint('landmark', 50, 50, { type: 'mountain' })
+    expect(getHexBiomeColor(hex, [far])).toBeNull()
+  })
+
+  it('falls back to elevation-based color when biome prop is missing', () => {
+    const hex = makeHex(600, 400, 40)
+    const cell = makeTerrainCell(600, 400, 80, 50) // no biome → Plains
+    expect(getHexBiomeColor(hex, [cell])).toBe(BIOME_COLORS['Plains'])
+  })
+
+  it('ignores non-terrain_cell features', () => {
+    const hex = makeHex(600, 400, 40)
+    const river = makePoint('river', 600, 400)
+    const farCell = makeTerrainCell(50, 50, 80, 400, 'Desert')
+    expect(getHexBiomeColor(hex, [river, farCell])).toBeNull()
+  })
+})
+
+describe('getBiomeAtPoint', () => {
+  it('returns biome name when point is inside a terrain_cell with biome', () => {
+    const cell = makeTerrainCell(600, 400, 80, 400, 'Cloud forest')
+    expect(getBiomeAtPoint(600, 400, [cell])).toBe('Cloud forest')
+  })
+
+  it('returns elevation fallback when biome prop is missing', () => {
+    const cell = makeTerrainCell(600, 400, 80, 50) // no biome → Plains
+    expect(getBiomeAtPoint(600, 400, [cell])).toBe('Plains')
+  })
+
+  it('returns null when point is outside all terrain_cells', () => {
+    const far = makeTerrainCell(50, 50, 80, 400, 'Desert')
+    expect(getBiomeAtPoint(600, 400, [far])).toBeNull()
+  })
+
+  it('ignores non-terrain_cell features', () => {
+    const river = makePoint('river', 600, 400)
+    const farCell = makeTerrainCell(50, 50, 80, 400, 'Desert')
+    expect(getBiomeAtPoint(600, 400, [river, farCell])).toBeNull()
+  })
+})
+
+describe('getRouteHexLabels', () => {
+  const HEX_SIZE = 50
+
+  it('returns empty array for empty nodes', () => {
+    expect(getRouteHexLabels([], HEX_SIZE)).toEqual([])
+  })
+
+  it('returns a single label for a single node', () => {
+    // Centroid of A1 at size 50, origin (0,0)
+    const [x, y] = axialToPixel(0, 0, HEX_SIZE, [0, 0])
+    expect(getRouteHexLabels([{ x, y }], HEX_SIZE)).toEqual(['A1'])
+  })
+
+  it('returns adjacent labels for two neighbouring nodes', () => {
+    const [x1, y1] = axialToPixel(0, 0, HEX_SIZE, [0, 0])
+    const [x2, y2] = axialToPixel(1, 0, HEX_SIZE, [0, 0])
+    const labels = getRouteHexLabels([{ x: x1, y: y1 }, { x: x2, y: y2 }], HEX_SIZE)
+    expect(labels.length).toBe(2)
+    expect(labels[0]).toBe('A1')
+    expect(labels[1]).toBe('A2')
+  })
+
+  it('deduplicates when two nodes land in the same hex', () => {
+    const [x, y] = axialToPixel(0, 0, HEX_SIZE, [0, 0])
+    // Two points both inside A1 (near centroid and slightly offset).
+    const labels = getRouteHexLabels([{ x, y }, { x: x + 5, y: y + 5 }], HEX_SIZE)
+    expect(labels).toEqual(['A1'])
+  })
+
+  it('produces a clean sequence across a longer line', () => {
+    // (0,0) → (3,0) should pass through A1, A2, A3, A4
+    const [x1, y1] = axialToPixel(0, 0, HEX_SIZE, [0, 0])
+    const [x2, y2] = axialToPixel(3, 0, HEX_SIZE, [0, 0])
+    const labels = getRouteHexLabels([{ x: x1, y: y1 }, { x: x2, y: y2 }], HEX_SIZE)
+    expect(labels.length).toBeGreaterThanOrEqual(2)
+    expect(labels[0]).toBe('A1')
+    expect(labels[labels.length - 1]).toBe('A4')
+    // No adjacent duplicates.
+    for (let i = 1; i < labels.length; i++) {
+      expect(labels[i]).not.toBe(labels[i - 1])
+    }
+  })
+
+  it('handles a multi-stop route without duplicates', () => {
+    const [x1, y1] = axialToPixel(0, 0, HEX_SIZE, [0, 0])
+    const [x2, y2] = axialToPixel(2, 0, HEX_SIZE, [0, 0])
+    const [x3, y3] = axialToPixel(4, 0, HEX_SIZE, [0, 0])
+    const labels = getRouteHexLabels(
+      [{ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }],
+      HEX_SIZE,
+    )
+    expect(labels.length).toBeGreaterThanOrEqual(3)
+    expect(labels[0]).toBe('A1')
+    expect(labels[labels.length - 1]).toBe('A5')
+    for (let i = 1; i < labels.length; i++) {
+      expect(labels[i]).not.toBe(labels[i - 1])
     }
   })
 })

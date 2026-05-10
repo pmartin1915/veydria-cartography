@@ -56,6 +56,8 @@ export function parsePatchYaml(yaml: string): CoordinatePatch[] {
 
 export interface PatchableFeature {
   type?: string
+  /** Top-level id (GeoJSON standard) — matched when properties.id is absent. */
+  id?: string
   properties: Record<string, unknown>
   geometry: { type: string; coordinates: unknown }
 }

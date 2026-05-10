@@ -169,7 +169,8 @@ function notableForDay(
 export function buildDailyBreakdown(
   route: JourneyRoute,
   season?: Season,
-  mode: RouteMode = 'direct'
+  mode: RouteMode = 'direct',
+  edgeBiomes?: (string | undefined)[]
 ): JourneyDay[] {
   if (!route.edges.length || route.estimatedDays <= 0) return []
 
@@ -178,7 +179,7 @@ export function buildDailyBreakdown(
   const seed = djb2Hash(sig)
 
   // Pre-bucket encounters by their edge's midpoint day.
-  const allEncounters = generateEncounters(route, season, mode)
+  const allEncounters = generateEncounters(route, season, mode, edgeBiomes)
   const encountersByDay: Map<number, Encounter[]> = new Map()
   let acc = 0
   const edgeMidpointDay: number[] = []

@@ -14,6 +14,7 @@ interface GeoJSONFeature {
 import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
 import type { HexCell } from '../utils/hex-grid'
+import { getRouteHexLabels, BIOME_COLORS } from '../utils/hex-grid'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute } from '../utils/journey-graph'
@@ -41,6 +42,7 @@ interface LayerVisibility {
   river: boolean
   faction_control: boolean
   terrain_cost: boolean
+  biome_colors: boolean
 }
 
 export interface MapViewerProps {
@@ -126,9 +128,13 @@ function buildAnnotationPopupContent(ann: MapAnnotation): string {
          <span class="annotation-popup-link-label">Linked: <strong>${escapeHtml(ann.featureName || ann.featureId)}</strong></span>
          <button type="button" class="annotation-popup-unlink">Unlink</button>
        </div>`
-    : `<div class="annotation-popup-link">
-         <button type="button" class="annotation-popup-link-nearest">Link to nearest feature</button>
-       </div>`
+    : ann.hexLabel
+      ? `<div class="annotation-popup-link annotation-popup-link--bound">
+           <span class="annotation-popup-link-label">Hex: <strong>${escapeHtml(ann.hexLabel)}</strong></span>
+         </div>`
+      : `<div class="annotation-popup-link">
+           <button type="button" class="annotation-popup-link-nearest">Link to nearest feature</button>
+         </div>`
   return `
     <div class="annotation-popup" data-id="${escapeHtml(ann.id)}">
       <input class="annotation-popup-label" type="text" value="${escapeHtml(ann.label)}" placeholder="Label..." />
@@ -715,13 +721,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       } as any)
 
       // Hex grid overlay — ALL features sampled, not a category subset.
-      const hexOverlay = initHexOverlay(map, geojson.features, hexSize)
+      const hexOverlay = initHexOverlay(map, geojson.features, hexSize, layers.biome_colors)
       hexOverlay.setOpacity(opacities?.hex_grid ?? 0.7)
       hexOverlayRef.current = hexOverlay
       layerGroupsRef.current.set('hex_grid', {
         addTo: () => hexOverlay.setVisibility(true),
         removeFrom: () => hexOverlay.setVisibility(false),
         setOpacity: (o: number) => hexOverlay.setOpacity(o),
+      } as any)
+      layerGroupsRef.current.set('biome_colors', {
+        addTo: () => hexOverlay.setBiomeColorsEnabled(true),
+        removeFrom: () => hexOverlay.setBiomeColorsEnabled(false),
+        setOpacity: (_o: number) => { /* biome colors don't have independent opacity */ },
       } as any)
 
       mapRef.current = map
@@ -858,6 +869,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
     }, [layers.faction_control, layers.terrain_cost])
 
+    // Biome colors: tint hex grid overlay by biome
+    useEffect(() => {
+      if (!hexOverlayRef.current) return
+      hexOverlayRef.current.setBiomeColorsEnabled(layers.biome_colors)
+    }, [layers.biome_colors])
+
     // Update layer opacity when opacities change
     useEffect(() => {
       if (!opacities) return
@@ -907,6 +924,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (!hexOverlayRef.current) return
       hexOverlayRef.current.setMeasurePath(hexMeasurePath ?? null)
     }, [hexMeasurePath])
+
+    // Highlight hex cells that the journey route passes through.
+    useEffect(() => {
+      if (!hexOverlayRef.current) return
+      if (!route || route.nodes.length < 2) {
+        hexOverlayRef.current.setJourneyRoute(null)
+        return
+      }
+      const nodes = route.nodes.map((n) => ({ x: n.x, y: n.y }))
+      const labels = getRouteHexLabels(nodes, hexSize ?? 50)
+      hexOverlayRef.current.setJourneyRoute(labels)
+    }, [route, hexSize])
 
     // On mobile, the InfoPanel slides up and covers ~65vh. Pan the map so
     // the selected feature stays visible above the panel. flyToBounds
@@ -1207,9 +1236,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       for (const ann of (annotations || [])) {
         const latlng = svgToLatLng(ann.x, ann.y)
 
+        const isHexNote = !!ann.hexLabel
         const icon = L.divIcon({
-          className: 'annotation-marker',
-          html: `<div class="annotation-pin" style="--pin-color:${escapeHtml(ann.color)}"><div class="annotation-pin-head"></div><div class="annotation-pin-stem"></div></div>`,
+          className: `annotation-marker ${isHexNote ? 'annotation-marker--hex' : ''}`,
+          html: isHexNote
+            ? `<div class="annotation-pin annotation-pin--hex" style="--pin-color:${escapeHtml(ann.color)}"><div class="annotation-pin-head annotation-pin-head--hex"></div><div class="annotation-pin-stem annotation-pin-stem--hex"></div></div>`
+            : `<div class="annotation-pin" style="--pin-color:${escapeHtml(ann.color)}"><div class="annotation-pin-head"></div><div class="annotation-pin-stem"></div></div>`,
           iconSize: [20, 28],
           iconAnchor: [10, 28],
         })
@@ -1376,6 +1408,41 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''} ${pinMode ? 'pin-mode' : ''}`} id="veydria-map" />
+        {/* Biome legend — only when hex grid + biome colors are on */}
+        {layers.hex_grid && layers.biome_colors && (
+          <div className="biome-legend">
+            <div className="biome-legend-title">Biomes</div>
+            {Object.entries(BIOME_COLORS)
+              .filter(([name]) =>
+                // Show primary biomes + a few distinctive secondaries;
+                // hide elevation fallback buckets to avoid clutter.
+                [
+                  'Cloud forest',
+                  'Highland savanna',
+                  'Desert',
+                  'Steppe',
+                  'Monsoon delta',
+                  'Volcanic archipelago',
+                  'Miombo woodland',
+                  'Afroalpine heath',
+                  'River gorge',
+                  'Sabkha',
+                  'Oasis',
+                  'Escarpment',
+                  'Mangrove swamp',
+                  'Floodplain',
+                  'Coral reef',
+                  'Geothermal vent',
+                ].includes(name)
+              )
+              .map(([name, color]) => (
+                <div key={name} className="biome-legend-item">
+                  <span className="biome-legend-swatch" style={{ backgroundColor: color }} />
+                  <span className="biome-legend-label">{name}</span>
+                </div>
+              ))}
+          </div>
+        )}
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">

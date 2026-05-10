@@ -30,6 +30,7 @@ const ALL_OFF: LayerVisibility = {
   river: false,
   faction_control: false,
   terrain_cost: false,
+  biome_colors: false,
 }
 
 const FULL_OPACITY: LayerOpacity = {
@@ -46,6 +47,7 @@ const FULL_OPACITY: LayerOpacity = {
   river: 0.6,
   faction_control: 1,
   terrain_cost: 0.75,
+  biome_colors: 1,
 }
 
 export const BUILT_IN_PRESETS: LayerPreset[] = [
@@ -67,6 +69,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       river: true,
       faction_control: false,
       terrain_cost: false,
+      biome_colors: false,
     },
     opacities: { ...FULL_OPACITY },
   },
@@ -163,6 +166,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       river: true,
       faction_control: false,
       terrain_cost: false,
+      biome_colors: false,
     },
     opacities: { ...FULL_OPACITY },
   },

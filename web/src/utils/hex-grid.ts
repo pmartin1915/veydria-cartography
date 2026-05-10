@@ -163,6 +163,45 @@ export function hexLineBetween(a: AxialCoord, b: AxialCoord): AxialCoord[] {
   return out
 }
 
+/**
+ * Compute the sequence of hex labels a journey route passes through.
+ * Samples each node and the straight line between consecutive nodes against
+ * the hex grid. Duplicates are collapsed so the result reads as a clean
+ * path like "G7 → H8 → I9".
+ */
+export function getRouteHexLabels(
+  nodes: Array<{ x: number; y: number }>,
+  hexSize: number,
+): string[] {
+  if (!nodes || nodes.length === 0) return []
+
+  const result: string[] = []
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]
+    const axial = roundAxial(pixelToAxial(node.x, node.y, hexSize, [0, 0]))
+
+    if (i === 0) {
+      result.push(labelHex(axial))
+    } else {
+      const prevNode = nodes[i - 1]
+      const prevAxial = roundAxial(pixelToAxial(prevNode.x, prevNode.y, hexSize, [0, 0]))
+      const line = hexLineBetween(prevAxial, axial)
+
+      // Append every label on the line, skipping the first (already added as
+      // the previous node's hex) and skipping any immediate duplicates.
+      for (let j = 1; j < line.length; j++) {
+        const lineLabel = labelHex(line[j])
+        if (lineLabel !== result[result.length - 1]) {
+          result.push(lineLabel)
+        }
+      }
+    }
+  }
+
+  return result
+}
+
 // ---------- Labels ----------
 
 /**
@@ -273,6 +312,83 @@ export function generateHexGrid(
 /**
  * Compute a tight bounding box for a hex (axis-aligned, in SVG units).
  */
+/**
+ * Return the biome name at an arbitrary SVG point by testing terrain_cell
+ * polygon containment. Returns `null` if the point falls outside all known
+ * terrain cells.
+ */
+export function getBiomeAtPoint(x: number, y: number, features: GeoJSONFeature[]): string | null {
+  for (const f of features) {
+    const props = f.properties || {}
+    const cat = (props.category as string) || ''
+    if (cat !== 'terrain_cell') continue
+    if (f.geometry?.type !== 'Polygon') continue
+
+    const ring = (f.geometry.coordinates as number[][][])[0]
+    if (!ring || !ring.length) continue
+
+    let pminX = Infinity,
+      pminY = Infinity,
+      pmaxX = -Infinity,
+      pmaxY = -Infinity
+    for (const [px, py] of ring) {
+      if (px < pminX) pminX = px
+      if (px > pmaxX) pmaxX = px
+      if (py < pminY) pminY = py
+      if (py > pmaxY) pmaxY = py
+    }
+    if (x < pminX || x > pmaxX || y < pminY || y > pmaxY) continue
+    if (pointInPolygon(x, y, ring)) {
+      return (props.biome as string) || elevationToBiome((props.elevation as number) ?? 0)
+    }
+  }
+  return null
+}
+
+export function getHexBiomeColor(hex: HexCell, features: GeoJSONFeature[]): string | null {
+  const [hcx, hcy] = hex.centroid
+  const bounds = hexBounds(hex)
+
+  for (const f of features) {
+    const props = f.properties || {}
+    const cat = (props.category as string) || ''
+    if (cat !== 'terrain_cell') continue
+    if (f.geometry?.type !== 'Polygon') continue
+
+    const ring = (f.geometry.coordinates as number[][][])[0]
+    if (!ring || !ring.length) continue
+
+    let pminX = Infinity,
+      pminY = Infinity,
+      pmaxX = -Infinity,
+      pmaxY = -Infinity
+    for (const [px, py] of ring) {
+      if (px < pminX) pminX = px
+      if (px > pmaxX) pmaxX = px
+      if (py < pminY) pminY = py
+      if (py > pmaxY) pmaxY = py
+    }
+    if (
+      pmaxX < bounds.minX ||
+      pminX > bounds.maxX ||
+      pmaxY < bounds.minY ||
+      pminY > bounds.maxY
+    ) {
+      continue
+    }
+    if (pointInPolygon(hcx, hcy, ring)) {
+      const biome = (props.biome as string) || ''
+      if (biome && BIOME_COLORS[biome]) {
+        return BIOME_COLORS[biome]
+      }
+      const elev = (props.elevation as number) ?? 0
+      const elevBiome = elevationToBiome(elev)
+      return BIOME_COLORS[elevBiome] || null
+    }
+  }
+  return null
+}
+
 function hexBounds(hex: HexCell): { minX: number; minY: number; maxX: number; maxY: number } {
   let minX = Infinity
   let minY = Infinity
@@ -320,6 +436,47 @@ function capitalizeWord(s: string): string {
  * to a single-word biome descriptor. Buckets chosen against the actual
  * Veydria elevation distribution (-1100 m basin floor → 2600 m highlands).
  */
+export const BIOME_COLORS: Record<string, string> = {
+  // Primary biomes
+  'Cloud forest': '#2d5a3d',
+  'Highland savanna': '#8faa5c',
+  'Desert': '#d4a76a',
+  'Steppe': '#b8c68e',
+  'Monsoon delta': '#4a7c59',
+  'Volcanic archipelago': '#6b4c3a',
+  // Secondary — Ngaru-Bon
+  'Miombo woodland': '#5a7a3a',
+  'Afroalpine heath': '#8a9a8a',
+  'River gorge': '#4a6a5a',
+  // Secondary — Irrah
+  'Sabkha': '#c8b890',
+  'Oasis': '#6aaa4a',
+  'Escarpment': '#9a8a6a',
+  // Secondary — Kheshkai
+  'Highland grassland': '#a0b06a',
+  'Cliff edge': '#8a8a7a',
+  'River gallery': '#5a8a6a',
+  // Secondary — Ndjadi
+  'Mangrove swamp': '#3a6a4a',
+  'Floodplain': '#7a9a5a',
+  'Stone baray': '#9a9a8a',
+  // Secondary — Qollari
+  'Mountain terrace': '#5a7a5a',
+  'Fog bank': '#8a9aaa',
+  'Cliff road': '#8a7a6a',
+  // Secondary — Oravan
+  'Coral reef': '#3a8a9a',
+  'Geothermal vent': '#9a5a3a',
+  'Strait': '#4a7a9a',
+  // Elevation fallback buckets
+  'Sea': '#3a6a9a',
+  'Plains': '#8aaa6a',
+  'Hill': '#9aaa5a',
+  'Highland': '#a89a6a',
+  'Mountain': '#9a8a6a',
+  'Peak': '#b0b0b0',
+}
+
 function elevationToBiome(elev: number): string {
   if (elev < 0) return 'Sea'
   if (elev < 200) return 'Plains'
@@ -446,8 +603,14 @@ export function sampleHexFeatures(hex: HexCell, features: GeoJSONFeature[]): str
     if (!matched) continue
 
     if (cat === 'terrain_cell') {
-      const elev = (props.elevation as number) ?? 0
-      bump(elevationToBiome(elev))
+      const biome = (props.biome as string | undefined)
+      if (biome) {
+        bump(biome)
+      } else {
+        // Fallback to elevation bucket if no biome prop (backward compat)
+        const elev = (props.elevation as number) ?? 0
+        bump(elevationToBiome(elev))
+      }
     } else if (cat === 'water') {
       // Use the descriptive 'type' if present, else the generic word.
       const t = (props.type as string | undefined) ?? ''

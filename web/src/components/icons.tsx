@@ -99,6 +99,9 @@ export const IconBolt = ({ size = 13 }: { size?: number } = {}) =>
 export const IconCircleDot = ({ size = 13 }: { size?: number } = {}) =>
   <svg {...svgFor(size)}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
 
+export const IconLink = ({ size = 14 }: { size?: number } = {}) =>
+  <svg {...svgFor(size)}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+
 export function NodeIcon({ category, size = 13 }: { category: string; size?: number }) {
   const p = svgFor(size)
   let body: ReactNode

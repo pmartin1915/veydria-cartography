@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
   createAnnotation,
+  createHexAnnotation,
+  getAnnotationsForHex,
   findNearestFeature,
   loadAnnotations,
   saveAnnotations,
@@ -122,6 +124,7 @@ describe('createAnnotation', () => {
     const ann = createAnnotation(100, 200)
     expect(ann.featureId).toBeUndefined()
     expect(ann.featureName).toBeUndefined()
+    expect(ann.hexLabel).toBeUndefined()
     expect(ann.x).toBe(100)
     expect(ann.y).toBe(200)
     expect(typeof ann.id).toBe('string')
@@ -132,6 +135,48 @@ describe('createAnnotation', () => {
     const ann: MapAnnotation = { ...createAnnotation(50, 50), featureId: 'port-a', featureName: 'Port A' }
     expect(ann.featureId).toBe('port-a')
     expect(ann.featureName).toBe('Port A')
+  })
+})
+
+describe('createHexAnnotation', () => {
+  it('creates an annotation with hexLabel set', () => {
+    const ann = createHexAnnotation('G7', 300, 400, 'Bandit camp', 'Dangerous area')
+    expect(ann.hexLabel).toBe('G7')
+    expect(ann.x).toBe(300)
+    expect(ann.y).toBe(400)
+    expect(ann.label).toBe('Bandit camp')
+    expect(ann.body).toBe('Dangerous area')
+  })
+
+  it('uses default label and body when omitted', () => {
+    const ann = createHexAnnotation('A1', 100, 100)
+    expect(ann.hexLabel).toBe('A1')
+    expect(ann.label).toBe('Hex Note')
+    expect(ann.body).toBe('')
+  })
+})
+
+describe('getAnnotationsForHex', () => {
+  it('returns only annotations matching the hex label', () => {
+    const annotations: MapAnnotation[] = [
+      { id: '1', x: 0, y: 0, label: 'A', body: '', color: '#c4a86b', createdAt: 1, hexLabel: 'G7' },
+      { id: '2', x: 0, y: 0, label: 'B', body: '', color: '#c4a86b', createdAt: 2, hexLabel: 'H8' },
+      { id: '3', x: 0, y: 0, label: 'C', body: '', color: '#c4a86b', createdAt: 3 },
+    ]
+    const got = getAnnotationsForHex(annotations, 'G7')
+    expect(got).toHaveLength(1)
+    expect(got[0].id).toBe('1')
+  })
+
+  it('returns empty array when no annotations match', () => {
+    const annotations: MapAnnotation[] = [
+      { id: '1', x: 0, y: 0, label: 'A', body: '', color: '#c4a86b', createdAt: 1, hexLabel: 'H8' },
+    ]
+    expect(getAnnotationsForHex(annotations, 'G7')).toEqual([])
+  })
+
+  it('returns empty array for empty input', () => {
+    expect(getAnnotationsForHex([], 'G7')).toEqual([])
   })
 })
 

@@ -3,7 +3,7 @@ import { findRelatedFeatures, type RelatedFeature } from '../utils/related-featu
 import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
 import type { MapAnnotation } from '../utils/annotations'
-import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock } from './icons'
+import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink } from './icons'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -23,6 +23,7 @@ interface InfoPanelProps {
   onSelectFeature?: (feature: GeoJSONFeature) => void
   annotations?: MapAnnotation[]
   onSelectAnnotation?: (annotation: MapAnnotation) => void
+  onShare?: () => void
 }
 
 // Fields to display for each category
@@ -159,7 +160,7 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
   )
 }
 
-export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation }: InfoPanelProps) {
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const related = useMemo(() => {
@@ -217,6 +218,17 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
             </p>
           )}
         </div>
+        {onShare && (
+          <button
+            className="info-panel-share"
+            onClick={onShare}
+            title="Copy share link"
+            aria-label="Copy share link"
+            id="share-info-panel"
+          >
+            <IconLink size={14} />
+          </button>
+        )}
         <button
           className="info-panel-close"
           onClick={onClose}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildHash, parseHash } from './url-hash'
+import { buildHash, buildShareUrl, parseHash } from './url-hash'
 
 describe('url-hash', () => {
   describe('hex deep-link', () => {
@@ -75,6 +75,78 @@ describe('url-hash', () => {
       expect(parsed.hexA).toBe('A1')
       expect(parsed.hexB).toBe('B3')
       expect(parsed.zoom).toBe(1.5)
+    })
+  })
+
+  describe('buildShareUrl', () => {
+    it('returns baseUrl + hash when baseUrl is provided', () => {
+      const url = buildShareUrl(
+        { featureId: 'f1', zoom: 1.5, centerX: 600, centerY: 400 },
+        'https://example.com/map'
+      )
+      expect(url).toBe('https://example.com/map#feature=f1&z=1.50&cx=600.0&cy=400.0')
+    })
+
+    it('returns only hash in node environment when baseUrl is omitted', () => {
+      const url = buildShareUrl({ hexLabel: 'G7' })
+      expect(url).toBe('#hex=G7')
+    })
+
+    it('includes share=1 for player view', () => {
+      const url = buildShareUrl(
+        { featureId: 'f1', share: true },
+        'https://example.com/map'
+      )
+      expect(url).toBe('https://example.com/map#feature=f1&share=1')
+    })
+
+    it('composes all parameters into a single URL', () => {
+      const state = {
+        featureId: 'f1',
+        hexLabel: 'G7',
+        hexA: 'A1',
+        hexB: 'B3',
+        journeyFrom: 'Ki-Mbuhari',
+        journeyTo: 'Tavakh-Qarat',
+        zoom: 2.5,
+        centerX: 300,
+        centerY: 200,
+      }
+      const url = buildShareUrl(state, 'https://example.com/map')
+      const hashStart = url.indexOf('#')
+      expect(hashStart).toBeGreaterThan(-1)
+      const hash = url.slice(hashStart)
+      const parsed = parseHash(hash)
+      expect(parsed.featureId).toBe('f1')
+      expect(parsed.hexLabel).toBe('G7')
+      expect(parsed.hexA).toBe('A1')
+      expect(parsed.hexB).toBe('B3')
+      expect(parsed.journeyFrom).toBe('Ki-Mbuhari')
+      expect(parsed.journeyTo).toBe('Tavakh-Qarat')
+      expect(parsed.zoom).toBe(2.5)
+      expect(parsed.centerX).toBe(300)
+      expect(parsed.centerY).toBe(200)
+    })
+
+    it('returns baseUrl unchanged when state is empty', () => {
+      const url = buildShareUrl({}, 'https://example.com/map')
+      expect(url).toBe('https://example.com/map')
+    })
+
+    it('round-trips through parseHash correctly', () => {
+      const original = {
+        hexLabel: 'AA12',
+        zoom: -1.25,
+        centerX: 0,
+        centerY: 800,
+      }
+      const url = buildShareUrl(original, 'https://example.com/map')
+      const hash = url.slice(url.indexOf('#'))
+      const parsed = parseHash(hash)
+      expect(parsed.hexLabel).toBe('AA12')
+      expect(parsed.zoom).toBe(-1.25)
+      expect(parsed.centerX).toBe(0)
+      expect(parsed.centerY).toBe(800)
     })
   })
 })

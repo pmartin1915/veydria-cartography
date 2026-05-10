@@ -93,6 +93,19 @@ export function buildHash(state: ViewportState): string {
   return str ? `#${str}` : ''
 }
 
+/**
+ * Build a full shareable URL from the current viewport state.
+ * @param state — viewport state to serialize
+ * @param baseUrl — optional base URL; defaults to `window.location.origin + window.location.pathname + window.location.search` in browser, otherwise `''`
+ */
+export function buildShareUrl(state: ViewportState, baseUrl?: string): string {
+  const hash = buildHash(state)
+  const base = baseUrl ?? (typeof window !== 'undefined'
+    ? window.location.origin + window.location.pathname + window.location.search
+    : '')
+  return base + hash
+}
+
 /** Clamp zoom to valid map range */
 export function clampZoom(z: number): number {
   return Math.max(-2, Math.min(4, z))

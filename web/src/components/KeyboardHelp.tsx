@@ -11,7 +11,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: 'M', description: 'Toggle measure mode' },
   { keys: 'P', description: 'Toggle pin mode' },
   { keys: 'Esc', description: 'Close panel / search / measure mode' },
-  { keys: 'Backspace', description: 'Undo last measure point' },
+  { keys: 'Backspace', description: 'Undo last measure point (or hex B in hex measure)' },
   { keys: 'Shift + click Snapshot', description: 'Capture without annotation pins (player view)' },
   { keys: 'Shift + ?', description: 'Show this help' },
 ]

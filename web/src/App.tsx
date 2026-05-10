@@ -10,12 +10,12 @@ import HexCoordChip from './components/HexCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
-import { parseHash, buildHash, clampZoom } from './utils/url-hash'
+import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
 import type { JourneyRoute } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import type { MapAnnotation } from './utils/annotations'
-import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown } from './utils/annotations'
+import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 
 // GeoJSON types
@@ -59,6 +59,7 @@ export interface LayerVisibility {
   river: boolean
   faction_control: boolean
   terrain_cost: boolean
+  biome_colors: boolean
 }
 
 export interface LayerOpacity {
@@ -75,6 +76,7 @@ export interface LayerOpacity {
   river: number
   faction_control: number
   terrain_cost: number
+  biome_colors: number
 }
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -91,6 +93,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   river: true,
   faction_control: false,
   terrain_cost: false,
+  biome_colors: false,
 }
 
 const DEFAULT_OPACITY: LayerOpacity = {
@@ -107,6 +110,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   river: 0.6,
   faction_control: 1,
   terrain_cost: 0.75,
+  biome_colors: 1,
 }
 
 function App() {
@@ -460,10 +464,39 @@ function App() {
     })
   }, [clearHexMeasureFromHash])
 
+  const handleToggleJourneyMode = useCallback(() => {
+    setJourneyMode(prev => {
+      const next = !prev
+      if (next) {
+        setPinMode(false)
+        setHexMeasureMode(false)
+        setHexMeasurePoints([])
+        clearHexMeasureFromHash()
+      }
+      return next
+    })
+  }, [clearHexMeasureFromHash])
+
   const handleHexMeasureClear = useCallback(() => {
     setHexMeasurePoints([])
     clearHexMeasureFromHash()
   }, [clearHexMeasureFromHash])
+
+  const handleHexMeasureUndo = useCallback(() => {
+    setHexMeasurePoints(prev => {
+      if (prev.length === 2) {
+        viewportRef.current = {
+          ...viewportRef.current,
+          hexB: undefined,
+          featureId: undefined,
+          hexLabel: undefined,
+        }
+        window.history.replaceState(null, '', buildHash(viewportRef.current))
+        return [prev[0]]
+      }
+      return prev
+    })
+  }, [])
 
   // Path derived from the two clicked endpoints. Empty array means nothing
   // to render. We pass null (not []) to clear, so the overlay can distinguish.
@@ -563,8 +596,7 @@ function App() {
   // the URL has share=1 set, which strips annotations/encounters/edit
   // controls when opened.
   const handleShare = useCallback(async (playerView = false) => {
-    const hash = buildHash({ ...viewportRef.current, share: playerView || undefined })
-    const url = window.location.origin + window.location.pathname + window.location.search + hash
+    const url = buildShareUrl({ ...viewportRef.current, share: playerView || undefined })
     try {
       await navigator.clipboard.writeText(url)
       setShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
@@ -619,10 +651,12 @@ function App() {
   const measureModeRef = useRef(measureMode)
   const journeyModeRef = useRef(journeyMode)
   const pinModeRef = useRef(pinMode)
+  const hexMeasureModeRef = useRef(hexMeasureMode)
   useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
   useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
   useEffect(() => { journeyModeRef.current = journeyMode }, [journeyMode])
   useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
+  useEffect(() => { hexMeasureModeRef.current = hexMeasureMode }, [hexMeasureMode])
 
   // Keyboard shortcut: Ctrl+K or / for search, M for measure mode, Shift+? for help
   useEffect(() => {
@@ -633,30 +667,15 @@ function App() {
       }
       if (e.key === 'm' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
-        setMeasureMode(prev => {
-          const next = !prev
-          if (next) setPinMode(false)
-          return next
-        })
+        handleToggleMeasureMode()
       }
       if (e.key === 'p' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
-        setPinMode(prev => {
-          const next = !prev
-          if (next) {
-            setMeasureMode(false)
-            setJourneyMode(false)
-          }
-          return next
-        })
+        handleTogglePinMode()
       }
       if (e.key === 'j' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
-        setJourneyMode(prev => {
-          const next = !prev
-          if (next) setPinMode(false)
-          return next
-        })
+        handleToggleJourneyMode()
       }
       if (e.key === 'h' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
@@ -665,6 +684,22 @@ function App() {
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
+      }
+      if (e.key === 'Backspace' && hexMeasureModeRef.current) {
+        e.preventDefault()
+        setHexMeasurePoints(prev => {
+          if (prev.length === 2) {
+            viewportRef.current = {
+              ...viewportRef.current,
+              hexB: undefined,
+              featureId: undefined,
+              hexLabel: undefined,
+            }
+            window.history.replaceState(null, '', buildHash(viewportRef.current))
+            return [prev[0]]
+          }
+          return prev
+        })
       }
       if (e.key === 'Escape') {
         const target = e.target as HTMLElement
@@ -686,7 +721,7 @@ function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleClosePanel, handleToggleHexMeasureMode, clearHexMeasureFromHash])
+  }, [handleClosePanel, handleToggleMeasureMode, handleTogglePinMode, handleToggleJourneyMode, handleToggleHexMeasureMode, clearHexMeasureFromHash])
 
   if (loading) {
     return (
@@ -749,18 +784,7 @@ function App() {
         <div className="header-right">
           <button
             className={`search-trigger ${journeyMode ? 'journey-active' : ''}`}
-            onClick={() => {
-              setJourneyMode(prev => {
-                const next = !prev
-                if (next) {
-                  setPinMode(false)
-                  setHexMeasureMode(false)
-                  setHexMeasurePoints([])
-                  clearHexMeasureFromHash()
-                }
-                return next
-              })
-            }}
+            onClick={handleToggleJourneyMode}
             title="Toggle journey planner (J)"
             id="journey-trigger"
           >
@@ -985,6 +1009,15 @@ function App() {
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
             }}
+            annotations={shareMode ? [] : annotations}
+            onAddAnnotation={(hexLabel, x, y, label, body, color) => {
+              const ann = createHexAnnotation(hexLabel, x, y, label || `Note on ${hexLabel}`, body, color)
+              setAnnotations(prev => addAnnotation(prev, ann))
+              setAnnotationToast('Hex note added')
+              if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
+              annotationToastTimeoutRef.current = window.setTimeout(() => setAnnotationToast(null), 2000)
+            }}
+            onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
           />
         )}
 
@@ -1028,6 +1061,7 @@ function App() {
           }}
           annotations={shareMode ? [] : annotations}
           onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
+          onShare={() => handleShare(false)}
         />
 
         {journeyMode && geojson && (
@@ -1043,6 +1077,8 @@ function App() {
             onSelectFeatureById={handleSelectFeatureById}
             onExportAnnotations={handleExportAnnotations}
             shareMode={shareMode}
+            hexSize={hexSize}
+            selectedBiome={selectedHex?.descriptors[0] ?? null}
           />
         )}
 
@@ -1108,6 +1144,14 @@ function App() {
               <div className="measure-panel-actions">
                 <button
                   className="measure-btn"
+                  onClick={handleHexMeasureUndo}
+                  disabled={hexMeasurePoints.length !== 2}
+                  title="Undo last hex (Backspace)"
+                >
+                  ↩ Undo
+                </button>
+                <button
+                  className="measure-btn"
                   onClick={handleHexMeasureClear}
                   disabled={hexMeasurePoints.length === 0}
                   title="Clear endpoints"
@@ -1123,7 +1167,7 @@ function App() {
               </div>
             </div>
             <div className="measure-panel-hint">
-              Click two hexes to measure · Click a third to start over
+              Click two hexes to measure · Backspace to undo · Click a third to start over
             </div>
           </div>
         )}

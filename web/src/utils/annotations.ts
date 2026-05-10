@@ -27,6 +27,7 @@ export interface MapAnnotation {
   createdAt: number
   featureId?: string
   featureName?: string
+  hexLabel?: string
 }
 
 interface FeatureLike {
@@ -106,6 +107,7 @@ function isValidAnnotation(a: unknown): a is MapAnnotation {
   ) return false
   if (o.featureId !== undefined && typeof o.featureId !== 'string') return false
   if (o.featureName !== undefined && typeof o.featureName !== 'string') return false
+  if (o.hexLabel !== undefined && typeof o.hexLabel !== 'string') return false
   return true
 }
 
@@ -125,6 +127,35 @@ export function createAnnotation(
     color,
     createdAt: Date.now(),
   }
+}
+
+/** Create an annotation tied to a specific hex cell. */
+export function createHexAnnotation(
+  hexLabel: string,
+  x: number,
+  y: number,
+  label = 'Hex Note',
+  body = '',
+  color = DEFAULT_ANNOTATION_COLOR
+): MapAnnotation {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    x,
+    y,
+    label,
+    body,
+    color,
+    createdAt: Date.now(),
+    hexLabel,
+  }
+}
+
+/** Return annotations whose `hexLabel` matches the given label. */
+export function getAnnotationsForHex(
+  annotations: MapAnnotation[],
+  hexLabel: string
+): MapAnnotation[] {
+  return annotations.filter((a) => a.hexLabel === hexLabel)
 }
 
 export function updateAnnotation(
@@ -286,6 +317,9 @@ export function exportAnnotationsMarkdown(annotations: MapAnnotation[]): string 
     if (a.featureName) {
       md += `*Linked: ${a.featureName}*\n`
     }
+    if (a.hexLabel) {
+      md += `*Hex: ${a.hexLabel}*\n`
+    }
     md += '\n'
     if (a.body) {
       md += `${a.body}\n`
@@ -306,6 +340,7 @@ export function exportRouteGmNotes(
   for (const a of nearby) {
     md += `**${a.label}**\n\n`
     if (a.featureName) md += `*Linked: ${a.featureName}*\n\n`
+    if (a.hexLabel) md += `*Hex: ${a.hexLabel}*\n\n`
     if (a.body) md += `${a.body}\n\n`
   }
   return md

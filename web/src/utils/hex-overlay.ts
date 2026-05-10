@@ -24,6 +24,7 @@ import {
   pixelToAxial,
   roundAxial,
   sampleHexFeatures,
+  getHexBiomeColor,
   type HexCell,
   type AxialCoord,
 } from './hex-grid'
@@ -42,6 +43,8 @@ export interface HexOverlay {
   setHexSize: (size: number) => void
   setSelectedLabel: (label: string | null) => void
   setMeasurePath: (labels: string[] | null) => void
+  setJourneyRoute: (labels: string[] | null) => void
+  setBiomeColorsEnabled: (enabled: boolean) => void
   getHexAtSvg: (svgX: number, svgY: number) => { hex: HexCell; descriptors: string[] } | null
   getHexByLabel: (label: string) => { hex: HexCell; descriptors: string[] } | null
 }
@@ -50,6 +53,7 @@ export function initHexOverlay(
   map: L.Map,
   features: GeoJSONFeature[],
   initialHexSize: number = DEFAULT_HEX_SIZE,
+  biomeColorsEnabled: boolean = false,
 ): HexOverlay {
   L.svg().addTo(map)
 
@@ -62,13 +66,17 @@ export function initHexOverlay(
   let currentHexSize = initialHexSize
   let cells: HexCell[] = []
   const descriptorsByLabel = new Map<string, string[]>()
+  const biomeColorByLabel = new Map<string, string | null>()
   const cellByAxial = new Map<string, HexCell>()
   let isVisible = false
   let selectedLabel: string | null = null
+  let biomeColorsActive = biomeColorsEnabled
   // Measure-path state. `measurePathSet` is every cell along the line;
   // `measureEndpoints` is just the two clicked ends (drawn brighter).
   const measurePathSet = new Set<string>()
   const measureEndpoints = new Set<string>()
+  // Journey-route state — hex cells the computed route passes through.
+  const journeyRouteSet = new Set<string>()
 
   function svgY(y: number): number {
     // Leaflet CRS.Simple flips Y. hex-grid produces SVG-space coords
@@ -80,9 +88,11 @@ export function initHexOverlay(
     currentHexSize = size
     cells = generateHexGrid(SVG_WIDTH, SVG_HEIGHT, size)
     descriptorsByLabel.clear()
+    biomeColorByLabel.clear()
     cellByAxial.clear()
     for (const cell of cells) {
       descriptorsByLabel.set(cell.label, sampleHexFeatures(cell, features))
+      biomeColorByLabel.set(cell.label, getHexBiomeColor(cell, features))
       cellByAxial.set(`${cell.coord.q},${cell.coord.r}`, cell)
     }
 
@@ -99,7 +109,14 @@ export function initHexOverlay(
     cellSel
       .append('polygon')
       .attr('points', (d) => d.corners.map(([x, y]) => `${x},${svgY(y)}`).join(' '))
-      .attr('fill', 'rgba(212, 168, 84, 0.04)')
+      .attr('fill', (d) => {
+        const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
+        return c ? c : 'rgba(212, 168, 84, 0.04)'
+      })
+      .attr('fill-opacity', (d) => {
+        const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
+        return c ? '0.18' : '0.04'
+      })
       .attr('stroke', 'rgba(212, 168, 84, 0.45)')
       .attr('stroke-width', 0.6)
       .attr('vector-effect', 'non-scaling-stroke')
@@ -126,20 +143,23 @@ export function initHexOverlay(
   }
 
   function applySelectionStyle() {
-    // Priority: measure endpoint > selectedLabel > measure mid-path > default.
+    // Priority: measure endpoint > selectedLabel > measure mid-path > journey route > default.
     hexGroup.selectAll<SVGPolygonElement, HexCell>('polygon')
       .attr('fill', function () {
         const label = this.getAttribute('data-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(126, 196, 230, 0.34)'
         if (label === selectedLabel) return 'rgba(212, 168, 84, 0.22)'
         if (measurePathSet.has(label)) return 'rgba(126, 196, 230, 0.16)'
-        return 'rgba(212, 168, 84, 0.04)'
+        if (journeyRouteSet.has(label)) return 'rgba(228, 176, 80, 0.14)'
+        const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
+        return c ? c : 'rgba(212, 168, 84, 0.04)'
       })
       .attr('stroke', function () {
         const label = this.getAttribute('data-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(186, 226, 244, 0.95)'
         if (label === selectedLabel) return 'rgba(244, 220, 160, 0.95)'
         if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.7)'
+        if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.55)'
         return 'rgba(212, 168, 84, 0.45)'
       })
       .attr('stroke-width', function () {
@@ -147,12 +167,14 @@ export function initHexOverlay(
         if (measureEndpoints.has(label)) return 1.8
         if (label === selectedLabel) return 1.6
         if (measurePathSet.has(label)) return 1.0
+        if (journeyRouteSet.has(label)) return 0.8
         return 0.6
       })
 
     // Labels mirror the cell-fill priority. Reset everyone first, then
     // brighten the highlighted ones — selectedLabel and endpoints get
-    // bold weight; mid-path stays normal but cyan-tinted.
+    // bold weight; mid-path stays normal but cyan-tinted; journey route
+    // gets a warm amber tint.
     const labels = hexGroup.selectAll<SVGTextElement, HexCell>('text.hex-label')
     labels
       .attr('fill', 'rgba(244, 220, 160, 0.55)')
@@ -161,7 +183,7 @@ export function initHexOverlay(
       labels
         .filter(function () {
           const l = this.getAttribute('data-label') ?? ''
-          return measurePathSet.has(l) && !measureEndpoints.has(l)
+          return measurePathSet.has(l) && !measureEndpoints.has(l) && !journeyRouteSet.has(l)
         })
         .attr('fill', 'rgba(186, 226, 244, 0.85)')
     }
@@ -181,6 +203,14 @@ export function initHexOverlay(
         })
         .attr('fill', 'rgba(255, 232, 168, 1)')
         .attr('font-weight', '700')
+    }
+    if (journeyRouteSet.size > 0) {
+      labels
+        .filter(function () {
+          const l = this.getAttribute('data-label') ?? ''
+          return journeyRouteSet.has(l) && !measureEndpoints.has(l) && l !== selectedLabel && !measurePathSet.has(l)
+        })
+        .attr('fill', 'rgba(244, 210, 140, 0.75)')
     }
   }
 
@@ -237,6 +267,17 @@ export function initHexOverlay(
         measureEndpoints.add(labels[0])
         if (labels.length > 1) measureEndpoints.add(labels[labels.length - 1])
       }
+      applySelectionStyle()
+    },
+    setJourneyRoute: (labels: string[] | null) => {
+      journeyRouteSet.clear()
+      if (labels && labels.length > 0) {
+        for (const l of labels) journeyRouteSet.add(l)
+      }
+      applySelectionStyle()
+    },
+    setBiomeColorsEnabled: (enabled: boolean) => {
+      biomeColorsActive = enabled
       applySelectionStyle()
     },
     getHexAtSvg: (svgX, svgYIn) => {
