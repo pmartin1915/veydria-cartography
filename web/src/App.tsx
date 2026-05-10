@@ -11,12 +11,14 @@ import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
-import type { JourneyRoute } from './utils/journey-graph'
+import type { JourneyRoute, Season, RouteMode } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
+import { downloadCampaignLog } from './utils/campaign-log'
+import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import TourOverlay from './components/TourOverlay'
@@ -142,6 +144,7 @@ function App() {
   const panelCloseTimeoutRef = useRef<number | null>(null)
   const flyToTimeoutRef = useRef<number | null>(null)
   const annotationToastTimeoutRef = useRef<number | null>(null)
+  const logToastTimeoutRef = useRef<number | null>(null)
   const [shareToast, setShareToast] = useState<string | null>(null)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
@@ -254,9 +257,12 @@ function App() {
   }, [])
 
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
+  const [journeySeason, setJourneySeason] = useState<Season | undefined>(undefined)
+  const [journeyModeState, setJourneyModeState] = useState<RouteMode>('direct')
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
   const [annotationToast, setAnnotationToast] = useState<string | null>(null)
+  const [logToast, setLogToast] = useState<string | null>(null)
   const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
@@ -280,6 +286,7 @@ function App() {
       if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
       if (flyToTimeoutRef.current) clearTimeout(flyToTimeoutRef.current)
       if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
+      if (logToastTimeoutRef.current) clearTimeout(logToastTimeoutRef.current)
     }
   }, [])
 
@@ -672,6 +679,8 @@ function App() {
   const handleJourneyRouteComputed = useCallback((route: JourneyRoute | null) => {
     setJourneyRoute(route)
     if (!route) {
+      setJourneySeason(undefined)
+      setJourneyModeState('direct')
       mapRef.current?.clearJourneyRoute()
       viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
     } else {
@@ -692,6 +701,8 @@ function App() {
   const handleJourneyClose = useCallback(() => {
     setJourneyMode(false)
     setJourneyRoute(null)
+    setJourneySeason(undefined)
+    setJourneyModeState('direct')
     mapRef.current?.clearJourneyRoute()
     viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
     if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
@@ -714,6 +725,22 @@ function App() {
       }
     }, 300)
   }, [])
+
+  // Share button: copy current URL to clipboard. If `playerView` is true,
+  // the URL has share=1 set, which strips annotations/encounters/edit
+  // controls when opened.
+  const handleDownloadCampaignLog = useCallback(() => {
+    downloadCampaignLog({
+      activeJourney: journeyRoute
+        ? { route: journeyRoute, season: journeySeason, mode: journeyModeState }
+        : undefined,
+      savedJourneys: loadSavedJourneys(),
+      annotations,
+    })
+    setLogToast('Campaign log downloaded')
+    if (logToastTimeoutRef.current) clearTimeout(logToastTimeoutRef.current)
+    logToastTimeoutRef.current = window.setTimeout(() => setLogToast(null), 2000)
+  }, [journeyRoute, journeySeason, journeyModeState, annotations])
 
   // Share button: copy current URL to clipboard. If `playerView` is true,
   // the URL has share=1 set, which strips annotations/encounters/edit
@@ -1020,6 +1047,22 @@ function App() {
               <span>Graph</span>
             </button>
           )}
+          {!shareMode && (
+            <button
+              className="search-trigger"
+              onClick={handleDownloadCampaignLog}
+              title="Download campaign log as markdown"
+              id="log-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>Log</span>
+            </button>
+          )}
           <button
             className="search-trigger"
             onClick={() => setKeyboardHelpOpen(true)}
@@ -1209,6 +1252,8 @@ function App() {
             shareMode={shareMode}
             hexSize={hexSize}
             selectedBiome={selectedHex?.descriptors[0] ?? null}
+            onSeasonChange={setJourneySeason}
+            onModeChange={setJourneyModeState}
           />
         )}
 
@@ -1420,6 +1465,17 @@ function App() {
               <circle cx="12" cy="9" r="2.5" />
             </svg>
             <span>{annotationToast}</span>
+          </div>
+        )}
+        {logToast && (
+          <div className="toast-notification" id="log-toast">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>{logToast}</span>
           </div>
         )}
       </main>

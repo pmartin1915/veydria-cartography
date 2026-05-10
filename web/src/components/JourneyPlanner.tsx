@@ -32,6 +32,10 @@ interface JourneyPlannerProps {
   /** Dominant biome of the currently selected hex, if any. Passed to the
    *  encounter roller so biome-specific beats surface in the right terrain. */
   selectedBiome?: string | null
+  /** Optional callback fired whenever the season selection changes. */
+  onSeasonChange?: (season: Season | undefined) => void
+  /** Optional callback fired whenever the route mode changes. */
+  onModeChange?: (mode: RouteMode) => void
 }
 
 function formatDays(days: number): string {
@@ -49,7 +53,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -421,6 +425,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
   function handleSeasonChange(newSeason: Season | undefined) {
     setSeason(newSeason)
+    onSeasonChange?.(newSeason)
     if (startId && endId) {
       computeRoute(newSeason, mode)
     }
@@ -428,6 +433,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
   function handleModeChange(newMode: RouteMode) {
     setMode(newMode)
+    onModeChange?.(newMode)
     if (startId && endId) {
       computeRoute(season, newMode)
     }

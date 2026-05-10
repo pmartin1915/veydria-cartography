@@ -130,6 +130,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Saved journeys** — canonical localStorage key `veydria.journeys.v1`; "My journeys" panel with inline rename, auto-generated default names (`A → B`), and defensive migration from legacy `veydria-journey-history`.
 - **Better Cmd-K** — recent items (last 5 selections, persisted to `veydria.search.recent.v1`), "Linked pins" section for annotations with `featureId`, civilization quick-filter chips when empty, `civ:` prefix filtering, `pin:` prefix filtering.
 - **Relationship richness** — explicit `relationships:` block in topology YAML now flows through to the FactionGraph. Added trade edges (Ngaru-Bon↔Irrah, Irrah↔Ndjadi, Kheshkai↔Qollari, Qollari↔Oravan, Qollari↔Ndjadi) and rival edges (Kheshkai↔Ndjadi). Generator exports relationships in GeoJSON metadata; frontend reads them via `geojson.metadata.relationships`.
+- **Export markdown campaign log** — new "Log" button in the header downloads a comprehensive `.md` file bundling the active journey (with full route, encounters, day-by-day), all saved journeys (summaries), campaign pins, and hex notes. `campaign-log.ts` utility with `exportJourneyMarkdown` (extracted from JourneyPlanner), `generateCampaignLog`, and `downloadCampaignLog`. 16 tests.
 
 ### In Progress / Next
 
@@ -143,7 +144,7 @@ Larger bets and exploratory directions:
 
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
 - **Time-of-day overlay** *(small)* — dawn/dusk/night tint slider for mood; affects nothing else.
-- **Export markdown campaign log** *(medium)* — bundle active journey + dropped pins + visited features into a single session-log export.
+
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
 - **Dedicated mobile player mode** *(medium)* — share-mode URL renders cleanly on phone with no editing, just panning, info panels, and journey path. Potentially the killer at-the-table feature.
 - **Time / calendar layer** *(medium)* — overlay civilizational calendar dates (festivals, monsoons, harvest) on the journey breakdown. Pulls from worldbuilder's calendar YAML.
