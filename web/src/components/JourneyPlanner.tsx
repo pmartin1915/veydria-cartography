@@ -13,6 +13,8 @@ import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
 import { exportRouteGmNotes } from '../utils/annotations'
+import { getRouteHexLabels, getBiomeAtPoint } from '../utils/hex-grid'
+import { DEFAULT_HEX_SIZE } from '../utils/hex-overlay'
 
 interface JourneyPlannerProps {
   geojson: GeoJSONCollection
@@ -26,6 +28,10 @@ interface JourneyPlannerProps {
   onSelectFeatureById?: (featureId: string) => void
   onExportAnnotations?: () => void
   shareMode?: boolean
+  hexSize?: number
+  /** Dominant biome of the currently selected hex, if any. Passed to the
+   *  encounter roller so biome-specific beats surface in the right terrain. */
+  selectedBiome?: string | null
 }
 
 function formatDays(days: number): string {
@@ -43,7 +49,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -76,6 +82,22 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
   const nodes = useMemo(() => getJourneyNodes(geojson), [geojson])
   const graph = useMemo(() => buildGraph(geojson), [geojson])
+  const routeHexLabels = useMemo(() => {
+    if (!route || route.nodes.length === 0) return []
+    return getRouteHexLabels(route.nodes, hexSize)
+  }, [route, hexSize])
+
+  const edgeBiomes = useMemo(() => {
+    if (!route) return undefined
+    return route.edges.map(edge => {
+      const fromNode = route.nodes.find(n => n.id === edge.from)
+      const toNode = route.nodes.find(n => n.id === edge.to)
+      if (!fromNode || !toNode) return undefined
+      const mx = (fromNode.x + toNode.x) / 2
+      const my = (fromNode.y + toNode.y) / 2
+      return getBiomeAtPoint(mx, my, geojson.features) || undefined
+    })
+  }, [route, geojson])
 
   const SEASONS: { key: Season; label: string; icon: ReactNode }[] = [
     { key: 'spring', label: 'Spring', icon: <IconFlower /> },
@@ -336,12 +358,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
-    const encounters = generateEncounters(route, season, mode)
+    const encounters = generateEncounters(route, season, mode, edgeBiomes)
     if (encounters.length > 0) {
       md += `\n### Encounters\n\n`
       for (const enc of encounters) {
         const segName = route.edges[enc.segmentIdx]?.name || 'Unknown segment'
-        md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)} · *${segName}*\n\n`
+        const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
+        md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)}${biomeTag} · *${segName}*\n\n`
         md += `${enc.beat}\n\n`
       }
     }
@@ -358,7 +381,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         }
         if (day.encounters.length > 0) {
           for (const enc of day.encounters) {
-            md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}): ${enc.beat}\n`
+            const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
+            md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}${biomeTag}): ${enc.beat}\n`
           }
         }
         md += `- Camp: ${day.campLabel}\n\n`
@@ -825,6 +849,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               })()}
             </div>
 
+            {routeHexLabels.length > 0 && (
+              <div className="journey-route-hexes">
+                <span className="journey-route-hexes-label">Hex path</span>
+                <span className="journey-route-hexes-value">{routeHexLabels.join(' → ')}</span>
+              </div>
+            )}
+
             {autoPivots.length > 0 && (
               <div className="journey-auto-pivot">
                 No direct route — auto-routed via {autoPivots.map(p => p.name).join(' and ')}.
@@ -908,7 +939,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             )}
 
             {routeTab === 'days' && (() => {
-              const days = buildDailyBreakdown(route, season, mode)
+              const days = buildDailyBreakdown(route, season, mode, edgeBiomes)
               if (days.length === 0) {
                 return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
               }
@@ -941,6 +972,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                                 <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                                 <span className="journey-encounter-type">{enc.type}</span>
                                 <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                                {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                               </div>
                               <div className="journey-encounter-beat">{enc.beat}</div>
                             </div>
@@ -957,15 +989,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             {!shareMode && routeTab === 'encounters' && (
               <div className="journey-encounters">
                 {(() => {
-                  const encounters = generateEncounters(route, season, mode)
+                  const encounters = generateEncounters(route, season, mode, edgeBiomes)
                   const handleRoll = () => {
                     if (route.edges.length === 0) return
-                    // Pick a random edge from the route and roll for its type.
-                    // For unscripted detours mid-session, the segment doesn't
-                    // really matter — what matters is the kind of terrain.
-                    const edge = route.edges[Math.floor(Math.random() * route.edges.length)]
+                    // Default to the first segment's edge type when the journey
+                    // is loaded — that's the "current" segment the party is on.
+                    const edge = route.edges[0]
                     const edgeType = edge.type === 'civ_link' ? 'intra_civ' : edge.type as 'trade_route' | 'chokepoint' | 'intra_civ'
-                    const rolled = rollOneOff({ edgeType, season })
+                    const rolled = rollOneOff({ edgeType, season, biome: selectedBiome || undefined })
                     if (rolled) setOneOffRolls(prev => [rolled, ...prev])
                   }
                   return (
@@ -979,7 +1010,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                           type="button"
                           className="journey-encounter-roll-btn"
                           onClick={handleRoll}
-                          title="Roll a fresh, non-deterministic encounter for an unscripted detour"
+                          title={`Roll for ${route.edges[0]?.name ?? 'current segment'} (${route.edges[0]?.type.replace('_', '-') ?? 'unknown'})`}
                         >
                           ⟳ Roll one-off
                         </button>
@@ -990,6 +1021,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                             <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                             <span className="journey-encounter-type">{enc.type}</span>
                             <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                             <span className="journey-encounter-segment journey-encounter-segment--impromptu">Impromptu</span>
                           </div>
                           <div className="journey-encounter-beat">{enc.beat}</div>
@@ -1004,6 +1036,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                             <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                             <span className="journey-encounter-type">{enc.type}</span>
                             <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                             {route.edges[enc.segmentIdx] && (
                               <span className="journey-encounter-segment">{route.edges[enc.segmentIdx].name}</span>
                             )}

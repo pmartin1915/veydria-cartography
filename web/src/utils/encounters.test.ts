@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, NOTHING_BEATS } from './encounters'
 import type { JourneyRoute } from './journey-graph'
 
 function fakeRoute(): JourneyRoute {
@@ -16,6 +16,33 @@ function fakeRoute(): JourneyRoute {
     totalDistanceSvg: 200,
     totalKm: 200,
     estimatedDays: 5,
+    bottlenecks: [],
+    seasonalWarnings: [],
+  }
+}
+
+function fakeRouteManyEdges(count: number, type: 'trade_route' | 'chokepoint' | 'intra_civ' = 'intra_civ'): JourneyRoute {
+  const nodes = Array.from({ length: count + 1 }, (_, i) => ({
+    id: `n${i}`,
+    name: `N${i}`,
+    category: 'civilization' as const,
+    x: i * 100,
+    y: 0,
+  }))
+  const edges = Array.from({ length: count }, (_, i) => ({
+    from: `n${i}`,
+    to: `n${i + 1}`,
+    distanceSvg: 100,
+    type,
+    name: `E${i}`,
+    segmentDays: 2,
+  }))
+  return {
+    nodes,
+    edges,
+    totalDistanceSvg: count * 100,
+    totalKm: count * 100,
+    estimatedDays: count * 2,
     bottlenecks: [],
     seasonalWarnings: [],
   }
@@ -50,5 +77,75 @@ describe('encounters', () => {
     expect(encounterSeverityLabel('mild')).toBe('Mild')
     expect(encounterSeverityLabel('moderate')).toBe('Moderate')
     expect(encounterSeverityLabel('severe')).toBe('Severe')
+  })
+
+  it('is deterministic when edgeBiomes are provided', () => {
+    const r = fakeRoute()
+    const a = generateEncounters(r, 'spring', 'direct', ['Desert', 'Desert'])
+    const b = generateEncounters(r, 'spring', 'direct', ['Desert', 'Desert'])
+    expect(a).toEqual(b)
+  })
+
+  it('narrows pool when edgeBiome matches', () => {
+    const r = fakeRoute()
+    const noBiome = generateEncounters(r, 'spring', 'direct')
+    const withBiome = generateEncounters(r, 'spring', 'direct', ['Desert', 'Desert'])
+    // Same seed, same route — but with a matching biome the pool is narrowed,
+    // so the outcome should differ (or at least the deterministic RNG path
+    // diverges because pool.length changes).
+    expect(withBiome).not.toEqual(noBiome)
+  })
+
+  it('falls back to full pool when edgeBiome has no matching beats', () => {
+    const r = fakeRoute()
+    const noBiome = generateEncounters(r, 'spring', 'direct')
+    const unknown = generateEncounters(r, 'spring', 'direct', ['NonExistent', 'NonExistent'])
+    expect(unknown).toEqual(noBiome)
+  })
+
+  it('populates biome field when a biome-specific beat is selected', () => {
+    // Force a route where edge 0 is Desert so we only get Desert beats.
+    // The first edge is trade_route; Desert trade-route beats exist.
+    const r = fakeRoute()
+    const encs = generateEncounters(r, 'spring', 'direct', ['Desert', 'Desert'])
+    // At least one encounter should surface (30% nothing chance on trade_route)
+    // If we got encounters, verify biome is present on the non-nothing ones.
+    const nonNothing = encs.filter(e => !e.beat.includes('Uneventful') && !e.beat.includes('Routine') && !e.beat.includes('well-maintained'))
+    for (const e of nonNothing) {
+      expect(e.biome).toBeDefined()
+    }
+  })
+
+  it('biome field is undefined for generic nothing beats', () => {
+    const genericTexts = new Set(NOTHING_BEATS.filter(b => !b.biome).map(b => b.text))
+    const r = fakeRouteManyEdges(10, 'intra_civ')
+    const encs = generateEncounters(r, 'spring', 'direct', Array(10).fill('NonExistent'))
+    const nothingEncs = encs.filter(e => genericTexts.has(e.beat))
+    expect(nothingEncs.length).toBeGreaterThan(0)
+    for (const e of nothingEncs) {
+      expect(e.biome).toBeUndefined()
+    }
+  })
+
+  it('uses biome-specific nothing beats when edgeBiome matches', () => {
+    const biomeTexts = new Set(NOTHING_BEATS.filter(b => b.biome === 'Desert').map(b => b.text))
+    const r = fakeRouteManyEdges(10, 'intra_civ')
+    const encs = generateEncounters(r, 'spring', 'direct', Array(10).fill('Desert'))
+    const nothingEncs = encs.filter(e => biomeTexts.has(e.beat))
+    expect(nothingEncs.length).toBeGreaterThan(0)
+    for (const e of nothingEncs) {
+      expect(e.biome).toBe('Desert')
+    }
+  })
+
+  it('uses only generic nothing beats when no edgeBiomes are provided', () => {
+    const genericTexts = new Set(NOTHING_BEATS.filter(b => !b.biome).map(b => b.text))
+    const r = fakeRouteManyEdges(10, 'intra_civ')
+    const encs = generateEncounters(r, 'spring', 'direct')
+    const nothingEncs = encs.filter(e => genericTexts.has(e.beat))
+    expect(nothingEncs.length).toBeGreaterThan(0)
+    for (const e of nothingEncs) {
+      expect(e.biome).toBeUndefined()
+    }
   })
 })

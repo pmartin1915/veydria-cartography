@@ -13,6 +13,7 @@
 import {
   poolForEdgeType,
   filterBySeason,
+  filterByBiome,
   type Beat,
   type Encounter,
 } from './encounters'
@@ -22,6 +23,9 @@ export interface RollOneOffOpts {
   edgeType: 'trade_route' | 'chokepoint' | 'intra_civ'
   season?: Season
   severity?: 'mild' | 'moderate' | 'severe'
+  /** Dominant biome of the hex where the encounter occurs. Biome-specific
+   *  beats are preferred; if none match, falls back to the full pool. */
+  biome?: string
   /** Optional RNG override; defaults to Math.random. Useful for tests. */
   rng?: () => number
 }
@@ -41,9 +45,10 @@ export function rollOneOff(opts: RollOneOffOpts): Encounter | null {
 
   const basePool = poolForEdgeType(opts.edgeType)
   const seasonFiltered = filterBySeason(basePool, opts.season)
+  const biomeFiltered = filterByBiome(seasonFiltered, opts.biome)
   const pool: Beat[] = opts.severity
-    ? seasonFiltered.filter(b => b.severity === opts.severity)
-    : seasonFiltered
+    ? biomeFiltered.filter(b => b.severity === opts.severity)
+    : biomeFiltered
 
   if (pool.length === 0) return null
 
@@ -59,5 +64,6 @@ export function rollOneOff(opts: RollOneOffOpts): Encounter | null {
     type: beat.type,
     severity: beat.severity,
     narrative: beat.text,
+    biome: beat.biome,
   }
 }
