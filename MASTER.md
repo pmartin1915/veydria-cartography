@@ -129,10 +129,11 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 Immediate gaps and plausible next-session moves, in rough priority order:
 
 - **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
-- **"Roll one-off" defaults to current edge type** *(small)* — pre-select the edge type of the active journey segment instead of always defaulting.
 - **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal) so the faction graph is not a near-empty state.
-- **Hex annotation deep-link** *(small)* — URL param `#hexNote=G7` to open HexInfoPanel with notes tab active; useful for sharing specific hex references.
-- **JourneyPlanner 'hexes traversed' count** *(small)* — show `N hexes` stat alongside the hex path string.
+- **Hex annotation deep-link polish** *(small)* — when `#hexNote=G7` opens the panel, auto-scroll to or highlight the notes section.
+- **JourneyPlanner edge-type pre-select** *(small)* — in the 'days' tab, clicking a day could auto-select its corresponding segment in the encounters tab.
+- **Tour mobile gating** *(small)* — skip auto-start on narrow viewports; tour card positioning is cramped on phone.
+- **Tour step 4 fallback** *(small)* — if Aethelian Basin is not found (schema change), degrade to a generic info-panel explanation instead of crashing.
 
 ### Backlog
 
