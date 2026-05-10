@@ -58,6 +58,7 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* --- App Layout --- */
@@ -1303,6 +1304,7 @@ body {
 .loading-screen {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1684,6 +1686,7 @@ body {
 .error-boundary {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1887,11 +1890,18 @@ body {
   }
 
   .layer-group-header {
-    padding: 4px 6px;
+    padding: 7px 8px;
   }
 
   .layer-toggle {
-    padding: 4px 6px;
+    padding: 8px 10px;
+  }
+
+  .layer-controls-collapse {
+    width: 32px;
+    height: 32px;
+    top: 6px;
+    right: 6px;
   }
 
   /* Compass rose smaller */
@@ -1909,7 +1919,7 @@ body {
   }
 
   .search-overlay {
-    padding-top: 8vh;
+    padding-top: 8dvh;
   }
 
   .keyboard-help-modal {
