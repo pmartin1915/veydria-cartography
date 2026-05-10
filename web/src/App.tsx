@@ -246,7 +246,7 @@ function App() {
         // toggle but the cells array is always present, so getHexByLabel is
         // safe regardless). Fly happens slightly after feature fly to avoid
         // a tug-of-war when both are set in the same hash.
-        const hexLabel = hashState.hexLabel
+        const hexLabel = hashState.hexLabel || hashState.hexNote
         if (hexLabel) {
           setLayers((prev) => prev.hex_grid ? prev : { ...prev, hex_grid: true })
           window.setTimeout(() => {
@@ -289,7 +289,7 @@ function App() {
     // mutually exclusive in the URL — same rule as the bottom sheet.
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
     if (id) {
-      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
+      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
       window.history.replaceState(null, '', hash)
     }
@@ -328,7 +328,7 @@ function App() {
     mapRef.current?.flyToFeature(feature)
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
     if (id) {
-      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
+      viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
       window.history.replaceState(null, '', hash)
     }
@@ -344,7 +344,7 @@ function App() {
     setSelectedFeature(feature)
     setPanelOpen(true)
     setSelectedHex(null)
-    viewportRef.current = { ...viewportRef.current, featureId, hexLabel: undefined }
+    viewportRef.current = { ...viewportRef.current, featureId, hexLabel: undefined, hexNote: undefined }
     const hash = buildHash(viewportRef.current)
     window.history.replaceState(null, '', hash)
   }, [geojson])
@@ -452,6 +452,7 @@ function App() {
           ...viewportRef.current,
           featureId: undefined,
           hexLabel: undefined,
+          hexNote: undefined,
           hexA: undefined,
           hexB: undefined,
         }
@@ -490,6 +491,7 @@ function App() {
           hexB: undefined,
           featureId: undefined,
           hexLabel: undefined,
+          hexNote: undefined,
         }
         window.history.replaceState(null, '', buildHash(viewportRef.current))
         return [prev[0]]
@@ -694,6 +696,7 @@ function App() {
               hexB: undefined,
               featureId: undefined,
               hexLabel: undefined,
+              hexNote: undefined,
             }
             window.history.replaceState(null, '', buildHash(viewportRef.current))
             return [prev[0]]
@@ -974,13 +977,14 @@ function App() {
                   hexB: next[1] ? labelHex(next[1]) : undefined,
                   featureId: undefined,
                   hexLabel: undefined,
+                  hexNote: undefined,
                 }
                 window.history.replaceState(null, '', buildHash(viewportRef.current))
                 return
               }
               setSelectedHex(hit)
               setPanelOpen(false)
-              viewportRef.current = { ...viewportRef.current, hexLabel: hit.hex.label, featureId: undefined }
+              viewportRef.current = { ...viewportRef.current, hexLabel: hit.hex.label, hexNote: undefined, featureId: undefined }
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash)
             }}
@@ -1005,7 +1009,7 @@ function App() {
             onCentre={() => mapRef.current?.flyToHex(selectedHex.hex.label)}
             onClose={() => {
               setSelectedHex(null)
-              viewportRef.current = { ...viewportRef.current, hexLabel: undefined }
+              viewportRef.current = { ...viewportRef.current, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
             }}
@@ -1054,7 +1058,7 @@ function App() {
             mapRef.current?.flyToFeature(f)
             const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
             if (id) {
-              viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined }
+              viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash)
             }

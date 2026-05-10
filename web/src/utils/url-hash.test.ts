@@ -34,6 +34,25 @@ describe('url-hash', () => {
       expect(parsed.centerY).toBe(400)
     })
 
+    it('parses #hexNote=G7 as hex deep-link', () => {
+      const state = parseHash('#hexNote=G7')
+      expect(state.hexNote).toBe('G7')
+    })
+
+    it('builds a hash with hexNote', () => {
+      expect(buildHash({ hexNote: 'G7' })).toBe('#hexNote=G7')
+    })
+
+    it('round-trips hexNote alongside zoom/center', () => {
+      const original = { hexNote: 'B3', zoom: 1.5, centerX: 600, centerY: 400 }
+      const hash = buildHash(original)
+      const parsed = parseHash(hash)
+      expect(parsed.hexNote).toBe('B3')
+      expect(parsed.zoom).toBe(1.5)
+      expect(parsed.centerX).toBe(600)
+      expect(parsed.centerY).toBe(400)
+    })
+
     it('coexists with feature in the hash for callers that set both, but drops feature when only hex is set', () => {
       // The App enforces mutual exclusion, but the builder itself keeps both
       // if both are passed in — that's the pure-data layer's job.

@@ -70,10 +70,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [autoPivots, setAutoPivots] = useState<JourneyNode[]>([])
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const [oneOffRolls, setOneOffRolls] = useState<Encounter[]>([])
-  // Reset impromptu rolls whenever the route identity changes — they're
-  // mid-session detours bound to a specific trip, not persistent history.
+  const [selectedSegmentIdx, setSelectedSegmentIdx] = useState(0)
+  // Reset impromptu rolls and segment selection whenever the route identity
+  // changes — they're mid-session state bound to a specific trip.
   const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
-  useEffect(() => { setOneOffRolls([]) }, [routeSig])
+  useEffect(() => { setOneOffRolls([]); setSelectedSegmentIdx(0) }, [routeSig])
   const startRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -853,6 +854,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               <div className="journey-route-hexes">
                 <span className="journey-route-hexes-label">Hex path</span>
                 <span className="journey-route-hexes-value">{routeHexLabels.join(' → ')}</span>
+                <span className="journey-route-hexes-count">{routeHexLabels.length} hex{routeHexLabels.length !== 1 ? 'es' : ''}</span>
               </div>
             )}
 
@@ -992,13 +994,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                   const encounters = generateEncounters(route, season, mode, edgeBiomes)
                   const handleRoll = () => {
                     if (route.edges.length === 0) return
-                    // Default to the first segment's edge type when the journey
-                    // is loaded — that's the "current" segment the party is on.
-                    const edge = route.edges[0]
+                    const edge = route.edges[selectedSegmentIdx] ?? route.edges[0]
                     const edgeType = edge.type === 'civ_link' ? 'intra_civ' : edge.type as 'trade_route' | 'chokepoint' | 'intra_civ'
-                    const rolled = rollOneOff({ edgeType, season, biome: selectedBiome || undefined })
+                    const biome = edgeBiomes?.[selectedSegmentIdx] || selectedBiome || undefined
+                    const rolled = rollOneOff({ edgeType, season, biome })
                     if (rolled) setOneOffRolls(prev => [rolled, ...prev])
                   }
+                  const activeEdge = route.edges[selectedSegmentIdx] ?? route.edges[0]
                   return (
                     <>
                       <div className="journey-encounters-header">
@@ -1010,11 +1012,29 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                           type="button"
                           className="journey-encounter-roll-btn"
                           onClick={handleRoll}
-                          title={`Roll for ${route.edges[0]?.name ?? 'current segment'} (${route.edges[0]?.type.replace('_', '-') ?? 'unknown'})`}
+                          title={`Roll for ${activeEdge?.name ?? 'current segment'} (${activeEdge?.type.replace('_', '-') ?? 'unknown'})`}
                         >
                           ⟳ Roll one-off
                         </button>
                       </div>
+                      {route.edges.length > 1 && (
+                        <div className="journey-segment-chips">
+                          {route.edges.map((edge, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className={`journey-segment-chip ${i === selectedSegmentIdx ? 'active' : ''}`}
+                              onClick={() => setSelectedSegmentIdx(i)}
+                              title={`${edge.name} (${edge.type.replace('_', '-')})`}
+                            >
+                              {edge.type === 'trade_route' && <IconScroll />}
+                              {edge.type === 'chokepoint' && <IconMountain />}
+                              {(edge.type === 'intra_civ' || edge.type === 'civ_link') && <IconArrow />}
+                              <span className="journey-segment-chip-label">{edge.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {oneOffRolls.map((enc, i) => (
                         <div key={`oneoff-${oneOffRolls.length - i}`} className={`journey-encounter journey-encounter--impromptu ${enc.severity}`}>
                           <div className="journey-encounter-meta">

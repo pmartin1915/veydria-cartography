@@ -13,6 +13,7 @@
 export interface ViewportState {
   featureId?: string
   hexLabel?: string
+  hexNote?: string
   hexA?: string
   hexB?: string
   zoom?: number
@@ -40,6 +41,9 @@ export function parseHash(hash: string): ViewportState {
 
   const hexLabel = params.get('hex')
   if (hexLabel && HEX_LABEL_RE.test(hexLabel)) result.hexLabel = hexLabel
+
+  const hexNote = params.get('hexNote')
+  if (hexNote && HEX_LABEL_RE.test(hexNote)) result.hexNote = hexNote
 
   const hexA = params.get('hexA')
   if (hexA && HEX_LABEL_RE.test(hexA)) result.hexA = hexA
@@ -80,6 +84,7 @@ export function buildHash(state: ViewportState): string {
   const params = new URLSearchParams()
   if (state.featureId) params.set('feature', state.featureId)
   if (state.hexLabel) params.set('hex', state.hexLabel)
+  if (state.hexNote) params.set('hexNote', state.hexNote)
   if (state.hexA) params.set('hexA', state.hexA)
   if (state.hexB) params.set('hexB', state.hexB)
   if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
