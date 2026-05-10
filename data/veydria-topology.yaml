@@ -197,3 +197,27 @@ elevation_profile:
     - { region: "irrah", elevation_m: "0-1500", notes: "Variable — sabkha flats to escarpments" }
     - { region: "ndjadi", elevation_m: "0-50", notes: "Flat alluvial delta; lowest on continent" }
     - { region: "aethelian_basin", elevation_m: "0", notes: "Sea level; port cities on shore" }
+
+biomes:
+  ngaru_bon:
+    primary: "Highland savanna"
+    secondary: ["Miombo woodland", "Afroalpine heath", "River gorge"]
+  irrah:
+    primary: "Desert"
+    secondary: ["Sabkha", "Oasis", "Escarpment"]
+  kheshkai:
+    primary: "Steppe"
+    secondary: ["Highland grassland", "Cliff edge", "River gallery"]
+  ndjadi:
+    primary: "Monsoon delta"
+    secondary: ["Mangrove swamp", "Floodplain", "Stone baray"]
+  qollari:
+    primary: "Cloud forest"
+    secondary: ["Mountain terrace", "Fog bank", "Cliff road"]
+  oravan:
+    primary: "Volcanic archipelago"
+    secondary: ["Coral reef", "Geothermal vent", "Strait"]
+
+relationships:
+  ngaru_bon:
+    hostile: ["kheshkai"]

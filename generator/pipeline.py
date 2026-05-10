@@ -38,6 +38,7 @@ def cmd_export_geojson(args: argparse.Namespace) -> None:
     print(f"  {len(data.route_names)} trade routes")
     print(f"  {len(data.port_zones)} port zones")
     print(f"  {len(data.contested_sites)} contested sites")
+    print(f"  {len(data.biomes)} biome definitions")
 
     output = export_geojson(data, args.output)
     print(f"\nGeoJSON written to: {output}")
@@ -116,6 +117,16 @@ def cmd_info(args: argparse.Namespace) -> None:
     print(f"\n--- Contested Sites ({len(data.contested_sites)}) ---")
     for key, site in data.contested_sites.items():
         print(f"  {key:15s}  {site.get('location', '?')}")
+
+    print(f"\n--- Biomes ---")
+    for name in data.civ_names:
+        biome = data.get_biome(name)
+        if biome:
+            primary = biome.get("primary", "?")
+            secondary = ", ".join(biome.get("secondary", []))
+            print(f"  {name:15s}  {primary:20s}  ({secondary})")
+        else:
+            print(f"  {name:15s}  (no biome defined)")
 
     print(f"\n--- Elevation Profile ---")
     for band in data.elevation_profile.get("bands", []):

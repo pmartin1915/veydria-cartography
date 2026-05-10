@@ -129,7 +129,8 @@ def generate_voronoi(civ_polygons_dict: dict[str, list[list[float]]], num_points
                 cells.append({
                     "polygon": coords_list,
                     "civ": assigned_civ,
-                    "elevation": float(base_elev)
+                    "elevation": float(base_elev),
+                    "index": i,
                 })
                 
     return cells

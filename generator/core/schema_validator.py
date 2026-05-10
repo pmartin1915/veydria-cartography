@@ -156,6 +156,24 @@ TOPOLOGY_SCHEMA: dict[str, Any] = {
                 },
             },
         },
+        "biomes": {
+            "type": "object",
+            "minProperties": 6,
+            "patternProperties": {
+                "^[a-z_]+$": {
+                    "type": "object",
+                    "required": ["primary", "secondary"],
+                    "properties": {
+                        "primary": {"type": "string"},
+                        "secondary": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                        },
+                    },
+                },
+            },
+        },
         "elevation_profile": {
             "type": "object",
             "required": ["description", "bands"],

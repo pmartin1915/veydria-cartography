@@ -23,6 +23,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from ..core.yaml_loader import TopologyData
 from ..core.geometry import generate_voronoi
 from ..core.coordinate_loader import load_manifest, CoordinateManifest
@@ -129,16 +131,31 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
     # --- Terrain Cells (Voronoi Heightmap) ---
     terrain_cells = generate_voronoi(civ_polygons, num_points=3000, seed=1915)
     for i, cell in enumerate(terrain_cells):
+        civ_biome = data.get_biome(cell["civ"])
+        props: dict[str, Any] = {
+            "id": f"terrain_cell_{i}",
+            "name": f"Terrain {i}",
+            "category": "terrain_cell",
+            "civ": cell["civ"],
+            "elevation": cell["elevation"],
+        }
+        if civ_biome:
+            primary = civ_biome.get("primary", "")
+            secondary = civ_biome.get("secondary", [])
+            # Weighted random: 70 % primary, 30 % uniform from secondary.
+            # Deterministic per cell using the Voronoi seed + stable cell index.
+            cell_index = cell.get("index", i)
+            rng = np.random.default_rng(1915 + cell_index)
+            if secondary and rng.random() < 0.3:
+                biome = rng.choice(secondary)
+            else:
+                biome = primary
+            props["biome"] = biome
+            props["biome_secondary"] = secondary
         features.append(_make_feature(
             "Polygon",
             [cell["polygon"]],
-            {
-                "id": f"terrain_cell_{i}",
-                "name": f"Terrain {i}",
-                "category": "terrain_cell",
-                "civ": cell["civ"],
-                "elevation": cell["elevation"],
-            },
+            props,
         ))
 
     # --- Chokepoints ---

@@ -41,6 +41,7 @@ class TopologyData:
         self.trade_routes = raw.get("trade_routes", {})
         self.elevation_profile = raw.get("elevation_profile", {})
         self.biological_barriers = raw.get("biological_barriers", {})
+        self.biomes = raw.get("biomes", {})
 
     @property
     def civ_names(self) -> list[str]:
@@ -78,6 +79,10 @@ class TopologyData:
     def get_route(self, name: str) -> dict[str, Any]:
         """Get a specific trade route's data."""
         return self.trade_routes.get(name, {})
+
+    def get_biome(self, civ_name: str) -> dict[str, Any]:
+        """Get a specific civilization's biome data."""
+        return self.biomes.get(civ_name, {})
 
 
 def load_topology(path: Path | str | None = None) -> TopologyData:
