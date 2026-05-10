@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 248/248 | vitest, 15 files |
+| Tests | ✅ 251/251 | vitest, 15 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -115,6 +115,9 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Snapshot player variant** — Shift+click drops annotation pins before capture.
 - **Bundle & UI polish** — code-split d3/leaflet/html-to-image into separate chunks, feature-count chip opens search palette, brighter player banner, annotation toolbar consolidated.
 - **Biome colors layer** — hex grid cells tinted by terrain_cell biome (20+ biome palette), toggleable layer with legend overlay. Biomes assigned deterministically in generator (70 % primary / 30 % secondary per civ).
+- **Roll one-off segment selector** — JourneyPlanner shows segment chips (one per edge); clicking selects the active segment, and the roll button uses that segment's edge type + biome.
+- **Hexes traversed count** — JourneyPlanner shows `N hexes` next to the hex path string.
+- **Hex annotation deep-link** — `#hexNote=G7` opens HexInfoPanel directly; useful for sharing specific hex references.
 - **Per-hex annotations** — drop notes on any hex cell via HexInfoPanel; diamond-shaped pins, color picker, auto-linked to hex label. Storage is additive-schema compatible.
 - **Journey route hex highlighting** — computed hex path (e.g. `G7 → H8 → I9`) displayed in JourneyPlanner; traversed hexes highlighted on the overlay. Edge biomes feed into encounter generation.
 - **Hex measure undo** — Backspace peels back last endpoint; dedicated ↩ Undo button in measure panel.

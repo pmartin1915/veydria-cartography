@@ -2,18 +2,19 @@
 
 ## Branch
 `auto/season-nothing-beats-2026-05-10`  
-Head: `c205581`  
-CI: N/A (no GH Actions run locally, but `npm test -- --run` = 248/248 pass, `npm run build` = green, `python pipeline.py validate` = green)
+Head: `d0b728d`  
+CI: N/A (local), but `npm test -- --run` = **251/251 pass**, `npm run build` = green, `python pipeline.py validate` = green
 
 ## Commits since last handoff
 
 ```
+d0b728d F.1 — roll one-off segment selector, hexes traversed count, hex annotation deep-link
 c205581 E.2 — biome colors, per-hex notes, journey hexes, measure undo, share URL
 de0d687 E.1 — generator biome support + data sync
-fda5d30 D.1 — season-specific nothing beats   ← previous head
+fda5d30 D.1 — season-specific nothing beats
 ```
 
-## What got done
+## What got done (this session)
 
 ### E.1 — Backend biome support
 - Added `biomes:` block to `data/veydria-topology.yaml` (primary + 3 secondary per civ)
@@ -57,10 +58,26 @@ fda5d30 D.1 — season-specific nothing beats   ← previous head
 - `handleToggleJourneyMode()` provides proper mutual-exclusion with pin/measure modes
 - `m`/`j`/`p` keyboard shortcuts route through toggle handlers (same pattern as `h`)
 
+### F.1 — Roll one-off segment selector + hex count + hexNote deep-link
+
+**Segment selector**
+- `selectedSegmentIdx` state in JourneyPlanner (resets on route change)
+- Segment chips row above encounters list: type icon + edge name per route edge
+- Clicking a chip selects the active segment; roll button uses its edge type + biome
+- Button title updates to show active segment name and type
+
+**Hexes traversed count**
+- JourneyPlanner shows `N hexes` next to the hex path string
+
+**Hex annotation deep-link**
+- `url-hash.ts` supports `#hexNote=G7` parameter (same validation as `hexLabel`)
+- App.tsx treats `hexNote` equivalently to `hexLabel` for opening HexInfoPanel
+- `hexNote` is cleared consistently alongside `hexLabel` on feature select, measure mode, etc.
+
 **Tests**
 - Added missing retroactive test files: `journey-history.test.ts`, `map-snapshot.test.ts`, `measure.test.ts`, `patch-parser.test.ts`, `related-features.test.ts`, `travel-time.test.ts`
-- `annotations.test.ts` +45 lines, `hex-grid.test.ts` +148 lines, `url-hash.test.ts` +74 lines
-- Total: **248/248 vitest tests pass** across 15 files
+- `annotations.test.ts` +45 lines, `hex-grid.test.ts` +148 lines, `url-hash.test.ts` +77 lines
+- Total: **251/251 vitest tests pass** across 15 files
 
 ## State of the tree
 
@@ -68,20 +85,19 @@ fda5d30 D.1 — season-specific nothing beats   ← previous head
 M  MASTER.md                          (roadmap updated — shipped items moved)
 ```
 
-All other changes are committed. Working tree is clean except for `MASTER.md` (uncommitted update).
+All other changes are committed. Working tree is clean except for `MASTER.md` (uncommitted update) and `.claude/` (untracked, should not be committed).
 
 ## Remaining gaps / next-session candidates
 
 From MASTER.md "In Progress / Next":
 
-1. **"Roll one-off" defaults to current edge type** *(small)* — pre-select the edge type of the active journey segment instead of always defaulting to the first edge.
-2. **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges. Current graph only shows one hostile edge.
-3. **Hex annotation deep-link** *(small)* — URL param `#hexNote=G7` to open HexInfoPanel with notes tab active.
-4. **JourneyPlanner 'hexes traversed' count** *(small)* — show `N hexes` stat alongside the hex path string.
-5. **Manual mobile audit** *(small, recurring)* — real-device verification checklist lives in `HANDOFF-2026-05-09c`.
+1. **Manual mobile audit** *(small, recurring)* — real-device verification checklist lives in `HANDOFF-2026-05-09c`.
+2. **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal).
+3. **Hex annotation deep-link polish** *(small)* — when `#hexNote=G7` opens the panel, auto-scroll to or highlight the notes section.
+4. **JourneyPlanner edge-type pre-select** *(small)* — in the 'days' tab, clicking a day could auto-select its corresponding segment in the encounters tab.
 
 Backlog highlights:
-- **Guided tour / onboarding** *(medium)* — all polish prerequisites are now met; this is the right next medium feature.
+- **Guided tour / onboarding** *(medium)* — 5–7 step first-visit walkthrough. All polish prerequisites are now met; this is the right next medium feature.
 - **Saved journeys** *(medium)* — persist journeys to `localStorage:veydria.journeys.v1`
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes
 
