@@ -221,3 +221,17 @@ biomes:
 relationships:
   ngaru_bon:
     hostile: ["kheshkai"]
+    trade: ["irrah"]
+  irrah:
+    trade: ["ndjadi", "ngaru_bon"]
+  kheshkai:
+    hostile: ["ngaru_bon"]
+    trade: ["qollari"]
+    rival: ["ndjadi"]
+  ndjadi:
+    trade: ["irrah", "qollari"]
+    rival: ["kheshkai"]
+  qollari:
+    trade: ["oravan", "kheshkai", "ndjadi"]
+  oravan:
+    trade: ["qollari"]

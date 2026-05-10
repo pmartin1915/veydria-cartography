@@ -327,6 +327,7 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
             "generator": "veydria-cartography/generator/export/geojson.py",
             "coordinate_system": "SVG viewBox (1200x800) — use CRS.Simple in Leaflet with Y-inversion",
             "description": "Spatial data for the continent of Veydria. Coordinates from coordinate-manifest.yaml; topology from veydria-topology.yaml.",
+            "relationships": data.relationships,
         },
         "features": features,
     }

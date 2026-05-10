@@ -1383,6 +1383,7 @@ function App() {
         <FactionGraph
           open={graphOpen}
           geojson={geojson}
+          relationships={geojson?.metadata?.relationships}
           onClose={() => setGraphOpen(false)}
           onSelectFaction={(civId) => {
             const feature = geojson?.features.find(f =>

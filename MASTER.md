@@ -129,13 +129,13 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **JourneyPlanner day-to-segment link** — clicking a day in the Days tab switches to the Encounters tab and pre-selects the corresponding route segment.
 - **Saved journeys** — canonical localStorage key `veydria.journeys.v1`; "My journeys" panel with inline rename, auto-generated default names (`A → B`), and defensive migration from legacy `veydria-journey-history`.
 - **Better Cmd-K** — recent items (last 5 selections, persisted to `veydria.search.recent.v1`), "Linked pins" section for annotations with `featureId`, civilization quick-filter chips when empty, `civ:` prefix filtering, `pin:` prefix filtering.
+- **Relationship richness** — explicit `relationships:` block in topology YAML now flows through to the FactionGraph. Added trade edges (Ngaru-Bon↔Irrah, Irrah↔Ndjadi, Kheshkai↔Qollari, Qollari↔Oravan, Qollari↔Ndjadi) and rival edges (Kheshkai↔Ndjadi). Generator exports relationships in GeoJSON metadata; frontend reads them via `geojson.metadata.relationships`.
 
 ### In Progress / Next
 
 Immediate gaps and plausible next-session moves, in rough priority order:
 
 - **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
-- **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal) so the faction graph is not a near-empty state.
 
 ### Backlog
 

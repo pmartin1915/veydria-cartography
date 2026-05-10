@@ -17,6 +17,7 @@ import { buildFactionGraph, type FactionEdge } from '../utils/faction-graph'
 interface FactionGraphProps {
   open: boolean
   geojson: GeoJSONCollection | null
+  relationships?: unknown
   onClose: () => void
   onSelectFaction: (civId: string) => void
 }
@@ -44,11 +45,12 @@ function getCentroid(props: Record<string, unknown>): [number, number] | null {
   return null
 }
 
-export default function FactionGraph({ open, geojson, onClose, onSelectFaction }: FactionGraphProps) {
+export default function FactionGraph({ open, geojson, relationships, onClose, onSelectFaction }: FactionGraphProps) {
   const graph = useMemo(() => {
     if (!geojson) return null
-    return buildFactionGraph(geojson)
-  }, [geojson])
+    const topology = relationships ? { relationships } : undefined
+    return buildFactionGraph(geojson, topology)
+  }, [geojson, relationships])
 
   // Centroid lookup — keyed by node id, normalised to viewBox.
   const positions = useMemo(() => {

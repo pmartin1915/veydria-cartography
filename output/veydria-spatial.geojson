@@ -4,7 +4,55 @@
     "source": "veydria-topology.yaml + coordinate-manifest.yaml",
     "generator": "veydria-cartography/generator/export/geojson.py",
     "coordinate_system": "SVG viewBox (1200x800) — use CRS.Simple in Leaflet with Y-inversion",
-    "description": "Spatial data for the continent of Veydria. Coordinates from coordinate-manifest.yaml; topology from veydria-topology.yaml."
+    "description": "Spatial data for the continent of Veydria. Coordinates from coordinate-manifest.yaml; topology from veydria-topology.yaml.",
+    "relationships": {
+      "ngaru_bon": {
+        "hostile": [
+          "kheshkai"
+        ],
+        "trade": [
+          "irrah"
+        ]
+      },
+      "irrah": {
+        "trade": [
+          "ndjadi",
+          "ngaru_bon"
+        ]
+      },
+      "kheshkai": {
+        "hostile": [
+          "ngaru_bon"
+        ],
+        "trade": [
+          "qollari"
+        ],
+        "rival": [
+          "ndjadi"
+        ]
+      },
+      "ndjadi": {
+        "trade": [
+          "irrah",
+          "qollari"
+        ],
+        "rival": [
+          "kheshkai"
+        ]
+      },
+      "qollari": {
+        "trade": [
+          "oravan",
+          "kheshkai",
+          "ndjadi"
+        ]
+      },
+      "oravan": {
+        "trade": [
+          "qollari"
+        ]
+      }
+    }
   },
   "features": [
     {
