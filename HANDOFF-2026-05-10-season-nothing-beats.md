@@ -1,13 +1,14 @@
-# Handoff — 2026-05-10 · Season Nothing Beats + Biome/Hex/Journey Polish
+# Handoff — 2026-05-10 · Season Nothing Beats + Biome/Hex/Journey Polish + Guided Tour
 
 ## Branch
 `auto/season-nothing-beats-2026-05-10`  
-Head: `d0b728d`  
-CI: N/A (local), but `npm test -- --run` = **251/251 pass**, `npm run build` = green, `python pipeline.py validate` = green
+Head: `33e17dd`  
+CI: N/A (local), but `npm test -- --run` = **264/264 pass**, `npm run build` = green, `python pipeline.py validate` = green
 
 ## Commits since last handoff
 
 ```
+33e17dd G.1 — guided tour / onboarding
 d0b728d F.1 — roll one-off segment selector, hexes traversed count, hex annotation deep-link
 c205581 E.2 — biome colors, per-hex notes, journey hexes, measure undo, share URL
 de0d687 E.1 — generator biome support + data sync
@@ -74,10 +75,20 @@ fda5d30 D.1 — season-specific nothing beats
 - App.tsx treats `hexNote` equivalently to `hexLabel` for opening HexInfoPanel
 - `hexNote` is cleared consistently alongside `hexLabel` on feature select, measure mode, etc.
 
+### G.1 — Guided tour / onboarding
+
+- New `TourOverlay` component with spotlight effect (`box-shadow: 0 0 0 9999px`), floating card, Next/Back/Skip, arrow-key navigation, Escape to skip
+- `tour.ts`: reducer, localStorage persistence (`veydria.tour.completed.v1`), DOM rect helpers, auto-positioning with fallback placements
+- 8-step tour: Welcome → Layers (applies Politics preset) → Search (opens palette) → InfoPanel (selects Aethelian Basin) → Journey → Pins → Share → Done
+- Auto-starts after first load only when no deep-link is present and not in share mode
+- Replay tour button added to KeyboardHelp (?) overlay
+- `data-tour` attributes added to LayerControls, SearchBar, InfoPanel, App triggers
+
 **Tests**
 - Added missing retroactive test files: `journey-history.test.ts`, `map-snapshot.test.ts`, `measure.test.ts`, `patch-parser.test.ts`, `related-features.test.ts`, `travel-time.test.ts`
 - `annotations.test.ts` +45 lines, `hex-grid.test.ts` +148 lines, `url-hash.test.ts` +77 lines
-- Total: **251/251 vitest tests pass** across 15 files
+- `tour.test.ts`: 13 tests for reducer, localStorage mock, card positioning
+- Total: **264/264 vitest tests pass** across 16 files
 
 ## State of the tree
 
@@ -95,11 +106,13 @@ From MASTER.md "In Progress / Next":
 2. **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal).
 3. **Hex annotation deep-link polish** *(small)* — when `#hexNote=G7` opens the panel, auto-scroll to or highlight the notes section.
 4. **JourneyPlanner edge-type pre-select** *(small)* — in the 'days' tab, clicking a day could auto-select its corresponding segment in the encounters tab.
+5. **Tour mobile gating** *(small)* — skip auto-start on narrow viewports; tour card positioning is cramped on phone.
+6. **Tour step 4 fallback** *(small)* — if Aethelian Basin is not found (schema change), degrade to a generic info-panel explanation instead of crashing.
 
 Backlog highlights:
-- **Guided tour / onboarding** *(medium)* — 5–7 step first-visit walkthrough. All polish prerequisites are now met; this is the right next medium feature.
 - **Saved journeys** *(medium)* — persist journeys to `localStorage:veydria.journeys.v1`
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes
+- **Better Cmd-K** *(small)* — recent items, recently-linked annotation section, jump-to-civ shortcuts
 
 ## Notes
 

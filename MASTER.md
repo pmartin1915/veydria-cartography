@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 251/251 | vitest, 15 files |
+| Tests | ✅ 264/264 | vitest, 16 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -118,6 +118,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Roll one-off segment selector** — JourneyPlanner shows segment chips (one per edge); clicking selects the active segment, and the roll button uses that segment's edge type + biome.
 - **Hexes traversed count** — JourneyPlanner shows `N hexes` next to the hex path string.
 - **Hex annotation deep-link** — `#hexNote=G7` opens HexInfoPanel directly; useful for sharing specific hex references.
+- **Guided tour / onboarding** — 8-step first-visit walkthrough with spotlight highlighting, Next/Back/Skip, arrow keys, localStorage completion tracking. Replay via KeyboardHelp (?) overlay.
 - **Per-hex annotations** — drop notes on any hex cell via HexInfoPanel; diamond-shaped pins, color picker, auto-linked to hex label. Storage is additive-schema compatible.
 - **Journey route hex highlighting** — computed hex path (e.g. `G7 → H8 → I9`) displayed in JourneyPlanner; traversed hexes highlighted on the overlay. Edge biomes feed into encounter generation.
 - **Hex measure undo** — Backspace peels back last endpoint; dedicated ↩ Undo button in measure panel.
@@ -137,7 +138,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 
 Larger bets and exploratory directions:
 
-- **Guided tour / onboarding** *(medium)* — first-visit walkthrough (5–7 steps) with backdrop-filter highlighting, `data-tour` attributes, and `localStorage` completion tracking. Detailed design sketch in §6.
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
 - **Saved journeys** *(medium)* — persist journeys to `localStorage:veydria.journeys.v1`; list under "My journeys" in the planner.
 - **Better Cmd-K** *(small)* — recent items, recently-linked annotation section, jump-to-civ shortcuts.
