@@ -178,6 +178,20 @@ body {
 .leaflet-container {
   background: #0a0e15 !important;
   font-family: var(--font-body) !important;
+  transition: filter 0.5s ease;
+}
+
+/* Time-of-day overlay filters */
+.app-main.time-of-day-dawn .leaflet-container {
+  filter: brightness(0.9) sepia(0.2) hue-rotate(-15deg) saturate(1.05);
+}
+
+.app-main.time-of-day-dusk .leaflet-container {
+  filter: brightness(0.75) sepia(0.1) hue-rotate(20deg) saturate(0.9);
+}
+
+.app-main.time-of-day-night .leaflet-container {
+  filter: brightness(0.5) contrast(1.05) hue-rotate(5deg) saturate(0.75);
 }
 
 .leaflet-control-zoom {
@@ -1537,6 +1551,14 @@ body {
   border-color: var(--color-port);
   color: var(--color-port);
   background: rgba(232, 200, 64, 0.08);
+}
+
+.time-of-day-btn {
+  border-color: rgba(196, 168, 98, 0.2);
+}
+
+.time-of-day-btn:hover {
+  border-color: rgba(196, 168, 98, 0.5);
 }
 
 .map-container.measure-mode {

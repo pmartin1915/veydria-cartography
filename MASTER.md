@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 297/297 | vitest, 18 files |
+| Tests | ✅ 322/322 | vitest, 20 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -131,6 +131,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Better Cmd-K** — recent items (last 5 selections, persisted to `veydria.search.recent.v1`), "Linked pins" section for annotations with `featureId`, civilization quick-filter chips when empty, `civ:` prefix filtering, `pin:` prefix filtering.
 - **Relationship richness** — explicit `relationships:` block in topology YAML now flows through to the FactionGraph. Added trade edges (Ngaru-Bon↔Irrah, Irrah↔Ndjadi, Kheshkai↔Qollari, Qollari↔Oravan, Qollari↔Ndjadi) and rival edges (Kheshkai↔Ndjadi). Generator exports relationships in GeoJSON metadata; frontend reads them via `geojson.metadata.relationships`.
 - **Export markdown campaign log** — new "Log" button in the header downloads a comprehensive `.md` file bundling the active journey (with full route, encounters, day-by-day), all saved journeys (summaries), campaign pins, and hex notes. `campaign-log.ts` utility with `exportJourneyMarkdown` (extracted from JourneyPlanner), `generateCampaignLog`, and `downloadCampaignLog`. 16 tests.
+- **Time-of-day overlay** — atmospheric tint control for the map. Cycles Day → Dawn → Dusk → Night via header button or `T` shortcut. CSS filters on `.leaflet-container` with smooth 0.5s transition. Per-mode icons (sun, rising sun, setting sun, crescent moon). Persisted to `veydria.timeOfDay.v1`. 9 tests.
 
 ### In Progress / Next
 
@@ -143,7 +144,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 Larger bets and exploratory directions:
 
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
-- **Time-of-day overlay** *(small)* — dawn/dusk/night tint slider for mood; affects nothing else.
 
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
 - **Dedicated mobile player mode** *(medium)* — share-mode URL renders cleanly on phone with no editing, just panning, info panels, and journey path. Potentially the killer at-the-table feature.

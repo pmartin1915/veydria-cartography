@@ -21,6 +21,7 @@ import { downloadCampaignLog } from './utils/campaign-log'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
+import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
 import TourOverlay from './components/TourOverlay'
 
 // GeoJSON types
@@ -267,6 +268,7 @@ function App() {
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
   const [hexSize, setHexSize] = useState<number>(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
     const n = stored ? Number.parseInt(stored, 10) : NaN
@@ -593,6 +595,14 @@ function App() {
     })
   }, [clearHexMeasureFromHash])
 
+  const handleCycleTimeOfDay = useCallback(() => {
+    setTimeOfDay(prev => {
+      const next = cycleTimeOfDay(prev)
+      saveTimeOfDay(next)
+      return next
+    })
+  }, [])
+
   const handleToggleJourneyMode = useCallback(() => {
     setJourneyMode(prev => {
       const next = !prev
@@ -831,6 +841,10 @@ function App() {
         e.preventDefault()
         handleToggleHexMeasureMode()
       }
+      if (e.key === 't' && !searchOpenRef.current && document.activeElement === document.body) {
+        e.preventDefault()
+        handleCycleTimeOfDay()
+      }
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
@@ -872,7 +886,7 @@ function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleClosePanel, handleToggleMeasureMode, handleTogglePinMode, handleToggleJourneyMode, handleToggleHexMeasureMode, clearHexMeasureFromHash])
+  }, [handleClosePanel, handleToggleMeasureMode, handleTogglePinMode, handleToggleJourneyMode, handleToggleHexMeasureMode, handleCycleTimeOfDay, clearHexMeasureFromHash])
 
   if (loading) {
     return (
@@ -1064,6 +1078,39 @@ function App() {
             </button>
           )}
           <button
+            className="search-trigger time-of-day-btn"
+            onClick={handleCycleTimeOfDay}
+            title={`Cycle time of day — current: ${TIME_OF_DAY_LABELS[timeOfDay]} (T)`}
+            id="time-of-day-trigger"
+          >
+            {timeOfDay === 'day' && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+              </svg>
+            )}
+            {timeOfDay === 'dawn' && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 10V4M4.93 14.93l1.41-1.41M17.66 14.93l1.41-1.41" />
+                <path d="M4 18h16" />
+                <circle cx="12" cy="16" r="4" />
+              </svg>
+            )}
+            {timeOfDay === 'dusk' && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 14v6M4.93 9.07l1.41 1.41M17.66 9.07l1.41 1.41" />
+                <path d="M4 18h16" />
+                <circle cx="12" cy="10" r="4" />
+              </svg>
+            )}
+            {timeOfDay === 'night' && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+            <span>{TIME_OF_DAY_LABELS[timeOfDay]}</span>
+          </button>
+          <button
             className="search-trigger"
             onClick={() => setKeyboardHelpOpen(true)}
             title="Keyboard shortcuts (Shift+?)"
@@ -1099,7 +1146,7 @@ function App() {
         </div>
       </header>
 
-      <main className={`app-main ${measureMode ? 'measure-mode' : ''}`}>
+      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay}`}>
         {geojson && (
           <MapViewer
             ref={mapRef}
