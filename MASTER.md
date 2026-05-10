@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 38/38 | vitest, 5 files |
+| Tests | ✅ 248/248 | vitest, 15 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -103,7 +103,7 @@ Three horizons, reorganised by state rather than time. Each item is sized **smal
 
 ### Shipped
 
-Recent sessions (2026-05-08 → 2026-05-09) cleared the previous near-term list and added significant GM utility:
+Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list and added significant GM utility:
 
 - **Hex grid overlay** — pointy-top odd-r grid (~110–600 cells via 30/50/70 size slider), A1/G7 labels, hover tooltip with terrain descriptors, click-to-select with `HexInfoPanel`, coord chip, deep-link via `#hex=G7`, variable size persisted to `localStorage`.
 - **Hex-distance measurement** — two-click axial-distance mode, path highlighting with tinted endpoint/mid-path labels, "H" shortcut, URL persistence (`#hexA=G7&hexB=K12`), mobile fly-to gate.
@@ -114,20 +114,21 @@ Recent sessions (2026-05-08 → 2026-05-09) cleared the previous near-term list 
 - **Zoom polish** — `maxZoom: 1.5` on init fit, canvas padding 0.3, tooltip gated on mobile, `flyToBounds` with padding on feature/hex select.
 - **Snapshot player variant** — Shift+click drops annotation pins before capture.
 - **Bundle & UI polish** — code-split d3/leaflet/html-to-image into separate chunks, feature-count chip opens search palette, brighter player banner, annotation toolbar consolidated.
+- **Biome colors layer** — hex grid cells tinted by terrain_cell biome (20+ biome palette), toggleable layer with legend overlay. Biomes assigned deterministically in generator (70 % primary / 30 % secondary per civ).
+- **Per-hex annotations** — drop notes on any hex cell via HexInfoPanel; diamond-shaped pins, color picker, auto-linked to hex label. Storage is additive-schema compatible.
+- **Journey route hex highlighting** — computed hex path (e.g. `G7 → H8 → I9`) displayed in JourneyPlanner; traversed hexes highlighted on the overlay. Edge biomes feed into encounter generation.
+- **Hex measure undo** — Backspace peels back last endpoint; dedicated ↩ Undo button in measure panel.
+- **Share URL + keyboard cleanup** — `buildShareUrl()` composes full clipboardable URLs; InfoPanel gets share button. `m`/`j`/`p` shortcuts route through mutual-exclusion toggle handlers (same pattern as `h`).
 
 ### In Progress / Next
 
 Immediate gaps and plausible next-session moves, in rough priority order:
 
 - **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
-- **Per-hex annotations** *(medium)* — optional `hexLabel` on `MapAnnotation`; pin UI shows "Linked to G7" instead of a feature name. Schema is additive; storage layer ready.
-- **Variable-hexSize-aware route highlighting** *(medium)* — reuse `hexLineBetween` across consecutive journey nodes to highlight traversed hexes and add a "hexes traversed: N" stat. Recompute on hex size change.
 - **"Roll one-off" defaults to current edge type** *(small)* — pre-select the edge type of the active journey segment instead of always defaulting.
-- **Keyboard-shortcut cleanup** *(small)* — route `m`/`j`/`p` through the proper mutual-exclusion toggle handlers (same pattern as `h`) so they clear `hexMeasureMode` and URL state consistently.
-- **Hex labels on the journey route** *(small)* — re-use the `data-label` hook to show "crosses G7 → H8 → I9 …" at a glance.
-- **Snapshot URL** *(medium)* — compose a clipboardable link capturing `feature=` / `hex=` / `hexA=` / `hexB=` / `journeyFrom=` / `journeyTo=` / zoom + center.
-- **Undo for Hex Measure** *(small)* — Backspace peels back the last endpoint (mirrors regular Measure mode).
-- **Biome words + faction relationships** *(medium, upstream-blocked)* — requires `worldbuilder` edits (`biome` field on terrain_cell, `relationships:` block in topology YAML) followed by `npm run sync:data`. `hex-grid.ts` and `faction-graph.ts` are shape-ready.
+- **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal) so the faction graph is not a near-empty state.
+- **Hex annotation deep-link** *(small)* — URL param `#hexNote=G7` to open HexInfoPanel with notes tab active; useful for sharing specific hex references.
+- **JourneyPlanner 'hexes traversed' count** *(small)* — show `N hexes` stat alongside the hex path string.
 
 ### Backlog
 
