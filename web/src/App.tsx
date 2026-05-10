@@ -182,8 +182,26 @@ function App() {
       body: 'Click any feature for its lore card. Notice related features at the bottom \u2014 you can chain through them.',
       placement: 'left',
       onEnter: () => {
-        // Programmatically open the Aethelian Basin
-        handleSelectFeatureById('aethelian_basin')
+        // Programmatically open the Aethelian Basin, or fall back to any
+        // water / civilization feature so the tour step still has a target
+        // even if the canonical ID drifts.
+        const ok = handleSelectFeatureById('aethelian_basin')
+        if (!ok && geojson) {
+          const fallback = geojson.features.find((f) => f.properties.category === 'water')
+            || geojson.features.find((f) => f.properties.category === 'civilization')
+            || geojson.features[0]
+          if (fallback) {
+            const id = (fallback as unknown as Record<string, unknown>).id as string || (fallback.properties.id as string)
+            if (id) {
+              setSelectedFeature(fallback)
+              setPanelOpen(true)
+              setSelectedHex(null)
+              viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
+              const hash = buildHash(viewportRef.current)
+              window.history.replaceState(null, '', hash)
+            }
+          }
+        }
       },
     },
     {
@@ -367,9 +385,10 @@ function App() {
 
         // Auto-start guided tour for first-time visitors, but only if there's
         // no deep-link state (the user is following a specific link, not
-        // exploring organically) and we're not in share mode.
+        // exploring organically), we're not in share mode, and the viewport
+        // is wide enough for the tour card to be readable.
         const hasDeepLink = !!(featureId || hexLabel || hashState.hexA || hashState.hexB || journeyFrom || journeyTo)
-        if (!hasDeepLink && !hashState.share && !isTourCompleted()) {
+        if (!hasDeepLink && !hashState.share && !isTourCompleted() && window.innerWidth >= 768) {
           window.setTimeout(() => {
             tourDispatch({ type: 'START' })
           }, 1200)
@@ -435,19 +454,20 @@ function App() {
     }
   }, [])
 
-  const handleSelectFeatureById = useCallback((featureId: string) => {
-    if (!geojson) return
+  const handleSelectFeatureById = useCallback((featureId: string): boolean => {
+    if (!geojson) return false
     const feature = geojson.features.find((f) => {
       const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
       return id === featureId
     })
-    if (!feature) return
+    if (!feature) return false
     setSelectedFeature(feature)
     setPanelOpen(true)
     setSelectedHex(null)
     viewportRef.current = { ...viewportRef.current, featureId, hexLabel: undefined, hexNote: undefined }
     const hash = buildHash(viewportRef.current)
     window.history.replaceState(null, '', hash)
+    return true
   }, [geojson])
 
   const handleCoordinateUpdate = useCallback((featureId: string, name: string, category: string, newCoords: [number, number]) => {
@@ -1127,6 +1147,7 @@ function App() {
               annotationToastTimeoutRef.current = window.setTimeout(() => setAnnotationToast(null), 2000)
             }}
             onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
+            highlightNotes={initialHashRef.current.hexNote === selectedHex.hex.label}
           />
         )}
 

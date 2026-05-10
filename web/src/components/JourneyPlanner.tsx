@@ -951,8 +951,22 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     <span className="journey-encounters-count">{days.length} day{days.length !== 1 ? 's' : ''}</span>
                     <span className="journey-encounters-seed">Deterministic by route + season</span>
                   </div>
-                  {days.map((day) => (
-                    <div key={day.dayNum} className="journey-day">
+                  {days.map((day) => {
+                    const primarySegmentIdx = day.edgesTraversed.length > 0
+                      ? route.edges.findIndex(e => e === day.edgesTraversed[0].edge)
+                      : 0
+                    return (
+                    <div
+                      key={day.dayNum}
+                      className="journey-day"
+                      onClick={() => {
+                        if (route.edges.length > 1) {
+                          setRouteTab('encounters')
+                          setSelectedSegmentIdx(Math.max(0, primarySegmentIdx))
+                        }
+                      }}
+                      title={route.edges.length > 1 ? 'Click to view this day\'s segment in Encounters' : undefined}
+                    >
                       <div className="journey-day-header">
                         <span className="journey-day-num">Day {day.dayNum}</span>
                         <span className="journey-day-km">{Math.round(day.kmCovered)} km</span>
@@ -983,8 +997,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                       )}
                       <div className="journey-day-line journey-day-camp"><IconPin /> {day.campLabel}</div>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
+              </div>
               )
             })()}
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { HexCell } from '../utils/hex-grid'
 import { hexNeighbors, labelHex } from '../utils/hex-grid'
 import type { MapAnnotation } from '../utils/annotations'
@@ -12,9 +12,10 @@ interface Props {
   annotations?: MapAnnotation[]
   onAddAnnotation?: (hexLabel: string, x: number, y: number, label: string, body: string, color: string) => void
   onSelectAnnotation?: (annotation: MapAnnotation) => void
+  highlightNotes?: boolean
 }
 
-export default function HexInfoPanel({ hex, descriptors, onClose, onCentre, annotations, onAddAnnotation, onSelectAnnotation }: Props) {
+export default function HexInfoPanel({ hex, descriptors, onClose, onCentre, annotations, onAddAnnotation, onSelectAnnotation, highlightNotes }: Props) {
   const neighbours = hexNeighbors(hex.coord).map(labelHex)
   const hexNotes = (annotations || []).filter((a) => a.hexLabel === hex.label)
   const [adding, setAdding] = useState(false)
@@ -32,6 +33,21 @@ export default function HexInfoPanel({ hex, descriptors, onClose, onCentre, anno
     setNoteBody('')
     setNoteColor(DEFAULT_ANNOTATION_COLOR)
   }
+
+  const notesRef = useRef<HTMLDivElement>(null)
+  const [didHighlight, setDidHighlight] = useState(false)
+
+  useEffect(() => {
+    if (highlightNotes && !didHighlight && notesRef.current) {
+      notesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      notesRef.current.classList.add('hex-notes-flash')
+      const t = window.setTimeout(() => {
+        notesRef.current?.classList.remove('hex-notes-flash')
+        setDidHighlight(true)
+      }, 1500)
+      return () => clearTimeout(t)
+    }
+  }, [highlightNotes, didHighlight])
 
   const handleStartAdd = () => {
     setAdding(true)
@@ -74,7 +90,7 @@ export default function HexInfoPanel({ hex, descriptors, onClose, onCentre, anno
         </div>
 
         {/* Hex Notes */}
-        <div className="hex-info-panel-row">
+        <div className="hex-info-panel-row" ref={notesRef}>
           <div className="hex-info-panel-key" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>Notes</span>
             {onAddAnnotation && !adding && (

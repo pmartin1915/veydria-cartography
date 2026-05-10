@@ -109,4 +109,20 @@ describe('journey-days: bucketing', () => {
     const last = days[days.length - 1]
     expect(last.campLabel).toContain(route.nodes[route.nodes.length - 1].name)
   })
+
+  it('populates edgesTraversed so UI can map days to segments', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 90 })
+    const days = buildDailyBreakdown(route)
+    expect(days.length).toBe(3)
+    for (const day of days) {
+      expect(day.edgesTraversed.length).toBeGreaterThanOrEqual(1)
+      expect(day.edgesTraversed[0].edge).toBeDefined()
+      expect(day.edgesTraversed[0].portion).toBeGreaterThan(0)
+      expect(day.edgesTraversed[0].portion).toBeLessThanOrEqual(1)
+    }
+    // Day 1 should traverse the first edge
+    expect(days[0].edgesTraversed[0].edge).toBe(route.edges[0])
+    // Day 3 should traverse the last edge
+    expect(days[2].edgesTraversed[0].edge).toBe(route.edges[2])
+  })
 })

@@ -123,6 +123,10 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Journey route hex highlighting** — computed hex path (e.g. `G7 → H8 → I9`) displayed in JourneyPlanner; traversed hexes highlighted on the overlay. Edge biomes feed into encounter generation.
 - **Hex measure undo** — Backspace peels back last endpoint; dedicated ↩ Undo button in measure panel.
 - **Share URL + keyboard cleanup** — `buildShareUrl()` composes full clipboardable URLs; InfoPanel gets share button. `m`/`j`/`p` shortcuts route through mutual-exclusion toggle handlers (same pattern as `h`).
+- **Tour mobile gating** — auto-start skipped on viewports `< 768 px` where the tour card is too cramped.
+- **Tour step 4 fallback** — if `aethelian_basin` is missing (schema drift), the tour falls back to the first water / civilization feature so the InfoPanel spotlight still has a valid target.
+- **Hex annotation deep-link polish** — `#hexNote=G7` now scrolls the notes section into view and plays a brief amber highlight flash on first open.
+- **JourneyPlanner day-to-segment link** — clicking a day in the Days tab switches to the Encounters tab and pre-selects the corresponding route segment.
 
 ### In Progress / Next
 
@@ -130,10 +134,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 
 - **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
 - **Relationship richness** *(small, upstream)* — flesh out `relationships:` block in worldbuilder with more edges (allied, trade, rival, vassal) so the faction graph is not a near-empty state.
-- **Hex annotation deep-link polish** *(small)* — when `#hexNote=G7` opens the panel, auto-scroll to or highlight the notes section.
-- **JourneyPlanner edge-type pre-select** *(small)* — in the 'days' tab, clicking a day could auto-select its corresponding segment in the encounters tab.
-- **Tour mobile gating** *(small)* — skip auto-start on narrow viewports; tour card positioning is cramped on phone.
-- **Tour step 4 fallback** *(small)* — if Aethelian Basin is not found (schema change), degrade to a generic info-panel explanation instead of crashing.
 
 ### Backlog
 
