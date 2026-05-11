@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, findRouteWithFallback, getJourneyNodes } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -86,5 +86,78 @@ describe('journey-graph: Dijkstra start-node fix', () => {
       }
     }
     expect(success).toBe(attempts)
+  })
+})
+
+describe('findComparisonRoutes', () => {
+  it('returns all three non-null routes for a typical civilization pair', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    expect(civs.length).toBeGreaterThanOrEqual(2)
+    const comps = findComparisonRoutes(graph, civs[0].id, civs[1].id)
+    expect(comps.direct).not.toBeNull()
+    expect(comps.safest).not.toBeNull()
+    expect(comps.cheapest).not.toBeNull()
+    expect(comps.direct!.nodes.length).toBeGreaterThanOrEqual(2)
+    expect(comps.safest!.nodes.length).toBeGreaterThanOrEqual(2)
+    expect(comps.cheapest!.nodes.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('direct route has the shortest (or equal) raw distance', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const comps = findComparisonRoutes(graph, civs[0].id, civs[civs.length - 1].id)
+    expect(comps.direct).not.toBeNull()
+    expect(comps.safest).not.toBeNull()
+    expect(comps.cheapest).not.toBeNull()
+    const dKm = comps.direct!.totalKm
+    const sKm = comps.safest!.totalKm
+    const cKm = comps.cheapest!.totalKm
+    // Direct optimizes purely for distance; safest/cheapest add multipliers ≥1.
+    expect(dKm).toBeLessThanOrEqual(sKm)
+    expect(dKm).toBeLessThanOrEqual(cKm)
+  })
+
+  it('returns degenerate single-node routes when start === end', () => {
+    const civ = nodes.find(n => n.category === 'civilization')!
+    const comps = findComparisonRoutes(graph, civ.id, civ.id)
+    expect(comps.direct).not.toBeNull()
+    expect(comps.safest).not.toBeNull()
+    expect(comps.cheapest).not.toBeNull()
+    expect(comps.direct!.nodes.length).toBe(1)
+    expect(comps.safest!.nodes.length).toBe(1)
+    expect(comps.cheapest!.nodes.length).toBe(1)
+    expect(comps.direct!.totalKm).toBe(0)
+    expect(comps.safest!.totalKm).toBe(0)
+    expect(comps.cheapest!.totalKm).toBe(0)
+  })
+
+  it('returns all-null for unknown node IDs', () => {
+    const comps = findComparisonRoutes(graph, 'nonexistent-start', 'nonexistent-end')
+    expect(comps.direct).toBeNull()
+    expect(comps.safest).toBeNull()
+    expect(comps.cheapest).toBeNull()
+  })
+
+  it('never throws for any named-node pair', () => {
+    const sample = nodes.slice(0, 12)
+    for (let i = 0; i < sample.length; i++) {
+      for (let j = 0; j < sample.length; j++) {
+        if (i === j) continue
+        expect(() => findComparisonRoutes(graph, sample[i].id, sample[j].id)).not.toThrow()
+      }
+    }
+  })
+
+  it('respects season parameter', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const spring = findComparisonRoutes(graph, civs[0].id, civs[1].id, 'spring')
+    const winter = findComparisonRoutes(graph, civs[0].id, civs[1].id, 'winter')
+    // Season can change route availability or edge costs, so the routes may differ.
+    // We only assert that both calls succeed and return non-null routes.
+    expect(spring.direct).not.toBeNull()
+    expect(winter.direct).not.toBeNull()
+    expect(spring.safest).not.toBeNull()
+    expect(winter.safest).not.toBeNull()
+    expect(spring.cheapest).not.toBeNull()
+    expect(winter.cheapest).not.toBeNull()
   })
 })

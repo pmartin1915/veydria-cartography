@@ -924,50 +924,70 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             {/* Comparison stats: side-by-side Direct / Safest / Cheapest */}
             {compareMode && comparisonRoutes && (
               <div className="journey-comparison-stats">
-                {(
-                  [
-                    { key: 'direct', label: 'Direct', color: '#4a9a3a', route: comparisonRoutes.direct },
-                    { key: 'safest', label: 'Safest', color: '#3a7ca5', route: comparisonRoutes.safest },
-                    { key: 'cheapest', label: 'Cheapest', color: '#c4a862', route: comparisonRoutes.cheapest },
-                  ] as const
-                ).map(({ key, label, color, route: cr }) => (
-                  <div
-                    key={key}
-                    className={`journey-comparison-card ${key === mode ? 'journey-comparison-active' : ''}`}
-                    style={{ '--comparison-color': color } as React.CSSProperties}
-                    onClick={() => {
-                      if (cr && key !== mode) {
-                        setMode(key as RouteMode)
-                        onModeChange?.(key as RouteMode)
-                      }
-                    }}
-                    title={cr ? `Click to switch to ${label} route` : 'No route found'}
-                  >
-                    <div className="journey-comparison-card-header">
-                      <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
-                      <span className="journey-comparison-label">{label}</span>
-                      {key === mode && <span className="journey-comparison-current">active</span>}
-                    </div>
-                    {cr ? (
-                      <div className="journey-comparison-card-body">
-                        <div className="journey-comparison-stat">
-                          <span className="journey-comparison-stat-label">Distance</span>
-                          <span className="journey-comparison-stat-value">{formatDistance(cr.totalDistanceSvg)}</span>
-                        </div>
-                        <div className="journey-comparison-stat">
-                          <span className="journey-comparison-stat-label">Travel</span>
-                          <span className="journey-comparison-stat-value">{formatDays(cr.estimatedDays)}</span>
-                        </div>
-                        <div className="journey-comparison-stat">
-                          <span className="journey-comparison-stat-label">Segments</span>
-                          <span className="journey-comparison-stat-value">{cr.edges.length}</span>
-                        </div>
+                {(() => {
+                  const entries = [
+                    { key: 'direct' as const, label: 'Direct', color: '#4a9a3a', route: comparisonRoutes.direct },
+                    { key: 'safest' as const, label: 'Safest', color: '#3a7ca5', route: comparisonRoutes.safest },
+                    { key: 'cheapest' as const, label: 'Cheapest', color: '#c4a862', route: comparisonRoutes.cheapest },
+                  ]
+                  const valid = entries.filter(e => e.route)
+                  const bestDistance = valid.length > 0 ? Math.min(...valid.map(e => e.route!.totalDistanceSvg)) : Infinity
+                  const bestDays = valid.length > 0 ? Math.min(...valid.map(e => e.route!.estimatedDays)) : Infinity
+                  const bestSegments = valid.length > 0 ? Math.min(...valid.map(e => e.route!.edges.length)) : Infinity
+                  return entries.map(({ key, label, color, route: cr }) => (
+                    <div
+                      key={key}
+                      className={`journey-comparison-card ${key === mode ? 'journey-comparison-active' : ''}`}
+                      style={{ '--comparison-color': color } as React.CSSProperties}
+                      onClick={() => {
+                        if (cr && key !== mode) {
+                          setMode(key as RouteMode)
+                          onModeChange?.(key as RouteMode)
+                        }
+                      }}
+                      title={cr ? `Click to switch to ${label} route` : 'No route found'}
+                    >
+                      <div className="journey-comparison-card-header">
+                        <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
+                        <span className="journey-comparison-label">{label}</span>
+                        {key === mode && <span className="journey-comparison-current">active</span>}
                       </div>
-                    ) : (
-                      <div className="journey-comparison-no-route">No route</div>
-                    )}
-                  </div>
-                ))}
+                      {cr ? (
+                        <div className="journey-comparison-card-body">
+                          <div className="journey-comparison-stat">
+                            <span className="journey-comparison-stat-label">Distance</span>
+                            <span className="journey-comparison-stat-value">
+                              {formatDistance(cr.totalDistanceSvg)}
+                              {cr.totalDistanceSvg === bestDistance && (
+                                <span className="journey-comparison-trophy" title="Shortest distance">★</span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="journey-comparison-stat">
+                            <span className="journey-comparison-stat-label">Travel</span>
+                            <span className="journey-comparison-stat-value">
+                              {formatDays(cr.estimatedDays)}
+                              {cr.estimatedDays === bestDays && (
+                                <span className="journey-comparison-trophy" title="Fastest route">★</span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="journey-comparison-stat">
+                            <span className="journey-comparison-stat-label">Segments</span>
+                            <span className="journey-comparison-stat-value">
+                              {cr.edges.length}
+                              {cr.edges.length === bestSegments && (
+                                <span className="journey-comparison-trophy" title="Fewest segments">★</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="journey-comparison-no-route">No route</div>
+                      )}
+                    </div>
+                  ))
+                })()}
               </div>
             )}
 

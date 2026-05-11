@@ -2969,6 +2969,20 @@ body {
   font-style: italic;
 }
 
+.journey-comparison-trophy {
+  margin-left: 4px;
+  font-size: 9px;
+  color: var(--accent);
+  vertical-align: middle;
+}
+
+/* Stack comparison cards vertically on very narrow panels */
+@media (max-width: 360px) {
+  .journey-comparison-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 .journey-route-hexes {
   margin-top: 10px;
   padding: 8px 10px;

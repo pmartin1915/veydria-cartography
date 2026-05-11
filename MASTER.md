@@ -156,30 +156,26 @@ Larger bets and exploratory directions:
 - Write tests alongside new state or schema. The 2026-05-07 audit added 7 retroactive tests; that gap shouldn't be the norm.
 - Avoid `localStorage` schema breakage by versioning keys (`...v1` → `...v2`). Defensive merges on read are forward-compatible for additive changes; bump the key for breaking ones.
 
-## 6. Guided tour — design sketch
+## 6. Guided tour
 
-A first-visit walkthrough is the right next big-ish feature once polish lands. Detail:
+**Shipped.** 8-step first-visit walkthrough implemented in `tour.ts` + `TourOverlay.tsx`. State managed by `tourReducer` in `App.tsx`.
 
-**Trigger.** Check `localStorage:veydria.tour.completed.v1`. If missing, on the first frame after `loaded === true`, fire the tour. Add a "Replay tour" entry to KeyboardHelp (?) for users who skipped.
+**Trigger.** Checks `localStorage:veydria.tour.completed.v1`. If missing, fires on first frame after `loaded === true`. Auto-start is skipped on viewports `< 768 px` where the tour card is too cramped. Replay via KeyboardHelp (?) overlay.
 
-**Mechanic.** A small floating card with text + a backdrop-filter dimming everything except the highlighted target (CSS `clip-path` or a mask-image + cutout). 5–7 steps, "Next" / "Skip" / "← Back" buttons, plus arrow keys.
+**Mechanic.** Floating spotlight card with text + CSS `clip-path` dimming everything except the highlighted target. Next / Back / Skip buttons, plus arrow-key navigation.
 
-**Steps (proposed):**
+**Steps:**
 
-1. **Welcome — what this is.** Card centred. "Veydria is a fantasy continent. This map has 3,052 features. Let me show you the five things you'll actually use."
-2. **Layers panel.** Highlight the layer column. "Toggle these on and off. Try a preset — `Politics view` is a good start." Demo: programmatically apply Politics preset on Next.
-3. **Cmd-K search.** Highlight the Search button. "Anything in the world is two keystrokes away — try `Cmd-K` and type a city name." Open the palette pre-populated with `oravan`.
-4. **Click → info panel.** Highlight the Aethelian Basin (programmatically open its InfoPanel). "Click any feature for its lore card. Notice the related features at the bottom — you can chain through them."
-5. **Journey planner.** Highlight the Journey button, open it. "Pick two places — the planner finds a route, breaks it into days, and rolls weather and encounters per leg."
-6. **Pins.** Highlight the Pin button. "Drop a pin near a feature and it auto-links. Use these for session notes."
-7. **Player view.** Highlight the Share button. "Toggle this and your annotations and encounter notes hide. Send the URL to your players."
-8. **Done.** "That's the tour. Press `?` for the keyboard help any time. Have fun."
+1. **Welcome** — centred card. "Veydria is a fantasy continent..."
+2. **Layers panel** — highlights layer column. Suggests trying the `Politics view` preset.
+3. **Cmd-K search** — highlights search button. Opens palette pre-populated with `oravan`.
+4. **Click → info panel** — opens Aethelian Basin InfoPanel (falls back to first water/civilization feature if schema drift). *Step 4 fallback implemented.*
+5. **Journey planner** — opens planner, explains route + days + encounters.
+6. **Pins** — demonstrates dropping a pin near a feature.
+7. **Player view** — toggles share mode, explains clean player URL.
+8. **Done** — "Press `?` for keyboard help any time."
 
-**Implementation cost.** ~4–6 hours. Tour state is a tiny `useReducer` in `App.tsx`; each step is a `{ targetSelector, title, body, onEnter?, onLeave? }`. Total LOC ~200 + a CSS file.
-
-**Test plan.** Vitest can verify the step graph (each step has a target selector that resolves in the DOM, no orphan steps, completion writes localStorage). The visual mask is manual.
-
-**Risk.** Selectors break when components are renamed. Mitigation: tag each tour target with a stable `data-tour="layers"` attribute rather than relying on CSS classes.
+**Tests.** `tour.test.ts` verifies step graph integrity, reducer state transitions, localStorage completion, and mobile gating.
 
 ## 7. Conventions
 
