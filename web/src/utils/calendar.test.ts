@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   clampDayOfYear,
   dayToSeason,
+  dayToApproximateDate,
   formatDayOfYear,
   eventActiveOn,
   getEventsForDay,
@@ -49,12 +50,36 @@ describe('calendar utilities', () => {
     })
   })
 
+  describe('dayToApproximateDate', () => {
+    it('maps day 1 to early January', () => {
+      expect(dayToApproximateDate(1)).toEqual({ month: 'January', period: 'early' })
+    })
+    it('maps day 15 to mid January', () => {
+      expect(dayToApproximateDate(15)).toEqual({ month: 'January', period: 'mid' })
+    })
+    it('maps day 25 to late January', () => {
+      expect(dayToApproximateDate(25)).toEqual({ month: 'January', period: 'late' })
+    })
+    it('maps day 120 to late April', () => {
+      expect(dayToApproximateDate(120)).toEqual({ month: 'April', period: 'late' })
+    })
+    it('maps day 365 to late December', () => {
+      expect(dayToApproximateDate(365)).toEqual({ month: 'December', period: 'late' })
+    })
+    it('clamps out-of-range days', () => {
+      expect(dayToApproximateDate(0)).toEqual({ month: 'January', period: 'early' })
+      expect(dayToApproximateDate(999)).toEqual({ month: 'December', period: 'late' })
+    })
+  })
+
   describe('formatDayOfYear', () => {
-    it('includes day number and season', () => {
+    it('includes day number, season, and approximate date', () => {
       expect(formatDayOfYear(1)).toContain('Day 1')
       expect(formatDayOfYear(1)).toContain('winter')
+      expect(formatDayOfYear(1)).toContain('early January')
       expect(formatDayOfYear(150)).toContain('Day 150')
       expect(formatDayOfYear(150)).toContain('spring')
+      expect(formatDayOfYear(150)).toContain('late May')
     })
   })
 

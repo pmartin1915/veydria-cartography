@@ -34,6 +34,12 @@ const SYNC_MAP = [
     dest: 'data/veydria-schematic.svg',
     description: 'Base SVG schematic from which coordinates are derived'
   },
+  {
+    src: 'timeline/calendar/calendar-events.yaml',
+    dest: 'data/calendar-events.yaml',
+    description: 'Structured calendar events (optional — falls back to hardcoded if missing in worldbuilder)',
+    optional: true,
+  },
 ];
 
 const CHECK_MODE = process.argv.includes('--check');
@@ -61,12 +67,16 @@ let synced = 0;
 let stale = 0;
 let missing = 0;
 
-for (const { src, dest, description } of SYNC_MAP) {
+for (const { src, dest, description, optional } of SYNC_MAP) {
   const srcPath = join(WORLDBUILDER_PATH, src);
   const destPath = join(CARTOGRAPHY_PATH, dest);
   const relDest = relative(CARTOGRAPHY_PATH, destPath);
 
   if (!existsSync(srcPath)) {
+    if (optional) {
+      console.log(`⏭️  Skipped (optional, not in worldbuilder): ${src}`);
+      continue;
+    }
     console.error(`❌ Source not found: ${srcPath}`);
     missing++;
     continue;
