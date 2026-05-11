@@ -132,6 +132,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Relationship richness** — explicit `relationships:` block in topology YAML now flows through to the FactionGraph. Added trade edges (Ngaru-Bon↔Irrah, Irrah↔Ndjadi, Kheshkai↔Qollari, Qollari↔Oravan, Qollari↔Ndjadi) and rival edges (Kheshkai↔Ndjadi). Generator exports relationships in GeoJSON metadata; frontend reads them via `geojson.metadata.relationships`.
 - **Export markdown campaign log** — new "Log" button in the header downloads a comprehensive `.md` file bundling the active journey (with full route, encounters, day-by-day), all saved journeys (summaries), campaign pins, and hex notes. `campaign-log.ts` utility with `exportJourneyMarkdown` (extracted from JourneyPlanner), `generateCampaignLog`, and `downloadCampaignLog`. 16 tests.
 - **Time-of-day overlay** — atmospheric tint control for the map. Cycles Day → Dawn → Dusk → Night via header button or `T` shortcut. CSS filters on `.leaflet-container` with smooth 0.5s transition. Per-mode icons (sun, rising sun, setting sun, crescent moon). Persisted to `veydria.timeOfDay.v1`. 9 tests.
+- **Dedicated mobile player mode** — when `#share=1` is loaded on a viewport ≤768px, the full GM header is replaced by minimal floating chrome: title pill top-left, search/help/exit-to-GM buttons top-right. Map fills the full screen (`100dvh`). Layer launcher pill stays bottom-left. Info panels and journey sheets remain bottom-sheet behaviour. New `useMediaQuery` hook with 6 tests.
 
 ### In Progress / Next
 
@@ -146,7 +147,6 @@ Larger bets and exploratory directions:
 - **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
 
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
-- **Dedicated mobile player mode** *(medium)* — share-mode URL renders cleanly on phone with no editing, just panning, info panels, and journey path. Potentially the killer at-the-table feature.
 - **Time / calendar layer** *(medium)* — overlay civilizational calendar dates (festivals, monsoons, harvest) on the journey breakdown. Pulls from worldbuilder's calendar YAML.
 - **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
 
