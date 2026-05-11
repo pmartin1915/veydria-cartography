@@ -37,6 +37,8 @@ export default function KeyboardHelp({ open, onClose, onReplayTour }: KeyboardHe
           <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Keyboard Shortcuts</span>
           <button
             onClick={onClose}
+            aria-label="Close keyboard help"
+            title="Close (Esc)"
             style={{
               width: 28, height: 28, border: '1px solid var(--border-subtle)',
               borderRadius: 4, background: 'transparent', color: 'var(--text-secondary)',
