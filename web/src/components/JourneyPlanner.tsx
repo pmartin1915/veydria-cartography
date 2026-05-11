@@ -8,7 +8,7 @@ import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findC
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
-import { formatDayOfYear, CALENDAR_EVENT_COLORS, type CalendarEventType } from '../utils/calendar'
+import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
@@ -400,9 +400,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     if (days.length > 0) {
       md += `\n### Day-by-Day\n\n`
       for (const day of days) {
-        md += `**Day ${day.dayNum}** · ${Math.round(day.kmCovered)} km\n\n`
+        const doyLabel = day.dayOfYear !== undefined ? ` · ${formatDayOfYear(day.dayOfYear)}` : ''
+        md += `**Day ${day.dayNum}**${doyLabel} · ${Math.round(day.kmCovered)} km\n\n`
         md += `- Start: ${day.startLabel}\n`
         md += `- Weather: ${day.weather}\n`
+        if (day.calendarEvents && day.calendarEvents.length > 0) {
+          for (const ev of day.calendarEvents) {
+            const effectLine = ev.effect ? ` — ${ev.effect}` : ''
+            md += `- 📅 **${ev.name}** (${ev.type})${effectLine}\n`
+          }
+        }
         if (day.notable.length > 0) {
           for (const n of day.notable) md += `- Notable: ${n}\n`
         }
@@ -693,6 +700,22 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               >
                 {departureDayOfYear !== undefined ? formatDayOfYear(departureDayOfYear) : 'Any'}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Calendar event legend */}
+        {departureDayOfYear !== undefined && (
+          <div className="journey-calendar-legend">
+            <span className="journey-calendar-legend-label">Event key</span>
+            <div className="journey-calendar-legend-grid">
+              {(Object.keys(CALENDAR_EVENT_COLORS) as CalendarEventType[]).map(type => (
+                <div key={type} className="journey-calendar-legend-item" title={type}>
+                  <span className="journey-calendar-legend-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[type] }} />
+                  <span className="journey-calendar-legend-icon">{CALENDAR_EVENT_ICONS[type]}</span>
+                  <span className="journey-calendar-legend-name">{type}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}

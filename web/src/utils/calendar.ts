@@ -248,6 +248,18 @@ export const VEYDRIA_CALENDAR: CalendarEvent[] = [
     season: 'autumn',
   },
   {
+    id: 'ndjadi-window-war',
+    name: 'Upstream/Downstream Window War',
+    civilization: 'ndjadi',
+    type: 'political',
+    startDay: 265,
+    durationDays: 35,
+    description:
+      'Annual flood-classification dispute season. The Wa-Kande ka-Bonde upstream coalition challenges the Flood-Yield Registry\'s ordinary/heavy designation to reduce levy obligations. Downstream Vernacular-Habal holders receive residual dam-release flow, often too late for optimal decrue planting. The River-Lord House Assembly convenes with the dispute on its agenda.',
+    effect: 'Grain-export contracts carry a "classification-risk premium." Smuggler portage volumes spike if Registry certificates freeze.',
+    season: 'autumn',
+  },
+  {
     id: 'ndjadi-decrue-planting',
     name: 'Decrue Planting',
     civilization: 'ndjadi',

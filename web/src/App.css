@@ -3915,6 +3915,51 @@ body {
   margin: 4px 0;
 }
 
+/* ── Calendar event legend ──────────────────────────────────────── */
+.journey-calendar-legend {
+  margin: 4px 0 8px;
+}
+
+.journey-calendar-legend-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.journey-calendar-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px 6px;
+}
+
+.journey-calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.journey-calendar-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.journey-calendar-legend-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.journey-calendar-legend-name {
+  text-transform: capitalize;
+}
+
 .journey-calendar-event {
   display: flex;
   align-items: center;

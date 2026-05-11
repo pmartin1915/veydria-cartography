@@ -232,6 +232,14 @@ export function buildDailyBreakdown(
     }
   }
 
+  // Extract civilizations the route passes through for calendar filtering.
+  // GeoJSON uses snake_case (e.g. ngaru_bon); calendar uses kebab-case (ngaru-bon).
+  const routeCivs = new Set(
+    route.nodes
+      .map(n => n.civ?.replace(/_/g, '-'))
+      .filter((c): c is string => !!c)
+  )
+
   const totalKm = route.totalKm
   const days: JourneyDay[] = []
   for (let d = 1; d <= totalDays; d++) {
@@ -275,7 +283,10 @@ export function buildDailyBreakdown(
     if (departureDayOfYear !== undefined && departureDayOfYear > 0) {
       const doy = ((departureDayOfYear - 1 + d - 1) % 365) + 1
       day.dayOfYear = doy
-      day.calendarEvents = getEventsForDay(doy)
+      const events = getEventsForDay(doy)
+      day.calendarEvents = routeCivs.size > 0
+        ? events.filter(ev => ev.civilization === 'all' || routeCivs.has(ev.civilization))
+        : events
     }
     days.push(day)
   }

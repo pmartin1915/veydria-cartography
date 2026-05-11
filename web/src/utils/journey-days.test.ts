@@ -160,4 +160,32 @@ describe('journey-days: bucketing', () => {
     expect(days[1].dayOfYear).toBe(365)
     expect(days[2].dayOfYear).toBe(1)   // wrapped
   })
+
+  it('filters calendar events to route civilizations', () => {
+    const route = makeRoute({ edgeDays: [1], totalKm: 25 })
+    // Assign ndjadi civ to all nodes so the route is "in Ndjadi territory"
+    for (const node of route.nodes) {
+      node.civ = 'ndjadi'
+    }
+    // Day 30 has both ndjadi-peak-fishing and irrah-imajin-council-spring active.
+    const days = buildDailyBreakdown(route, 'winter', 'direct', undefined, 30)
+    expect(days.length).toBe(1)
+    expect(days[0].calendarEvents).toBeDefined()
+    const eventNames = days[0].calendarEvents!.map(e => e.id)
+    expect(eventNames).toContain('ndjadi-peak-fishing')
+    expect(eventNames).not.toContain('irrah-imajin-council-spring')
+  })
+
+  it('includes basin-wide (all) calendar events regardless of route civ', () => {
+    const route = makeRoute({ edgeDays: [1], totalKm: 25 })
+    for (const node of route.nodes) {
+      node.civ = 'kheshkai'
+    }
+    // Day 1 has basin-khazadari-rate-setting (civilization: 'all').
+    const days = buildDailyBreakdown(route, 'winter', 'direct', undefined, 1)
+    expect(days.length).toBe(1)
+    expect(days[0].calendarEvents).toBeDefined()
+    const eventNames = days[0].calendarEvents!.map(e => e.id)
+    expect(eventNames).toContain('basin-khazadari-rate-setting')
+  })
 })
