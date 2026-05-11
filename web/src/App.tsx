@@ -22,6 +22,7 @@ import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
+import { useMediaQuery } from './utils/media-query'
 import TourOverlay from './components/TourOverlay'
 
 // GeoJSON types
@@ -278,6 +279,8 @@ function App() {
     try { window.localStorage.setItem('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
   }, [hexSize])
   const shareMode = !!initialHashRef.current.share
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const mobilePlayerMode = shareMode && isMobile
 
   // Cleanup all timeouts on unmount
   useEffect(() => {
@@ -736,6 +739,13 @@ function App() {
     }, 300)
   }, [])
 
+  // Exit player view: strip share=1 and reload so the full GM chrome renders.
+  const handleExitPlayerView = useCallback(() => {
+    const hash = buildHash({ ...viewportRef.current, share: undefined })
+    window.location.hash = hash
+    window.location.reload()
+  }, [])
+
   // Share button: copy current URL to clipboard. If `playerView` is true,
   // the URL has share=1 set, which strips annotations/encounters/edit
   // controls when opened.
@@ -935,13 +945,52 @@ function App() {
   const featureCount = geojson?.features.length ?? 0
 
   return (
-    <div className={`app ${shareMode ? 'share-mode' : ''}`}>
-      {shareMode && (
+    <div className={`app ${shareMode ? 'share-mode' : ''} ${mobilePlayerMode ? 'mobile-player-mode' : ''}`}>
+      {shareMode && !mobilePlayerMode && (
         <div className="player-view-banner" role="status" aria-live="polite">
           Player view — annotations and encounter notes are hidden
         </div>
       )}
-      <header className="app-header">
+      {mobilePlayerMode && (
+        <div className="mobile-player-chrome">
+          <div className="mobile-player-pill mobile-player-title">
+            <span className="mobile-player-title-text">VEYDRIA</span>
+          </div>
+          <div className="mobile-player-pill mobile-player-actions">
+            <button
+              className="mobile-player-btn"
+              onClick={() => setSearchOpen(true)}
+              title="Search features"
+              aria-label="Search features"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+            </button>
+            <button
+              className="mobile-player-btn"
+              onClick={() => setKeyboardHelpOpen(true)}
+              title="Keyboard shortcuts"
+              aria-label="Keyboard shortcuts"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="M6 8h.01M6 12h.01M6 16h.01" />
+              </svg>
+            </button>
+            <button
+              className="mobile-player-btn mobile-player-btn--exit"
+              onClick={handleExitPlayerView}
+              title="Exit player view"
+              aria-label="Exit player view"
+            >
+              <span>GM</span>
+            </button>
+          </div>
+        </div>
+      )}
+      {!mobilePlayerMode && <header className="app-header">
         <div className="header-left">
           <h1 className="app-title">VEYDRIA</h1>
           <span className="app-subtitle">Continental Reference Map</span>
@@ -1144,7 +1193,7 @@ function App() {
             {featureCount} features
           </button>
         </div>
-      </header>
+      </header>}
 
       <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay}`}>
         {geojson && (

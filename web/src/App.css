@@ -2105,6 +2105,101 @@ body {
   color: var(--text-primary);
 }
 
+/* --- Dedicated mobile player mode ---
+   When #share=1 is loaded on a narrow viewport the full header is
+   replaced by two floating pills: title (top-left) and actions
+   (top-right). The map fills the entire screen. */
+.app.mobile-player-mode {
+  padding-top: 0;
+}
+
+.app.mobile-player-mode .app-main {
+  height: 100dvh;
+}
+
+.mobile-player-chrome {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 1500;
+}
+
+.mobile-player-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.mobile-player-title-text {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.mobile-player-actions {
+  gap: 2px;
+  padding: 4px;
+}
+
+.mobile-player-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-player-btn:hover,
+.mobile-player-btn:focus-visible {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.mobile-player-btn:active {
+  transform: scale(0.92);
+}
+
+.mobile-player-btn--exit {
+  width: auto;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-accent);
+}
+
+.mobile-player-btn--exit span {
+  line-height: 1;
+}
+
+/* Hide the layer-controls collapse button in player mode when the
+   panel is open — the launcher pill is enough chrome. */
+.app.mobile-player-mode .layer-controls-collapse {
+  top: 56px;
+}
+
 @media (max-width: 480px) {
   .app-header {
     padding: 0 10px;
