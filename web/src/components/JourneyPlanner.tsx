@@ -8,6 +8,7 @@ import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findC
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
+import { formatDayOfYear, CALENDAR_EVENT_COLORS, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
@@ -80,6 +81,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [selectedSegmentIdx, setSelectedSegmentIdx] = useState(0)
   const [compareMode, setCompareMode] = useState(false)
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
+  const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
   // Reset impromptu rolls and segment selection whenever the route identity
   // changes — they're mid-session state bound to a specific trip.
   const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
@@ -212,6 +214,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setSeason(undefined)
       setMode('direct')
       setExportToast(null)
+      setDepartureDayOfYear(undefined)
     }
   }, [active, onRouteComputed])
 
@@ -263,6 +266,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setWpOpenIdx(null)
     setAttempted(false)
     setAutoPivots([])
+    setDepartureDayOfYear(undefined)
   }
 
   function handleAddWaypoint() {
@@ -392,7 +396,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
-    const days = buildDailyBreakdown(route, season, mode)
+    const days = buildDailyBreakdown(route, season, mode, undefined, departureDayOfYear)
     if (days.length > 0) {
       md += `\n### Day-by-Day\n\n`
       for (const day of days) {
@@ -665,6 +669,31 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               </svg>
               <span>Compare routes</span>
             </button>
+          </div>
+        )}
+
+        {/* Departure day-of-year */}
+        {!shareMode && (
+          <div className="journey-departure">
+            <label className="journey-departure-label">Departure</label>
+            <div className="journey-departure-row">
+              <input
+                type="range"
+                min={1}
+                max={365}
+                value={departureDayOfYear ?? 1}
+                onChange={(e) => setDepartureDayOfYear(Number(e.target.value))}
+                className="journey-departure-slider"
+                disabled={departureDayOfYear === undefined}
+              />
+              <button
+                className={`journey-departure-toggle ${departureDayOfYear !== undefined ? 'active' : ''}`}
+                onClick={() => setDepartureDayOfYear(prev => prev === undefined ? 120 : undefined)}
+                title={departureDayOfYear !== undefined ? 'Clear departure date' : 'Set departure date for calendar events'}
+              >
+                {departureDayOfYear !== undefined ? formatDayOfYear(departureDayOfYear) : 'Any'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -1082,7 +1111,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             )}
 
             {routeTab === 'days' && (() => {
-              const days = buildDailyBreakdown(route, season, mode, edgeBiomes)
+              const days = buildDailyBreakdown(route, season, mode, edgeBiomes, departureDayOfYear)
               if (days.length === 0) {
                 return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
               }
@@ -1110,10 +1139,31 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     >
                       <div className="journey-day-header">
                         <span className="journey-day-num">Day {day.dayNum}</span>
+                        {day.dayOfYear !== undefined && (
+                          <span className="journey-day-doy">{formatDayOfYear(day.dayOfYear)}</span>
+                        )}
                         <span className="journey-day-km">{Math.round(day.kmCovered)} km</span>
                       </div>
                       <div className="journey-day-line"><span className="journey-day-label">Start:</span> {day.startLabel}</div>
                       <div className="journey-day-line journey-day-weather"><IconCloudRain /> {day.weather}</div>
+                      {day.calendarEvents && day.calendarEvents.length > 0 && (
+                        <div className="journey-day-calendar">
+                          {day.calendarEvents.map((ev, i) => (
+                            <div
+                              key={i}
+                              className="journey-calendar-event"
+                              style={{ borderLeftColor: CALENDAR_EVENT_COLORS[ev.type] }}
+                              title={ev.description + (ev.effect ? `\nEffect: ${ev.effect}` : '')}
+                            >
+                              <span className="journey-calendar-event-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[ev.type] }} />
+                              <span className="journey-calendar-event-name">{ev.name}</span>
+                              {ev.civilization !== 'all' && (
+                                <span className="journey-calendar-event-civ">{ev.civilization}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {day.notable.length > 0 && (
                         <ul className="journey-day-notable">
                           {day.notable.map((n, i) => (

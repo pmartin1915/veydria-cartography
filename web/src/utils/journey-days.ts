@@ -12,6 +12,8 @@
 
 import type { JourneyRoute, JourneyEdge, JourneyNode, Season, RouteMode } from './journey-graph'
 import { generateEncounters, type Encounter } from './encounters'
+import type { CalendarEvent } from './calendar'
+import { getEventsForDay } from './calendar'
 
 export interface JourneyDay {
   dayNum: number
@@ -22,6 +24,10 @@ export interface JourneyDay {
   encounters: Encounter[]
   notable: string[]
   edgesTraversed: { edge: JourneyEdge; portion: number }[] // portion ∈ (0, 1]
+  /** Calendar events active on this day, if departure date is set. */
+  calendarEvents?: CalendarEvent[]
+  /** Absolute day-of-year (1–365) if departure date is set. */
+  dayOfYear?: number
 }
 
 /* ─── Hash + RNG (kept self-contained so this module is independent) ─── */
@@ -170,7 +176,8 @@ export function buildDailyBreakdown(
   route: JourneyRoute,
   season?: Season,
   mode: RouteMode = 'direct',
-  edgeBiomes?: (string | undefined)[]
+  edgeBiomes?: (string | undefined)[],
+  departureDayOfYear?: number
 ): JourneyDay[] {
   if (!route.edges.length || route.estimatedDays <= 0) return []
 
@@ -255,7 +262,7 @@ export function buildDailyBreakdown(
       campLabel = campLabelAt(route.nodes, route.edges, pos.edgeIdx, pos.t)
     }
 
-    days.push({
+    const day: JourneyDay = {
       dayNum: d,
       kmCovered,
       startLabel,
@@ -264,7 +271,13 @@ export function buildDailyBreakdown(
       encounters: encountersByDay.get(d) || [],
       notable: notableForDay(edgesInDay, d, totalDays),
       edgesTraversed: edgesInDay,
-    })
+    }
+    if (departureDayOfYear !== undefined && departureDayOfYear > 0) {
+      const doy = ((departureDayOfYear - 1 + d - 1) % 365) + 1
+      day.dayOfYear = doy
+      day.calendarEvents = getEventsForDay(doy)
+    }
+    days.push(day)
   }
 
   return days

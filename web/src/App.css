@@ -3844,6 +3844,107 @@ body {
   padding-top: 6px;
 }
 
+.journey-day-doy {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Departure day control ───────────────────────────────────────── */
+.journey-departure {
+  margin: 8px 0;
+}
+
+.journey-departure-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.journey-departure-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journey-departure-slider {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.journey-departure-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.journey-departure-toggle {
+  padding: 3px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.journey-departure-toggle:hover {
+  border-color: var(--text-accent);
+  color: var(--text-primary);
+}
+
+.journey-departure-toggle.active {
+  border-color: var(--accent);
+  background: rgba(180, 140, 80, 0.12);
+  color: var(--accent);
+}
+
+/* ── Calendar event badges in day cards ──────────────────────────── */
+.journey-day-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.journey-calendar-event {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--bg-surface);
+  border-left: 3px solid;
+  font-size: 10px;
+}
+
+.journey-calendar-event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.journey-calendar-event-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.journey-calendar-event-civ {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
 @keyframes hex-notes-flash {
   0% { background: transparent; }
   20% { background: rgba(232, 200, 64, 0.15); }
