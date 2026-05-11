@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 328/328 | vitest, 21 files |
+| Tests | ✅ 353/353 | vitest, 22 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -134,6 +134,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Time-of-day overlay** — atmospheric tint control for the map. Cycles Day → Dawn → Dusk → Night via header button or `T` shortcut. CSS filters on `.leaflet-container` with smooth 0.5s transition. Per-mode icons (sun, rising sun, setting sun, crescent moon). Persisted to `veydria.timeOfDay.v1`. 9 tests.
 - **Dedicated mobile player mode** — when `#share=1` is loaded on a viewport ≤768px, the full GM header is replaced by minimal floating chrome: title pill top-left, search/help/exit-to-GM buttons top-right. Map fills the full screen (`100dvh`). Layer launcher pill stays bottom-left. Info panels and journey sheets remain bottom-sheet behaviour. New `useMediaQuery` hook with 6 tests.
 - **Multi-route comparison** — overlay Direct (solid green), Safest (dashed blue), and Cheapest (dotted gold) routes simultaneously on the map. Toggle button in JourneyPlanner when no waypoints are set. Side-by-side stat cards (distance, travel time, segments) with colour-coded dots. Click a card to switch the active route mode. `findComparisonRoutes()` in `journey-graph.ts` computes all three in parallel. Data flows: `App.tsx` state → `JourneyPlanner` computation → `MapViewer` rendering via separate `comparisonRouteLayerRef`.
+- **Time / calendar layer** — civilizational calendar overlay on journey day-by-day breakdown. Departure day-of-year selector (1-365) with season-aware slider. Each JourneyDay gets `dayOfYear` + active `calendarEvents` from the `calendar.ts` module. Events shown as colour-coded badges in the Days tab. 19 tests. Placeholder events for all 6 civilizations + Basin-wide; replace with researched canon from worldbuilder.
 
 ### In Progress / Next
 
@@ -147,7 +148,6 @@ Larger bets and exploratory directions:
 
 
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
-- **Time / calendar layer** *(medium)* — overlay civilizational calendar dates (festivals, monsoons, harvest) on the journey breakdown. Pulls from worldbuilder's calendar YAML.
 - **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
 
 ### Health / infrastructure (always-on)
