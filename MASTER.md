@@ -94,7 +94,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 322/322 | vitest, 20 files |
+| Tests | ✅ 328/328 | vitest, 21 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -133,6 +133,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Export markdown campaign log** — new "Log" button in the header downloads a comprehensive `.md` file bundling the active journey (with full route, encounters, day-by-day), all saved journeys (summaries), campaign pins, and hex notes. `campaign-log.ts` utility with `exportJourneyMarkdown` (extracted from JourneyPlanner), `generateCampaignLog`, and `downloadCampaignLog`. 16 tests.
 - **Time-of-day overlay** — atmospheric tint control for the map. Cycles Day → Dawn → Dusk → Night via header button or `T` shortcut. CSS filters on `.leaflet-container` with smooth 0.5s transition. Per-mode icons (sun, rising sun, setting sun, crescent moon). Persisted to `veydria.timeOfDay.v1`. 9 tests.
 - **Dedicated mobile player mode** — when `#share=1` is loaded on a viewport ≤768px, the full GM header is replaced by minimal floating chrome: title pill top-left, search/help/exit-to-GM buttons top-right. Map fills the full screen (`100dvh`). Layer launcher pill stays bottom-left. Info panels and journey sheets remain bottom-sheet behaviour. New `useMediaQuery` hook with 6 tests.
+- **Multi-route comparison** — overlay Direct (solid green), Safest (dashed blue), and Cheapest (dotted gold) routes simultaneously on the map. Toggle button in JourneyPlanner when no waypoints are set. Side-by-side stat cards (distance, travel time, segments) with colour-coded dots. Click a card to switch the active route mode. `findComparisonRoutes()` in `journey-graph.ts` computes all three in parallel. Data flows: `App.tsx` state → `JourneyPlanner` computation → `MapViewer` rendering via separate `comparisonRouteLayerRef`.
 
 ### In Progress / Next
 
@@ -144,7 +145,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 
 Larger bets and exploratory directions:
 
-- **Multi-route comparison** *(medium)* — overlay Direct vs Safest vs Cheapest routes simultaneously with distinct colours and side-by-side stat blocks.
 
 - **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
 - **Time / calendar layer** *(medium)* — overlay civilizational calendar dates (festivals, monsoons, harvest) on the journey breakdown. Pulls from worldbuilder's calendar YAML.

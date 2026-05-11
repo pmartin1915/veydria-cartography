@@ -4,7 +4,7 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
@@ -36,6 +36,7 @@ interface JourneyPlannerProps {
   onSeasonChange?: (season: Season | undefined) => void
   /** Optional callback fired whenever the route mode changes. */
   onModeChange?: (mode: RouteMode) => void
+  onComparisonRoutesComputed?: (routes: ComparisonRoutes) => void
 }
 
 function formatDays(days: number): string {
@@ -53,7 +54,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -77,6 +78,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const [oneOffRolls, setOneOffRolls] = useState<Encounter[]>([])
   const [selectedSegmentIdx, setSelectedSegmentIdx] = useState(0)
+  const [compareMode, setCompareMode] = useState(false)
+  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   // Reset impromptu rolls and segment selection whenever the route identity
   // changes — they're mid-session state bound to a specific trip.
   const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
@@ -175,10 +178,20 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setAutoPivots(pivots)
       setAttempted(true)
       onRouteComputed(result)
+
+      // Comparison routes: only for simple A→B (no waypoints) and when enabled
+      if (compareMode && stops.length === 2) {
+        const comparisons = findComparisonRoutes(graph, startId, endId, season)
+        setComparisonRoutes(comparisons)
+        onComparisonRoutesComputed?.(comparisons)
+      } else if (!compareMode) {
+        setComparisonRoutes({ direct: null, safest: null, cheapest: null })
+        onComparisonRoutesComputed?.({ direct: null, safest: null, cheapest: null })
+      }
     }, 250)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, startId, endId, waypoints, season, mode, graph])
+  }, [active, startId, endId, waypoints, season, mode, graph, compareMode])
 
   // Reset route when closed
   useEffect(() => {
@@ -186,6 +199,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       didAutoComputeRef.current = false
       setRoute(null)
       onRouteComputed(null)
+      setComparisonRoutes({ direct: null, safest: null, cheapest: null })
+      onComparisonRoutesComputed?.({ direct: null, safest: null, cheapest: null })
+      setCompareMode(false)
       setStartId('')
       setEndId('')
       setStartSearch('')
@@ -636,6 +652,22 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         </div>
 
+        {/* Compare routes toggle */}
+        {!shareMode && waypoints.length === 0 && (
+          <div className="journey-compare-toggle">
+            <button
+              className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
+              onClick={() => setCompareMode(prev => !prev)}
+              title="Overlay Direct, Safest, and Cheapest routes on the map"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
+              <span>Compare routes</span>
+            </button>
+          </div>
+        )}
+
         {/* Start selector */}
         <div className="journey-field" ref={startRef}>
           <label className="journey-field-label">From</label>
@@ -888,6 +920,56 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 return <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
               })()}
             </div>
+
+            {/* Comparison stats: side-by-side Direct / Safest / Cheapest */}
+            {compareMode && comparisonRoutes && (
+              <div className="journey-comparison-stats">
+                {(
+                  [
+                    { key: 'direct', label: 'Direct', color: '#4a9a3a', route: comparisonRoutes.direct },
+                    { key: 'safest', label: 'Safest', color: '#3a7ca5', route: comparisonRoutes.safest },
+                    { key: 'cheapest', label: 'Cheapest', color: '#c4a862', route: comparisonRoutes.cheapest },
+                  ] as const
+                ).map(({ key, label, color, route: cr }) => (
+                  <div
+                    key={key}
+                    className={`journey-comparison-card ${key === mode ? 'journey-comparison-active' : ''}`}
+                    style={{ '--comparison-color': color } as React.CSSProperties}
+                    onClick={() => {
+                      if (cr && key !== mode) {
+                        setMode(key as RouteMode)
+                        onModeChange?.(key as RouteMode)
+                      }
+                    }}
+                    title={cr ? `Click to switch to ${label} route` : 'No route found'}
+                  >
+                    <div className="journey-comparison-card-header">
+                      <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
+                      <span className="journey-comparison-label">{label}</span>
+                      {key === mode && <span className="journey-comparison-current">active</span>}
+                    </div>
+                    {cr ? (
+                      <div className="journey-comparison-card-body">
+                        <div className="journey-comparison-stat">
+                          <span className="journey-comparison-stat-label">Distance</span>
+                          <span className="journey-comparison-stat-value">{formatDistance(cr.totalDistanceSvg)}</span>
+                        </div>
+                        <div className="journey-comparison-stat">
+                          <span className="journey-comparison-stat-label">Travel</span>
+                          <span className="journey-comparison-stat-value">{formatDays(cr.estimatedDays)}</span>
+                        </div>
+                        <div className="journey-comparison-stat">
+                          <span className="journey-comparison-stat-label">Segments</span>
+                          <span className="journey-comparison-stat-value">{cr.edges.length}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="journey-comparison-no-route">No route</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {routeHexLabels.length > 0 && (
               <div className="journey-route-hexes">

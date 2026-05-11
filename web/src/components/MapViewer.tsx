@@ -17,7 +17,7 @@ import type { HexCell } from '../utils/hex-grid'
 import { getRouteHexLabels, BIOME_COLORS } from '../utils/hex-grid'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
-import type { JourneyRoute } from '../utils/journey-graph'
+import type { JourneyRoute, ComparisonRoutes } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
 import { createAnnotation, ANNOTATION_COLORS, findNearestFeature } from '../utils/annotations'
 import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
@@ -64,6 +64,7 @@ export interface MapViewerProps {
   onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
   opacities?: LayerOpacity
   route?: JourneyRoute | null
+  comparisonRoutes?: ComparisonRoutes
   onHoverHex?: (hex: { hex: HexCell; descriptors: string[] } | null) => void
   onSelectHex?: (hex: { hex: HexCell; descriptors: string[] }) => void
   hexSize?: number
@@ -229,7 +230,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
+  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
@@ -239,6 +240,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
     const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
+    const comparisonRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const annotationLayerRef = useRef<L.LayerGroup | null>(null)
     const hexOverlayRef = useRef<HexOverlay | null>(null)
     const hexTooltipRef = useRef<HTMLDivElement | null>(null)
@@ -319,6 +321,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         if (journeyRouteLayerRef.current && mapRef.current) {
           mapRef.current.removeLayer(journeyRouteLayerRef.current)
           journeyRouteLayerRef.current = null
+        }
+        if (comparisonRouteLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(comparisonRouteLayerRef.current)
+          comparisonRouteLayerRef.current = null
         }
       },
       selectHexByLabel(label: string) {
@@ -1220,6 +1226,56 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       }
     }, [route])
+
+    // Render comparison route overlays (Direct vs Safest vs Cheapest)
+    useEffect(() => {
+      if (!mapRef.current) return
+      if (comparisonRouteLayerRef.current) {
+        mapRef.current.removeLayer(comparisonRouteLayerRef.current)
+        comparisonRouteLayerRef.current = null
+      }
+      if (!comparisonRoutes) return
+
+      const COMPARISON_STYLES: Record<string, { color: string; weight: number }> = {
+        direct:   { color: '#4a9a3a', weight: 4 },
+        safest:   { color: '#3a7ca5', weight: 4 },
+        cheapest: { color: '#c4a862', weight: 4 },
+      }
+
+      const group = L.layerGroup()
+
+      for (const [mode, route] of Object.entries(comparisonRoutes)) {
+        if (!route || route.nodes.length < 2) continue
+        const style = COMPARISON_STYLES[mode]
+        if (!style) continue
+
+        for (let i = 1; i < route.nodes.length; i++) {
+          const a = route.nodes[i - 1]
+          const b = route.nodes[i]
+          const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
+
+          L.polyline(latlngs, {
+            color: style.color,
+            weight: style.weight,
+            opacity: 0.65,
+            lineCap: 'round',
+            lineJoin: 'round',
+            className: `journey-comparison-line journey-comparison-${mode}`,
+            dashArray: mode === 'direct' ? undefined : mode === 'safest' ? '6,4' : '3,3',
+          }).addTo(group)
+        }
+      }
+
+      group.addTo(mapRef.current)
+      comparisonRouteLayerRef.current = group
+
+      return () => {
+        if (comparisonRouteLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(comparisonRouteLayerRef.current)
+          comparisonRouteLayerRef.current = null
+        }
+      }
+    }, [comparisonRoutes])
 
     // Render annotation pins
     useEffect(() => {

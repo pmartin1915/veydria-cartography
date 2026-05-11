@@ -549,6 +549,22 @@ export function findRouteWithFallback(
   return { route: null, pivots: [] }
 }
 
+export type ComparisonRoutes = Record<'direct' | 'safest' | 'cheapest', JourneyRoute | null>
+
+/** Compute direct, safest, and cheapest routes for side-by-side comparison. */
+export function findComparisonRoutes(
+  graph: Graph,
+  startId: string,
+  endId: string,
+  season?: Season
+): ComparisonRoutes {
+  return {
+    direct: findRouteWithFallback(graph, startId, endId, season, 'direct').route,
+    safest: findRouteWithFallback(graph, startId, endId, season, 'safest').route,
+    cheapest: findRouteWithFallback(graph, startId, endId, season, 'cheapest').route,
+  }
+}
+
 /** Derive a difficulty class from edge composition. */
 export function getRouteDifficulty(route: JourneyRoute): { class: string; label: string } {
   if (route.edges.length === 0) return { class: 'trivial', label: 'Trivial' }

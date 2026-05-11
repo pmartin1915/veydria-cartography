@@ -11,7 +11,7 @@ import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
-import type { JourneyRoute, Season, RouteMode } from './utils/journey-graph'
+import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
@@ -259,6 +259,7 @@ function App() {
   }, [])
 
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
+  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [journeySeason, setJourneySeason] = useState<Season | undefined>(undefined)
   const [journeyModeState, setJourneyModeState] = useState<RouteMode>('direct')
   const [pinMode, setPinMode] = useState(false)
@@ -711,9 +712,14 @@ function App() {
     }, 300)
   }, [])
 
+  const handleComparisonRoutesComputed = useCallback((routes: ComparisonRoutes) => {
+    setComparisonRoutes(routes)
+  }, [])
+
   const handleJourneyClose = useCallback(() => {
     setJourneyMode(false)
     setJourneyRoute(null)
+    setComparisonRoutes({ direct: null, safest: null, cheapest: null })
     setJourneySeason(undefined)
     setJourneyModeState('direct')
     mapRef.current?.clearJourneyRoute()
@@ -1226,6 +1232,7 @@ function App() {
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
             route={journeyRoute}
+            comparisonRoutes={comparisonRoutes}
             onHoverHex={setHoverHex}
             onSelectHex={(hit) => {
               if (hexMeasureMode) {
@@ -1341,6 +1348,7 @@ function App() {
             defaultEndId={initialHashRef.current.journeyTo}
             onClose={handleJourneyClose}
             onRouteComputed={handleJourneyRouteComputed}
+            onComparisonRoutesComputed={handleComparisonRoutesComputed}
             annotations={shareMode ? [] : annotations}
             onFlyToAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
             onSelectFeatureById={handleSelectFeatureById}
