@@ -94,6 +94,22 @@ describe('calendar utilities', () => {
       expect(eventActiveOn(ev, 5)).toBe(false)
       expect(eventActiveOn(ev, 359)).toBe(false)
     })
+
+    it('treats year-long (or longer) events as always active', () => {
+      const ev: CalendarEvent = {
+        id: 'perma',
+        name: 'Permanent',
+        civilization: 'all',
+        type: 'misc',
+        startDay: 200,
+        durationDays: 365,
+        description: '',
+        season: 'all',
+      }
+      expect(eventActiveOn(ev, 1)).toBe(true)
+      expect(eventActiveOn(ev, 200)).toBe(true)
+      expect(eventActiveOn(ev, 365)).toBe(true)
+    })
   })
 
   describe('getEventsForDay', () => {

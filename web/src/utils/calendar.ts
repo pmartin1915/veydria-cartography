@@ -2,8 +2,8 @@
  * calendar.ts — Veydrian civilizational calendar
  *
  * Calendar events tied to civilizations, seasons, and day-of-year.
- * Placeholder events are defined here; replace with researched canon
- * from worldbuilder when available.
+ * ~50 researched canon events for all 6 civilizations + Basin-wide
+ * institutions, drawn from worldbuilder/timeline/calendar/*.yaml.
  *
  * All days are 1-based (1 = first day of the year, 365 = last day).
  */
@@ -64,6 +64,7 @@ export function formatDayOfYear(day: number): string {
 export function eventActiveOn(event: CalendarEvent, day: number): boolean {
   const d = clampDayOfYear(day)
   const s = event.startDay
+  if (event.durationDays >= DAYS_IN_YEAR) return true
   const rawEnd = s + event.durationDays - 1
   const e = (rawEnd % DAYS_IN_YEAR) || DAYS_IN_YEAR
   if (rawEnd <= DAYS_IN_YEAR) {
@@ -107,182 +108,639 @@ export function getSeasonalEvents(
   return events.filter(e => e.season === season || e.season === 'all')
 }
 
-/* ─── Placeholder calendar data ─────────────────────────────────────
- * Replace with researched canon from worldbuilder.
- * Each civilization should have festivals, harvests, trade fairs, etc.
+/* ─── Researched canon calendar ────────────────────────────────────
+ * Drawn from worldbuilder timeline/calendar/*.yaml (2026-05-11).
+ * Events are mapped to approximate day-of-year (1–365) against a
+ * Northern-Hemisphere season model so the journey planner can show
+ * seasonal overlays.  Durations wrap across year-end where needed.
  */
 
 export const VEYDRIA_CALENDAR: CalendarEvent[] = [
-  // ── Oravan (maritime, monsoon-gated) ─────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  //  ORAVAN — Monsoon-Window Reckoning
+  // ═══════════════════════════════════════════════════════════════════
   {
-    id: 'oravan-spice-harvest',
-    name: 'Spice Harvest',
+    id: 'oravan-nw-monsoon',
+    name: 'NW Monsoon',
     civilization: 'oravan',
-    type: 'harvest',
-    startDay: 130,
-    durationDays: 21,
-    description: 'Oravan archipelago spice harvest aligns with the sailing window.',
-    effect: 'Spice prices halved in Oravan ports. Maritime traffic peaks.',
+    type: 'monsoon',
+    startDay: 320,
+    durationDays: 80,
+    description:
+      'Wet north-west monsoon. Convective rain, breadfruit and wild-nutmeg fruiting across the archipelago.',
+    season: 'winter',
+  },
+  {
+    id: 'oravan-cyclone-shoulder-spring',
+    name: 'Cyclone Shoulder (Spring)',
+    civilization: 'oravan',
+    type: 'monsoon',
+    startDay: 80,
+    durationDays: 14,
+    description:
+      'Transition from wet monsoon to SE trade season. Cyclone risk peaks; convoy-departure windows are declared by the priestess-queen.',
+    effect: 'Insurance premiums triple between standard and cyclone-shoulder rates.',
     season: 'spring',
   },
   {
-    id: 'oravan-monsoon-departure',
-    name: 'Monsoon Departure',
+    id: 'oravan-cyclone-shoulder-autumn',
+    name: 'Cyclone Shoulder (Autumn)',
     civilization: 'oravan',
     type: 'monsoon',
-    startDay: 90,
+    startDay: 270,
     durationDays: 14,
-    description: 'SE trade season opens. Fleet captains race to be first through Halkar Straits.',
+    description:
+      'Transition from SE trade season back to wet monsoon. The Harbor Covenant reviews wave-tithe terms.',
+    season: 'autumn',
+  },
+  {
+    id: 'oravan-clove-nutmeg-harvest',
+    name: 'Clove & Nutmeg Harvest',
+    civilization: 'oravan',
+    type: 'harvest',
+    startDay: 180,
+    durationDays: 21,
+    description: 'Drier SE trade season harvest. Canoe-voyaging window peaks.',
+    effect: 'Spice prices halved in Oravan ports; Basin-bound convoys load.',
+    season: 'summer',
+  },
+  {
+    id: 'oravan-tavamala-consecration',
+    name: 'Tavamala Consecration',
+    civilization: 'oravan',
+    type: 'religious',
+    startDay: 355,
+    durationDays: 5,
+    description:
+      'Annual solstice consecration of the New Harvest by the priestess-queen in dual-aspect register (ocean-salt + hearth-fire). The only fixed point of the Oravan year.',
+    effect: 'Opens the sailing-year and sets the Harbor Covenant insurance window.',
+    season: 'winter',
+  },
+  {
+    id: 'oravan-convoy-blessing',
+    name: 'Convoy Blessing',
+    civilization: 'oravan',
+    type: 'religious',
+    startDay: 90,
+    durationDays: 7,
+    description:
+      'Cyclone-shoulder convoy blessing declared by the priestess-queen after observation. No vessel may sail uninsured before this rite.',
     season: 'spring',
   },
   {
     id: 'oravan-wave-tithe',
-    name: 'Wave-Tithe',
+    name: 'Wave-Tithe Collection',
     civilization: 'oravan',
-    type: 'religious',
+    type: 'political',
     startDay: 200,
     durationDays: 7,
-    description: 'Annual tribute to the sea. Queen-church collects from every vessel.',
+    description:
+      'The Harbor Covenant collects the seasonal wave-tithe from every vessel that sailed under its insurance window.',
     season: 'summer',
   },
 
-  // ── Ndjadi (equatorial grain basin) ──────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  //  NDJADI — Flood-Pulse Reckoning
+  // ═══════════════════════════════════════════════════════════════════
   {
-    id: 'ndjadi-planting',
-    name: 'Delta Planting',
+    id: 'ndjadi-flood-rise',
+    name: 'Flood Rise',
     civilization: 'ndjadi',
-    type: 'harvest',
-    startDay: 60,
-    durationDays: 14,
-    description: 'Stone barays are opened and the delta fields are sown.',
-    effect: 'Labour shortages as every hand is in the fields.',
+    type: 'misc',
+    startDay: 130,
+    durationDays: 90,
+    description:
+      'Upland rains drive the A-Tzalan flood rise. River traffic becomes unpredictable and gauge-readings climb.',
     season: 'spring',
   },
   {
-    id: 'ndjadi-first-flood',
-    name: 'First Flood',
+    id: 'ndjadi-flood-crest',
+    name: 'Flood Crest',
     civilization: 'ndjadi',
     type: 'misc',
-    startDay: 160,
+    startDay: 260,
     durationDays: 10,
-    description: 'The A-Tzalan tributaries swell. River traffic becomes unpredictable.',
-    season: 'summer',
+    description: 'The flood crests across the delta. Peak water height determines the annual classification.',
+    season: 'autumn',
+  },
+  {
+    id: 'ndjadi-flood-window-publication',
+    name: 'Flood-Window Publication',
+    civilization: 'ndjadi',
+    type: 'political',
+    startDay: 265,
+    durationDays: 7,
+    description:
+      'The Floodwatch Augmented Bureaucracy publishes the annual flood-window prediction. Classifies the year as ordinary, heavy, or low flood.',
+    effect: 'Determines levy schedule, harvest-guarantee underwriting, and Court notarization volume.',
+    season: 'autumn',
+  },
+  {
+    id: 'ndjadi-river-lord-assembly',
+    name: 'River-Lord House Assembly',
+    civilization: 'ndjadi',
+    type: 'political',
+    startDay: 272,
+    durationDays: 7,
+    description:
+      'Ratification session convened the week after flood-window publication. River-lords vote on levy apportionment.',
+    effect: 'Upstream irrigation districts may dispute the classification to reduce their levy obligation.',
+    season: 'autumn',
+  },
+  {
+    id: 'ndjadi-decrue-planting',
+    name: 'Decrue Planting',
+    civilization: 'ndjadi',
+    type: 'harvest',
+    startDay: 320,
+    durationDays: 50,
+    description:
+      'Flood recession planting into moist silt (Nov–Jan). The busiest agricultural window of the Ndjadi year.',
+    season: 'winter',
+  },
+  {
+    id: 'ndjadi-peak-fishing',
+    name: 'Peak Fishing',
+    civilization: 'ndjadi',
+    type: 'trade',
+    startDay: 30,
+    durationDays: 20,
+    description: 'Mid-dry season perch concentrate in shrinking channels. River markets flood with dried fish.',
+    season: 'winter',
+  },
+  {
+    id: 'ndjadi-hungry-gap',
+    name: 'Hungry Gap',
+    civilization: 'ndjadi',
+    type: 'misc',
+    startDay: 55,
+    durationDays: 20,
+    description:
+      'Late dry season when granary reserves run critical. Vernacular-Habal pamphlets circulate at river-market fairs.',
+    season: 'winter',
   },
 
-  // ── Irrah (arid interior, caravans) ──────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  //  IRRah — Caravan-Season Reckoning
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    id: 'irrah-cool-caravan-season',
+    name: 'Cool Caravan Season',
+    civilization: 'irrah',
+    type: 'trade',
+    startDay: 330,
+    durationDays: 60,
+    description:
+      'Late-autumn to early-spring caravan window. Day-travel possible; Imajīn Caravan Council dust-tithe rates set quarterly.',
+    effect: 'Caravans departing under non-Council-endorsed scholar certification must self-insure.',
+    season: 'winter',
+  },
   {
     id: 'irrah-date-harvest',
     name: 'Date Harvest',
     civilization: 'irrah',
     type: 'harvest',
-    startDay: 250,
+    startDay: 220,
     durationDays: 18,
-    description: 'Irrah oasis date harvest. Caravans load for the Basin markets.',
+    description: 'Irrah oasis date harvest. Caravans load for the Basin markets before the hot season closes day-travel.',
     effect: 'Date prices collapse locally; Basin markets see glut in 2–3 weeks.',
-    season: 'autumn',
+    season: 'summer',
   },
   {
-    id: 'irrah-sand-still',
-    name: 'Sand Still',
+    id: 'irrah-frankincense-spring-tapping',
+    name: 'Frankincense Spring Tapping',
+    civilization: 'irrah',
+    type: 'trade',
+    startDay: 75,
+    durationDays: 30,
+    description: 'First frankincense tapping cycle (March–April). 2nd and 3rd cuts yield highest grade.',
+    season: 'spring',
+  },
+  {
+    id: 'irrah-frankincense-autumn-tapping',
+    name: 'Frankincense Autumn Tapping',
+    civilization: 'irrah',
+    type: 'trade',
+    startDay: 320,
+    durationDays: 45,
+    description: 'Second frankincense tapping cycle (November–January). Harvest peaks before the cool caravan season opens.',
+    season: 'winter',
+  },
+  {
+    id: 'irrah-imajin-council-spring',
+    name: 'Imajīn Caravan Council (Spring)',
+    civilization: 'irrah',
+    type: 'political',
+    startDay: 30,
+    durationDays: 7,
+    description:
+      'Twice-yearly Imajīn Caravan Council meeting at Tin-Aghīz. Cool-season caravan-opening declared by Azmarāʔ scholars.',
+    season: 'winter',
+  },
+  {
+    id: 'irrah-imajin-council-autumn',
+    name: 'Imajīn Caravan Council (Autumn)',
+    civilization: 'irrah',
+    type: 'political',
+    startDay: 210,
+    durationDays: 7,
+    description:
+      'Autumn session of the Imajīn Caravan Council. Dust-tithe pool adjustments ratified for the remaining caravan rotations.',
+    season: 'summer',
+  },
+  {
+    id: 'irrah-azmara-star-reading',
+    name: 'Azmarāʔ Star-Reading Window',
     civilization: 'irrah',
     type: 'religious',
-    startDay: 1,
-    durationDays: 5,
-    description: 'New year observance. No caravan moves for five days.',
+    startDay: 355,
+    durationDays: 15,
+    description:
+      'Peak period for Azmarāʔ star-readings. Qalibin scholars compute caravan-season openings from desert-interior water-lore.',
     season: 'winter',
   },
-
-  // ── Kheshkai (highland steppes, metallurgy) ──────────────────────
   {
-    id: 'kheshkai-smelt-bloom',
-    name: 'Smelt Bloom',
-    civilization: 'kheshkai',
-    type: 'trade',
-    startDay: 110,
-    durationDays: 12,
-    description: 'Highland furnaces reach peak output. Steel flows to the Basin.',
-    effect: 'Metal prices drop 20% while bloom lasts.',
-    season: 'spring',
-  },
-  {
-    id: 'kheshkai-shaman-conclave',
-    name: 'Shaman Conclave',
-    civilization: 'kheshkai',
-    type: 'religious',
-    startDay: 330,
+    id: 'irrah-water-allocation-ruling',
+    name: 'Water-Allocation Court Ruling',
+    civilization: 'irrah',
+    type: 'political',
+    startDay: 230,
     durationDays: 7,
-    description: 'Triennial gathering of Kheshkai shamans at the Cloud-Steppe Border.',
-    effect: 'Calendar-keepers from Qollari attend. Border towns swell.',
-    season: 'winter',
-  },
-
-  // ── Qollari (cloud forest, calendar-keepers) ─────────────────────
-  {
-    id: 'qollari-calendar-rite',
-    name: 'Calendar Rite',
-    civilization: 'qollari',
-    type: 'religious',
-    startDay: 80,
-    durationDays: 5,
-    description: 'Calendar-keepers recalibrate the continental relay schedule.',
-    effect: 'Pass access may be restricted during the rite.',
-    season: 'spring',
-  },
-  {
-    id: 'qollari-mist-market',
-    name: 'Mist Market',
-    civilization: 'qollari',
-    type: 'trade',
-    startDay: 180,
-    durationDays: 10,
-    description: 'Cloud-forest medicinal barks and dyes sold before the monsoon closes the passes.',
+    description:
+      'Mid-to-late-summer drought classification by the Water-Allocation Court. Governs Ḥārrā Tappers\' League harvest certification.',
+    effect: 'A "genuine drought" classification cuts certified-grade frankincense harvest by ~25%.',
     season: 'summer',
   },
 
-  // ── Ngaru-Bon (alpine, metallurgical exports) ────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  //  KHESHKAI — Oral-Tally Pasture-Rotation Reckoning
+  // ═══════════════════════════════════════════════════════════════════
   {
-    id: 'ngaru-bon-ice-road',
-    name: 'Ice Road Opening',
-    civilization: 'ngaru-bon',
-    type: 'trade',
-    startDay: 45,
-    durationDays: 20,
-    description: 'High-altitude ice roads become passable. Ore caravans descend.',
-    effect: 'Ngaru-Bon metallurgical exports reach Basin markets.',
+    id: 'kheshkai-spring-thaw',
+    name: 'Spring Thaw',
+    civilization: 'kheshkai',
+    type: 'misc',
+    startDay: 75,
+    durationDays: 30,
+    description: 'Calving, foaling, and lambing season. Herds move to spring pastures; campaign season opens.',
     season: 'spring',
   },
   {
-    id: 'ngaru-bon-long-night',
-    name: 'Long Night',
-    civilization: 'ngaru-bon',
+    id: 'kheshkai-lightning-summer',
+    name: 'Lightning Summer',
+    civilization: 'kheshkai',
+    type: 'misc',
+    startDay: 170,
+    durationDays: 60,
+    description: 'Short dry summer when steppe grass peaks. Herds fatten; lightning-fire risk is high.',
+    season: 'summer',
+  },
+  {
+    id: 'kheshkai-autumn-slaughter',
+    name: 'Autumn Slaughter & Dry',
+    civilization: 'kheshkai',
+    type: 'harvest',
+    startDay: 260,
+    durationDays: 30,
+    description: 'Slaughter-and-dry for winter. Felt-making season; trade caravans depart for Basin markets.',
+    season: 'autumn',
+  },
+  {
+    id: 'kheshkai-winter-tebenevka',
+    name: 'Winter Tebenevka',
+    civilization: 'kheshkai',
+    type: 'misc',
+    startDay: 340,
+    durationDays: 45,
+    description:
+      'Horses paw through snow; temperatures drop to –40 °C. Dzud risk peaks; Bokh Heresy Watchers monitor monthly.',
+    season: 'winter',
+  },
+  {
+    id: 'kheshkai-three-year-skyward',
+    name: 'Three-Year Skyward',
+    civilization: 'kheshkai',
     type: 'religious',
     startDay: 355,
-    durationDays: 11,
-    description: 'Deep winter festival. Fires burn on every ridge.',
+    durationDays: 7,
+    description:
+      'Triennial pilgrimage window at the Breath-of-Cloud sanctuary on the Kheshkai–Qollari border. Shamans and calendar-keepers converge by independent methods.',
+    effect: 'The Qollari corridor is guaranteed open to Kheshkai caravans during this window.',
+    season: 'winter',
+  },
+  {
+    id: 'kheshkai-pasture-rotation-hearing',
+    name: 'Pasture-Rotation Hearing',
+    civilization: 'kheshkai',
+    type: 'political',
+    startDay: 310,
+    durationDays: 14,
+    description:
+      'Autumn Oral-Memory Council hearing that ratifies the year\'s grazing-circuit allocation. The operational load-bearing decision of the Kheshkai year.',
+    effect:
+      'Unratified disputes force clans to overwinter on contested pasture without Council-Varkosh validation.',
+    season: 'autumn',
+  },
+  {
+    id: 'kheshkai-spring-festival',
+    name: 'Spring Festival Circuit',
+    civilization: 'kheshkai',
+    type: 'festival',
+    startDay: 90,
+    durationDays: 5,
+    description: 'First of the half-dozen annual master-shaman gathering festivals. Harmony-oaths witnessed on the move.',
+    season: 'spring',
+  },
+  {
+    id: 'kheshkai-summer-festival',
+    name: 'Summer Festival Circuit',
+    civilization: 'kheshkai',
+    type: 'festival',
+    startDay: 180,
+    durationDays: 5,
+    description: 'Mid-summer master-shaman festival. Steppe fires and ancestor-songs mark the lightning season.',
+    season: 'summer',
+  },
+  {
+    id: 'kheshkai-autumn-festival',
+    name: 'Autumn Festival Circuit',
+    civilization: 'kheshkai',
+    type: 'festival',
+    startDay: 270,
+    durationDays: 5,
+    description: 'Late-autumn master-shaman festival preceding the pasture-rotation hearing.',
+    season: 'autumn',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  QOLLARI — Khipu-Genealogy Reckoning
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    id: 'qollari-summer-planting',
+    name: 'Summer Rains Planting',
+    civilization: 'qollari',
+    type: 'harvest',
+    startDay: 130,
+    durationDays: 21,
+    description: 'Tuber and quinoa planting as the puna wet season begins.',
+    season: 'spring',
+  },
+  {
+    id: 'qollari-chuno-window',
+    name: 'Chuño Window',
+    civilization: 'qollari',
+    type: 'harvest',
+    startDay: 290,
+    durationDays: 21,
+    description:
+      'Late-autumn freeze-and-trample processing of bitter tubers into chuño. Alternating hard freezes and foot-trampling determine the year\'s caloric reserve.',
+    season: 'autumn',
+  },
+  {
+    id: 'qollari-midwinter-caravan',
+    name: 'Midwinter Caravan Season',
+    civilization: 'qollari',
+    type: 'trade',
+    startDay: 15,
+    durationDays: 20,
+    description:
+      'Cold dry season when highland passes open to Kheshkai caravan traffic. Corridor-gating tariff windows are declared by the calendar-keepers.',
+    effect: 'A merchant who ignores the declared calendar risks oath-invalidation.',
+    season: 'winter',
+  },
+  {
+    id: 'qollari-three-year-skyward',
+    name: 'Three-Year Skyward',
+    civilization: 'qollari',
+    type: 'religious',
+    startDay: 355,
+    durationDays: 7,
+    description:
+      'Triennial pilgrimage to the Breath-of-Cloud sanctuary. Qollari calendarists compute the window from khipu records; Kheshkai shamans observe the same stars from the steppe.',
+    season: 'winter',
+  },
+  {
+    id: 'qollari-winter-solstice-rite',
+    name: 'Winter Solstice Rite',
+    civilization: 'qollari',
+    type: 'religious',
+    startDay: 355,
+    durationDays: 3,
+    description: 'Uvular consonants reserved for the winter solstice. Calendar-keepers reaffirm the Alto/Upriver intercalation lines.',
+    season: 'winter',
+  },
+  {
+    id: 'qollari-summer-solstice-rite',
+    name: 'Summer Solstice Rite',
+    civilization: 'qollari',
+    type: 'religious',
+    startDay: 172,
+    durationDays: 3,
+    description: 'Summer solstice observance. Processional calculations are reviewed by the highest-altitude calendar-keepers.',
+    season: 'summer',
+  },
+  {
+    id: 'qollari-calendar-schism-window',
+    name: 'Calendar Schism Disputed Window',
+    civilization: 'qollari',
+    type: 'political',
+    startDay: 355,
+    durationDays: 89,
+    description:
+      'The ~89-day window between winter solstice and spring equinox disputed by the Alto Concordance and Upriver Confederation. Every date inside is "correct" under one lineage and "wrong" under the other.',
+    effect:
+      'Oaths sworn during this window are valid by one lineage and void by the other. Double-dated contracts are standard in Basin commerce.',
     season: 'winter',
   },
 
-  // ── Aethelian Basin (pan-civ port network) ───────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  //  NGARU-BON — Smelting-Season + Generation-Count Reckoning
+  // ═══════════════════════════════════════════════════════════════════
   {
-    id: 'basin-convocation',
-    name: 'Port Convocation',
-    civilization: 'all',
-    type: 'political',
-    startDay: 140,
-    durationDays: 7,
-    description: 'The six port cities convene to set tariffs and resolve disputes.',
-    effect: 'Trade policy shifts. Some routes may be newly taxed or exempted.',
+    id: 'ngaru-bon-green-hunger',
+    name: 'Green Hunger',
+    civilization: 'ngaru-bon',
+    type: 'misc',
+    startDay: 310,
+    durationDays: 21,
+    description: 'Early wet season when previous harvest stores deplete and new crops are not yet ready.',
+    season: 'autumn',
+  },
+  {
+    id: 'ngaru-bon-msasa-sowing',
+    name: 'Msasa Sowing Signal',
+    civilization: 'ngaru-bon',
+    type: 'harvest',
+    startDay: 325,
+    durationDays: 14,
+    description: 'Msasa red leaf flush signals the sowing month. Fields are planted across the highland plateau.',
+    season: 'autumn',
+  },
+  {
+    id: 'ngaru-bon-growing-season',
+    name: 'Growing Season',
+    civilization: 'ngaru-bon',
+    type: 'misc',
+    startDay: 340,
+    durationDays: 45,
+    description: 'Mid-wet growing season. Army-worm and quelea risk peaks across the miombo woodlands.',
+    season: 'winter',
+  },
+  {
+    id: 'ngaru-bon-harvest',
+    name: 'Highland Harvest',
+    civilization: 'ngaru-bon',
+    type: 'harvest',
+    startDay: 110,
+    durationDays: 21,
+    description: 'Mid-autumn grain harvest. Granaries filled before the cool dry winter begins.',
     season: 'spring',
   },
   {
-    id: 'basin-monsoon-shift',
-    name: 'Monsoon Shift',
+    id: 'ngaru-bon-smelting-season',
+    name: 'Smelting Season',
+    civilization: 'ngaru-bon',
+    type: 'trade',
+    startDay: 130,
+    durationDays: 90,
+    description:
+      'Cool dry winter when bloomery furnaces operate at peak. Iron and steel production determines the year\'s continental supply.',
+    effect: 'Tool reconsecration cycles gate agricultural productivity; lapsed consecration renders tools ritually inert.',
+    season: 'spring',
+  },
+  {
+    id: 'ngaru-bon-master-smith-consecration',
+    name: 'Master-Smith Consecration Festival',
+    civilization: 'ngaru-bon',
+    type: 'religious',
+    startDay: 355,
+    durationDays: 5,
+    description:
+      'Annual solstice festival (Lapam Bla-\'Bangs Cho-Ga). The only occasion all six Ngaru-Bon factions occupy the same space. Gold-work consecration of the festival flame is the liturgical climax.',
+    effect:
+      'If Inner Council and Outside-Forge Network disagree on the presiding Lapam-tier candidate, the year\'s tool-reconsecration cycle is invalidated.',
+    season: 'winter',
+  },
+  {
+    id: 'ngaru-bon-spring-forge-relighting',
+    name: 'Spring Equinox Forge-Relighting',
+    civilization: 'ngaru-bon',
+    type: 'religious',
+    startDay: 80,
+    durationDays: 3,
+    description: 'Equinoctial forge-relighting rite. Smith-guilds mark the transition from sowing to growing.',
+    season: 'spring',
+  },
+  {
+    id: 'ngaru-bon-autumn-forge-relighting',
+    name: 'Autumn Equinox Forge-Relighting',
+    civilization: 'ngaru-bon',
+    type: 'religious',
+    startDay: 265,
+    durationDays: 3,
+    description: 'Equinoctial forge-relighting rite. Smith-guilds mark the transition from harvest to smelting.',
+    season: 'autumn',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  AETHELIAN BASIN — Triple-Seal Court Circuit Reckoning
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    id: 'basin-tavakh-qarat-court',
+    name: 'Tavakh-Qarat Court Session',
     civilization: 'all',
-    type: 'monsoon',
+    type: 'political',
+    startDay: 15,
+    durationDays: 30,
+    description:
+      'Triple-Seal Court convenes at Tavakh-Qarat (north shore) during the Mediterranean cool season. Khazadari cross-rate sessions and arbitration-panel sittings in the Arcade of Scales.',
+    season: 'winter',
+  },
+  {
+    id: 'basin-ki-mbuhari-court',
+    name: 'Ki-Mbuhari Court Session',
+    civilization: 'all',
+    type: 'political',
+    startDay: 320,
+    durationDays: 50,
+    description:
+      'Triple-Seal Court convenes at Ki-Mbuhari (south shore) during the Ndjadi flood-recede. Prefix-notarization economy at its busiest.',
+    season: 'winter',
+  },
+  {
+    id: 'basin-halani-tamu-court',
+    name: 'Halani-Tamu Court Session',
+    civilization: 'all',
+    type: 'political',
+    startDay: 110,
+    durationDays: 30,
+    description:
+      'Triple-Seal Court convenes at Halani-Tamu (east shore) during the monsoon lull. Qalībin Lodges at peak certification activity.',
+    season: 'spring',
+  },
+  {
+    id: 'basin-dzong-tamu-court',
+    name: 'Dzong-Tamu Court Session',
+    civilization: 'all',
+    type: 'political',
     startDay: 270,
-    durationDays: 21,
-    description: 'NW monsoon begins. Maritime routes to Oravan become marginal.',
-    effect: 'Coastal travel slower. Cyclone risk at transition.',
+    durationDays: 30,
+    description:
+      'Triple-Seal Court convenes at Dzong-Tamu (southeast margin) during the Ngaru-Bon harvest-bridge. Iron Keep and Click-Market at peak commercial activity.',
+    season: 'autumn',
+  },
+  {
+    id: 'basin-khazadari-rate-setting',
+    name: 'Khazadari Biennial Rate-Setting',
+    civilization: 'all',
+    type: 'trade',
+    startDay: 1,
+    durationDays: 7,
+    description:
+      'Khazadari Inner Circle publishes cross-rate schedules for the six major currency-traded commodities. Every port\'s warehouse-factors must adjust contract terms within thirty days.',
+    effect: 'Failure to adjust marks a house as "rate-deaf" and triggers creditor scrutiny.',
+    season: 'winter',
+  },
+  {
+    id: 'basin-court-rotation-tq-km',
+    name: 'Court Rotation: Tavakh-Qarat → Ki-Mbuhari',
+    civilization: 'all',
+    type: 'political',
+    startDay: 45,
+    durationDays: 7,
+    description:
+      'The Triple-Seal Court packs up at Tavakh-Qarat and reconvenes at Ki-Mbuhari. Contracts straddling the transition are flagged for procedural review.',
+    season: 'winter',
+  },
+  {
+    id: 'basin-court-rotation-km-ht',
+    name: 'Court Rotation: Ki-Mbuhari → Halani-Tamu',
+    civilization: 'all',
+    type: 'political',
+    startDay: 135,
+    durationDays: 7,
+    description:
+      'Court rotation from Ki-Mbuhari to Halani-Tamu. Receiving-port senior arbitrators may ratify or remand contracts whose validity windows cross the transition.',
+    season: 'spring',
+  },
+  {
+    id: 'basin-court-rotation-ht-dt',
+    name: 'Court Rotation: Halani-Tamu → Dzong-Tamu',
+    civilization: 'all',
+    type: 'political',
+    startDay: 225,
+    durationDays: 7,
+    description: 'Court rotation from Halani-Tamu to Dzong-Tamu. Maritime jurisdiction yields to metallurgical contract adjudication.',
+    season: 'summer',
+  },
+  {
+    id: 'basin-court-rotation-dt-tq',
+    name: 'Court Rotation: Dzong-Tamu → Tavakh-Qarat',
+    civilization: 'all',
+    type: 'political',
+    startDay: 315,
+    durationDays: 7,
+    description: 'Court rotation from Dzong-Tamu to Tavakh-Qarat. The Basin commercial year closes before the Mediterranean cool season.',
     season: 'autumn',
   },
 ]
@@ -304,7 +762,7 @@ export const CALENDAR_EVENT_ICONS: Record<CalendarEventType, string> = {
   harvest: '🌾',
   monsoon: '🌧',
   religious: '⛪',
-  political: '⚖',
+  political: '🏛',
   trade: '⚖',
   misc: '📌',
 }

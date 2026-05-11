@@ -125,4 +125,39 @@ describe('journey-days: bucketing', () => {
     // Day 3 should traverse the last edge
     expect(days[2].edgesTraversed[0].edge).toBe(route.edges[2])
   })
+
+  it('populates calendarEvents and dayOfYear when departure date is set', () => {
+    const route = makeRoute({ edgeDays: [2, 2], totalKm: 100 })
+    // Start on day 355 (close to year-end) so the 4-day journey wraps into
+    // the new year, exercising the wrap-around logic.
+    const days = buildDailyBreakdown(route, 'winter', 'direct', undefined, 355)
+    expect(days.length).toBe(4)
+    expect(days[0].dayOfYear).toBe(355)
+    expect(days[1].dayOfYear).toBe(356)
+    expect(days[2].dayOfYear).toBe(357)
+    expect(days[3].dayOfYear).toBe(358)
+    // At least some days should have calendar events (the canon calendar is
+    // dense enough that a 4-day window almost always hits something).
+    const daysWithEvents = days.filter(d => d.calendarEvents && d.calendarEvents.length > 0)
+    expect(daysWithEvents.length).toBeGreaterThanOrEqual(1)
+    // Each event should have the expected shape
+    for (const day of days) {
+      if (day.calendarEvents) {
+        for (const ev of day.calendarEvents) {
+          expect(ev.id).toBeDefined()
+          expect(ev.name).toBeDefined()
+          expect(ev.type).toBeDefined()
+        }
+      }
+    }
+  })
+
+  it('wraps day-of-year around the year end correctly', () => {
+    const route = makeRoute({ edgeDays: [2, 1], totalKm: 50 })
+    const days = buildDailyBreakdown(route, 'winter', 'direct', undefined, 364)
+    expect(days.length).toBe(3)
+    expect(days[0].dayOfYear).toBe(364)
+    expect(days[1].dayOfYear).toBe(365)
+    expect(days[2].dayOfYear).toBe(1)   // wrapped
+  })
 })
