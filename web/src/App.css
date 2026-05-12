@@ -91,6 +91,15 @@ body {
   gap: 16px;
 }
 
+.header-right {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.header-right::-webkit-scrollbar { display: none; }
+.header-right > * { flex-shrink: 0; }
+
 .app-title {
   font-family: var(--font-display);
   font-size: 20px;
