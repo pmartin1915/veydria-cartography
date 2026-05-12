@@ -24,6 +24,7 @@ import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
 import { useMediaQuery } from './utils/media-query'
+import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
 
 // GeoJSON types
@@ -135,20 +136,20 @@ function App() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
-  const [patchToast, setPatchToast] = useState<string | null>(null)
   const mapRef = useRef<MapViewerHandle | null>(null)
 
   // Viewport-aware deep-linking
   const initialHashRef = useRef(parseHash(window.location.hash))
   const viewportRef = useRef(initialHashRef.current)
   const hashUpdateTimeoutRef = useRef<number | null>(null)
-  const shareToastTimeoutRef = useRef<number | null>(null)
-  const patchToastTimeoutRef = useRef<number | null>(null)
   const panelCloseTimeoutRef = useRef<number | null>(null)
   const flyToTimeoutRef = useRef<number | null>(null)
-  const annotationToastTimeoutRef = useRef<number | null>(null)
-  const logToastTimeoutRef = useRef<number | null>(null)
-  const [shareToast, setShareToast] = useState<string | null>(null)
+
+  // Toasts with graceful exit animation
+  const [shareToast, shareToastLeaving, showShareToast] = useToast(2000)
+  const [patchToast, patchToastLeaving, showPatchToast] = useToast(3000)
+  const [annotationToast, annotationToastLeaving, showAnnotationToast] = useToast(2000)
+  const [logToast, logToastLeaving, showLogToast] = useToast(2000)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
@@ -265,8 +266,7 @@ function App() {
   const [journeyModeState, setJourneyModeState] = useState<RouteMode>('direct')
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
-  const [annotationToast, setAnnotationToast] = useState<string | null>(null)
-  const [logToast, setLogToast] = useState<string | null>(null)
+
   const [hoverHex, setHoverHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [selectedHex, setSelectedHex] = useState<{ hex: HexCell; descriptors: string[] } | null>(null)
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
@@ -288,12 +288,8 @@ function App() {
   useEffect(() => {
     return () => {
       if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
-      if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
-      if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
       if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
       if (flyToTimeoutRef.current) clearTimeout(flyToTimeoutRef.current)
-      if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
-      if (logToastTimeoutRef.current) clearTimeout(logToastTimeoutRef.current)
     }
   }, [])
 
@@ -517,9 +513,7 @@ function App() {
     const text = await file.text()
     const patches = parsePatchYaml(text)
     if (patches.length === 0) {
-      setPatchToast('No valid patches found in file')
-      if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
-      patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
+      showPatchToast('No valid patches found in file')
       return
     }
     const result = applyPatches(geojson, patches)
@@ -533,9 +527,7 @@ function App() {
     }
     // New features array reference triggers React re-renders in SearchBar / InfoPanel
     setGeojson({ ...geojson, features: result.newFeatures as GeoJSONFeature[] })
-    setPatchToast(`Applied ${result.applied} patch${result.applied !== 1 ? 'es' : ''}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`)
-    if (patchToastTimeoutRef.current) clearTimeout(patchToastTimeoutRef.current)
-    patchToastTimeoutRef.current = window.setTimeout(() => setPatchToast(null), 3000)
+    showPatchToast(`Applied ${result.applied} patch${result.applied !== 1 ? 'es' : ''}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`)
   }, [geojson])
 
   // Drop hex measure endpoints from the URL. Called from every code path
@@ -671,12 +663,10 @@ function App() {
     const md = exportAnnotationsMarkdown(annotations)
     try {
       await navigator.clipboard.writeText(md)
-      setAnnotationToast('Campaign notes copied')
+      showAnnotationToast('Campaign notes copied')
     } catch {
-      setAnnotationToast('Failed to copy notes')
+      showAnnotationToast('Failed to copy notes')
     }
-    if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
-    annotationToastTimeoutRef.current = window.setTimeout(() => setAnnotationToast(null), 2000)
   }, [annotations])
 
   const handleMeasureUpdate = useCallback((stats: MeasureStats) => {
@@ -765,9 +755,7 @@ function App() {
       annotations,
       featureNotes: getAllFeatureNotes(),
     })
-    setLogToast('Campaign log downloaded')
-    if (logToastTimeoutRef.current) clearTimeout(logToastTimeoutRef.current)
-    logToastTimeoutRef.current = window.setTimeout(() => setLogToast(null), 2000)
+    showLogToast('Campaign log downloaded')
   }, [journeyRoute, journeySeason, journeyModeState, annotations])
 
   // Share button: copy current URL to clipboard. If `playerView` is true,
@@ -777,7 +765,7 @@ function App() {
     const url = buildShareUrl({ ...viewportRef.current, share: playerView || undefined })
     try {
       await navigator.clipboard.writeText(url)
-      setShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
+      showShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
     } catch {
       // Fallback for browsers without clipboard API
       const input = document.createElement('input')
@@ -786,10 +774,8 @@ function App() {
       input.select()
       document.execCommand('copy')
       document.body.removeChild(input)
-      setShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
+      showShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
     }
-    if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
-    shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
   }, [])
 
   // Snapshot button: capture the visible map as a PNG. Tries clipboard
@@ -800,28 +786,24 @@ function App() {
   const handleSnapshot = useCallback(async (e?: ReactMouseEvent) => {
     const container = document.querySelector('.leaflet-container') as HTMLElement | null
     if (!container) {
-      setShareToast('Map not ready for snapshot')
-      if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
-      shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2000)
+      showShareToast('Map not ready for snapshot')
       return
     }
     const playerVariant = !!e?.shiftKey
-    setShareToast(playerVariant ? 'Capturing player snapshot…' : 'Capturing snapshot…')
+    showShareToast(playerVariant ? 'Capturing player snapshot…' : 'Capturing snapshot…')
     try {
       const dataUrl = await captureMapPng({ target: container, excludeAnnotations: playerVariant })
       const copied = await copyPngToClipboard(dataUrl)
       const label = playerVariant ? 'Player snapshot' : 'Snapshot'
       if (copied) {
-        setShareToast(`${label} copied to clipboard`)
+        showShareToast(`${label} copied to clipboard`)
       } else {
         downloadPng(dataUrl, suggestSnapshotFilename())
-        setShareToast(`${label} downloaded`)
+        showShareToast(`${label} downloaded`)
       }
     } catch {
-      setShareToast('Snapshot failed')
+      showShareToast('Snapshot failed')
     }
-    if (shareToastTimeoutRef.current) clearTimeout(shareToastTimeoutRef.current)
-    shareToastTimeoutRef.current = window.setTimeout(() => setShareToast(null), 2200)
   }, [])
 
   // Refs for keyboard handler to avoid re-binding on every state change
@@ -1290,9 +1272,7 @@ function App() {
             onAddAnnotation={(hexLabel, x, y, label, body, color) => {
               const ann = createHexAnnotation(hexLabel, x, y, label || `Note on ${hexLabel}`, body, color)
               setAnnotations(prev => addAnnotation(prev, ann))
-              setAnnotationToast('Hex note added')
-              if (annotationToastTimeoutRef.current) clearTimeout(annotationToastTimeoutRef.current)
-              annotationToastTimeoutRef.current = window.setTimeout(() => setAnnotationToast(null), 2000)
+              showAnnotationToast('Hex note added')
             }}
             onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
             highlightNotes={initialHashRef.current.hexNote === selectedHex.hex.label}
@@ -1546,16 +1526,16 @@ function App() {
         />
 
         {/* Toast notifications */}
-        {shareToast && (
-          <div className="toast-notification" id="share-toast">
+        {(shareToast || shareToastLeaving) && (
+          <div className={`toast-notification ${shareToastLeaving ? 'exiting' : ''}`} id="share-toast">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 6L9 17l-5-5" />
             </svg>
             <span>{shareToast}</span>
           </div>
         )}
-        {patchToast && (
-          <div className="toast-notification" id="patch-toast">
+        {(patchToast || patchToastLeaving) && (
+          <div className={`toast-notification ${patchToastLeaving ? 'exiting' : ''}`} id="patch-toast">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
@@ -1564,8 +1544,8 @@ function App() {
             <span>{patchToast}</span>
           </div>
         )}
-        {annotationToast && (
-          <div className="toast-notification" id="annotation-toast">
+        {(annotationToast || annotationToastLeaving) && (
+          <div className={`toast-notification ${annotationToastLeaving ? 'exiting' : ''}`} id="annotation-toast">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z" />
               <circle cx="12" cy="9" r="2.5" />
@@ -1573,8 +1553,8 @@ function App() {
             <span>{annotationToast}</span>
           </div>
         )}
-        {logToast && (
-          <div className="toast-notification" id="log-toast">
+        {(logToast || logToastLeaving) && (
+          <div className={`toast-notification ${logToastLeaving ? 'exiting' : ''}`} id="log-toast">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
