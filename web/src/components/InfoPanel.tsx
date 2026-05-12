@@ -1,8 +1,9 @@
-import { useState, useMemo, type ReactNode } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
 import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
 import type { MapAnnotation } from '../utils/annotations'
+import { getFeatureNote, setFeatureNote } from '../utils/feature-notes'
 import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink } from './icons'
 
 interface GeoJSONFeature {
@@ -162,6 +163,30 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
 
 export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [gmNote, setGmNote] = useState('')
+  const gmNoteDebounceRef = useRef<number | null>(null)
+
+  const featureId = feature ? getFeatureId(feature) : ''
+
+  useEffect(() => {
+    if (featureId) {
+      setGmNote(getFeatureNote(featureId))
+    } else {
+      setGmNote('')
+    }
+  }, [featureId])
+
+  const handleGmNoteChange = useCallback((text: string) => {
+    setGmNote(text)
+    if (gmNoteDebounceRef.current) {
+      window.clearTimeout(gmNoteDebounceRef.current)
+    }
+    gmNoteDebounceRef.current = window.setTimeout(() => {
+      if (featureId) {
+        setFeatureNote(featureId, text)
+      }
+    }, 300)
+  }, [featureId])
 
   const related = useMemo(() => {
     if (!feature || !allFeatures) return []
@@ -355,6 +380,20 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
 
         {/* Lore & Sources */}
         <LoreSection entries={featureLore} />
+
+        {/* GM Notes */}
+        <div className="info-field info-field--gm-notes" key="gm-notes">
+          <div className="info-field-header">
+            <div className="info-field-label">GM Notes</div>
+          </div>
+          <textarea
+            className="info-gm-notes-textarea"
+            value={gmNote}
+            onChange={(e) => handleGmNoteChange(e.target.value)}
+            placeholder="Add private notes about this location..."
+            rows={3}
+          />
+        </div>
       </div>
     </div>
   )

@@ -955,6 +955,32 @@ body {
   overflow: hidden;
 }
 
+.info-gm-notes-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-gm-notes-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.info-gm-notes-textarea:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 2px rgba(196, 168, 107, 0.15);
+}
+
 .info-tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .info-tag {
@@ -3991,6 +4017,51 @@ body {
   font-size: 9px;
   color: var(--text-muted);
   text-transform: capitalize;
+}
+
+.journey-calendar-event-crisis {
+  font-size: 10px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.journey-calendar-event.dimmed {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+.journey-calendar-event.crisis {
+  background: rgba(232, 200, 64, 0.08);
+}
+
+.journey-calendar-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.journey-calendar-legend-toggle {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.journey-calendar-legend-toggle:hover {
+  border-color: var(--border-accent);
+  color: var(--text-secondary);
+}
+
+.journey-calendar-legend-toggle.active {
+  background: rgba(232, 200, 64, 0.15);
+  border-color: rgba(232, 200, 64, 0.4);
+  color: var(--color-port);
 }
 
 @keyframes hex-notes-flash {

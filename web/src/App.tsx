@@ -18,6 +18,7 @@ import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
 import { downloadCampaignLog } from './utils/campaign-log'
+import { getAllFeatureNotes } from './utils/feature-notes'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
@@ -762,6 +763,7 @@ function App() {
         : undefined,
       savedJourneys: loadSavedJourneys(),
       annotations,
+      featureNotes: getAllFeatureNotes(),
     })
     setLogToast('Campaign log downloaded')
     if (logToastTimeoutRef.current) clearTimeout(logToastTimeoutRef.current)

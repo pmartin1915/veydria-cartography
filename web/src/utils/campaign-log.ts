@@ -11,6 +11,7 @@ import { buildDailyBreakdown } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import type { SavedJourney } from './journey-saved'
 import type { MapAnnotation } from './annotations'
+import { hasCrisis, formatCrisisRef } from './calendar'
 
 export interface CampaignLogInput {
   activeJourney?: {
@@ -21,6 +22,7 @@ export interface CampaignLogInput {
   }
   savedJourneys: SavedJourney[]
   annotations: MapAnnotation[]
+  featureNotes?: { featureId: string; note: string }[]
 }
 
 function formatDays(days: number): string {
@@ -114,6 +116,16 @@ export function exportJourneyMarkdown(
       if (day.notable.length > 0) {
         for (const n of day.notable) md += `- Notable: ${n}\n`
       }
+      if (day.calendarEvents && day.calendarEvents.length > 0) {
+        for (const ev of day.calendarEvents) {
+          md += `- 📅 **${ev.name}** (${ev.type})`
+          if (ev.effect) md += ` — ${ev.effect}`
+          if (hasCrisis(ev) && ev.crises) {
+            md += ` — ⚡ Leverage: ${ev.crises.map(formatCrisisRef).join(', ')}`
+          }
+          md += '\n'
+        }
+      }
       if (day.encounters.length > 0) {
         for (const enc of day.encounters) {
           const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
@@ -131,7 +143,7 @@ export function exportJourneyMarkdown(
  * Generate a full campaign-log markdown string.
  */
 export function generateCampaignLog(input: CampaignLogInput): string {
-  const { activeJourney, savedJourneys, annotations } = input
+  const { activeJourney, savedJourneys, annotations, featureNotes } = input
   let md = `# Veydria Campaign Log\n\n`
   md += `*Generated on ${new Date().toLocaleDateString()} from [Veydria Cartography](${baseUrl()})*\n\n`
   md += `---\n\n`
@@ -183,6 +195,16 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       if (a.body) md += `${a.body}\n`
       md += `\n---\n\n`
     }
+  }
+
+  // Feature notes
+  if (featureNotes && featureNotes.length > 0) {
+    md += `## Feature Notes\n\n`
+    for (const { featureId, note } of featureNotes) {
+      md += `### ${featureId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}\n\n`
+      md += `${note}\n\n`
+    }
+    md += `---\n\n`
   }
 
   // Hex notes grouped by hex label
