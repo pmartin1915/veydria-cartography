@@ -6,6 +6,7 @@ import type { MapAnnotation } from '../utils/annotations'
 import { getFeatureNote, setFeatureNote } from '../utils/feature-notes'
 import { generateFeatureHooks, getStoredHooks, storeHooks, type FeatureHook } from '../utils/feature-hooks'
 import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink } from './icons'
+import AiLorePanel from './AiLorePanel'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -26,6 +27,7 @@ interface InfoPanelProps {
   annotations?: MapAnnotation[]
   onSelectAnnotation?: (annotation: MapAnnotation) => void
   onShare?: () => void
+  onOpenSettings?: () => void
 }
 
 // Fields to display for each category
@@ -162,7 +164,7 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
   )
 }
 
-export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare }: InfoPanelProps) {
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare, onOpenSettings }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [gmNote, setGmNote] = useState('')
   const gmNoteDebounceRef = useRef<number | null>(null)
@@ -430,6 +432,9 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
             </div>
           )}
         </div>
+
+        {/* AI Lore */}
+        <AiLorePanel feature={feature} onOpenSettings={onOpenSettings} />
 
         {/* GM Notes */}
         <div className="info-field info-field--gm-notes" key="gm-notes">

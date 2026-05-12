@@ -26,6 +26,7 @@ import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_D
 import { useMediaQuery } from './utils/media-query'
 import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
+import SettingsModal from './components/SettingsModal'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -173,6 +174,7 @@ function App() {
   const [logToast, logToastLeaving, showLogToast] = useToast(2000)
   const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
 
@@ -1183,6 +1185,17 @@ function App() {
           </button>
           <button
             className="search-trigger"
+            onClick={() => setSettingsOpen(true)}
+            title="Settings"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>Settings</span>
+          </button>
+          <button
+            className="search-trigger"
             data-tour="search"
             onClick={() => openSearch()}
             title="Search features (Ctrl+K)"
@@ -1341,6 +1354,7 @@ function App() {
           annotations={shareMode ? [] : annotations}
           onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
           onShare={() => handleShare(false)}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
 
         {journeyMode && geojson && (
@@ -1545,6 +1559,11 @@ function App() {
             )
             if (feature) handleFeatureClick(feature)
           }}
+        />
+
+        <SettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
         />
 
         {/* Toast notifications */}
