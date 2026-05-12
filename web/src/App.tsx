@@ -133,6 +133,27 @@ function App() {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
   const [opacities, setOpacities] = useState<LayerOpacity>(DEFAULT_OPACITY)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchExiting, setSearchExiting] = useState(false)
+  const searchExitTimerRef = useRef<number | null>(null)
+
+  const openSearch = useCallback(() => {
+    if (searchExitTimerRef.current) {
+      clearTimeout(searchExitTimerRef.current)
+      searchExitTimerRef.current = null
+    }
+    setSearchExiting(false)
+    setSearchOpen(true)
+  }, [])
+
+  const closeSearch = useCallback(() => {
+    if (searchExiting || !searchOpen) return
+    setSearchExiting(true)
+    searchExitTimerRef.current = window.setTimeout(() => {
+      setSearchOpen(false)
+      setSearchExiting(false)
+      searchExitTimerRef.current = null
+    }, 120)
+  }, [searchOpen, searchExiting])
   const [isEditMode, setIsEditMode] = useState(false)
   const [measureMode, setMeasureMode] = useState(false)
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
@@ -179,8 +200,8 @@ function App() {
       title: 'Search',
       body: 'Anything in the world is two keystrokes away. Press Cmd-K (or Ctrl-K) and type a city name.',
       placement: 'bottom',
-      onEnter: () => setSearchOpen(true),
-      onLeave: () => setSearchOpen(false),
+      onEnter: () => openSearch(),
+      onLeave: () => closeSearch(),
     },
     {
       id: 'info-panel',
@@ -250,7 +271,7 @@ function App() {
   )
 
   const cleanupTour = useCallback(() => {
-    setSearchOpen(false)
+    closeSearch()
     setJourneyMode(false)
     setPinMode(false)
     setPanelOpen(false)
@@ -453,7 +474,7 @@ function App() {
   const handleSearchSelect = useCallback((feature: GeoJSONFeature) => {
     setSelectedFeature(feature)
     setPanelOpen(true)
-    setSearchOpen(false)
+    closeSearch()
     setSelectedHex(null)
     mapRef.current?.flyToFeature(feature)
     const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
@@ -462,7 +483,7 @@ function App() {
       const hash = buildHash(viewportRef.current)
       window.history.replaceState(null, '', hash)
     }
-  }, [])
+  }, [closeSearch])
 
   const handleSelectFeatureById = useCallback((featureId: string): boolean => {
     if (!geojson) return false
@@ -812,7 +833,7 @@ function App() {
   const journeyModeRef = useRef(journeyMode)
   const pinModeRef = useRef(pinMode)
   const hexMeasureModeRef = useRef(hexMeasureMode)
-  useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
+  useEffect(() => { searchOpenRef.current = searchOpen || searchExiting }, [searchOpen, searchExiting])
   useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
   useEffect(() => { journeyModeRef.current = journeyMode }, [journeyMode])
   useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
@@ -823,7 +844,7 @@ function App() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchOpenRef.current && document.activeElement === document.body)) {
         e.preventDefault()
-        setSearchOpen(true)
+        openSearch()
       }
       if (e.key === 'm' && !searchOpenRef.current && document.activeElement === document.body) {
         e.preventDefault()
@@ -873,7 +894,7 @@ function App() {
           target.blur()
           return
         }
-        setSearchOpen(false)
+        closeSearch()
         setKeyboardHelpOpen(false)
         handleClosePanel()
         if (measureModeRef.current) setMeasureMode(false)
@@ -886,7 +907,7 @@ function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleClosePanel, handleToggleMeasureMode, handleTogglePinMode, handleToggleJourneyMode, handleToggleHexMeasureMode, handleCycleTimeOfDay, clearHexMeasureFromHash])
+  }, [handleClosePanel, handleToggleMeasureMode, handleTogglePinMode, handleToggleJourneyMode, handleToggleHexMeasureMode, handleCycleTimeOfDay, clearHexMeasureFromHash, closeSearch, openSearch])
 
   if (loading) {
     return (
@@ -949,7 +970,7 @@ function App() {
           <div className="mobile-player-pill mobile-player-actions">
             <button
               className="mobile-player-btn"
-              onClick={() => setSearchOpen(true)}
+              onClick={() => openSearch()}
               title="Search features"
               aria-label="Search features"
             >
@@ -1163,7 +1184,7 @@ function App() {
           <button
             className="search-trigger"
             data-tour="search"
-            onClick={() => setSearchOpen(true)}
+            onClick={() => openSearch()}
             title="Search features (Ctrl+K)"
             id="search-trigger"
           >
@@ -1176,7 +1197,7 @@ function App() {
           </button>
           <button
             className="feature-count"
-            onClick={() => setSearchOpen(true)}
+            onClick={() => openSearch()}
             title="Search features (Ctrl+K)"
             type="button"
           >
@@ -1482,12 +1503,13 @@ function App() {
           </div>
         )}
 
-        {searchOpen && geojson && (
+        {(searchOpen || searchExiting) && geojson && (
           <SearchBar
             features={geojson.features}
             annotations={annotations}
             onSelect={handleSearchSelect}
-            onClose={() => setSearchOpen(false)}
+            onClose={closeSearch}
+            exiting={searchExiting}
           />
         )}
 

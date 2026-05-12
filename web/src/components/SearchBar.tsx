@@ -17,9 +17,10 @@ interface SearchBarProps {
   annotations?: MapAnnotation[]
   onSelect: (feature: GeoJSONFeature) => void
   onClose: () => void
+  exiting?: boolean
 }
 
-export default function SearchBar({ features, annotations = [], onSelect, onClose }: SearchBarProps) {
+export default function SearchBar({ features, annotations = [], onSelect, onClose, exiting = false }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -281,8 +282,8 @@ export default function SearchBar({ features, annotations = [], onSelect, onClos
   }
 
   return (
-    <div className="search-overlay" onClick={onClose} id="search-overlay">
-      <div className="search-modal" onClick={(e) => e.stopPropagation()}>
+    <div className={`search-overlay ${exiting ? 'exiting' : ''}`} onClick={onClose} id="search-overlay">
+      <div className={`search-modal ${exiting ? 'exiting' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="search-input-row">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
