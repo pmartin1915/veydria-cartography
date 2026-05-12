@@ -24,6 +24,12 @@ OUTPUT_PATH = REPO_ROOT / "web" / "src" / "generated" / "calendar-events.ts"
 TS_HEADER = '''// Auto-generated from data/calendar-events.yaml
 // Do NOT edit manually. Run `npm run generate:calendar` to regenerate.
 
+interface CrisisRef {
+  id: string
+  window: number
+  note?: string
+}
+
 interface CalendarEvent {
   id: string
   name: string
@@ -34,6 +40,7 @@ interface CalendarEvent {
   description: string
   effect?: string
   season: 'winter' | 'spring' | 'summer' | 'autumn' | 'all'
+  crises?: CrisisRef[]
 }
 
 export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
@@ -60,6 +67,15 @@ def event_to_ts(ev: dict) -> str:
     if "effect" in ev and ev["effect"]:
         lines.append(f"    effect: '{escape_ts_string(ev['effect'])}',")
     lines.append(f"    season: '{ev['season']}',")
+    if "crises" in ev and ev["crises"]:
+        lines.append("    crises: [")
+        for c in ev["crises"]:
+            note = c.get("note", "")
+            if note:
+                lines.append(f"      {{ id: '{escape_ts_string(c['id'])}', window: {c['window']}, note: '{escape_ts_string(note)}' }},")
+            else:
+                lines.append(f"      {{ id: '{escape_ts_string(c['id'])}', window: {c['window']} }},")
+        lines.append("    ],")
     lines.append("  },")
     return "\n".join(lines)
 

@@ -1,6 +1,12 @@
 // Auto-generated from data/calendar-events.yaml
 // Do NOT edit manually. Run `npm run generate:calendar` to regenerate.
 
+interface CrisisRef {
+  id: string
+  window: number
+  note?: string
+}
+
 interface CalendarEvent {
   id: string
   name: string
@@ -11,6 +17,7 @@ interface CalendarEvent {
   description: string
   effect?: string
   season: 'winter' | 'spring' | 'summer' | 'autumn' | 'all'
+  crises?: CrisisRef[]
 }
 
 export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
@@ -24,6 +31,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     durationDays: 80,
     description: 'Wet north-west monsoon. Convective rain, breadfruit and wild-nutmeg fruiting across the archipelago.',
     season: 'winter',
+    crises: [
+      { id: 'harbor-oath-war', window: 1, note: 'Harbor Covenant gains leverage; Syndics lose volume' },
+    ],
   },
 
   {
@@ -162,6 +172,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     durationDays: 50,
     description: 'Flood recession planting into moist silt (Nov–Jan). The busiest agricultural window of the Ndjadi year.',
     season: 'winter',
+    crises: [
+      { id: 'harbor-oath-war', window: 2, note: 'Kagbende/Court gain at Ki-Mbuhari; Covenant loses to premium spike' },
+    ],
   },
 
   {
@@ -196,6 +209,10 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     description: 'Late-autumn to early-spring caravan window. Day-travel possible; Imajīn Caravan Council dust-tithe rates set quarterly.',
     effect: 'Caravans departing under non-Council-endorsed scholar certification must self-insure.',
     season: 'winter',
+    crises: [
+      { id: 'harbor-oath-war', window: 3, note: 'Syndics/Caravan Council gain via dust-tithe; Ndjadi scribes lose' },
+      { id: 'metal-interdict', window: 2, note: 'Tin-Aghīz-Lam-Chen gain; Inner Council loses credibility' },
+    ],
   },
 
   {
@@ -286,6 +303,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     durationDays: 30,
     description: 'Calving, foaling, and lambing season. Herds move to spring pastures; campaign season opens.',
     season: 'spring',
+    crises: [
+      { id: 'metal-interdict', window: 3, note: 'Pacha-Urco gains via counterfeit timing; Inner Council loses' },
+    ],
   },
 
   {
@@ -331,6 +351,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     description: 'Triennial pilgrimage window at the Breath-of-Cloud sanctuary on the Kheshkai–Qollari border. Shamans and calendar-keepers converge by independent methods.',
     effect: 'The Qollari corridor is guaranteed open to Kheshkai caravans during this window.',
     season: 'winter',
+    crises: [
+      { id: 'metal-interdict', window: 4, note: 'Cinchona-route factors gain; Inner Council loses at peak demand' },
+    ],
   },
 
   {
@@ -421,6 +444,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     durationDays: 7,
     description: 'Triennial pilgrimage to the Breath-of-Cloud sanctuary. Qollari calendarists compute the window from khipu records; Kheshkai shamans observe the same stars from the steppe.',
     season: 'winter',
+    crises: [
+      { id: 'metal-interdict', window: 4, note: 'Cinchona-route factors gain; Inner Council loses at peak demand' },
+    ],
   },
 
   {
@@ -511,6 +537,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     description: 'Cool dry winter when bloomery furnaces operate at peak. Iron and steel production determines the year\'s continental supply.',
     effect: 'Tool reconsecration cycles gate agricultural productivity; lapsed consecration renders tools ritually inert.',
     season: 'spring',
+    crises: [
+      { id: 'metal-interdict', window: 1, note: 'Hardline gains via contraction fiction; Steel Moderates lose' },
+    ],
   },
 
   {
@@ -634,6 +663,9 @@ export const VEYDRIA_CALENDAR_EVENTS: CalendarEvent[] = [
     durationDays: 7,
     description: 'Court rotation from Halani-Tamu to Dzong-Tamu. Maritime jurisdiction yields to metallurgical contract adjudication.',
     season: 'summer',
+    crises: [
+      { id: 'harbor-oath-war', window: 4, note: 'Ult-Imajīn gain in arbitration vacuum; Nalu-Tavamala loses cover' },
+    ],
   },
 
   {

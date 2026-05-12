@@ -10,6 +10,9 @@ import {
   getSeasonalEvents,
   VEYDRIA_CALENDAR,
   CALENDAR_EVENT_COLORS,
+  hasCrisis,
+  getCrisisIds,
+  formatCrisisRef,
 } from './calendar'
 import type { CalendarEvent } from './calendar'
 
@@ -214,6 +217,45 @@ describe('calendar utilities', () => {
       for (const ev of VEYDRIA_CALENDAR) {
         expect(CALENDAR_EVENT_COLORS[ev.type]).toBeDefined()
       }
+    })
+
+    it('has crisis metadata on known leverage-window events', () => {
+      const hoW = VEYDRIA_CALENDAR.find(e => e.id === 'oravan-nw-monsoon')
+      expect(hoW).toBeDefined()
+      expect(hasCrisis(hoW!)).toBe(true)
+      expect(hoW!.crises![0].id).toBe('harbor-oath-war')
+      expect(hoW!.crises![0].window).toBe(1)
+
+      const mi = VEYDRIA_CALENDAR.find(e => e.id === 'ngaru-bon-smelting-season')
+      expect(mi).toBeDefined()
+      expect(hasCrisis(mi!)).toBe(true)
+      expect(mi!.crises![0].id).toBe('metal-interdict')
+    })
+
+    it('does not claim crisis on events without crises field', () => {
+      const ev = VEYDRIA_CALENDAR.find(e => e.id === 'oravan-clove-nutmeg-harvest')
+      expect(ev).toBeDefined()
+      expect(hasCrisis(ev!)).toBe(false)
+    })
+  })
+
+  describe('getCrisisIds', () => {
+    it('collects unique crisis IDs', () => {
+      const events: CalendarEvent[] = [
+        { id: 'a', name: 'A', civilization: 'all', type: 'misc', startDay: 1, durationDays: 1, description: '', season: 'winter', crises: [{ id: 'x', window: 1 }] },
+        { id: 'b', name: 'B', civilization: 'all', type: 'misc', startDay: 2, durationDays: 1, description: '', season: 'winter', crises: [{ id: 'x', window: 2 }, { id: 'y', window: 1 }] },
+      ]
+      expect(getCrisisIds(events)).toEqual(['x', 'y'])
+    })
+
+    it('returns empty for no crises', () => {
+      expect(getCrisisIds([])).toEqual([])
+    })
+  })
+
+  describe('formatCrisisRef', () => {
+    it('title-cases ID and appends window number', () => {
+      expect(formatCrisisRef({ id: 'harbor-oath-war', window: 3 })).toBe('Harbor Oath War #3')
     })
   })
 })

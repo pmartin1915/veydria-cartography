@@ -20,6 +20,12 @@ export type CalendarEventType =
   | 'trade'
   | 'misc'
 
+export interface CrisisRef {
+  id: string
+  window: number
+  note?: string
+}
+
 export interface CalendarEvent {
   id: string
   name: string
@@ -33,6 +39,8 @@ export interface CalendarEvent {
   effect?: string
   /** Season affinity — used for filtering when no departure date is set */
   season: Season | 'all'
+  /** Crisis leverage windows this event is part of */
+  crises?: CrisisRef[]
 }
 
 /* ─── Day-of-year helpers ─────────────────────────────────────────── */
@@ -175,4 +183,28 @@ export const CALENDAR_EVENT_ICONS: Record<CalendarEventType, string> = {
   political: '🏛',
   trade: '⚖',
   misc: '📌',
+}
+
+/** Return true if the event is tagged as part of any crisis leverage window. */
+export function hasCrisis(event: CalendarEvent): boolean {
+  return Array.isArray(event.crises) && event.crises.length > 0
+}
+
+/** Get a list of unique crisis IDs across a set of events. */
+export function getCrisisIds(events: readonly CalendarEvent[]): string[] {
+  const ids = new Set<string>()
+  for (const ev of events) {
+    if (ev.crises) {
+      for (const c of ev.crises) ids.add(c.id)
+    }
+  }
+  return Array.from(ids)
+}
+
+/** Format a crisis reference for display (e.g. "Harbor Oath War #1"). */
+export function formatCrisisRef(crisis: CrisisRef): string {
+  const name = crisis.id
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, ch => ch.toUpperCase())
+  return `${name} #${crisis.window}`
 }

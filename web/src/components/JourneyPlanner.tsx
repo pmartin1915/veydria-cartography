@@ -8,7 +8,7 @@ import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findC
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
-import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, type CalendarEventType } from '../utils/calendar'
+import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, hasCrisis, formatCrisisRef, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
@@ -82,6 +82,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [compareMode, setCompareMode] = useState(false)
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
+  const [highlightCrisisEvents, setHighlightCrisisEvents] = useState(false)
   // Reset impromptu rolls and segment selection whenever the route identity
   // changes — they're mid-session state bound to a specific trip.
   const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
@@ -707,7 +708,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         {/* Calendar event legend */}
         {departureDayOfYear !== undefined && (
           <div className="journey-calendar-legend">
-            <span className="journey-calendar-legend-label">Event key</span>
+            <div className="journey-calendar-legend-header">
+              <span className="journey-calendar-legend-label">Event key</span>
+              <button
+                type="button"
+                className={`journey-calendar-legend-toggle ${highlightCrisisEvents ? 'active' : ''}`}
+                onClick={() => setHighlightCrisisEvents(v => !v)}
+                title="Highlight events that are crisis leverage windows"
+              >
+                ⚡ Crisis
+              </button>
+            </div>
             <div className="journey-calendar-legend-grid">
               {(Object.keys(CALENDAR_EVENT_COLORS) as CalendarEventType[]).map(type => (
                 <div key={type} className="journey-calendar-legend-item" title={type}>
@@ -1171,20 +1182,25 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                       <div className="journey-day-line journey-day-weather"><IconCloudRain /> {day.weather}</div>
                       {day.calendarEvents && day.calendarEvents.length > 0 && (
                         <div className="journey-day-calendar">
-                          {day.calendarEvents.map((ev, i) => (
-                            <div
-                              key={i}
-                              className="journey-calendar-event"
-                              style={{ borderLeftColor: CALENDAR_EVENT_COLORS[ev.type] }}
-                              title={ev.description + (ev.effect ? `\nEffect: ${ev.effect}` : '')}
-                            >
-                              <span className="journey-calendar-event-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[ev.type] }} />
-                              <span className="journey-calendar-event-name">{ev.name}</span>
-                              {ev.civilization !== 'all' && (
-                                <span className="journey-calendar-event-civ">{ev.civilization}</span>
-                              )}
-                            </div>
-                          ))}
+                          {day.calendarEvents.map((ev, i) => {
+                            const crisis = hasCrisis(ev)
+                            const dimmed = highlightCrisisEvents && !crisis
+                            return (
+                              <div
+                                key={i}
+                                className={`journey-calendar-event ${dimmed ? 'dimmed' : ''} ${crisis ? 'crisis' : ''}`}
+                                style={{ borderLeftColor: CALENDAR_EVENT_COLORS[ev.type] }}
+                                title={ev.description + (ev.effect ? `\nEffect: ${ev.effect}` : '') + (ev.crises ? '\nCrisis: ' + ev.crises.map(formatCrisisRef).join(', ') : '')}
+                              >
+                                <span className="journey-calendar-event-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[ev.type] }} />
+                                <span className="journey-calendar-event-name">{ev.name}</span>
+                                {crisis && <span className="journey-calendar-event-crisis">⚡</span>}
+                                {ev.civilization !== 'all' && (
+                                  <span className="journey-calendar-event-civ">{ev.civilization}</span>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                       {day.notable.length > 0 && (
