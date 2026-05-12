@@ -1,6 +1,6 @@
 # Veydria Cartography — Master Document
 
-*Last updated 2026-05-08 · supersedes the scattered notes across `README.md`, `AGENTS.md`, and the HANDOFF series for high-level orientation.*
+*Last updated 2026-05-11 · supersedes the scattered notes across `README.md`, `AGENTS.md`, and the HANDOFF series for high-level orientation.*
 
 ---
 
@@ -73,6 +73,7 @@ data/                                          ← read-only here
                       ├── measure                straight-line distance
                       ├── travel-time            league/day math
                       ├── feature-notes          per-feature GM notes (localStorage)
+                      ├── feature-hooks          seeded adventure-hook generator per feature
                       └── calendar               civilizational calendar events + season helpers
 ```
 
@@ -99,7 +100,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 373/373 | vitest, 22 files |
+| Tests | ✅ 391/391 | vitest, 23 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -141,6 +142,7 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Multi-route comparison** — overlay Direct (solid green), Safest (dashed blue), and Cheapest (dotted gold) routes simultaneously on the map. Toggle button in JourneyPlanner when no waypoints are set. Side-by-side stat cards (distance, travel time, segments) with colour-coded dots. Click a card to switch the active route mode. `findComparisonRoutes()` in `journey-graph.ts` computes all three in parallel. Data flows: `App.tsx` state → `JourneyPlanner` computation → `MapViewer` rendering via separate `comparisonRouteLayerRef`.
 - **Time / calendar layer** — civilizational calendar overlay on journey day-by-day breakdown. Departure day-of-year selector (1-365) with season-aware slider and month approximation (`~late April`). Each JourneyDay gets `dayOfYear` + active `calendarEvents` from the `calendar.ts` module. Events shown as colour-coded badges in the Days tab. Calendar event legend panel (7 types with colour/icon key) visible when departure date is set. Route-based civilization filtering — only events for civs the journey passes through are shown; Basin-wide (`all`) events always appear. Calendar events included in markdown export. ~56 canon events including the Upstream/Downstream Window War crisis. Calendar data lives in `data/calendar-events.yaml` and is auto-generated to `web/src/generated/calendar-events.ts` via `generator/export/calendar_ts.py`. **Crisis leverage bridge:** 8 events tagged with `crises` metadata linking them to `harbor-oath-war` and `metal-interdict` leverage windows. Days tab shows ⚡ indicator on crisis-relevant events; legend panel has "Crisis" highlight toggle that dims non-crisis events. Campaign log export includes `⚡ Leverage: Crisis Name #N` footnotes. 32 tests.
 - **Per-feature GM notes** — persistent textarea in the InfoPanel for every feature. Notes are keyed by feature ID and stored in `localStorage:veydria.featureNotes.v1`. 300ms debounced saves. Empty notes auto-delete. Included in campaign log export under a "Feature Notes" section with human-readable titles (`aethelian_basin` → "Aethelian Basin"). 17 tests + 2 campaign-log tests.
+- **Adventure hooks per feature** — deterministic, seeded adventure-hook generator for every feature on the map. Each feature gets 3 context-aware hooks drawn from category-specific pools (port, chokepoint, oasis, contested_site, civilization, trade_route, water, landmark, river). Hooks are deterministic (`djb2Hash` + `mulberry32` seeded by feature ID) so the same location always produces the same inspiration. GMs can reroll for fresh seeds. Generated hooks are cached in `localStorage:veydria.hooks.v1`. Displayed in InfoPanel between Lore & Sources and GM Notes, with tag chips (trade, conflict, political, religious, supernatural, treasure, disease). 18 tests.
 
 ### In Progress / Next
 

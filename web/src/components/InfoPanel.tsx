@@ -4,6 +4,7 @@ import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
 import type { MapAnnotation } from '../utils/annotations'
 import { getFeatureNote, setFeatureNote } from '../utils/feature-notes'
+import { generateFeatureHooks, getStoredHooks, storeHooks, type FeatureHook } from '../utils/feature-hooks'
 import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink } from './icons'
 
 interface GeoJSONFeature {
@@ -165,16 +166,30 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [gmNote, setGmNote] = useState('')
   const gmNoteDebounceRef = useRef<number | null>(null)
+  const [hooks, setHooks] = useState<FeatureHook[]>([])
 
   const featureId = feature ? getFeatureId(feature) : ''
 
   useEffect(() => {
     if (featureId) {
       setGmNote(getFeatureNote(featureId))
+      const stored = getStoredHooks(featureId)
+      setHooks(stored ?? [])
     } else {
       setGmNote('')
+      setHooks([])
     }
   }, [featureId])
+
+  const handleGenerateHooks = useCallback(() => {
+    if (!feature) return
+    const id = getFeatureId(feature)
+    const name = (feature.properties.name as string) || 'Unknown'
+    const category = (feature.properties.category as string) || 'unknown'
+    const newHooks = generateFeatureHooks(id, name, category, { count: 3 })
+    setHooks(newHooks)
+    storeHooks(id, newHooks)
+  }, [feature])
 
   const handleGmNoteChange = useCallback((text: string) => {
     setGmNote(text)
@@ -380,6 +395,41 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
 
         {/* Lore & Sources */}
         <LoreSection entries={featureLore} />
+
+        {/* Adventure Hooks */}
+        <div className="info-field info-field--hooks" key="adventure-hooks">
+          <div className="info-field-header">
+            <div className="info-field-label">Adventure Hooks</div>
+            <button
+              className="info-hooks-roll-btn"
+              onClick={handleGenerateHooks}
+              title={hooks.length > 0 ? 'Reroll hooks' : 'Generate hooks'}
+              aria-label={hooks.length > 0 ? 'Reroll hooks' : 'Generate hooks'}
+            >
+              ⟳ {hooks.length > 0 ? 'Reroll' : 'Roll'}
+            </button>
+          </div>
+          {hooks.length === 0 ? (
+            <p className="info-hooks-placeholder">
+              Click <strong>Roll</strong> to generate 3 seeded adventure hooks for this location.
+            </p>
+          ) : (
+            <div className="info-hooks-list">
+              {hooks.map((hook, i) => (
+                <div className="info-hook-card" key={i}>
+                  <div className="info-hook-text">{hook.text}</div>
+                  {hook.tags.length > 0 && (
+                    <div className="info-hook-tags">
+                      {hook.tags.map((tag) => (
+                        <span className="info-hook-tag" key={tag}>{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* GM Notes */}
         <div className="info-field info-field--gm-notes" key="gm-notes">

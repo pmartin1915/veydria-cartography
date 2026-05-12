@@ -21,7 +21,7 @@ export interface Encounter {
 
 /* ─── Seeded RNG ─── */
 
-function djb2Hash(str: string): number {
+export function djb2Hash(str: string): number {
   let h = 5381
   for (let i = 0; i < str.length; i++) {
     h = ((h << 5) + h) + str.charCodeAt(i)
@@ -29,7 +29,7 @@ function djb2Hash(str: string): number {
   return h >>> 0
 }
 
-function mulberry32(a: number) {
+export function mulberry32(a: number) {
   return function () {
     let t = (a += 0x6D2B79F5)
     t = Math.imul(t ^ (t >>> 15), t | 1)

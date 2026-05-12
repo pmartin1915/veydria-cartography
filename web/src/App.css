@@ -981,6 +981,80 @@ body {
   box-shadow: 0 0 0 2px rgba(196, 168, 107, 0.15);
 }
 
+/* Adventure Hooks */
+.info-field--hooks {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+}
+
+.info-hooks-roll-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(196, 168, 98, 0.1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-accent);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.info-hooks-roll-btn:hover {
+  background: rgba(196, 168, 98, 0.2);
+  border-color: var(--border-accent);
+}
+
+.info-hooks-placeholder {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.info-hooks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-hook-card {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(196, 168, 98, 0.04);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.info-hook-card:hover {
+  border-color: var(--border-accent);
+  background: rgba(196, 168, 98, 0.08);
+}
+
+.info-hook-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.info-hook-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.info-hook-tag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(196, 168, 98, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
 .info-tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .info-tag {
