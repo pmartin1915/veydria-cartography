@@ -81,6 +81,9 @@ export const IconCloudRain = ({ size = 13 }: { size?: number } = {}) =>
 export const IconPin = ({ size = 13 }: { size?: number } = {}) =>
   <svg {...svgFor(size)}><path d="M12 2C8.7 2 6 4.7 6 8c0 4.5 6 14 6 14s6-9.5 6-14c0-3.3-2.7-6-6-6z"/><circle cx="12" cy="8" r="2.5"/></svg>
 
+export const IconClipboard = ({ size = 14 }: { size?: number } = {}) =>
+  <svg {...svgFor(size)}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+
 export const IconScroll = ({ size = 12 }: { size?: number } = {}) =>
   <svg {...svgFor(size)}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
 
