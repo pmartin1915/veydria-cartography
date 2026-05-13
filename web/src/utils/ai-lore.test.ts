@@ -7,6 +7,7 @@ import {
   clearAiLoreCache,
   generateMockLore,
   fetchAiLore,
+  buildPrompt,
   type AiLoreType,
 } from './ai-lore'
 import type { GeoJSONFeature } from '../App'
@@ -166,6 +167,39 @@ describe('mock lore generator', () => {
         }
       })
     })
+  })
+})
+
+describe('buildPrompt', () => {
+  it('includes feature name and category', () => {
+    const f = mockFeature({ name: 'Ki-Mbuhari', category: 'port' })
+    const prompt = buildPrompt(f, 'rumors')
+    expect(prompt).toContain('Ki-Mbuhari')
+    expect(prompt).toContain('Category: port')
+    expect(prompt).toContain('rumours')
+  })
+
+  it('includes world context for all types', () => {
+    const f = mockFeature()
+    const rumors = buildPrompt(f, 'rumors')
+    const npcs = buildPrompt(f, 'npcs')
+    const tensions = buildPrompt(f, 'tensions')
+    expect(rumors).toContain('Veydria')
+    expect(npcs).toContain('Veydria')
+    expect(tensions).toContain('Veydria')
+  })
+
+  it('uses type-specific instructions', () => {
+    const f = mockFeature()
+    expect(buildPrompt(f, 'rumors')).toContain('rumours')
+    expect(buildPrompt(f, 'npcs')).toContain('NPCs')
+    expect(buildPrompt(f, 'tensions')).toContain('tensions')
+  })
+
+  it('requests plain text without markdown', () => {
+    const f = mockFeature()
+    const prompt = buildPrompt(f, 'rumors')
+    expect(prompt).toContain('No markdown formatting')
   })
 })
 

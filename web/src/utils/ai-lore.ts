@@ -148,7 +148,7 @@ function buildFeatureContext(feature: GeoJSONFeature): string {
   return lines.join('\n')
 }
 
-function buildPrompt(feature: GeoJSONFeature, type: AiLoreType): string {
+export function buildPrompt(feature: GeoJSONFeature, type: AiLoreType): string {
   const ctx = buildFeatureContext(feature)
   const worldCtx = `Veydria is a roughly C-shaped fantasy continent wrapped around an enclosed sea, the Aethelian Basin. The basin is the continent's trade pivot — a neutral processor and certifier, not a producer. Six port cities with distinct architectural traditions ring it. Outside the basin: highland steppes north, oasis chains in the southern desert, archipelagos west of the Halkar Straits. Trade routes are specific economic relationships that drive faction tension.`
 

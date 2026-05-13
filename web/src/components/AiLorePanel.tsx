@@ -8,6 +8,7 @@ import {
   generateMockLore,
   getCachedLore,
   setCachedLore,
+  buildPrompt,
 } from '../utils/ai-lore'
 
 type LoreTab = 'rumors' | 'npcs' | 'tensions'
@@ -46,6 +47,7 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
     npcs: { content: '', loading: false, error: null },
     tensions: { content: '', loading: false, error: null },
   })
+  const [copied, setCopied] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   // Reset state when feature changes
@@ -87,6 +89,22 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
       abortRef.current?.abort()
     }
   }, [feature])
+
+  const handleCopyPrompt = useCallback(() => {
+    if (!feature) return
+    const prompt = buildPrompt(feature, activeTab)
+    navigator.clipboard.writeText(prompt).catch(() => {
+      // Fallback for environments where clipboard API is blocked
+      const ta = document.createElement('textarea')
+      ta.value = prompt
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    })
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1500)
+  }, [feature, activeTab])
 
   const handleGenerate = useCallback(async (type: LoreTab) => {
     if (!feature) return
@@ -133,15 +151,26 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
     <div className="info-field info-field--ai-lore" key="ai-lore">
       <div className="info-field-header">
         <div className="info-field-label">AI Lore</div>
-        <button
-          className="info-hooks-roll-btn"
-          onClick={() => handleGenerate(activeTab)}
-          title={hasContent ? 'Regenerate' : 'Generate'}
-          aria-label={hasContent ? 'Regenerate' : 'Generate'}
-          disabled={currentState.loading}
-        >
-          {currentState.loading ? '⋯' : `⟳ ${hasContent ? 'Regenerate' : 'Generate'}`}
-        </button>
+        <div className="ai-lore-actions">
+          <button
+            className={`ai-lore-copy-btn ${copied ? 'copied' : ''}`}
+            onClick={handleCopyPrompt}
+            title="Copy prompt to clipboard"
+            aria-label="Copy prompt to clipboard"
+            disabled={copied}
+          >
+            {copied ? 'Copied!' : '📋 Copy prompt'}
+          </button>
+          <button
+            className="info-hooks-roll-btn"
+            onClick={() => handleGenerate(activeTab)}
+            title={hasContent ? 'Regenerate' : 'Generate'}
+            aria-label={hasContent ? 'Regenerate' : 'Generate'}
+            disabled={currentState.loading}
+          >
+            {currentState.loading ? '⋯' : `⟳ ${hasContent ? 'Regenerate' : 'Generate'}`}
+          </button>
+        </div>
       </div>
 
       {/* Tab bar */}
