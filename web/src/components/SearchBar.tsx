@@ -15,12 +15,13 @@ interface GeoJSONFeature {
 interface SearchBarProps {
   features: GeoJSONFeature[]
   annotations?: MapAnnotation[]
+  starredIds?: string[]
   onSelect: (feature: GeoJSONFeature) => void
   onClose: () => void
   exiting?: boolean
 }
 
-export default function SearchBar({ features, annotations = [], onSelect, onClose, exiting = false }: SearchBarProps) {
+export default function SearchBar({ features, annotations = [], starredIds = [], onSelect, onClose, exiting = false }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -68,6 +69,22 @@ export default function SearchBar({ features, annotations = [], onSelect, onClos
     // Most recent first
     return pins.sort((a, b) => b.annotation.createdAt - a.annotation.createdAt).slice(0, 5)
   }, [annotations, features])
+
+  // Resolve starred IDs to actual features
+  const starredFeatures = useMemo(() => {
+    if (starredIds.length === 0) return []
+    const featureMap = new Map<string, GeoJSONFeature>()
+    for (const f of features) {
+      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      if (id) featureMap.set(id, f)
+    }
+    const out: GeoJSONFeature[] = []
+    for (const id of starredIds) {
+      const f = featureMap.get(id)
+      if (f) out.push(f)
+    }
+    return out
+  }, [starredIds, features])
 
   // Resolve recent items to actual features (defensive against stale IDs)
   const recentFeatures = useMemo(() => {
@@ -210,10 +227,11 @@ export default function SearchBar({ features, annotations = [], onSelect, onClos
   }
 
   const isEmptyQuery = !deferredQuery.trim()
+  const showStarred = isEmptyQuery && starredFeatures.length > 0
   const showRecent = isEmptyQuery && recentFeatures.length > 0
   const showLinkedPins = isEmptyQuery && linkedPins.length > 0
   const showCivChips = isEmptyQuery && civNames.length > 0
-  const showAllHeader = isEmptyQuery && (showRecent || showLinkedPins)
+  const showAllHeader = isEmptyQuery && (showStarred || showRecent || showLinkedPins)
 
   const renderFeatureRow = (feature: GeoJSONFeature, i: number, opts?: { icon?: React.ReactNode; metaOverride?: string }) => {
     const category = (feature.properties.category as string) || 'unknown'
@@ -241,6 +259,17 @@ export default function SearchBar({ features, annotations = [], onSelect, onClos
   // Build flat list with section headers for display
   let displayIndex = 0
   const displayItems: React.ReactNode[] = []
+
+  if (showStarred) {
+    displayItems.push(
+      <div key="starred-header" className="search-section-header">Starred</div>
+    )
+    for (const f of starredFeatures) {
+      displayItems.push(renderFeatureRow(f, displayIndex++, {
+        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12,2 14.5,9 22,9 16,13.5 18.5,21 12,16.5 5.5,21 8,13.5 2,9 9.5,9"/></svg>,
+      }))
+    }
+  }
 
   if (showRecent) {
     displayItems.push(

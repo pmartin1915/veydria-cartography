@@ -5,7 +5,7 @@ import type { LoreEntry, LoreIndex } from '../App'
 import type { MapAnnotation } from '../utils/annotations'
 import { getFeatureNote, setFeatureNote } from '../utils/feature-notes'
 import { generateFeatureHooks, getStoredHooks, storeHooks, type FeatureHook } from '../utils/feature-hooks'
-import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink } from './icons'
+import { IconRoute, IconMountain, IconAnchor, IconCircleDot, IconClock, IconLink, IconStar } from './icons'
 import AiLorePanel from './AiLorePanel'
 
 interface GeoJSONFeature {
@@ -28,6 +28,8 @@ interface InfoPanelProps {
   onSelectAnnotation?: (annotation: MapAnnotation) => void
   onShare?: () => void
   onOpenSettings?: () => void
+  starredIds?: string[]
+  onToggleStar?: (featureId: string) => void
 }
 
 // Fields to display for each category
@@ -164,7 +166,7 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
   )
 }
 
-export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare, onOpenSettings }: InfoPanelProps) {
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare, onOpenSettings, starredIds = [], onToggleStar }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [gmNote, setGmNote] = useState('')
   const gmNoteDebounceRef = useRef<number | null>(null)
@@ -260,6 +262,16 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
             </p>
           )}
         </div>
+        {onToggleStar && featureId && (
+          <button
+            className={`info-panel-star ${starredIds.includes(featureId) ? 'starred' : ''}`}
+            onClick={() => onToggleStar(featureId)}
+            title={starredIds.includes(featureId) ? 'Unstar this feature' : 'Star this feature'}
+            aria-label={starredIds.includes(featureId) ? 'Unstar this feature' : 'Star this feature'}
+          >
+            <IconStar size={14} />
+          </button>
+        )}
         {onShare && (
           <button
             className="info-panel-share"

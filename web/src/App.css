@@ -882,6 +882,38 @@ body {
   border-color: var(--border-accent);
 }
 
+.info-panel-star {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.info-panel-star:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+}
+
+.info-panel-star.starred {
+  color: var(--color-route);
+  border-color: rgba(212, 168, 84, 0.4);
+}
+
+.info-panel-star.starred:hover {
+  color: #e8c060;
+  border-color: var(--color-route);
+}
+
 .info-panel-body { padding: 20px; }
 
 .info-panel-name {

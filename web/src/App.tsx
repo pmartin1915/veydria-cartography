@@ -19,6 +19,7 @@ import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
 import { downloadCampaignLog } from './utils/campaign-log'
 import { getAllFeatureNotes } from './utils/feature-notes'
+import { getStarredIds, toggleStarred } from './utils/feature-stars'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
@@ -177,6 +178,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
+  const [starredIds, setStarredIds] = useState<string[]>(() => getStarredIds())
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -455,6 +457,12 @@ function App() {
     viewportRef.current = { ...viewportRef.current, featureId: undefined }
     const hash = buildHash(viewportRef.current)
     window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
+  }, [])
+
+  const handleToggleStar = useCallback((featureId: string) => {
+    const nowStarred = toggleStarred(featureId)
+    setStarredIds(getStarredIds())
+    showAnnotationToast(nowStarred ? 'Starred' : 'Unstarred')
   }, [])
 
   const handleLayerToggle = useCallback((layer: keyof LayerVisibility) => {
@@ -1355,6 +1363,8 @@ function App() {
           onSelectAnnotation={(ann) => mapRef.current?.flyToAnnotation(ann)}
           onShare={() => handleShare(false)}
           onOpenSettings={() => setSettingsOpen(true)}
+          starredIds={starredIds}
+          onToggleStar={handleToggleStar}
         />
 
         {journeyMode && geojson && (
@@ -1521,6 +1531,7 @@ function App() {
           <SearchBar
             features={geojson.features}
             annotations={annotations}
+            starredIds={starredIds}
             onSelect={handleSearchSelect}
             onClose={closeSearch}
             exiting={searchExiting}
