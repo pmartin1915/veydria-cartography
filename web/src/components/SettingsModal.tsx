@@ -10,6 +10,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('')
   const [endpoint, setEndpoint] = useState('')
   const [model, setModel] = useState('')
+  const [temperature, setTemperature] = useState(0.7)
   const [showKey, setShowKey] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -20,6 +21,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
       setApiKey(settings.apiKey ?? '')
       setEndpoint(settings.endpoint)
       setModel(settings.model)
+      setTemperature(settings.temperature)
       setSavedFlash(false)
       // Focus the first input after mount
       setTimeout(() => inputRef.current?.focus(), 50)
@@ -31,6 +33,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
       apiKey: apiKey.trim() || null,
       endpoint: endpoint.trim() || 'https://api.openai.com/v1/chat/completions',
       model: model.trim() || 'gpt-4o-mini',
+      temperature,
     })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1200)
@@ -134,6 +137,27 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="gpt-4o-mini"
               />
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-label" htmlFor="settings-temperature">
+                Temperature
+                <span className="settings-slider-value">{temperature.toFixed(1)}</span>
+              </label>
+              <div className="settings-slider-row">
+                <span className="settings-slider-label">Grounded</span>
+                <input
+                  id="settings-temperature"
+                  type="range"
+                  className="settings-slider"
+                  min={0}
+                  max={1.5}
+                  step={0.1}
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                />
+                <span className="settings-slider-label">Creative</span>
+              </div>
             </div>
           </div>
         </div>

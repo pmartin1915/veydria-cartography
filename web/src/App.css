@@ -5602,5 +5602,60 @@ select:focus-visible {
   font-size: 11px;
   font-weight: 600;
   color: #7abf7a;
+}
+
+.settings-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.settings-slider-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.settings-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--border-accent);
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.settings-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--border-accent);
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.settings-slider-value {
+  float: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-accent);
+  margin-left: 8px;
   animation: fadeIn 0.2s ease;
 }

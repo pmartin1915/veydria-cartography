@@ -18,6 +18,7 @@ export interface AiLoreSettings {
   apiKey: string | null
   endpoint: string
   model: string
+  temperature: number
 }
 
 export interface AiLoreResult {
@@ -33,6 +34,7 @@ const DEFAULT_SETTINGS: AiLoreSettings = {
   apiKey: null,
   endpoint: 'https://api.openai.com/v1/chat/completions',
   model: 'gpt-4o-mini',
+  temperature: 0.7,
 }
 
 /* ─── Settings persistence ─── */
@@ -46,6 +48,7 @@ export function loadAiLoreSettings(): AiLoreSettings {
       apiKey: parsed.apiKey ?? DEFAULT_SETTINGS.apiKey,
       endpoint: parsed.endpoint ?? DEFAULT_SETTINGS.endpoint,
       model: parsed.model ?? DEFAULT_SETTINGS.model,
+      temperature: typeof parsed.temperature === 'number' ? parsed.temperature : DEFAULT_SETTINGS.temperature,
     }
   } catch {
     return { ...DEFAULT_SETTINGS }
@@ -190,7 +193,7 @@ export async function fetchAiLore(
     body: JSON.stringify({
       model: settings.model,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.85,
+      temperature: settings.temperature,
       max_tokens: 800,
     }),
   })

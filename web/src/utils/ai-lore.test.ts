@@ -47,10 +47,11 @@ describe('ai-lore settings', () => {
     expect(s.apiKey).toBeNull()
     expect(s.endpoint).toBe('https://api.openai.com/v1/chat/completions')
     expect(s.model).toBe('gpt-4o-mini')
+    expect(s.temperature).toBe(0.7)
   })
 
   it('round-trips custom settings', () => {
-    const settings = { apiKey: 'sk-test', endpoint: 'https://example.com/v1/chat/completions', model: 'gpt-4' }
+    const settings = { apiKey: 'sk-test', endpoint: 'https://example.com/v1/chat/completions', model: 'gpt-4', temperature: 1.2 }
     saveAiLoreSettings(settings)
     const loaded = loadAiLoreSettings()
     expect(loaded).toEqual(settings)
@@ -62,6 +63,7 @@ describe('ai-lore settings', () => {
     expect(s.apiKey).toBeNull()
     expect(s.endpoint).toBe('https://api.openai.com/v1/chat/completions')
     expect(s.model).toBe('custom-model')
+    expect(s.temperature).toBe(0.7)
   })
 })
 
@@ -212,14 +214,14 @@ describe('fetchAiLore', () => {
   it('returns cached content without calling API', async () => {
     setCachedLore('test_feature', 'rumors', 'Cached rumor')
     const f = mockFeature()
-    const result = await fetchAiLore(f, 'rumors', { apiKey: null, endpoint: '', model: '' })
+    const result = await fetchAiLore(f, 'rumors', { apiKey: null, endpoint: '', model: '', temperature: 0.7 })
     expect(result.content).toBe('Cached rumor')
     expect(result.cached).toBe(true)
   })
 
   it('falls back to mock when no API key is set', async () => {
     const f = mockFeature()
-    const result = await fetchAiLore(f, 'rumors', { apiKey: null, endpoint: '', model: '' })
+    const result = await fetchAiLore(f, 'rumors', { apiKey: null, endpoint: '', model: '', temperature: 0.7 })
     expect(result.cached).toBe(false)
     expect(result.content.length).toBeGreaterThan(50)
     // Should have cached the mock result
@@ -237,6 +239,7 @@ describe('fetchAiLore', () => {
       apiKey: 'sk-test',
       endpoint: 'https://api.example.com/v1/chat/completions',
       model: 'gpt-test',
+      temperature: 0.7,
     })
 
     expect(result.content).toBe('API-generated rumor')
@@ -248,6 +251,7 @@ describe('fetchAiLore', () => {
     expect(body.model).toBe('gpt-test')
     expect(body.messages[0].role).toBe('user')
     expect(body.messages[0].content).toContain('Test Port')
+    expect(body.temperature).toBe(0.7)
   })
 
   it('throws on API error', async () => {
@@ -259,7 +263,7 @@ describe('fetchAiLore', () => {
 
     const f = mockFeature()
     await expect(
-      fetchAiLore(f, 'rumors', { apiKey: 'sk-test', endpoint: 'https://api.example.com/v1/chat/completions', model: 'gpt-test' })
+      fetchAiLore(f, 'rumors', { apiKey: 'sk-test', endpoint: 'https://api.example.com/v1/chat/completions', model: 'gpt-test', temperature: 0.7 })
     ).rejects.toThrow('AI lore request failed (429)')
   })
 
@@ -271,7 +275,7 @@ describe('fetchAiLore', () => {
 
     const f = mockFeature()
     await expect(
-      fetchAiLore(f, 'rumors', { apiKey: 'sk-test', endpoint: 'https://api.example.com/v1/chat/completions', model: 'gpt-test' })
+      fetchAiLore(f, 'rumors', { apiKey: 'sk-test', endpoint: 'https://api.example.com/v1/chat/completions', model: 'gpt-test', temperature: 0.7 })
     ).rejects.toThrow('AI lore returned empty content')
   })
 })
