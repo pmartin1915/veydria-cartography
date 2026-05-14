@@ -20,6 +20,14 @@ import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exp
 import { downloadCampaignLog } from './utils/campaign-log'
 import { getAllFeatureNotes } from './utils/feature-notes'
 import { getStarredIds, toggleStarred } from './utils/feature-stars'
+import {
+  getPrepOrder,
+  setPrepOrder as savePrepOrder,
+  getPrepDoneIds,
+  togglePrepDone,
+  syncPrepOrder,
+  syncPrepDone,
+} from './utils/session-prep'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
@@ -181,6 +189,8 @@ function App() {
   const [sessionPrepOpen, setSessionPrepOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
   const [starredIds, setStarredIds] = useState<string[]>(() => getStarredIds())
+  const [prepOrder, setPrepOrderState] = useState<string[]>(() => getPrepOrder())
+  const [prepDoneIds, setPrepDoneIds] = useState<string[]>(() => getPrepDoneIds())
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -463,7 +473,12 @@ function App() {
 
   const handleToggleStar = useCallback((featureId: string) => {
     const nowStarred = toggleStarred(featureId)
-    setStarredIds(getStarredIds())
+    const newStarred = getStarredIds()
+    setStarredIds(newStarred)
+    const newOrder = syncPrepOrder(newStarred)
+    setPrepOrderState(newOrder)
+    const newDone = syncPrepDone(newStarred)
+    setPrepDoneIds(newDone)
     showAnnotationToast(nowStarred ? 'Starred' : 'Unstarred')
   }, [])
 
@@ -645,6 +660,60 @@ function App() {
       return next
     })
   }, [clearHexMeasureFromHash])
+
+  const handleReorderPrep = useCallback((ids: string[]) => {
+    savePrepOrder(ids)
+    setPrepOrderState(ids)
+  }, [])
+
+  const handleTogglePrepDone = useCallback((featureId: string) => {
+    togglePrepDone(featureId)
+    setPrepDoneIds(getPrepDoneIds())
+  }, [])
+
+  const handleStartSession = useCallback(() => {
+    setSessionPrepOpen(false)
+    setMeasureMode(false)
+    setPinMode(false)
+    setHexMeasureMode(false)
+    setHexMeasurePoints([])
+    clearHexMeasureFromHash()
+    setJourneyMode(false)
+    setJourneyRoute(null)
+    setComparisonRoutes({ direct: null, safest: null, cheapest: null })
+    setJourneySeason(undefined)
+    setJourneyModeState('direct')
+    mapRef.current?.clearJourneyRoute()
+    setPanelOpen(false)
+    setSelectedFeature(null)
+    setSelectedHex(null)
+    viewportRef.current = {
+      ...viewportRef.current,
+      featureId: undefined,
+      hexLabel: undefined,
+      hexNote: undefined,
+      journeyFrom: undefined,
+      journeyTo: undefined,
+      hexA: undefined,
+      hexB: undefined,
+    }
+    window.history.replaceState(null, '', buildHash(viewportRef.current) || window.location.pathname + window.location.search)
+    // Fit map to starred features if any; otherwise fly to a default view.
+    window.setTimeout(() => {
+      if (starredIds.length > 0 && geojson) {
+        const features = geojson.features.filter((f) => {
+          const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+          return id && starredIds.includes(id)
+        })
+        if (features.length > 0) {
+          mapRef.current?.fitBoundsToFeatures(features)
+        }
+      } else {
+        mapRef.current?.clearMeasurePoints?.()
+      }
+    }, 100)
+    showAnnotationToast('Session started — good luck!')
+  }, [clearHexMeasureFromHash, starredIds, geojson])
 
   const handleHexMeasureClear = useCallback(() => {
     setHexMeasurePoints([])
@@ -1603,6 +1672,8 @@ function App() {
         <SessionPrepPanel
           features={geojson?.features ?? []}
           starredIds={starredIds}
+          orderedIds={prepOrder.length > 0 ? prepOrder : undefined}
+          doneIds={prepDoneIds}
           open={sessionPrepOpen}
           onClose={() => setSessionPrepOpen(false)}
           onSelectFeature={(f) => {
@@ -1618,12 +1689,11 @@ function App() {
               window.history.replaceState(null, '', hash)
             }
           }}
-          onToggleStar={(id) => {
-            const nowStarred = toggleStarred(id)
-            setStarredIds(getStarredIds())
-            showAnnotationToast(nowStarred ? 'Starred' : 'Unstarred')
-          }}
+          onToggleStar={handleToggleStar}
+          onReorder={handleReorderPrep}
+          onToggleDone={handleTogglePrepDone}
           onExportCampaignLog={handleDownloadCampaignLog}
+          onStartSession={handleStartSession}
         />
 
         {/* Toast notifications */}

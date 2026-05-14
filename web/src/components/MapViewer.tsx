@@ -85,6 +85,7 @@ export interface MapViewerHandle {
   selectHexByLabel: (label: string) => boolean
   flyToHex: (label: string) => boolean
   fitBoundsToHexes: (labels: string[]) => boolean
+  fitBoundsToFeatures: (features: GeoJSONFeature[]) => boolean
 }
 
 // SVG viewBox dimensions
@@ -362,6 +363,27 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         // so a tightly-packed pair doesn't snap to max.
         mapRef.current.flyToBounds(L.latLngBounds(lls), {
           padding: [60, 60],
+          maxZoom: 2.5,
+          duration: 0.8,
+        })
+        return true
+      },
+      fitBoundsToFeatures(features: GeoJSONFeature[]) {
+        if (!mapRef.current || features.length === 0) return false
+        const lls: L.LatLngTuple[] = []
+        for (const f of features) {
+          if (f.geometry.type === 'Point') {
+            const [x, y] = f.geometry.coordinates as number[]
+            lls.push(svgToLatLng(x, y) as L.LatLngTuple)
+          }
+        }
+        if (lls.length === 0) return false
+        if (lls.length === 1) {
+          mapRef.current.flyTo(lls[0] as L.LatLngExpression, 2, { duration: 0.6 })
+          return true
+        }
+        mapRef.current.flyToBounds(L.latLngBounds(lls), {
+          padding: [80, 80],
           maxZoom: 2.5,
           duration: 0.8,
         })

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { NodeIcon, IconStar } from './icons'
 import { getFeatureNote } from '../utils/feature-notes'
 import { getStoredHooks } from '../utils/feature-hooks'
@@ -7,11 +7,16 @@ import type { GeoJSONFeature } from '../App'
 interface SessionPrepPanelProps {
   features: GeoJSONFeature[]
   starredIds: string[]
+  orderedIds?: string[]
+  doneIds?: string[]
   open: boolean
   onClose: () => void
   onSelectFeature: (feature: GeoJSONFeature) => void
   onToggleStar: (featureId: string) => void
+  onReorder?: (ids: string[]) => void
+  onToggleDone?: (featureId: string) => void
   onExportCampaignLog?: () => void
+  onStartSession?: () => void
 }
 
 function getFeatureId(f: GeoJSONFeature): string {
@@ -29,12 +34,19 @@ function getFeatureCategory(f: GeoJSONFeature): string {
 export default function SessionPrepPanel({
   features,
   starredIds,
+  orderedIds,
+  doneIds = [],
   open,
   onClose,
   onSelectFeature,
   onToggleStar,
+  onReorder,
+  onToggleDone,
   onExportCampaignLog,
+  onStartSession,
 }: SessionPrepPanelProps) {
+  const activeIds = orderedIds ?? starredIds
+
   const starredFeatures = useMemo(() => {
     const map = new Map<string, GeoJSONFeature>()
     for (const f of features) {
@@ -42,14 +54,62 @@ export default function SessionPrepPanel({
       if (id) map.set(id, f)
     }
     const out: GeoJSONFeature[] = []
-    for (const id of starredIds) {
+    for (const id of activeIds) {
       const f = map.get(id)
       if (f) out.push(f)
     }
     return out
-  }, [starredIds, features])
+  }, [activeIds, features])
+
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+
+  const doneSet = useMemo(() => new Set(doneIds), [doneIds])
+
+  const remainingCount = starredFeatures.length - doneIds.length
 
   if (!open) return null
+
+  function handleDragStart(e: React.DragEvent, id: string) {
+    if (!onReorder) return
+    setDraggingId(id)
+    e.dataTransfer.effectAllowed = 'move'
+    // Firefox requires data to be set
+    e.dataTransfer.setData('text/plain', id)
+  }
+
+  function handleDragOver(e: React.DragEvent, id: string) {
+    e.preventDefault()
+    if (!onReorder || !draggingId || draggingId === id) return
+    setDragOverId(id)
+  }
+
+  function handleDrop(e: React.DragEvent, targetId: string) {
+    e.preventDefault()
+    if (!onReorder || !draggingId || draggingId === targetId) {
+      setDraggingId(null)
+      setDragOverId(null)
+      return
+    }
+    const fromIndex = activeIds.indexOf(draggingId)
+    const toIndex = activeIds.indexOf(targetId)
+    if (fromIndex === -1 || toIndex === -1) {
+      setDraggingId(null)
+      setDragOverId(null)
+      return
+    }
+    const next = [...activeIds]
+    next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, draggingId)
+    onReorder(next)
+    setDraggingId(null)
+    setDragOverId(null)
+  }
+
+  function handleDragEnd() {
+    setDraggingId(null)
+    setDragOverId(null)
+  }
 
   return (
     <div className="search-overlay" onClick={onClose}>
@@ -62,7 +122,9 @@ export default function SessionPrepPanel({
             Session Prep
           </span>
           {starredFeatures.length > 0 && (
-            <span className="lore-count">{starredFeatures.length}</span>
+            <span className="lore-count">
+              {remainingCount > 0 ? `${remainingCount} / ${starredFeatures.length}` : starredFeatures.length}
+            </span>
           )}
           <button
             onClick={onClose}
@@ -106,14 +168,53 @@ export default function SessionPrepPanel({
                 const note = getFeatureNote(id)
                 const hooks = getStoredHooks(id)
                 const hasContent = note || (hooks && hooks.length > 0)
+                const isDone = doneSet.has(id)
+                const isDragging = draggingId === id
+                const isDragOver = dragOverId === id
 
                 return (
-                  <div key={id} className="session-prep-card">
+                  <div
+                    key={id}
+                    className={`session-prep-card ${isDone ? 'done' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                    draggable={!!onReorder}
+                    onDragStart={(e) => handleDragStart(e, id)}
+                    onDragOver={(e) => handleDragOver(e, id)}
+                    onDrop={(e) => handleDrop(e, id)}
+                    onDragEnd={handleDragEnd}
+                  >
                     <div className="session-prep-card-header">
                       <div className="session-prep-card-meta">
-                        <span className={`info-panel-category ${category}`}>
-                          {category.replaceAll('_', ' ')}
-                        </span>
+                        <div className="session-prep-card-top-row">
+                          <div className="session-prep-card-controls">
+                            {onToggleDone && (
+                              <label className="prep-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  className="prep-checkbox"
+                                  checked={isDone}
+                                  onChange={() => onToggleDone(id)}
+                                  aria-label={`Mark ${name} as done`}
+                                />
+                                <span className="prep-checkbox-check" />
+                              </label>
+                            )}
+                            {onReorder && (
+                              <span className="prep-drag-handle" title="Drag to reorder">
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                                  <circle cx="2" cy="2" r="1" />
+                                  <circle cx="5" cy="2" r="1" />
+                                  <circle cx="8" cy="2" r="1" />
+                                  <circle cx="2" cy="5" r="1" />
+                                  <circle cx="5" cy="5" r="1" />
+                                  <circle cx="8" cy="5" r="1" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                          <span className={`info-panel-category ${category}`}>
+                            {category.replaceAll('_', ' ')}
+                          </span>
+                        </div>
                         <span className="session-prep-card-name">{name}</span>
                       </div>
                       <div className="session-prep-card-actions">
@@ -158,15 +259,26 @@ export default function SessionPrepPanel({
 
         <div className="search-footer">
           <span><kbd>Esc</kbd> Close</span>
-          {starredFeatures.length > 0 && onExportCampaignLog && (
-            <button
-              type="button"
-              className="keyboard-help-replay"
-              onClick={onExportCampaignLog}
-            >
-              Export log
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+            {starredFeatures.length > 0 && onExportCampaignLog && (
+              <button
+                type="button"
+                className="keyboard-help-replay"
+                onClick={onExportCampaignLog}
+              >
+                Export log
+              </button>
+            )}
+            {starredFeatures.length > 0 && onStartSession && (
+              <button
+                type="button"
+                className="session-prep-start-btn"
+                onClick={onStartSession}
+              >
+                Start session
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

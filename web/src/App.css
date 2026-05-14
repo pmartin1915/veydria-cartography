@@ -2007,6 +2007,19 @@ body {
   min-width: 0;
 }
 
+.session-prep-card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-prep-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .session-prep-card-name {
   font-family: var(--font-display);
   font-size: 16px;
@@ -2093,6 +2106,116 @@ body {
   .session-prep-card-name {
     font-size: 15px;
   }
+}
+
+/* Prep checkbox */
+.prep-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.prep-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.prep-checkbox-check {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  background: var(--bg-card);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prep-checkbox-label:hover .prep-checkbox-check {
+  border-color: var(--border-accent);
+}
+
+.prep-checkbox:checked + .prep-checkbox-check {
+  background: var(--color-oasis);
+  border-color: var(--color-oasis);
+}
+
+.prep-checkbox:checked + .prep-checkbox-check::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid var(--bg-deep);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translate(-0.5px, -0.5px);
+}
+
+/* Drag handle */
+.prep-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 2px 4px;
+  margin-right: 2px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.prep-drag-handle:active {
+  cursor: grabbing;
+}
+
+.session-prep-card:hover .prep-drag-handle {
+  opacity: 1;
+}
+
+/* Done state */
+.session-prep-card.done {
+  opacity: 0.5;
+}
+
+.session-prep-card.done .session-prep-card-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.session-prep-card.done .info-panel-category {
+  opacity: 0.6;
+}
+
+/* Dragging states */
+.session-prep-card.dragging {
+  opacity: 0.35;
+  border-style: dashed;
+}
+
+.session-prep-card.drag-over {
+  border-top: 2px solid var(--text-accent);
+}
+
+/* Start session button */
+.session-prep-start-btn {
+  background: rgba(232, 200, 64, 0.12);
+  border: 1px solid rgba(232, 200, 64, 0.4);
+  color: var(--color-port);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.session-prep-start-btn:hover {
+  background: rgba(232, 200, 64, 0.22);
+  border-color: rgba(232, 200, 64, 0.6);
 }
 
 /* --- Keyboard Help --- */
