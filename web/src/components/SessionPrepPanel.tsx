@@ -2,17 +2,20 @@ import { useMemo, useState } from 'react'
 import { NodeIcon, IconStar } from './icons'
 import { getFeatureNote } from '../utils/feature-notes'
 import { getStoredHooks } from '../utils/feature-hooks'
-import { downloadPrepList, type PrepItem } from '../utils/session-prep'
+import { downloadPrepList, type PrepItem, type HexPrepItem } from '../utils/session-prep'
 import type { GeoJSONFeature } from '../App'
+import type { MapAnnotation } from '../utils/annotations'
 
 interface SessionPrepPanelProps {
   features: GeoJSONFeature[]
   starredIds: string[]
   orderedIds?: string[]
   doneIds?: string[]
+  annotations?: MapAnnotation[]
   open: boolean
   onClose: () => void
   onSelectFeature: (feature: GeoJSONFeature) => void
+  onSelectHex?: (hexLabel: string) => void
   onToggleStar: (featureId: string) => void
   onReorder?: (ids: string[]) => void
   onToggleDone?: (featureId: string) => void
@@ -36,9 +39,11 @@ export default function SessionPrepPanel({
   starredIds,
   orderedIds,
   doneIds = [],
+  annotations = [],
   open,
   onClose,
   onSelectFeature,
+  onSelectHex,
   onToggleStar,
   onReorder,
   onToggleDone,
@@ -80,6 +85,21 @@ export default function SessionPrepPanel({
       return { id, name, category, done: doneSet.has(id), note, hookTags }
     })
   }, [starredFeatures, doneSet])
+
+  const hexPrepItems: HexPrepItem[] = useMemo(() => {
+    const map = new Map<string, MapAnnotation[]>()
+    for (const ann of annotations) {
+      if (!ann.hexLabel) continue
+      const list = map.get(ann.hexLabel) || []
+      list.push(ann)
+      map.set(ann.hexLabel, list)
+    }
+    const labels = Array.from(map.keys()).sort()
+    return labels.map((label) => ({
+      hexLabel: label,
+      notes: map.get(label)!.map((a) => ({ label: a.label, body: a.body })),
+    }))
+  }, [annotations])
 
   if (!open) return null
 
@@ -162,7 +182,7 @@ export default function SessionPrepPanel({
         </div>
 
         <div className="search-results session-prep-body">
-          {starredFeatures.length === 0 ? (
+          {starredFeatures.length === 0 && hexPrepItems.length === 0 ? (
             <div className="session-prep-empty">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.4, marginBottom: 12 }}>
                 <polygon points="12,2 14.5,9 22,9 16,13.5 18.5,21 12,16.5 5.5,21 8,13.5 2,9 9.5,9" />
@@ -268,16 +288,50 @@ export default function SessionPrepPanel({
               })}
             </div>
           )}
+
+          {hexPrepItems.length > 0 && (
+            <div className="session-prep-hex-section">
+              <div className="session-prep-hex-header">Hex Notes</div>
+              <div className="session-prep-hex-list">
+                {hexPrepItems.map((hi) => (
+                  <div key={hi.hexLabel} className="session-prep-hex-card">
+                    <div className="session-prep-hex-card-header">
+                      <span className="session-prep-hex-label">{hi.hexLabel}</span>
+                      {onSelectHex && (
+                        <button
+                          className="session-prep-btn session-prep-btn--fly"
+                          onClick={() => onSelectHex(hi.hexLabel)}
+                          title="Fly to hex"
+                        >
+                          Fly to
+                        </button>
+                      )}
+                    </div>
+                    <div className="session-prep-hex-notes">
+                      {hi.notes.map((n, idx) => (
+                        <div key={idx} className="session-prep-hex-note">
+                          <span className="session-prep-hex-note-label">{n.label}</span>
+                          {n.body && (
+                            <span className="session-prep-hex-note-body">{n.body}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="search-footer">
           <span><kbd>Esc</kbd> Close</span>
           <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-            {starredFeatures.length > 0 && (
+            {(starredFeatures.length > 0 || hexPrepItems.length > 0) && (
               <button
                 type="button"
                 className="keyboard-help-replay"
-                onClick={() => downloadPrepList(prepItems)}
+                onClick={() => downloadPrepList(prepItems, hexPrepItems)}
               >
                 Export prep
               </button>

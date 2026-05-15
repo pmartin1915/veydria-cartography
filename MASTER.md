@@ -162,6 +162,7 @@ Recent sessions (2026-05-08 → 2026-05-14) cleared the previous near-term list 
 - **Session Prep v2** — drag-to-reorder checklist of starred features with per-item done-state (`veydria.prepOrder.v1` / `veydria.prepDone.v1`). HTML5 DnD with grip handles, custom checkboxes, strikethrough on complete. "Start session" button resets transient UI state and fits the map to all starred features. 18 tests.
 - **Export prep list as markdown** — "Export prep" button in Session Prep panel downloads a markdown checklist (`veydria-session-prep-YYYY-MM-DD.md`) with title, generation date, source URL, remaining/total count, and each item as `- [x] **Name** (category)` with optional GM notes and hook tags. 5 tests.
 - **Session HUD bar** — minimal persistent chrome bar below the header when a session is active. Shows remaining prep count, horizontal scrollable chips for every starred feature (category-coloured dots, max-width truncation), done items dimmed with checkmark. Click a chip to fly to the feature and open its InfoPanel. "End" button dismisses the HUD and clears session state. Session active state persists to `localStorage:veydria.sessionActive.v1`. Mobile responsive (768 px breakpoint). 4 tests.
+- **Per-hex annotations in prep panel** — hex notes (annotations with `hexLabel`) now surface in the Session Prep panel below starred features. Grouped by hex label, each card shows the hex coordinate, note labels, and body snippets. "Fly to" button navigates to the hex and opens the `HexInfoPanel`. Included in markdown export under a dedicated "Hex Notes" section. 2 new tests.
 
 ### In Progress / Next
 
@@ -174,7 +175,6 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 Larger bets and exploratory directions:
 
 - **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
-- **Per-hex annotations in prep panel** *(small)* — surface hex notes and hex-linked pins inside the Session Prep panel alongside starred features.
 
 ### Health / infrastructure (always-on)
 

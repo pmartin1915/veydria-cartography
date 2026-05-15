@@ -123,6 +123,16 @@ export interface PrepItem {
   hookTags?: string[]
 }
 
+export interface HexPrepNote {
+  label: string
+  body: string
+}
+
+export interface HexPrepItem {
+  hexLabel: string
+  notes: HexPrepNote[]
+}
+
 function baseUrl(): string {
   if (typeof window !== 'undefined') {
     return window.location.href.split('#')[0]
@@ -133,27 +143,44 @@ function baseUrl(): string {
 /**
  * Export the session prep list as a markdown checklist.
  */
-export function exportPrepMarkdown(items: PrepItem[]): string {
-  if (items.length === 0) return ''
+export function exportPrepMarkdown(items: PrepItem[], hexItems: HexPrepItem[] = []): string {
+  if (items.length === 0 && hexItems.length === 0) return ''
 
-  const remaining = items.filter((i) => !i.done).length
   let md = `# Veydria Session Prep\n\n`
   md += `*Generated on ${new Date().toLocaleDateString()} from [Veydria Cartography](${baseUrl()})*\n\n`
-  md += `## Prep List (${remaining} / ${items.length} remaining)\n\n`
 
-  for (const item of items) {
-    const check = item.done ? 'x' : ' '
-    const cat = item.category.replace(/_/g, ' ')
-    md += `- [${check}] **${item.name}** (${cat})\n`
-    if (item.note) {
-      md += `  - *Note:* ${item.note}\n`
-    }
-    if (item.hookTags && item.hookTags.length > 0) {
-      md += `  - *Hooks:* ${item.hookTags.join(', ')}\n`
+  if (items.length > 0) {
+    const remaining = items.filter((i) => !i.done).length
+    md += `## Prep List (${remaining} / ${items.length} remaining)\n\n`
+
+    for (const item of items) {
+      const check = item.done ? 'x' : ' '
+      const cat = item.category.replace(/_/g, ' ')
+      md += `- [${check}] **${item.name}** (${cat})\n`
+      if (item.note) {
+        md += `  - *Note:* ${item.note}\n`
+      }
+      if (item.hookTags && item.hookTags.length > 0) {
+        md += `  - *Hooks:* ${item.hookTags.join(', ')}\n`
+      }
     }
   }
 
-  md += `\n---\n\n*Exported from Veydria Cartography*\n`
+  if (hexItems.length > 0) {
+    md += `\n## Hex Notes\n\n`
+    for (const hi of hexItems) {
+      md += `### ${hi.hexLabel}\n\n`
+      for (const n of hi.notes) {
+        md += `- **${n.label}**\n`
+        if (n.body) {
+          md += `  ${n.body}\n`
+        }
+      }
+      md += `\n`
+    }
+  }
+
+  md += `---\n\n*Exported from Veydria Cartography*\n`
   return md
 }
 
@@ -180,8 +207,8 @@ export function setSessionActive(active: boolean): void {
   }
 }
 
-export function downloadPrepList(items: PrepItem[]): void {
-  const md = exportPrepMarkdown(items)
+export function downloadPrepList(items: PrepItem[], hexItems: HexPrepItem[] = []): void {
+  const md = exportPrepMarkdown(items, hexItems)
   if (!md) return
   const blob = new Blob([md], { type: 'text/markdown' })
   const url = URL.createObjectURL(blob)

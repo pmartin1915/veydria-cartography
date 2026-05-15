@@ -153,6 +153,7 @@ describe('syncPrepDone', () => {
 describe('exportPrepMarkdown', () => {
   it('returns empty string for empty items', () => {
     expect(exportPrepMarkdown([])).toBe('')
+    expect(exportPrepMarkdown([], [])).toBe('')
   })
 
   it('renders a simple checklist', () => {
@@ -192,12 +193,38 @@ describe('exportPrepMarkdown', () => {
     const md = exportPrepMarkdown(items)
     expect(md).toContain('(contested site)')
   })
+
+  it('includes hex notes in a separate section', () => {
+    const items: PrepItem[] = [
+      { id: 'a', name: 'Oravan', category: 'civilization', done: false },
+    ]
+    const hexItems = [
+      { hexLabel: 'G7', notes: [{ label: 'Ambush spot', body: 'Bandits here' }] },
+    ]
+    const md = exportPrepMarkdown(items, hexItems)
+    expect(md).toContain('## Hex Notes')
+    expect(md).toContain('### G7')
+    expect(md).toContain('- **Ambush spot**')
+    expect(md).toContain('  Bandits here')
+  })
+
+  it('renders only hex notes when no feature items', () => {
+    const hexItems = [
+      { hexLabel: 'H8', notes: [{ label: 'Camp', body: '' }] },
+    ]
+    const md = exportPrepMarkdown([], hexItems)
+    expect(md).toContain('## Hex Notes')
+    expect(md).toContain('### H8')
+    expect(md).toContain('- **Camp**')
+    expect(md).not.toContain('## Prep List')
+  })
 })
 
 describe('downloadPrepList', () => {
   it('does nothing for empty items', () => {
     // Should not throw
     downloadPrepList([])
+    downloadPrepList([], [])
   })
 })
 

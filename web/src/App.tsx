@@ -1710,6 +1710,7 @@ function App() {
           starredIds={starredIds}
           orderedIds={prepOrder.length > 0 ? prepOrder : undefined}
           doneIds={prepDoneIds}
+          annotations={annotations}
           open={sessionPrepOpen}
           onClose={() => setSessionPrepOpen(false)}
           onSelectFeature={(f) => {
@@ -1724,6 +1725,10 @@ function App() {
               const hash = buildHash(viewportRef.current)
               window.history.replaceState(null, '', hash)
             }
+          }}
+          onSelectHex={(label) => {
+            setSessionPrepOpen(false)
+            mapRef.current?.selectHexByLabel(label)
           }}
           onToggleStar={handleToggleStar}
           onReorder={handleReorderPrep}
