@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { NodeIcon, IconStar } from './icons'
 import { getFeatureNote } from '../utils/feature-notes'
 import { getStoredHooks } from '../utils/feature-hooks'
+import { downloadPrepList, type PrepItem } from '../utils/session-prep'
 import type { GeoJSONFeature } from '../App'
 
 interface SessionPrepPanelProps {
@@ -15,7 +16,6 @@ interface SessionPrepPanelProps {
   onToggleStar: (featureId: string) => void
   onReorder?: (ids: string[]) => void
   onToggleDone?: (featureId: string) => void
-  onExportCampaignLog?: () => void
   onStartSession?: () => void
 }
 
@@ -42,7 +42,6 @@ export default function SessionPrepPanel({
   onToggleStar,
   onReorder,
   onToggleDone,
-  onExportCampaignLog,
   onStartSession,
 }: SessionPrepPanelProps) {
   const activeIds = orderedIds ?? starredIds
@@ -67,6 +66,20 @@ export default function SessionPrepPanel({
   const doneSet = useMemo(() => new Set(doneIds), [doneIds])
 
   const remainingCount = starredFeatures.length - doneIds.length
+
+  const prepItems: PrepItem[] = useMemo(() => {
+    return starredFeatures.map((feature) => {
+      const id = getFeatureId(feature)
+      const name = getFeatureName(feature)
+      const category = getFeatureCategory(feature)
+      const note = getFeatureNote(id) || undefined
+      const hooks = getStoredHooks(id)
+      const hookTags = hooks && hooks.length > 0
+        ? hooks.flatMap((h) => h.tags).filter((t, i, arr) => arr.indexOf(t) === i)
+        : undefined
+      return { id, name, category, done: doneSet.has(id), note, hookTags }
+    })
+  }, [starredFeatures, doneSet])
 
   if (!open) return null
 
@@ -260,13 +273,13 @@ export default function SessionPrepPanel({
         <div className="search-footer">
           <span><kbd>Esc</kbd> Close</span>
           <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-            {starredFeatures.length > 0 && onExportCampaignLog && (
+            {starredFeatures.length > 0 && (
               <button
                 type="button"
                 className="keyboard-help-replay"
-                onClick={onExportCampaignLog}
+                onClick={() => downloadPrepList(prepItems)}
               >
-                Export log
+                Export prep
               </button>
             )}
             {starredFeatures.length > 0 && onStartSession && (

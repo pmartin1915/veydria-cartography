@@ -7,6 +7,7 @@
 
 const ORDER_KEY = 'veydria.prepOrder.v1'
 const DONE_KEY = 'veydria.prepDone.v1'
+const ACTIVE_KEY = 'veydria.sessionActive.v1'
 
 function readOrder(): string[] {
   try {
@@ -111,4 +112,85 @@ export function syncPrepDone(starredIds: string[]): string[] {
   const filtered = current.filter((id) => starredIds.includes(id))
   writeDone(filtered)
   return filtered
+}
+
+export interface PrepItem {
+  id: string
+  name: string
+  category: string
+  done: boolean
+  note?: string
+  hookTags?: string[]
+}
+
+function baseUrl(): string {
+  if (typeof window !== 'undefined') {
+    return window.location.href.split('#')[0]
+  }
+  return 'https://veydria.com'
+}
+
+/**
+ * Export the session prep list as a markdown checklist.
+ */
+export function exportPrepMarkdown(items: PrepItem[]): string {
+  if (items.length === 0) return ''
+
+  const remaining = items.filter((i) => !i.done).length
+  let md = `# Veydria Session Prep\n\n`
+  md += `*Generated on ${new Date().toLocaleDateString()} from [Veydria Cartography](${baseUrl()})*\n\n`
+  md += `## Prep List (${remaining} / ${items.length} remaining)\n\n`
+
+  for (const item of items) {
+    const check = item.done ? 'x' : ' '
+    const cat = item.category.replace(/_/g, ' ')
+    md += `- [${check}] **${item.name}** (${cat})\n`
+    if (item.note) {
+      md += `  - *Note:* ${item.note}\n`
+    }
+    if (item.hookTags && item.hookTags.length > 0) {
+      md += `  - *Hooks:* ${item.hookTags.join(', ')}\n`
+    }
+  }
+
+  md += `\n---\n\n*Exported from Veydria Cartography*\n`
+  return md
+}
+
+/**
+ * Check whether a session is currently active.
+ */
+export function isSessionActive(): boolean {
+  try {
+    return localStorage.getItem(ACTIVE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setSessionActive(active: boolean): void {
+  try {
+    if (active) {
+      localStorage.setItem(ACTIVE_KEY, '1')
+    } else {
+      localStorage.removeItem(ACTIVE_KEY)
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function downloadPrepList(items: PrepItem[]): void {
+  const md = exportPrepMarkdown(items)
+  if (!md) return
+  const blob = new Blob([md], { type: 'text/markdown' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const date = new Date().toISOString().slice(0, 10)
+  a.download = `veydria-session-prep-${date}.md`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }

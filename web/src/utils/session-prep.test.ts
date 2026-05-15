@@ -8,10 +8,16 @@ import {
   clearPrepDone,
   syncPrepOrder,
   syncPrepDone,
+  exportPrepMarkdown,
+  downloadPrepList,
+  isSessionActive,
+  setSessionActive,
+  type PrepItem,
 } from './session-prep'
 
 const ORDER_KEY = 'veydria.prepOrder.v1'
 const DONE_KEY = 'veydria.prepDone.v1'
+const ACTIVE_KEY = 'veydria.sessionActive.v1'
 
 function installLocalStorageStub() {
   const store = new Map<string, string>()
@@ -141,5 +147,82 @@ describe('syncPrepDone', () => {
     localStorage.setItem(DONE_KEY, JSON.stringify(['a']))
     const result = syncPrepDone([])
     expect(result).toEqual([])
+  })
+})
+
+describe('exportPrepMarkdown', () => {
+  it('returns empty string for empty items', () => {
+    expect(exportPrepMarkdown([])).toBe('')
+  })
+
+  it('renders a simple checklist', () => {
+    const items: PrepItem[] = [
+      { id: 'a', name: 'Oravan', category: 'civilization', done: false },
+      { id: 'b', name: 'Aethelian Basin', category: 'water', done: true },
+    ]
+    const md = exportPrepMarkdown(items)
+    expect(md).toContain('# Veydria Session Prep')
+    expect(md).toContain('## Prep List (1 / 2 remaining)')
+    expect(md).toContain('- [ ] **Oravan** (civilization)')
+    expect(md).toContain('- [x] **Aethelian Basin** (water)')
+    expect(md).toContain('*Exported from Veydria Cartography*')
+  })
+
+  it('includes notes and hook tags', () => {
+    const items: PrepItem[] = [
+      {
+        id: 'a',
+        name: 'Copper Road',
+        category: 'trade_route',
+        done: false,
+        note: 'Bandits spotted near the bridge',
+        hookTags: ['conflict', 'treasure'],
+      },
+    ]
+    const md = exportPrepMarkdown(items)
+    expect(md).toContain('- [ ] **Copper Road** (trade route)')
+    expect(md).toContain('  - *Note:* Bandits spotted near the bridge')
+    expect(md).toContain('  - *Hooks:* conflict, treasure')
+  })
+
+  it('replaces underscores in category names', () => {
+    const items: PrepItem[] = [
+      { id: 'a', name: 'X', category: 'contested_site', done: false },
+    ]
+    const md = exportPrepMarkdown(items)
+    expect(md).toContain('(contested site)')
+  })
+})
+
+describe('downloadPrepList', () => {
+  it('does nothing for empty items', () => {
+    // Should not throw
+    downloadPrepList([])
+  })
+})
+
+describe('isSessionActive / setSessionActive', () => {
+  it('returns false when nothing stored', () => {
+    expect(isSessionActive()).toBe(false)
+  })
+
+  it('returns true after activation', () => {
+    setSessionActive(true)
+    expect(isSessionActive()).toBe(true)
+    expect(localStorage.getItem(ACTIVE_KEY)).toBe('1')
+  })
+
+  it('returns false after deactivation', () => {
+    setSessionActive(true)
+    setSessionActive(false)
+    expect(isSessionActive()).toBe(false)
+    expect(localStorage.getItem(ACTIVE_KEY)).toBeNull()
+  })
+
+  it('survives a round-trip through localStorage', () => {
+    setSessionActive(true)
+    expect(isSessionActive()).toBe(true)
+    // Simulate reload by re-reading
+    expect(localStorage.getItem(ACTIVE_KEY)).toBe('1')
   })
 })

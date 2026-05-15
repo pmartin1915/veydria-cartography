@@ -1,6 +1,6 @@
 # Veydria Cartography — Master Document
 
-*Last updated 2026-05-11 · supersedes the scattered notes across `README.md`, `AGENTS.md`, and the HANDOFF series for high-level orientation.*
+*Last updated 2026-05-15 · supersedes the scattered notes across `README.md`, `AGENTS.md`, and the HANDOFF series for high-level orientation.*
 
 ---
 
@@ -59,7 +59,13 @@ data/                                          ← read-only here
                   │   ├── LayerControls          left-side layer + preset UI
                   │   ├── JourneyPlanner         routing + days + encounters
                   │   ├── SearchBar              Cmd-K palette
-                  │   └── KeyboardHelp           ? overlay
+                  │   ├── KeyboardHelp           ? overlay
+                  │   ├── FactionGraph           SVG civ-relationship modal
+                  │   ├── SessionPrepPanel       starred-feature prep list
+                  │   ├── SessionHud             persistent play bar
+                  │   ├── HexInfoPanel           hex cell detail + annotations
+                  │   ├── TourOverlay            guided onboarding spotlight
+                  │   └── SettingsModal          AI Lore + app settings
                   ├── generated/
                   │   └── calendar-events.ts    (auto-generated from data/calendar-events.yaml)
                   └── utils/
@@ -74,6 +80,12 @@ data/                                          ← read-only here
                       ├── travel-time            league/day math
                       ├── feature-notes          per-feature GM notes (localStorage)
                       ├── feature-hooks          seeded adventure-hook generator per feature
+                      ├── feature-stars          starred-feature IDs for session prep
+                      ├── session-prep           ordering, done-state, markdown export
+                      ├── tour                   guided onboarding state + reducer
+                      ├── time-of-day            atmospheric tint cycles
+                      ├── media-query            responsive breakpoint hook
+                      ├── use-toast              toast notification hook
                       └── calendar               civilizational calendar events + season helpers
 ```
 
@@ -100,7 +112,7 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 440/440 | vitest, 24 files |
+| Tests | ✅ 481/481 | vitest, 26 files |
 | CI | ✅ green | GH Actions, ~22s |
 
 ## 5. Roadmap
@@ -109,7 +121,7 @@ Three horizons, reorganised by state rather than time. Each item is sized **smal
 
 ### Shipped
 
-Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list and added significant GM utility:
+Recent sessions (2026-05-08 → 2026-05-14) cleared the previous near-term list and added significant GM utility:
 
 - **Hex grid overlay** — pointy-top odd-r grid (~110–600 cells via 30/50/70 size slider), A1/G7 labels, hover tooltip with terrain descriptors, click-to-select with `HexInfoPanel`, coord chip, deep-link via `#hex=G7`, variable size persisted to `localStorage`.
 - **Hex-distance measurement** — two-click axial-distance mode, path highlighting with tinted endpoint/mid-path labels, "H" shortcut, URL persistence (`#hexA=G7&hexB=K12`), mobile fly-to gate.
@@ -146,6 +158,10 @@ Recent sessions (2026-05-08 → 2026-05-10) cleared the previous near-term list 
 - **Copy prompt button for AI Lore** — `buildPrompt()` exported; GMs can copy the full context-rich prompt to clipboard (with fallback for environments that block Clipboard API). Green "Copied!" flash feedback. 4 tests.
 - **Temperature slider for AI Lore** — range control (0.0–1.5, step 0.1) in SettingsModal, default 0.7. Labels show "Grounded" ↔ "Creative". Value is persisted in `veydria.aiLoreSettings.v1` and passed through to the OpenAI-compatible API payload.
 - **Adventure hooks per feature** — deterministic, seeded adventure-hook generator for every feature on the map. Each feature gets 3 context-aware hooks drawn from category-specific pools (port, chokepoint, oasis, contested_site, civilization, trade_route, water, landmark, river). Hooks are deterministic (`djb2Hash` + `mulberry32` seeded by feature ID) so the same location always produces the same inspiration. GMs can reroll for fresh seeds. Generated hooks are cached in `localStorage:veydria.hooks.v1`. Displayed in InfoPanel between Lore & Sources and GM Notes, with tag chips (trade, conflict, political, religious, supernatural, treasure, disease). 18 tests.
+- **Feature stars** — star any feature from its InfoPanel to build a persistent shortlist. Starred IDs stored in `veydria.stars.v1`. Session Prep panel consumes the starred list.
+- **Session Prep v2** — drag-to-reorder checklist of starred features with per-item done-state (`veydria.prepOrder.v1` / `veydria.prepDone.v1`). HTML5 DnD with grip handles, custom checkboxes, strikethrough on complete. "Start session" button resets transient UI state and fits the map to all starred features. 18 tests.
+- **Export prep list as markdown** — "Export prep" button in Session Prep panel downloads a markdown checklist (`veydria-session-prep-YYYY-MM-DD.md`) with title, generation date, source URL, remaining/total count, and each item as `- [x] **Name** (category)` with optional GM notes and hook tags. 5 tests.
+- **Session HUD bar** — minimal persistent chrome bar below the header when a session is active. Shows remaining prep count, horizontal scrollable chips for every starred feature (category-coloured dots, max-width truncation), done items dimmed with checkmark. Click a chip to fly to the feature and open its InfoPanel. "End" button dismisses the HUD and clears session state. Session active state persists to `localStorage:veydria.sessionActive.v1`. Mobile responsive (768 px breakpoint). 4 tests.
 
 ### In Progress / Next
 
@@ -157,9 +173,8 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 
 Larger bets and exploratory directions:
 
-
-- **Generative content per feature** *(large)* — Claude API "rumours, hooks, NPCs" panel per feature lore card. Cached per feature ID; optional, needs API key.
 - **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
+- **Per-hex annotations in prep panel** *(small)* — surface hex notes and hex-linked pins inside the Session Prep panel alongside starred features.
 
 ### Health / infrastructure (always-on)
 

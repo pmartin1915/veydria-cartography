@@ -27,6 +27,8 @@ import {
   togglePrepDone,
   syncPrepOrder,
   syncPrepDone,
+  isSessionActive,
+  setSessionActive as saveSessionActive,
 } from './utils/session-prep'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
@@ -37,6 +39,7 @@ import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
 import SettingsModal from './components/SettingsModal'
 import SessionPrepPanel from './components/SessionPrepPanel'
+import SessionHud from './components/SessionHud'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -191,6 +194,7 @@ function App() {
   const [starredIds, setStarredIds] = useState<string[]>(() => getStarredIds())
   const [prepOrder, setPrepOrderState] = useState<string[]>(() => getPrepOrder())
   const [prepDoneIds, setPrepDoneIds] = useState<string[]>(() => getPrepDoneIds())
+  const [sessionActive, setSessionActive] = useState<boolean>(() => isSessionActive())
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -712,8 +716,16 @@ function App() {
         mapRef.current?.clearMeasurePoints?.()
       }
     }, 100)
+    saveSessionActive(true)
+    setSessionActive(true)
     showAnnotationToast('Session started — good luck!')
   }, [clearHexMeasureFromHash, starredIds, geojson])
+
+  const handleEndSession = useCallback(() => {
+    saveSessionActive(false)
+    setSessionActive(false)
+    showAnnotationToast('Session ended')
+  }, [showAnnotationToast])
 
   const handleHexMeasureClear = useCallback(() => {
     setHexMeasurePoints([])
@@ -1319,6 +1331,30 @@ function App() {
         </div>
       </header>}
 
+      {sessionActive && (
+        <SessionHud
+          features={geojson?.features ?? []}
+          starredIds={starredIds}
+          doneIds={prepDoneIds}
+          onNavigate={(feature) => {
+            setSelectedFeature(feature)
+            setPanelOpen(true)
+            setSelectedHex(null)
+            viewportRef.current = {
+              ...viewportRef.current,
+              featureId: ((feature as unknown as Record<string, unknown>).id as string) || (feature.properties.id as string),
+              hexLabel: undefined,
+              hexNote: undefined,
+              journeyFrom: undefined,
+              journeyTo: undefined,
+            }
+            window.history.replaceState(null, '', buildHash(viewportRef.current) || window.location.pathname + window.location.search)
+            mapRef.current?.flyToFeature?.(feature)
+          }}
+          onEndSession={handleEndSession}
+        />
+      )}
+
       <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay}`}>
         {geojson && (
           <MapViewer
@@ -1692,7 +1728,6 @@ function App() {
           onToggleStar={handleToggleStar}
           onReorder={handleReorderPrep}
           onToggleDone={handleTogglePrepDone}
-          onExportCampaignLog={handleDownloadCampaignLog}
           onStartSession={handleStartSession}
         />
 
