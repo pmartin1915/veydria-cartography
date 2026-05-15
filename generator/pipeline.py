@@ -26,6 +26,7 @@ from generator.core.schema_validator import validate_topology_file
 from generator.export.geojson import export_geojson
 from generator.export.azgaar import export_azgaar_heightmap
 from generator.render.rasterize import rasterize_map
+from generator.render.config import load_render_config
 
 
 def cmd_export_geojson(args: argparse.Namespace) -> None:
@@ -182,6 +183,12 @@ def main() -> None:
         default=200,
         help="Resolution in DPI (default: 200)",
     )
+    p_render.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to layer config JSON from the web app (optional)",
+    )
 
     # export-azgaar
     p_azgaar = sub.add_parser("export-azgaar", help="Export Voronoi elevation to Azgaar heightmap PNG")
@@ -206,10 +213,18 @@ def main() -> None:
         data = load_topology(args.input)
         export_azgaar_heightmap(data, args.output, dpi=args.dpi)
     elif args.command == "render-map":
+        layer_filter = None
+        if args.config:
+            cfg = load_render_config(args.config)
+            layer_filter = cfg.layers
+            print(f"Loaded render config (v{cfg.version}) generated at {cfg.generated_at}")
+            active = [k for k, v in layer_filter.items() if v]
+            print(f"  Active layers: {', '.join(active) if active else '(none)'}")
         rasterize_map(
             geojson_path=args.geojson,
             output_path=args.output,
             dpi=args.dpi,
+            layer_filter=layer_filter,
         )
     elif args.command == "validate":
         cmd_validate(args)

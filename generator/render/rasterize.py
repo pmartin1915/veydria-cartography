@@ -173,7 +173,7 @@ def _draw_ocean(ax: plt.Axes) -> None:
     ax.add_patch(ocean)
 
 
-def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.random.Generator) -> None:
+def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.random.Generator, layer_filter: dict[str, bool] | None = None) -> None:
     """Draw the merged continental landmass from civilization polygons."""
     # Collect all polygon points to create a rough continental hull
     all_points = []
@@ -182,6 +182,9 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
         all_points.extend(coords)
 
     if not all_points:
+        return
+
+    if layer_filter is not None and not layer_filter.get('civilization', True):
         return
 
     # Draw each civ polygon as land fill
@@ -241,9 +244,11 @@ def _elevation_color(elev: float, min_elev: float = -500, max_elev: float = 6000
     return ELEVATION_COLORS[-1][1]
 
 
-def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict]) -> None:
+def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict], layer_filter: dict[str, bool] | None = None) -> None:
     """Draw Voronoi heightmap cells with hypsometric tinting and hillshade."""
     if not terrain_cells:
+        return
+    if layer_filter is not None and not layer_filter.get('terrain_cell', True):
         return
     
     elevations = [f['properties']['elevation'] for f in terrain_cells]
@@ -264,8 +269,10 @@ def _draw_terrain_cells(ax: plt.Axes, terrain_cells: list[dict]) -> None:
         # zorder=2 so it sits above ocean(1) and under civ fills(3)
         ax.fill(xs, ys, facecolor=color, edgecolor='none', alpha=hillshade_alpha, zorder=2)
 
-def _draw_basin(ax: plt.Axes, basin_feat: dict, rng: np.random.Generator) -> None:
+def _draw_basin(ax: plt.Axes, basin_feat: dict, rng: np.random.Generator, layer_filter: dict[str, bool] | None = None) -> None:
     """Draw the Aethelian Basin as a translucent water body."""
+    if layer_filter is not None and not layer_filter.get('water', True):
+        return
     coords = basin_feat['geometry']['coordinates'][0]
     jittered = _jitter_polygon(coords, rng, amplitude=3.0)
     xs = [p[0] for p in jittered]
@@ -287,8 +294,10 @@ def _draw_basin(ax: plt.Axes, basin_feat: dict, rng: np.random.Generator) -> Non
             ])
 
 
-def _draw_rivers(ax: plt.Axes, rivers: list[dict]) -> None:
+def _draw_rivers(ax: plt.Axes, rivers: list[dict], layer_filter: dict[str, bool] | None = None) -> None:
     """Draw river lines."""
+    if layer_filter is not None and not layer_filter.get('river', True):
+        return
     for feat in rivers:
         coords = feat['geometry']['coordinates']
         xs = [p[0] for p in coords]
@@ -297,8 +306,10 @@ def _draw_rivers(ax: plt.Axes, rivers: list[dict]) -> None:
                 solid_capstyle='round', zorder=5)
 
 
-def _draw_trade_routes(ax: plt.Axes, routes: list[dict]) -> None:
+def _draw_trade_routes(ax: plt.Axes, routes: list[dict], layer_filter: dict[str, bool] | None = None) -> None:
     """Draw trade routes as styled dashed lines."""
+    if layer_filter is not None and not layer_filter.get('trade_route', True):
+        return
     for feat in routes:
         props = feat['properties']
         route_id = props.get('id', '')
@@ -314,11 +325,13 @@ def _draw_trade_routes(ax: plt.Axes, routes: list[dict]) -> None:
                 dash_joinstyle='round', zorder=8)
 
 
-def _draw_points(ax: plt.Axes, features: list[dict]) -> None:
+def _draw_points(ax: plt.Axes, features: list[dict], layer_filter: dict[str, bool] | None = None) -> None:
     """Draw point markers (ports, chokepoints, oases, landmarks, contested sites)."""
     for feat in features:
         props = feat['properties']
         category = props.get('category', 'landmark')
+        if layer_filter is not None and not layer_filter.get(category, True):
+            continue
         name = props.get('name', '')
         x, y = feat['geometry']['coordinates']
         y = SVG_HEIGHT - y  # Invert
@@ -429,7 +442,7 @@ def _draw_title(ax: plt.Axes) -> None:
             color=BORDER_COLOR, linewidth=0.6, alpha=0.6, zorder=24)
 
 
-def _draw_legend(ax: plt.Axes, routes: list[dict]) -> None:
+def _draw_legend(ax: plt.Axes, routes: list[dict], points: list[dict], layer_filter: dict[str, bool] | None = None) -> None:
     """Draw a map legend."""
     lx, ly = SVG_WIDTH - 200, 175
     box_w, box_h = 180, 185
@@ -449,8 +462,18 @@ def _draw_legend(ax: plt.Axes, routes: list[dict]) -> None:
 
     y_pos = ly - 25
 
+    has_routes = layer_filter is None or layer_filter.get('trade_route', True)
+    point_categories = ['chokepoint', 'port', 'oasis']
+    has_points = layer_filter is None or any(
+        layer_filter.get(cat, True) for cat in point_categories
+    )
+
+    if not has_routes and not has_points:
+        return
+
     # Trade routes
-    for feat in routes:
+    if has_routes:
+      for feat in routes:
         props = feat['properties']
         route_id = props.get('id', '')
         name = props.get('name', route_id)
@@ -467,8 +490,11 @@ def _draw_legend(ax: plt.Axes, routes: list[dict]) -> None:
     y_pos -= 6
 
     # Point markers
-    for category, label in [('chokepoint', 'Chokepoint'), ('port', 'Basin Port Zone'),
-                             ('oasis', 'Irrah Oasis City')]:
+    if has_points:
+      for category, label in [('chokepoint', 'Chokepoint'), ('port', 'Basin Port Zone'),
+                               ('oasis', 'Irrah Oasis City')]:
+        if layer_filter is not None and not layer_filter.get(category, True):
+            continue
         cfg = MARKER_CONFIG[category]
         ax.scatter(lx + 18, y_pos, marker=cfg['marker'], c=cfg['color'],
                    s=cfg['size'] * 0.7, edgecolors=cfg['edgecolor'],
@@ -483,6 +509,7 @@ def rasterize_map(
     geojson_path: Path | str | None = None,
     output_path: Path | str | None = None,
     dpi: int = DPI,
+    layer_filter: dict[str, bool] | None = None,
 ) -> Path:
     """
     Render the Veydria map as a static PNG.
@@ -535,25 +562,29 @@ def rasterize_map(
     print("  Drawing ocean...")
     _draw_ocean(ax)
 
-    if terrain_cells:
+    if terrain_cells and (layer_filter is None or layer_filter.get('terrain_cell', True)):
         print("  Drawing terrain cells...")
-        _draw_terrain_cells(ax, terrain_cells)
+        _draw_terrain_cells(ax, terrain_cells, layer_filter)
 
-    print("  Drawing continental regions...")
-    _draw_continent_outline(ax, civilizations, rng)
+    if civilizations and (layer_filter is None or layer_filter.get('civilization', True)):
+        print("  Drawing continental regions...")
+        _draw_continent_outline(ax, civilizations, rng, layer_filter)
 
-    if basin:
+    if basin and (layer_filter is None or layer_filter.get('water', True)):
         print("  Drawing Aethelian Basin...")
-        _draw_basin(ax, basin[0], rng)
+        _draw_basin(ax, basin[0], rng, layer_filter)
 
-    print("  Drawing rivers...")
-    _draw_rivers(ax, rivers)
+    if rivers and (layer_filter is None or layer_filter.get('river', True)):
+        print("  Drawing rivers...")
+        _draw_rivers(ax, rivers, layer_filter)
 
-    print("  Drawing trade routes...")
-    _draw_trade_routes(ax, routes)
+    if routes and (layer_filter is None or layer_filter.get('trade_route', True)):
+        print("  Drawing trade routes...")
+        _draw_trade_routes(ax, routes, layer_filter)
 
-    print("  Drawing points of interest...")
-    _draw_points(ax, points)
+    if points:
+        print("  Drawing points of interest...")
+        _draw_points(ax, points, layer_filter)
 
     print("  Drawing compass rose...")
     _draw_compass(ax)
@@ -564,8 +595,11 @@ def rasterize_map(
     print("  Drawing title...")
     _draw_title(ax)
 
-    print("  Drawing legend...")
-    _draw_legend(ax, routes)
+    if (layer_filter is None
+        or layer_filter.get('trade_route', True)
+        or any(layer_filter.get(cat, True) for cat in ['chokepoint', 'port', 'oasis'])):
+        print("  Drawing legend...")
+        _draw_legend(ax, routes, points, layer_filter)
 
     # Add a thin border
     for spine in ax.spines.values():

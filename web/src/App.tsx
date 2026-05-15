@@ -32,6 +32,7 @@ import {
 } from './utils/session-prep'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
+import { downloadRenderConfig } from './utils/render-config'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
 import { useMediaQuery } from './utils/media-query'
@@ -1188,6 +1189,21 @@ function App() {
             </svg>
             <span>Snapshot</span>
           </button>
+          {!shareMode && (
+            <button
+              className="search-trigger"
+              onClick={() => downloadRenderConfig(layers)}
+              title="Download render config for high-DPI parchment export (run: python pipeline.py render-map --config ...)"
+              id="parchment-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+              <span>Parchment</span>
+            </button>
+          )}
           {!shareMode && (
             <button
               className="search-trigger"

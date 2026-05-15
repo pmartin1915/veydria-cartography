@@ -174,7 +174,7 @@ Immediate gaps and plausible next-session moves, in rough priority order:
 
 Larger bets and exploratory directions:
 
-- **Static map regeneration** *(large)* — "Render this view as parchment" button that hands layer state to the Python pipeline and produces a high-DPI PNG.
+- **Static map regeneration** *(large)* — "Parchment" button in the web header downloads a `veydria-render-config-YYYY-MM-DD.json` containing current layer visibility. The Python pipeline's `render-map` command accepts `--config` to read this JSON and filter which categories are drawn. Web-only layers (hex_grid, faction_control, terrain_cost, biome_colors) are automatically omitted. High-DPI via `--dpi 300`. `generator/render/config.py` defines `RenderConfig` with `load_render_config()`; `rasterize.py` respects the layer filter across all drawing functions. 2 tests on the web side.
 
 ### Health / infrastructure (always-on)
 
