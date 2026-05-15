@@ -112,8 +112,12 @@ data/                                          ← read-only here
 | Player share mode (`#share=1`) | ✅ shipped | banner + chrome hide |
 | PNG snapshot | ✅ shipped | clipboard-first, ≤6 MP cap |
 | Measure tool | ✅ shipped | straight-line km/leagues |
-| Tests | ✅ 481/481 | vitest, 26 files |
+| Tests | ✅ 489/489 | vitest, 27 files |
 | CI | ✅ green | GH Actions, ~22s |
+| Session HUD | ✅ shipped | persistent play chrome with quick-nav chips |
+| Per-hex annotations in prep | ✅ shipped | hex notes surface in Session Prep panel |
+| Static map regeneration | ✅ shipped | web → Python parchment render bridge |
+| Mobile iOS polish | ✅ shipped | `-webkit-overflow-scrolling: touch` on scrollables |
 
 ## 5. Roadmap
 
@@ -161,20 +165,22 @@ Recent sessions (2026-05-08 → 2026-05-14) cleared the previous near-term list 
 - **Feature stars** — star any feature from its InfoPanel to build a persistent shortlist. Starred IDs stored in `veydria.stars.v1`. Session Prep panel consumes the starred list.
 - **Session Prep v2** — drag-to-reorder checklist of starred features with per-item done-state (`veydria.prepOrder.v1` / `veydria.prepDone.v1`). HTML5 DnD with grip handles, custom checkboxes, strikethrough on complete. "Start session" button resets transient UI state and fits the map to all starred features. 18 tests.
 - **Export prep list as markdown** — "Export prep" button in Session Prep panel downloads a markdown checklist (`veydria-session-prep-YYYY-MM-DD.md`) with title, generation date, source URL, remaining/total count, and each item as `- [x] **Name** (category)` with optional GM notes and hook tags. 5 tests.
-- **Session HUD bar** — minimal persistent chrome bar below the header when a session is active. Shows remaining prep count, horizontal scrollable chips for every starred feature (category-coloured dots, max-width truncation), done items dimmed with checkmark. Click a chip to fly to the feature and open its InfoPanel. "End" button dismisses the HUD and clears session state. Session active state persists to `localStorage:veydria.sessionActive.v1`. Mobile responsive (768 px breakpoint). 4 tests.
-- **Per-hex annotations in prep panel** — hex notes (annotations with `hexLabel`) now surface in the Session Prep panel below starred features. Grouped by hex label, each card shows the hex coordinate, note labels, and body snippets. "Fly to" button navigates to the hex and opens the `HexInfoPanel`. Included in markdown export under a dedicated "Hex Notes" section. 2 new tests.
+- **Session HUD bar** *(2026-05-15)* — minimal persistent chrome bar below the header when a session is active. Shows remaining prep count, horizontal scrollable chips for every starred feature (category-coloured dots, max-width truncation), done items dimmed with checkmark. Click a chip to fly to the feature and open its InfoPanel. "End" button dismisses the HUD and clears session state. Session active state persists to `localStorage:veydria.sessionActive.v1`. Mobile responsive (768 px breakpoint). 4 tests.
+- **Per-hex annotations in prep panel** *(2026-05-15)* — hex notes (annotations with `hexLabel`) now surface in the Session Prep panel below starred features. Grouped by hex label, each card shows the hex coordinate, note labels, and body snippets. "Fly to" button navigates to the hex and opens the `HexInfoPanel`. Included in markdown export under a dedicated "Hex Notes" section. 2 new tests.
+- **Static map regeneration** *(2026-05-15, large → shipped)* — "Parchment" button in the web header downloads `veydria-render-config-YYYY-MM-DD.json` containing current layer visibility. Python `pipeline.py render-map --config <path>` reads the JSON and filters which GeoJSON categories are drawn. Web-only layers (hex_grid, faction_control, terrain_cost, biome_colors) are automatically omitted. High-DPI via `--dpi 300`. `generator/render/config.py` defines `RenderConfig` with `load_render_config()`; `rasterize.py` respects the layer filter across all drawing functions. 2 tests on the web side.
+- **Mobile iOS polish** *(2026-05-15)* — added `-webkit-overflow-scrolling: touch` to 6 scrollable containers for native iOS momentum scrolling: `.session-hud-scroll`, `.header-right`, `.journey-tabs`, `.layer-controls`, `.search-results`, `.info-panel-body`.
 
 ### In Progress / Next
 
 Immediate gaps and plausible next-session moves, in rough priority order:
 
-- **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom. Checklist lives in `HANDOFF-2026-05-09c`.
+- **Manual mobile audit** *(small, recurring)* — real-device verification of all mobile paths: first-load fit, pinch-zoom smoothness, bottom-sheet contention, hex measure on phone, label tint at label-visible zoom, Session HUD chip tap targets (20 px on mobile is below 44 px HIG). Checklist lives in `HANDOFF-2026-05-09c`.
 
 ### Backlog
 
 Larger bets and exploratory directions:
 
-- **Static map regeneration** *(large)* — "Parchment" button in the web header downloads a `veydria-render-config-YYYY-MM-DD.json` containing current layer visibility. The Python pipeline's `render-map` command accepts `--config` to read this JSON and filter which categories are drawn. Web-only layers (hex_grid, faction_control, terrain_cost, biome_colors) are automatically omitted. High-DPI via `--dpi 300`. `generator/render/config.py` defines `RenderConfig` with `load_render_config()`; `rasterize.py` respects the layer filter across all drawing functions. 2 tests on the web side.
+*(empty — all backlog items shipped as of 2026-05-15)*
 
 ### Health / infrastructure (always-on)
 
