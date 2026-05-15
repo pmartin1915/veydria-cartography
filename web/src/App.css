@@ -1030,7 +1030,7 @@ body {
   border-color: var(--color-route);
 }
 
-.info-panel-body { padding: 20px; }
+.info-panel-body { padding: 20px; -webkit-overflow-scrolling: touch; }
 
 .info-panel-name {
   font-family: var(--font-display);
@@ -1466,6 +1466,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   padding: 4px 0;
@@ -2588,6 +2589,7 @@ body {
     left: 8px;
     max-height: 45vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 6px;
     min-width: 150px;
   }
@@ -2671,6 +2673,7 @@ body {
     flex-wrap: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
   }
   .header-right::-webkit-scrollbar { display: none; }
   .header-right > * { flex-shrink: 0; }
@@ -2718,6 +2721,7 @@ body {
     overflow-x: auto;
     flex-wrap: nowrap;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
   .journey-tabs::-webkit-scrollbar { display: none; }
   .journey-tab { flex-shrink: 0; }
