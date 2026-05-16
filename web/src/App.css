@@ -6561,3 +6561,54 @@ select:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Compendium ego network */
+.compendium-ego-network {
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+.compendium-ego-network h4 {
+  font-family: var(--font-display);
+  color: var(--text-accent);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.compendium-ego-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.compendium-ego-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.compendium-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.compendium-ego-node {
+  transition: opacity 0.15s;
+}
+
+.compendium-ego-node:hover {
+  opacity: 0.8;
+}
+
+.compendium-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}

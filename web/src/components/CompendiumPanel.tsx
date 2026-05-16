@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { marked } from 'marked';
 import type { CanonEntity, CanonEntityRaw, CompendiumTab } from './compendium/types';
 import { CIVS, CIV_LABELS, LENSES, displayName } from './compendium/types';
+import EgoNetwork from './compendium/EgoNetwork';
 import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
 
 interface CompendiumPanelProps {
@@ -114,6 +115,8 @@ export default function CompendiumPanel({ onSelectMapAnchor, onClose }: Compendi
             onBack={() => setSelectedId(null)}
             onMapClick={() => handleMapClick(selectedEntity)}
             hasMapAnchor={!!selectedEntity.map_anchor}
+            allEntities={entities}
+            onSelectEntity={(id) => { setSelectedId(id); }}
           />
         ) : tab === 'browse' ? (
           <BrowseView entities={filtered} onSelect={setSelectedId} total={entities.length} />
@@ -265,13 +268,16 @@ function LensesView({ entities, lens, onSelectLens, onSelectEntity }: {
   );
 }
 
-function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor }: {
+function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor, allEntities, onSelectEntity }: {
   entity: CanonEntity;
   onBack: () => void;
   onMapClick: () => void;
   hasMapAnchor: boolean;
+  allEntities: CanonEntity[];
+  onSelectEntity: (id: string) => void;
 }) {
   const [bodyHtml, setBodyHtml] = useState('');
+  const [showNetwork, setShowNetwork] = useState(false);
 
   useEffect(() => {
     if (entity.body) {
@@ -285,6 +291,9 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor }: {
       setBodyHtml('');
     }
   }, [entity.body]);
+
+  const hasNetwork = (entity.cross_refs && entity.cross_refs.length > 0) ||
+    allEntities.some((e) => e.cross_refs?.includes(entity.id));
 
   return (
     <div className="compendium-detail">
@@ -300,11 +309,18 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor }: {
         {entity.epoch && <span className="compendium-tag">{entity.epoch}</span>}
         {entity.status && <span className="compendium-tag">{entity.status}</span>}
       </div>
-      {hasMapAnchor && (
-        <button className="compendium-map-btn" onClick={onMapClick}>
-          🗺 Show on Map
-        </button>
-      )}
+      <div className="compendium-detail-actions">
+        {hasMapAnchor && (
+          <button className="compendium-map-btn" onClick={onMapClick}>
+            🗺 Show on Map
+          </button>
+        )}
+        {hasNetwork && (
+          <button className="compendium-map-btn" onClick={() => setShowNetwork((p) => !p)}>
+            {showNetwork ? '✕ Hide Network' : '⟡ Network'}
+          </button>
+        )}
+      </div>
       {entity.summary && (
         <div className="compendium-detail-summary">{entity.summary}</div>
       )}
@@ -317,6 +333,9 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor }: {
             ))}
           </ul>
         </div>
+      )}
+      {showNetwork && hasNetwork && (
+        <EgoNetwork entity={entity} allEntities={allEntities} onSelectEntity={onSelectEntity} />
       )}
       {bodyHtml && (
         <div className="compendium-detail-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
