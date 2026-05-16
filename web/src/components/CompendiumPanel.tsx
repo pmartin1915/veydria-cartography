@@ -4,6 +4,7 @@ import type { CanonEntity, CanonEntityRaw, CompendiumTab } from './compendium/ty
 import { CIVS, CIV_LABELS, LENSES, displayName } from './compendium/types';
 import EgoNetwork from './compendium/EgoNetwork';
 import CalendarCompare from './compendium/CalendarCompare';
+import MatrixCardGrid from './compendium/MatrixCardGrid';
 import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
 
 function getHashParam(key: string, defaultValue: string): string {
@@ -265,6 +266,16 @@ function LensesView({ entities, lens, onSelectLens, onSelectEntity }: {
         <button className="compendium-back" onClick={() => onSelectLens(null)}>← Back</button>
         <h3>{LENSES.find((l) => l.key === lens)?.label}</h3>
         <CalendarCompare entities={entities} />
+      </div>
+    );
+  }
+
+  if (lens === 'cross-civ') {
+    return (
+      <div className="compendium-lens-page">
+        <button className="compendium-back" onClick={() => onSelectLens(null)}>← Back</button>
+        <h3>{LENSES.find((l) => l.key === lens)?.label}</h3>
+        <MatrixCardGrid entities={entities} onSelectEntity={onSelectEntity} />
       </div>
     );
   }
