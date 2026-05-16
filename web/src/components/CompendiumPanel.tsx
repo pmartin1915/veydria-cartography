@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import type { CanonEntity, CanonEntityRaw, CompendiumTab } from './compendium/types';
 import { CIVS, CIV_LABELS, LENSES, displayName } from './compendium/types';
 import EgoNetwork from './compendium/EgoNetwork';
+import CalendarCompare from './compendium/CalendarCompare';
 import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
 
 function getHashParam(key: string, defaultValue: string): string {
@@ -258,12 +259,19 @@ function LensesView({ entities, lens, onSelectLens, onSelectEntity }: {
   onSelectLens: (lens: string | null) => void;
   onSelectEntity: (id: string) => void;
 }) {
+  if (lens === 'calendars') {
+    return (
+      <div className="compendium-lens-page">
+        <button className="compendium-back" onClick={() => onSelectLens(null)}>← Back</button>
+        <h3>{LENSES.find((l) => l.key === lens)?.label}</h3>
+        <CalendarCompare entities={entities} />
+      </div>
+    );
+  }
+
   if (lens) {
     let filtered: CanonEntity[] = [];
     switch (lens) {
-      case 'calendars':
-        filtered = entities.filter((e) => e.family === 'calendar_institution');
-        break;
       case 'cross-civ':
         filtered = entities.filter((e) => e.family === 'cross_civ_relationship');
         break;
