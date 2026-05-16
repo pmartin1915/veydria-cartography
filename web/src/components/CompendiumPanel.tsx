@@ -5,6 +5,28 @@ import { CIVS, CIV_LABELS, LENSES, displayName } from './compendium/types';
 import EgoNetwork from './compendium/EgoNetwork';
 import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
 
+function getHashParam(key: string, defaultValue: string): string {
+  const hash = window.location.hash;
+  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const params = new URLSearchParams(qs);
+  const val = params.get(key);
+  return val !== null ? val : defaultValue;
+}
+
+function setHashParam(key: string, value: string | null) {
+  const hash = window.location.hash;
+  const base = hash.split('?')[0] || '';
+  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const params = new URLSearchParams(qs);
+  if (value === null || value === '' || value === 'browse') {
+    params.delete(key);
+  } else {
+    params.set(key, value);
+  }
+  const newQs = params.toString();
+  window.history.replaceState(null, '', base + (newQs ? '?' + newQs : ''));
+}
+
 interface CompendiumPanelProps {
   onSelectMapAnchor?: (kind: string, slug: string) => void;
   onClose?: () => void;
@@ -12,11 +34,14 @@ interface CompendiumPanelProps {
 
 export default function CompendiumPanel({ onSelectMapAnchor, onClose }: CompendiumPanelProps) {
   const [canon, setCanon] = useState<Record<string, CanonEntityRaw> | null>(null);
-  const [searchText, setSearchText] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<CompendiumTab>('browse');
-  const [civPage, setCivPage] = useState<string | null>(null);
-  const [lens, setLens] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState(() => getHashParam('q', ''));
+  const [selectedId, setSelectedId] = useState<string | null>(() => getHashParam('id', '') || null);
+  const [tab, setTab] = useState<CompendiumTab>(() => {
+    const t = getHashParam('tab', 'browse');
+    return ['browse', 'civs', 'lenses'].includes(t) ? (t as CompendiumTab) : 'browse';
+  });
+  const [civPage, setCivPage] = useState<string | null>(() => getHashParam('civPage', '') || null);
+  const [lens, setLens] = useState<string | null>(() => getHashParam('lens', '') || null);
   const [searchIndex, setSearchIndex] = useState<{ id: string; name: string; tokens: string[] }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +54,27 @@ export default function CompendiumPanel({ onSelectMapAnchor, onClose }: Compendi
       setLoading(false);
     });
     return () => { cancelled = true; };
+  }, []);
+
+  // Sync state → URL
+  useEffect(() => { setHashParam('q', searchText || null); }, [searchText]);
+  useEffect(() => { setHashParam('id', selectedId); }, [selectedId]);
+  useEffect(() => { setHashParam('tab', tab); }, [tab]);
+  useEffect(() => { setHashParam('civPage', civPage); }, [civPage]);
+  useEffect(() => { setHashParam('lens', lens); }, [lens]);
+
+  // Sync URL → state on hashchange
+  useEffect(() => {
+    const onHashChange = () => {
+      setSearchText(getHashParam('q', ''));
+      setSelectedId(getHashParam('id', '') || null);
+      const t = getHashParam('tab', 'browse');
+      setTab(['browse', 'civs', 'lenses'].includes(t) ? (t as CompendiumTab) : 'browse');
+      setCivPage(getHashParam('civPage', '') || null);
+      setLens(getHashParam('lens', '') || null);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   const entities = useMemo(() => canon ? getEntitiesArray({ entities: canon, meta: {} }) : [], [canon]);
