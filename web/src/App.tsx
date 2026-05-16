@@ -41,6 +41,7 @@ import TourOverlay from './components/TourOverlay'
 import SettingsModal from './components/SettingsModal'
 import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
+import CompendiumPanel from './components/CompendiumPanel'
 
 // GeoJSON types
 export interface GeoJSONFeature {
@@ -196,6 +197,7 @@ function App() {
   const [prepOrder, setPrepOrderState] = useState<string[]>(() => getPrepOrder())
   const [prepDoneIds, setPrepDoneIds] = useState<string[]>(() => getPrepDoneIds())
   const [sessionActive, setSessionActive] = useState<boolean>(() => isSessionActive())
+  const [compendiumOpen, setCompendiumOpen] = useState(false)
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -1267,6 +1269,20 @@ function App() {
               <span>Prep</span>
             </button>
           )}
+          {!shareMode && (
+            <button
+              className={`search-trigger ${compendiumOpen ? 'active' : ''}`}
+              onClick={() => setCompendiumOpen(prev => !prev)}
+              title="Open compendium (C)"
+              id="compendium-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <span>Compendium</span>
+            </button>
+          )}
           <button
             className="search-trigger time-of-day-btn"
             onClick={handleCycleTimeOfDay}
@@ -1371,7 +1387,36 @@ function App() {
         />
       )}
 
-      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay}`}>
+      {compendiumOpen && (
+        <CompendiumPanel
+          onSelectMapAnchor={(kind, slug) => {
+            setCompendiumOpen(false)
+            // Map the worldbuilder kind to cartography layer + feature lookup
+            const kindToCategory: Record<string, string> = {
+              region: 'civilization',
+              port: 'port',
+              chokepoint: 'chokepoint',
+              oasis: 'oasis',
+              'sacred-site': 'contested_site',
+              'magic-register': 'magicRegisters',
+              'religion-tradition': 'religionTraditions',
+            }
+            const category = kindToCategory[kind]
+            if (!category || !geojson) return
+            const feature = geojson.features.find((f) =>
+              f.properties.category === category && (f.properties.id === slug || f.properties.slug === slug)
+            )
+            if (feature) {
+              setSelectedFeature(feature)
+              setPanelOpen(true)
+              setSelectedHex(null)
+              mapRef.current?.flyToFeature?.(feature)
+            }
+          }}
+          onClose={() => setCompendiumOpen(false)}
+        />
+      )}
+      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay} ${compendiumOpen ? 'compendium-active' : ''}`}>
         {geojson && (
           <MapViewer
             ref={mapRef}

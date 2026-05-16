@@ -6194,3 +6194,370 @@ select:focus-visible {
   margin-left: 8px;
   animation: fadeIn 0.2s ease;
 }
+
+/* ============================================================
+   Compendium Panel Styles
+   ============================================================ */
+
+.compendium-panel {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-deep);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.compendium-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.compendium-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text-accent);
+}
+
+.compendium-close {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.compendium-close:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.compendium-toolbar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-surface);
+}
+
+.compendium-search {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.compendium-search:focus {
+  border-color: var(--border-accent);
+}
+
+.compendium-search::placeholder {
+  color: var(--text-muted);
+}
+
+.compendium-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.compendium-tabs button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.compendium-tabs button.active {
+  background: var(--bg-elevated);
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+}
+
+.compendium-tabs button:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.compendium-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.compendium-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+
+.compendium-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.compendium-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.compendium-card {
+  text-align: left;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.compendium-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+}
+
+.compendium-card-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  color: var(--text-accent);
+}
+
+.compendium-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-bottom: 6px;
+}
+
+.compendium-card-summary {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.compendium-civs,
+.compendium-lenses {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.compendium-civ-card,
+.compendium-lens-card {
+  text-align: left;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.compendium-civ-card:hover,
+.compendium-lens-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+}
+
+.compendium-civ-name,
+.compendium-lens-name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: var(--text-accent);
+}
+
+.compendium-civ-count,
+.compendium-lens-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.compendium-back {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  transition: all var(--transition-fast);
+}
+
+.compendium-back:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.compendium-civ-page h3,
+.compendium-lens-page h3 {
+  font-family: var(--font-display);
+  color: var(--text-accent);
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+}
+
+.compendium-detail h3 {
+  font-family: var(--font-display);
+  color: var(--text-accent);
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.compendium-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.compendium-tag {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  border: 1px solid var(--border-subtle);
+}
+
+.compendium-map-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+  color: var(--text-accent);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: all var(--transition-fast);
+}
+
+.compendium-map-btn:hover {
+  background: var(--bg-card-hover);
+}
+
+.compendium-detail-summary {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.compendium-detail-refs {
+  margin-bottom: 16px;
+}
+
+.compendium-detail-refs h4 {
+  font-family: var(--font-display);
+  color: var(--text-accent);
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.compendium-detail-refs ul {
+  list-style: none;
+  padding: 0;
+}
+
+.compendium-detail-refs li {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 3px 0;
+}
+
+.compendium-detail-body {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.compendium-detail-body h1,
+.compendium-detail-body h2,
+.compendium-detail-body h3 {
+  font-family: var(--font-display);
+  color: var(--text-accent);
+  margin: 16px 0 8px;
+}
+
+.compendium-detail-body p {
+  margin-bottom: 10px;
+}
+
+.compendium-detail-body ul,
+.compendium-detail-body ol {
+  margin: 8px 0 8px 20px;
+}
+
+.compendium-detail-body li {
+  margin: 4px 0;
+}
+
+.compendium-detail-body blockquote {
+  border-left: 3px solid var(--border-accent);
+  padding-left: 12px;
+  margin: 10px 0;
+  color: var(--text-muted);
+}
+
+/* Hide map when compendium is active on mobile */
+@media (max-width: 768px) {
+  .compendium-panel {
+    top: 0;
+  }
+
+  .compendium-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compendium-civs,
+  .compendium-lenses {
+    grid-template-columns: 1fr;
+  }
+}

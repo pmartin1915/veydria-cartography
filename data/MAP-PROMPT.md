@@ -1,3 +1,30 @@
+---
+id: geography.map_prompt
+entity_type: design_document
+family: geography
+tags:
+  - map
+  - prompt
+  - visual-spec
+  - continental
+status: draft
+provenance:
+  source_ref: >-
+    geography/MAP-PROMPT.md — internal visual specification for continental map
+    generation
+  sections: []
+  creative_additions:
+    - Continental C-shape and orientation
+    - Aethelian Basin four-port-zone spatial relationships
+    - 'Named locations, chokepoints, trade routes, terrain features'
+section_flags:
+  continental_shape: '[x]'
+  aethelian_basin: '[x]'
+  named_locations: '[x]'
+  trade_routes: '[x]'
+  terrain_features: '[x]'
+---
+
 # Veydria Continental Map — Definitive Visual Prompt
 
 ## Purpose

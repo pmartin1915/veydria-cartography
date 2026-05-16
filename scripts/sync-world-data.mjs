@@ -40,6 +40,24 @@ const SYNC_MAP = [
     description: 'Structured calendar events (optional — falls back to hardcoded if missing in worldbuilder)',
     optional: true,
   },
+  {
+    src: 'design/narrative-schema/canon.json',
+    dest: 'web/public/canon.json',
+    description: 'Compendium entity corpus (188 entities) for narrative browsing',
+    optional: true,
+  },
+  {
+    src: 'design/narrative-schema/search-index.json',
+    dest: 'web/public/search-index.json',
+    description: 'Full-text search index for compendium search',
+    optional: true,
+  },
+  {
+    src: 'design/narrative-schema/map-anchors.json',
+    dest: 'web/public/map-anchors.json',
+    description: 'Compendium→map anchor mappings (20 entries)',
+    optional: true,
+  },
 ];
 
 const CHECK_MODE = process.argv.includes('--check');

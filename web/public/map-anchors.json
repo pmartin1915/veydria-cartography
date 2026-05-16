@@ -1,0 +1,122 @@
+{
+  "magic.system.irrah_qalib": {
+    "kind": "magic-register",
+    "slug": "irrah"
+  },
+  "magic.system.kheshkai_varkosh": {
+    "kind": "magic-register",
+    "slug": "kheshkai"
+  },
+  "magic.system.ndjadi_wazahaki": {
+    "kind": "magic-register",
+    "slug": "ndjadi"
+  },
+  "magic.system.ngaru_bon_gyamsgra": {
+    "kind": "magic-register",
+    "slug": "ngaru-bon"
+  },
+  "magic.system.oravan_tavamala": {
+    "kind": "magic-register",
+    "slug": "oravan"
+  },
+  "magic.system.qollari_willkaqallu": {
+    "kind": "magic-register",
+    "slug": "qollari"
+  },
+  "religion.sacred_site.ash_oracle": {
+    "kind": "sacred-site",
+    "slug": "veyd-kirrha"
+  },
+  "religion.sacred_site.qhabal_ur": {
+    "kind": "sacred-site",
+    "slug": "qhabal-ur"
+  },
+  "religion.sacred_site.smith_spring": {
+    "kind": "chokepoint",
+    "slug": "smith-spring"
+  },
+  "religion.tradition.aethelian_syncretic": {
+    "kind": "religion-tradition",
+    "slug": "aethelian-syncretic"
+  },
+  "religion.tradition.ancestor_stone": {
+    "kind": "religion-tradition",
+    "slug": "ancestor-stone"
+  },
+  "religion.tradition.oravan_fire_house": {
+    "kind": "religion-tradition",
+    "slug": "oravan-fire-house"
+  },
+  "religion.tradition.sky_mandate": {
+    "kind": "religion-tradition",
+    "slug": "sky-mandate"
+  },
+  "religion.tradition.water_covenant": {
+    "kind": "religion-tradition",
+    "slug": "water-covenant"
+  },
+  "linguistics.culture.irrah": {
+    "kind": "region",
+    "slug": "irrah"
+  },
+  "linguistics.culture.kheshkai": {
+    "kind": "region",
+    "slug": "kheshkai"
+  },
+  "linguistics.culture.ndjadi": {
+    "kind": "region",
+    "slug": "ndjadi"
+  },
+  "linguistics.culture.ngaru-bon": {
+    "kind": "region",
+    "slug": "ngaru-bon"
+  },
+  "linguistics.culture.oravan": {
+    "kind": "region",
+    "slug": "oravan"
+  },
+  "linguistics.culture.qollari": {
+    "kind": "region",
+    "slug": "qollari"
+  },
+  "factions.civ.irrah": {
+    "kind": "region",
+    "slug": "irrah"
+  },
+  "factions.civ.kheshkai": {
+    "kind": "region",
+    "slug": "kheshkai"
+  },
+  "factions.civ.ndjadi": {
+    "kind": "region",
+    "slug": "ndjadi"
+  },
+  "factions.civ.ngaru-bon": {
+    "kind": "region",
+    "slug": "ngaru-bon"
+  },
+  "factions.civ.oravan": {
+    "kind": "region",
+    "slug": "oravan"
+  },
+  "factions.civ.qollari": {
+    "kind": "region",
+    "slug": "qollari"
+  },
+  "factions.crisis.harbor_oath_war": {
+    "kind": "port",
+    "slug": "halani-tamu"
+  },
+  "factions.crisis.upstream_downstream_window_war": {
+    "kind": "port",
+    "slug": "ki-mbuhari"
+  },
+  "factions.crisis.metal_interdict": {
+    "kind": "region",
+    "slug": "ngaru-bon"
+  },
+  "factions.dormant.pre_slaughter_dzud": {
+    "kind": "region",
+    "slug": "kheshkai"
+  }
+}
