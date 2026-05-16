@@ -6675,3 +6675,26 @@ select:focus-visible {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
+/* Compendium cross-ref links */
+.compendium-ref-link {
+  background: none;
+  border: none;
+  color: var(--color-water);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(58, 124, 165, 0.4);
+  transition: text-decoration-color var(--transition-fast);
+}
+
+.compendium-ref-link:hover {
+  text-decoration-color: var(--color-water);
+}
+
+.compendium-ref-missing {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

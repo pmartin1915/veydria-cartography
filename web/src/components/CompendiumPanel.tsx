@@ -382,9 +382,20 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor, allEntitie
         <div className="compendium-detail-refs">
           <h4>Related</h4>
           <ul>
-            {entity.cross_refs.map((ref) => (
-              <li key={ref}>{ref}</li>
-            ))}
+            {entity.cross_refs.map((ref) => {
+              const related = allEntities.find((e) => e.id === ref);
+              return (
+                <li key={ref}>
+                  {related ? (
+                    <button className="compendium-ref-link" onClick={() => onSelectEntity(ref)}>
+                      {related.name}
+                    </button>
+                  ) : (
+                    <span className="compendium-ref-missing">{ref}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
