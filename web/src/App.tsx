@@ -968,6 +968,10 @@ function App() {
         e.preventDefault()
         setSessionPrepOpen(prev => !prev)
       }
+      if (e.key === 'c' && !searchOpenRef.current && document.activeElement === document.body) {
+        e.preventDefault()
+        setCompendiumOpen(prev => !prev)
+      }
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault()
         setKeyboardHelpOpen(prev => !prev)
@@ -1006,6 +1010,7 @@ function App() {
         setHexMeasurePoints([])
         clearHexMeasureFromHash()
         setSessionPrepOpen(false)
+        setCompendiumOpen(false)
       }
     }
     window.addEventListener('keydown', handler)
