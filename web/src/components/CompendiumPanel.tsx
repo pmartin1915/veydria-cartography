@@ -20,6 +20,10 @@ import EgoNetwork from './compendium/EgoNetwork';
 import CalendarCompare from './compendium/CalendarCompare';
 import MatrixCardGrid from './compendium/MatrixCardGrid';
 import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
+import {
+  buildWorldbuilderCompendiumUrl,
+  buildWorldbuilderHomeUrl,
+} from '../utils/worldbuilder-link';
 
 function getHashParam(key: string, defaultValue: string): string {
   const hash = window.location.hash;
@@ -142,6 +146,15 @@ export default function CompendiumPanel({ onSelectMapAnchor, onClose }: Compendi
     <div className="compendium-panel">
       <div className="compendium-header">
         <h2>Compendium</h2>
+        <a
+          className="compendium-worldbuilder-link"
+          href={buildWorldbuilderHomeUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open the canonical compendium in worldbuilder (new tab)"
+        >
+          Open full compendium ↗
+        </a>
         {onClose && (
           <button className="compendium-close" onClick={onClose} aria-label="Close compendium">
             ✕
@@ -399,6 +412,15 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor, allEntitie
             {showNetwork ? '✕ Hide Network' : '⟡ Network'}
           </button>
         )}
+        <a
+          className="compendium-map-btn compendium-worldbuilder-btn"
+          href={buildWorldbuilderCompendiumUrl(entity.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open this entity in the worldbuilder compendium (new tab)"
+        >
+          Open in worldbuilder ↗
+        </a>
       </div>
       {entity.summary && (
         <div className="compendium-detail-summary">{entity.summary}</div>

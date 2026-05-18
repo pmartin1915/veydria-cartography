@@ -6481,6 +6481,26 @@ select:focus-visible {
   background: var(--bg-card-hover);
 }
 
+.compendium-worldbuilder-link {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 6px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.compendium-worldbuilder-link:hover {
+  color: var(--text-accent);
+  border-color: var(--border-accent);
+}
+
+.compendium-worldbuilder-btn {
+  text-decoration: none;
+  display: inline-block;
+}
+
 .compendium-detail-summary {
   font-size: 0.9rem;
   color: var(--text-secondary);
