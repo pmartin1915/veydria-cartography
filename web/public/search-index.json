@@ -167,7 +167,7 @@
     },
     {
       "id": "factions.civ.basin",
-      "search_text": "The Aethelian Basin — Place-as-Actor Faction Ecology Filing Note This file is filed under for organizational continuity with the six per-civ files, but the Basin is not a civilization — it has no native ethnicity, no army, no single language, no chartered authority. The pre-allocation of this path was made in the Batch 1 forward roadmap and is preserved here. What the Basin has, instead, is an institutional ecology dense enough that operating in the Basin requires conforming to a recognizable set of disciplines that none of the six contributing civs imposed and none can unilaterally amend. That ecology is what this file describes. The Basin is treated here as a place-as-actor: a named institutional culture whose six contributing civs are upstream rather than constitutive. The eight design rails of factions/00overview.md apply with the literal token they exclude held inviolate — no faction is continental, and the Basin's reach across the four ports is hub-shaped, not continental-shaped. What the Basin-as-Actor Is The Basin's institutional ecology is constituted by five overlapping institutional cohorts, each of which is documented at its own canonical file: the four port-zone…",
+      "search_text": "Filing Note This file is filed under for organizational continuity with the six per-civ files, but the Basin is not a civilization — it has no native ethnicity, no army, no single language, no chartered authority. The pre-allocation of this path was made in the Batch 1 forward roadmap and is preserved here. What the Basin has, instead, is an institutional ecology dense enough that operating in the Basin requires conforming to a recognizable set of disciplines that none of the six contributing civs imposed and none can unilaterally amend. That ecology is what this file describes. The Basin is treated here as a place-as-actor: a named institutional culture whose six contributing civs are upstream rather than constitutive. The eight design rails of factions/00overview.md apply with the literal token they exclude held inviolate — no faction is continental, and the Basin's reach across the four ports is hub-shaped, not continental-shaped. What the Basin-as-Actor Is The Basin's institutional ecology is constituted by five overlapping institutional cohorts, each of which is documented at its own canonical file: the four port-zone merchant dynasties at…",
       "source_path": "factions/01_civ_factions/basin.md"
     },
     {
@@ -913,5 +913,5 @@
   ],
   "generated_at": null,
   "schema_version": 1,
-  "source_commit": "707b064562637613fb77987c2691a44348d5f93b"
+  "source_commit": "e6be0f8646f09149d8144ed77d000a461569c0c6"
 }
