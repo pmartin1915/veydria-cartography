@@ -1,3 +1,17 @@
+/**
+ * Subordinate Phase 1 compendium for the play surface (at-the-table reference).
+ *
+ * Canonical compendium lives in the worldbuilder repo at
+ * `tools/map-viewer/src/components/compendium/` (11+ lenses, full-body search,
+ * crisis dashboard, sacred registers, pilgrimage routes, reform movements).
+ *
+ * Rule: new compendium lenses go in worldbuilder. Bug fixes and per-table
+ * usability tweaks are fine here. For depth, this panel deep-links out via
+ * VITE_WORLDBUILDER_COMPENDIUM_URL (see web/.env.example).
+ *
+ * See RECONCILIATION-PLAN-MAP-COMPENDIUM-2026-05-18.md (worldbuilder repo root)
+ * for the audience-split rationale.
+ */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { marked } from 'marked';
 import type { CanonEntity, CanonEntityRaw, CompendiumTab } from './compendium/types';

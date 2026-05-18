@@ -51,6 +51,23 @@ The files in `data/` are **copies** from the worldbuilder repo:
 
 If the worldbuilder files change, re-copy them here. The worldbuilder repo is the canonical source of truth.
 
+## Companion surface: worldbuilder map-viewer
+
+This repo is the **play surface** (hex grid, encounters, journey planning,
+session prep, per-hex annotations). The sibling worldbuilder repo at
+`worldbuilder/tools/map-viewer/` is the **canon-audit surface** and hosts the
+**canonical compendium** (11+ lenses, full-body search, crisis dashboard,
+sacred registers, pilgrimage routes, reform movements).
+
+`web/src/components/CompendiumPanel.tsx` is a **subordinate Phase 1 copy** for
+at-the-table reference. New compendium lens work lands in worldbuilder, not
+here. For depth, the panel deep-links out via `VITE_WORLDBUILDER_COMPENDIUM_URL`
+(see `web/.env.example`).
+
+See `RECONCILIATION-PLAN-MAP-COMPENDIUM-2026-05-18.md` in the worldbuilder repo
+root for the audience-split rationale and the deep-link contract
+(`#compendium?id=…`, `#map?focus=kind:slug`).
+
 ## Tech Stack
 
 | Layer | Library | Purpose |
