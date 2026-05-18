@@ -23,8 +23,15 @@ export interface CanonEntity extends CanonEntityRaw {
   id: string;
 }
 
+/**
+ * Canon JSON ships `entities` as an array (sorted by id) per
+ * `worldbuilder/scripts/extract-canon.mjs` — each entry already carries
+ * its real string `id` in the body. Earlier drafts of cartography were
+ * written assuming an object map; the loader normalizes both shapes so
+ * old fixtures still work.
+ */
 export interface CanonData {
-  entities: Record<string, CanonEntityRaw>;
+  entities: CanonEntity[] | Record<string, CanonEntityRaw>;
   meta?: {
     generated_at?: string;
     entity_count?: number;

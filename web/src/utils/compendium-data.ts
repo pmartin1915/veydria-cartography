@@ -67,11 +67,24 @@ export async function loadMapAnchors(): Promise<MapAnchor> {
 }
 
 export function getEntitiesArray(canon: CanonData): CanonEntity[] {
-  return Object.entries(canon.entities).map(([id, entity]) => ({ ...(entity as CanonEntityRaw), id }));
+  const entities = canon.entities;
+  // canon.json on disk is array-shaped (extract-canon.mjs writes a sorted
+  // array where each entity carries its own real id). Older test fixtures
+  // pass an object map keyed by id — preserve that path for the existing
+  // fixture-based tests, but never let an array index overwrite the real
+  // entity.id (the bug that produced ?id=0 deep-links to worldbuilder).
+  if (Array.isArray(entities)) {
+    return entities.map((entity) => entity as CanonEntity);
+  }
+  return Object.entries(entities).map(([id, entity]) => ({ ...(entity as CanonEntityRaw), id }));
 }
 
 export function lookupEntity(canon: CanonData, id: string): CanonEntity | null {
-  const raw = canon.entities[id];
+  const entities = canon.entities;
+  if (Array.isArray(entities)) {
+    return (entities.find((e) => e.id === id) as CanonEntity | undefined) ?? null;
+  }
+  const raw = entities[id];
   if (!raw) return null;
   return { ...(raw as CanonEntityRaw), id };
 }

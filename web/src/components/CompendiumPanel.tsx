@@ -14,12 +14,12 @@
  */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { marked } from 'marked';
-import type { CanonEntity, CanonEntityRaw, CompendiumTab } from './compendium/types';
+import type { CanonData, CanonEntity, CompendiumTab } from './compendium/types';
 import { CIVS, CIV_LABELS, LENSES, displayName } from './compendium/types';
 import EgoNetwork from './compendium/EgoNetwork';
 import CalendarCompare from './compendium/CalendarCompare';
 import MatrixCardGrid from './compendium/MatrixCardGrid';
-import { loadCanon, loadSearchIndex, getEntitiesArray, getMapAnchor } from '../utils/compendium-data';
+import { loadCanon, loadSearchIndex, getEntitiesArray, lookupEntity, getMapAnchor } from '../utils/compendium-data';
 import {
   buildWorldbuilderCompendiumUrl,
   buildWorldbuilderHomeUrl,
@@ -53,7 +53,7 @@ interface CompendiumPanelProps {
 }
 
 export default function CompendiumPanel({ onSelectMapAnchor, onClose }: CompendiumPanelProps) {
-  const [canon, setCanon] = useState<Record<string, CanonEntityRaw> | null>(null);
+  const [canon, setCanon] = useState<CanonData['entities'] | null>(null);
   const [searchText, setSearchText] = useState(() => getHashParam('q', ''));
   const [selectedId, setSelectedId] = useState<string | null>(() => getHashParam('id', '') || null);
   const [tab, setTab] = useState<CompendiumTab>(() => {
@@ -121,9 +121,7 @@ export default function CompendiumPanel({ onSelectMapAnchor, onClose }: Compendi
 
   const selectedEntity = useMemo(() => {
     if (!selectedId || !canon) return null;
-    const raw = canon[selectedId];
-    if (!raw) return null;
-    return { ...raw, id: selectedId } as CanonEntity;
+    return lookupEntity({ entities: canon, meta: {} }, selectedId);
   }, [selectedId, canon]);
 
   const handleMapClick = useCallback(async (entity: CanonEntity) => {
