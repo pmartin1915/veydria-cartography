@@ -11,6 +11,7 @@ import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
+import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
 import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
@@ -175,8 +176,15 @@ function App() {
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const mapRef = useRef<MapViewerHandle | null>(null)
 
-  // Viewport-aware deep-linking
-  const initialHashRef = useRef(parseHash(window.location.hash))
+  // Viewport-aware deep-linking. Before capturing the initial hash, consume
+  // any `?focus=<kind>:<slug>` query param from worldbuilder's map-viewer
+  // outbound link: it gets spliced into the hash as `#feature=<id>` so the
+  // existing fly-to + select flow handles it without further branching.
+  // See utils/focus-param.ts and worldbuilder/tools/map-viewer/src/utils/cartography-link.js.
+  const initialHashRef = useRef((() => {
+    consumeFocusParam()
+    return parseHash(window.location.hash)
+  })())
   const viewportRef = useRef(initialHashRef.current)
   const hashUpdateTimeoutRef = useRef<number | null>(null)
   const panelCloseTimeoutRef = useRef<number | null>(null)
