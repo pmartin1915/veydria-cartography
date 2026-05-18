@@ -111,14 +111,14 @@ export function initHexOverlay(
       .attr('points', (d) => d.corners.map(([x, y]) => `${x},${svgY(y)}`).join(' '))
       .attr('fill', (d) => {
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
-        return c ? c : 'rgba(212, 168, 84, 0.04)'
+        return c ? c : 'rgba(212, 168, 84, 0.06)'
       })
       .attr('fill-opacity', (d) => {
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
         return c ? '0.18' : '0.04'
       })
-      .attr('stroke', 'rgba(212, 168, 84, 0.45)')
-      .attr('stroke-width', 0.6)
+      .attr('stroke', 'rgba(212, 168, 84, 0.85)')
+      .attr('stroke-width', 1.0)
       .attr('vector-effect', 'non-scaling-stroke')
       .attr('data-label', (d) => d.label)
 
@@ -152,23 +152,23 @@ export function initHexOverlay(
         if (measurePathSet.has(label)) return 'rgba(126, 196, 230, 0.16)'
         if (journeyRouteSet.has(label)) return 'rgba(228, 176, 80, 0.14)'
         const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
-        return c ? c : 'rgba(212, 168, 84, 0.04)'
+        return c ? c : 'rgba(212, 168, 84, 0.06)'
       })
       .attr('stroke', function () {
         const label = this.getAttribute('data-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(186, 226, 244, 0.95)'
         if (label === selectedLabel) return 'rgba(244, 220, 160, 0.95)'
-        if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.7)'
-        if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.55)'
-        return 'rgba(212, 168, 84, 0.45)'
+        if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.9)'
+        if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.9)'
+        return 'rgba(212, 168, 84, 0.85)'
       })
       .attr('stroke-width', function () {
         const label = this.getAttribute('data-label') ?? ''
-        if (measureEndpoints.has(label)) return 1.8
-        if (label === selectedLabel) return 1.6
-        if (measurePathSet.has(label)) return 1.0
-        if (journeyRouteSet.has(label)) return 0.8
-        return 0.6
+        if (measureEndpoints.has(label)) return 2.2
+        if (label === selectedLabel) return 2.0
+        if (measurePathSet.has(label)) return 1.4
+        if (journeyRouteSet.has(label)) return 1.2
+        return 1.0
       })
 
     // Labels mirror the cell-fill priority. Reset everyone first, then
