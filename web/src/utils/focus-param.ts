@@ -42,25 +42,54 @@ export function focusToFeatureId(kind: string, slug: string): string | null {
 }
 
 export interface FocusRewrite {
-  featureId: string
+  /** The resolved feature id, or null when the focus param was rejected. */
+  featureId: string | null
   /** New hash body (no leading `#`). Empty string means no hash. */
   newHash: string
+  /** Whether the URL needs rewriting (i.e. `?focus=` was present in `search`). */
+  shouldRewrite: boolean
+}
+
+function searchHasFocusParam(search: string): boolean {
+  if (!search) return false
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+  return params.has('focus')
+}
+
+function stripFocusFromSearch(search: string): string {
+  if (!search) return ''
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+  params.delete('focus')
+  const str = params.toString()
+  return str ? `?${str}` : ''
 }
 
 /**
- * Pure URL-rewriter: given the page's `search` and `hash`, return what the
- * spliced hash should become. Returns null if no actionable focus param.
- * The featureId is merged into any existing hash params (other params preserved).
+ * Pure URL-rewriter: given the page's `search` and `hash`, decide what the
+ * URL should become.
+ *
+ * - No `?focus=` at all → returns null (nothing to do).
+ * - `?focus=` present and valid → `featureId` set, merged into hash params.
+ * - `?focus=` present but rejected (bad kind/slug) → `featureId` null, hash
+ *   left alone, but the param is still stripped so the URL is hygienic.
+ *
+ * In both present-cases `shouldRewrite` is true; non-focus query params (if
+ * any) are preserved and returned in `newSearch`.
  */
-export function rewriteFocusToHash(search: string, hash: string): FocusRewrite | null {
+export function rewriteFocusToHash(search: string, hash: string): (FocusRewrite & { newSearch: string }) | null {
+  if (!searchHasFocusParam(search)) return null
+  const newSearch = stripFocusFromSearch(search)
   const parsed = parseFocusParam(search)
-  if (!parsed) return null
-  const featureId = focusToFeatureId(parsed.kind, parsed.slug)
-  if (!featureId) return null
+  const featureId = parsed ? focusToFeatureId(parsed.kind, parsed.slug) : null
   const existingHash = hash.startsWith('#') ? hash.slice(1) : hash
   const hashParams = new URLSearchParams(existingHash)
-  hashParams.set('feature', featureId)
-  return { featureId, newHash: hashParams.toString() }
+  if (featureId) hashParams.set('feature', featureId)
+  return {
+    featureId,
+    newHash: hashParams.toString(),
+    shouldRewrite: true,
+    newSearch,
+  }
 }
 
 /**
@@ -70,6 +99,10 @@ export function rewriteFocusToHash(search: string, hash: string): FocusRewrite |
  * focus param / unsupported kind). Idempotent: subsequent calls see no
  * `?focus=` and do nothing.
  *
+ * The `?focus=` param is always stripped when present — even when the value
+ * is rejected (unsupported kind, malformed slug) — so the URL never carries
+ * a contractually-defined param that the app deliberately ignored.
+ *
  * Designed to run before `parseHash(window.location.hash)` is captured so
  * the existing deep-link flow (fly-to + select) picks up the spliced hash.
  */
@@ -77,7 +110,7 @@ export function consumeFocusParam(): string | null {
   if (typeof window === 'undefined') return null
   const rewrite = rewriteFocusToHash(window.location.search, window.location.hash)
   if (!rewrite) return null
-  const newUrl = window.location.pathname + (rewrite.newHash ? `#${rewrite.newHash}` : '')
+  const newUrl = window.location.pathname + rewrite.newSearch + (rewrite.newHash ? `#${rewrite.newHash}` : '')
   window.history.replaceState(null, '', newUrl)
   return rewrite.featureId
 }

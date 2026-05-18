@@ -61,14 +61,14 @@ describe('focus-param', () => {
   })
 
   describe('rewriteFocusToHash', () => {
-    it('returns null with no focus param', () => {
+    it('returns null with no focus param at all (no rewrite needed)', () => {
       expect(rewriteFocusToHash('', '')).toBeNull()
       expect(rewriteFocusToHash('?other=x', '#z=1.5')).toBeNull()
     })
 
     it('rewrites ?focus=region:irrah into a feature= hash entry', () => {
       const result = rewriteFocusToHash('?focus=region:irrah', '')
-      expect(result).toEqual({ featureId: 'irrah', newHash: 'feature=irrah' })
+      expect(result).toMatchObject({ featureId: 'irrah', newHash: 'feature=irrah', shouldRewrite: true, newSearch: '' })
     })
 
     it('merges into existing hash params, preserving them', () => {
@@ -88,8 +88,21 @@ describe('focus-param', () => {
       expect(params.get('z')).toBe('1')
     })
 
-    it('drops unsupported kinds', () => {
-      expect(rewriteFocusToHash('?focus=magic-register:irrah', '')).toBeNull()
+    it('rejected ?focus= still triggers a rewrite that strips the param', () => {
+      const result = rewriteFocusToHash('?focus=magic-register:irrah', '#z=1.5')
+      expect(result).not.toBeNull()
+      expect(result?.featureId).toBeNull()
+      expect(result?.shouldRewrite).toBe(true)
+      expect(result?.newSearch).toBe('')
+      // Hash is untouched on rejection (no feature= injected).
+      expect(result?.newHash).toBe('z=1.5')
+    })
+
+    it('rejected ?focus= preserves any sibling query params', () => {
+      const result = rewriteFocusToHash('?focus=:irrah&utm=campaign', '')
+      expect(result?.featureId).toBeNull()
+      expect(result?.newSearch).toBe('?utm=campaign')
+      expect(result?.newHash).toBe('')
     })
   })
 })
