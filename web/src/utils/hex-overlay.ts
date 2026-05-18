@@ -57,8 +57,13 @@ export function initHexOverlay(
 ): HexOverlay {
   L.svg().addTo(map)
 
+  // Leaflet 1.9 SVG renderer structure is <svg class="leaflet-zoom-animated">
+  // <g></g><defs></defs></svg>. The 'leaflet-zoom-hide' class lives on marker
+  // panes (Leaflet/src/map/Map.js), NOT on any SVG <g> — selecting
+  // 'g.leaflet-zoom-hide' returns an empty d3 selection and silently no-ops
+  // every subsequent .append(). Grab the root <g> directly.
   const svg = d3.select(map.getPanes().overlayPane).select<SVGSVGElement>('svg')
-  const g = svg.select<SVGGElement>('g.leaflet-zoom-hide')
+  const g = svg.select<SVGGElement>('g')
 
   g.selectAll('.hex-grid-group').remove()
   const hexGroup = g.append('g').attr('class', 'hex-grid-group')

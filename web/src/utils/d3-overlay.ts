@@ -29,8 +29,10 @@ export function initD3Overlay(
 ) {
   L.svg().addTo(map)
 
+  // See hex-overlay.ts for the full note: 'g.leaflet-zoom-hide' never matches
+  // anything in the Leaflet 1.9 SVG renderer output, so select the root <g>.
   const svg = d3.select(map.getPanes().overlayPane).select<SVGSVGElement>('svg')
-  const g = svg.select<SVGGElement>('g.leaflet-zoom-hide')
+  const g = svg.select<SVGGElement>('g')
 
   g.selectAll('.d3-route-group').remove()
   const routeGroup = g.append('g').attr('class', 'd3-route-group')
