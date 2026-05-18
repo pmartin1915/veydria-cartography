@@ -763,13 +763,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         __mock: true,
       }
       layerGroupsRef.current.set('hex_grid', hexGridMock)
-      const biomeColorsMock: OverlayMock = {
-        addTo: () => hexOverlay.setBiomeColorsEnabled(true),
-        removeFrom: () => hexOverlay.setBiomeColorsEnabled(false),
-        setOpacity: (_o: number) => { /* biome colors don't have independent opacity */ },
-        __mock: true,
-      }
-      layerGroupsRef.current.set('biome_colors', biomeColorsMock)
+      // biome_colors is driven by its own useEffect (see "Biome colors:" below)
+      // — no entry in layerGroupsRef so the toggle dispatcher doesn't double-fire.
 
       mapRef.current = map
 
@@ -885,7 +880,13 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
     }, [layers.terrain_cost])
 
-    // Faction overlay: tint terrain cells by controlling civilization
+    // Faction overlay: tint terrain cells by controlling civilization.
+    // IMPORTANT: keep this useEffect declared AFTER the terrain_cost effect
+    // above. React fires effects in declaration order. Both effects key off
+    // layers.terrain_cost — when terrain_cost flips OFF while faction_control
+    // is ON, the terrain_cost effect runs first and resets cells to elevation
+    // colors, then this effect runs second and re-applies civ colors. Reorder
+    // them and faction_control will silently lose to the elevation reset.
     useEffect(() => {
       if (!mapRef.current) return
       const enabled = layers.faction_control
