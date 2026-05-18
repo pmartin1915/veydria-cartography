@@ -13,6 +13,7 @@ interface GeoJSONFeature {
 
 import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
+import { applyLayerVisibility, type LayerEntry, type OverlayMock } from '../utils/layer-visibility'
 import type { HexCell } from '../utils/hex-grid'
 import { getRouteHexLabels, BIOME_COLORS } from '../utils/hex-grid'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
@@ -234,7 +235,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
   function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
-    const layerGroupsRef = useRef<Map<string, L.LayerGroup>>(new Map())
+    const layerGroupsRef = useRef<Map<string, LayerEntry>>(new Map())
     const layerRefsRef = useRef<Map<string, L.Layer[]>>(new Map())
     const terrainCellMetaRef = useRef<Map<string, { polygon: L.Polygon; elevation: number; civ: string }>>(new Map())
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
@@ -743,26 +744,32 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       const d3Overlay = initD3Overlay(map, tradeRoutes, onFeatureClick)
       d3Overlay.setOpacity(opacities?.trade_route ?? 0.75)
       // Store in layer groups ref so it can be toggled
-      layerGroupsRef.current.set('trade_route', {
+      const tradeRouteMock: OverlayMock = {
         addTo: () => d3Overlay.setVisibility(true),
         removeFrom: () => d3Overlay.setVisibility(false),
         setOpacity: (o: number) => d3Overlay.setOpacity(o),
-      } as any)
+        __mock: true,
+      }
+      layerGroupsRef.current.set('trade_route', tradeRouteMock)
 
       // Hex grid overlay — ALL features sampled, not a category subset.
       const hexOverlay = initHexOverlay(map, geojson.features, hexSize, layers.biome_colors)
       hexOverlay.setOpacity(opacities?.hex_grid ?? 0.7)
       hexOverlayRef.current = hexOverlay
-      layerGroupsRef.current.set('hex_grid', {
+      const hexGridMock: OverlayMock = {
         addTo: () => hexOverlay.setVisibility(true),
         removeFrom: () => hexOverlay.setVisibility(false),
         setOpacity: (o: number) => hexOverlay.setOpacity(o),
-      } as any)
-      layerGroupsRef.current.set('biome_colors', {
+        __mock: true,
+      }
+      layerGroupsRef.current.set('hex_grid', hexGridMock)
+      const biomeColorsMock: OverlayMock = {
         addTo: () => hexOverlay.setBiomeColorsEnabled(true),
         removeFrom: () => hexOverlay.setBiomeColorsEnabled(false),
         setOpacity: (_o: number) => { /* biome colors don't have independent opacity */ },
-      } as any)
+        __mock: true,
+      }
+      layerGroupsRef.current.set('biome_colors', biomeColorsMock)
 
       mapRef.current = map
 
@@ -860,17 +867,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const threshold = ZOOM_THRESHOLDS[category as keyof LayerVisibility]
         const zoomVisible = threshold === undefined || zoomLevel >= threshold
         const visible = userVisible && zoomVisible
-        
-        if (category === 'trade_route') {
-          if (visible) group.addTo(mapRef.current)
-          else group.removeFrom(mapRef.current)
-        } else {
-          if (visible && !mapRef.current.hasLayer(group as L.LayerGroup)) {
-            (group as L.LayerGroup).addTo(mapRef.current)
-          } else if (!visible && mapRef.current.hasLayer(group as L.LayerGroup)) {
-            mapRef.current.removeLayer(group as L.LayerGroup)
-          }
-        }
+
+        applyLayerVisibility(group, visible, mapRef.current)
       }
     }, [layers, zoomLevel])
 
@@ -919,10 +917,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           }
         }
       }
-      // D3 overlay opacity
-      const d3Group = layerGroupsRef.current.get('trade_route')
-      if (d3Group && 'setOpacity' in d3Group) {
-        (d3Group as unknown as { setOpacity: (o: number) => void }).setOpacity(opacities.trade_route)
+      // Mock-overlay opacity (D3 trade routes, SVG hex grid). Biome colors
+      // has no independent opacity — its mock's setOpacity is a no-op.
+      for (const category of ['trade_route', 'hex_grid'] as const) {
+        const mock = layerGroupsRef.current.get(category)
+        if (mock && 'setOpacity' in mock) {
+          const op = opacities[category]
+          if (op !== undefined) mock.setOpacity(op)
+        }
       }
     }, [opacities])
 
