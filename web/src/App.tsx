@@ -760,6 +760,16 @@ function App() {
     })
   }, [])
 
+  // Stable identity — MapViewer's init effect depends on this prop. Without
+  // the memo, an inline literal would be a fresh object on every App render
+  // (whenever the URL has viewport hash), re-firing init and leaving overlays
+  // hidden until the next layer/zoom change.
+  const initialViewport = useMemo(() => {
+    const h = initialHashRef.current
+    if (h.zoom === undefined || h.centerX === undefined || h.centerY === undefined) return undefined
+    return { zoom: clampZoom(h.zoom), centerX: h.centerX, centerY: h.centerY }
+  }, [])
+
   // Path derived from the two clicked endpoints. Empty array means nothing
   // to render. We pass null (not []) to clear, so the overlay can distinguish.
   const hexMeasurePath = hexMeasurePoints.length === 2
@@ -1446,17 +1456,7 @@ function App() {
             onAnnotationAdd={handleAnnotationAdd}
             onAnnotationUpdate={handleAnnotationUpdate}
             onAnnotationDelete={handleAnnotationDelete}
-            initialViewport={
-              initialHashRef.current.zoom !== undefined &&
-              initialHashRef.current.centerX !== undefined &&
-              initialHashRef.current.centerY !== undefined
-                ? {
-                    zoom: clampZoom(initialHashRef.current.zoom),
-                    centerX: initialHashRef.current.centerX,
-                    centerY: initialHashRef.current.centerY,
-                  }
-                : undefined
-            }
+            initialViewport={initialViewport}
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
             route={journeyRoute}

@@ -766,6 +766,18 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // biome_colors is driven by its own useEffect (see "Biome colors:" below)
       // — no entry in layerGroupsRef so the toggle dispatcher doesn't double-fire.
 
+      // Re-apply current `layers` state synchronously, so a re-init (e.g. from
+      // initialViewport identity changing on a parent re-render) doesn't leave
+      // overlays hidden until the next [layers, zoomLevel] change fires the
+      // toggle-vis effect below.
+      for (const [category, group] of layerGroupsRef.current.entries()) {
+        const userVisible = layers[category as keyof LayerVisibility]
+        if (userVisible === undefined) continue
+        const threshold = ZOOM_THRESHOLDS[category as keyof LayerVisibility]
+        const zoomVisible = threshold === undefined || zoomLevel >= threshold
+        applyLayerVisibility(group, userVisible && zoomVisible, map)
+      }
+
       mapRef.current = map
 
       // Mobile Safari measures the container before the address bar settles,
