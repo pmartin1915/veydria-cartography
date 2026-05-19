@@ -218,6 +218,8 @@ export function initHexOverlay(
     })
 
     // Scale label size with hex radius so smaller hexes don't crowd.
+    // Sepia ink on the parchment base: warm dark-brown italic Georgia,
+    // legible against the cream feTurbulence fill.
     const fontSize = Math.max(5, Math.round(size * 0.16))
     cellSel
       .append('text')
@@ -226,9 +228,10 @@ export function initHexOverlay(
       .attr('y', (d) => svgY(d.centroid[1]))
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', 'rgba(244, 220, 160, 0.55)')
+      .attr('fill', 'rgba(78, 52, 28, 0.78)')
       .attr('font-size', fontSize)
       .attr('font-family', 'Georgia, serif')
+      .attr('font-style', 'italic')
       .attr('pointer-events', 'none')
       .attr('data-label', (d) => d.label)
       .text((d) => d.label)
@@ -279,7 +282,7 @@ export function initHexOverlay(
     // gets a warm amber tint.
     const labels = hexGroup.selectAll<SVGTextElement, HexCell>('text.hex-label')
     labels
-      .attr('fill', 'rgba(244, 220, 160, 0.55)')
+      .attr('fill', 'rgba(78, 52, 28, 0.78)')
       .attr('font-weight', null)
     if (measurePathSet.size > 0) {
       labels
