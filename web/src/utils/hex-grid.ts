@@ -436,45 +436,49 @@ function capitalizeWord(s: string): string {
  * to a single-word biome descriptor. Buckets chosen against the actual
  * Veydria elevation distribution (-1100 m basin floor → 2600 m highlands).
  */
+// Cross-reviewed (Cowork, 2026-05-19) and tuned against the parchment base
+// layer (feat(hex-overlay): parchment base). Hue pulled 8-12° toward yellow,
+// saturation dropped ~20%, value lifted so cells read as tinted paper not
+// paint chips. Desert/Highland/Mountain kept — already correct ochre/parchment.
 export const BIOME_COLORS: Record<string, string> = {
   // Primary biomes
-  'Cloud forest': '#2d5a3d',
-  'Highland savanna': '#8faa5c',
+  'Cloud forest': '#5e7a4a',
+  'Highland savanna': '#a8b06a',
   'Desert': '#d4a76a',
-  'Steppe': '#b8c68e',
-  'Monsoon delta': '#4a7c59',
-  'Volcanic archipelago': '#6b4c3a',
+  'Steppe': '#c4c290',
+  'Monsoon delta': '#6a8e5e',
+  'Volcanic archipelago': '#7a543c',
   // Secondary — Ngaru-Bon
-  'Miombo woodland': '#5a7a3a',
-  'Afroalpine heath': '#8a9a8a',
-  'River gorge': '#4a6a5a',
+  'Miombo woodland': '#7a8848',
+  'Afroalpine heath': '#a6a89a',
+  'River gorge': '#6a7a6a',
   // Secondary — Irrah
-  'Sabkha': '#c8b890',
-  'Oasis': '#6aaa4a',
-  'Escarpment': '#9a8a6a',
+  'Sabkha': '#d8c898',
+  'Oasis': '#8aaa5c',
+  'Escarpment': '#a89878',
   // Secondary — Kheshkai
-  'Highland grassland': '#a0b06a',
-  'Cliff edge': '#8a8a7a',
-  'River gallery': '#5a8a6a',
+  'Highland grassland': '#b4b878',
+  'Cliff edge': '#9c9686',
+  'River gallery': '#7a967a',
   // Secondary — Ndjadi
-  'Mangrove swamp': '#3a6a4a',
-  'Floodplain': '#7a9a5a',
-  'Stone baray': '#9a9a8a',
+  'Mangrove swamp': '#5a7e58',
+  'Floodplain': '#94a468',
+  'Stone baray': '#adaa92',
   // Secondary — Qollari
-  'Mountain terrace': '#5a7a5a',
-  'Fog bank': '#8a9aaa',
-  'Cliff road': '#8a7a6a',
+  'Mountain terrace': '#76886c',
+  'Fog bank': '#b0b8be',
+  'Cliff road': '#968474',
   // Secondary — Oravan
-  'Coral reef': '#3a8a9a',
-  'Geothermal vent': '#9a5a3a',
-  'Strait': '#4a7a9a',
+  'Coral reef': '#6a9aa4',
+  'Geothermal vent': '#a8623c',
+  'Strait': '#6a8ea6',
   // Elevation fallback buckets
-  'Sea': '#3a6a9a',
-  'Plains': '#8aaa6a',
-  'Hill': '#9aaa5a',
+  'Sea': '#6a8ca8',
+  'Plains': '#a4b070',
+  'Hill': '#aaa86c',
   'Highland': '#a89a6a',
   'Mountain': '#9a8a6a',
-  'Peak': '#b0b0b0',
+  'Peak': '#c4beae',
 }
 
 function elevationToBiome(elev: number): string {
