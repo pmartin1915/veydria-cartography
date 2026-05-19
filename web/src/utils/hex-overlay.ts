@@ -178,7 +178,9 @@ export function initHexOverlay(
       })
       .attr('fill-opacity', (d) => {
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
-        return c ? '0.18' : '0.04'
+        // 0.14 (was 0.18) — over the parchment base, 0.18 made the darker
+        // brown biomes (Volcanic, Geothermal, Mountain) dominate the view.
+        return c ? '0.14' : '0.04'
       })
       .attr('stroke', 'none')
       .attr('data-label', (d) => d.label)
@@ -189,10 +191,14 @@ export function initHexOverlay(
     // baseline stroke/width as data-base-* so applySelectionStyle can restore
     // them when the cell leaves a highlight state. At hexSize=30 this produces
     // ~1320 lines, well within SVG's comfort zone.
-    const EDGE_BOUNDARY_STROKE = 'rgba(150, 108, 52, 0.9)'
-    const EDGE_SEAM_STROKE = 'rgba(212, 168, 84, 0.55)'
-    const EDGE_BOUNDARY_WIDTH = 1.6
-    const EDGE_SEAM_WIDTH = 0.5
+    // Softened from Cowork's original (1.6w @ alpha 0.9 boundary / 0.5w @
+    // alpha 0.55 seam): at hexSize 50 the dense boundary mesh read as
+    // "darker brown" across a third of the hex grid, especially around
+    // small biome enclaves. Keep boundary > seam hierarchy but ease both.
+    const EDGE_BOUNDARY_STROKE = 'rgba(150, 108, 52, 0.65)'
+    const EDGE_SEAM_STROKE = 'rgba(212, 168, 84, 0.4)'
+    const EDGE_BOUNDARY_WIDTH = 1.1
+    const EDGE_SEAM_WIDTH = 0.4
     cellSel.each(function (cell) {
       const cellG = d3.select<SVGGElement, HexCell>(this)
       const ownBiome = biomeColorByAxialKey.get(axialKey(cell.coord)) ?? null
