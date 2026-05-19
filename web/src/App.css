@@ -302,7 +302,12 @@ body {
 
 /* Leaflet overrides */
 .leaflet-container {
-  background: #0a0e15 !important;
+  /* Deep desaturated ocean — visible outside the continental schematic
+     SVG bounds. Tuned to harmonize with the parchment hex layer without
+     competing with the Sea-biome (#6a8ca8) hex fills, and to leave
+     headroom for the time-of-day filters below (night drops brightness
+     to 0.5, so #2a4860 → ~#152430 still reads as deep water, not black). */
+  background: #2a4860 !important;
   font-family: var(--font-body) !important;
   transition: filter 0.5s ease;
 }
