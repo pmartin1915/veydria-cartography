@@ -41,6 +41,12 @@ export interface HexOverlay {
   update: () => void
   destroy: () => void
   setVisibility: (visible: boolean) => void
+  /**
+   * Toggle the analytical grid layer (edge <line>s and label <text>s) without
+   * affecting the parchment base or biome-fill polygons. Lets biome colors
+   * remain visible while the user hides the grid mesh.
+   */
+  setShowGridLines: (visible: boolean) => void
   setOpacity: (opacity: number) => void
   setHexSize: (size: number) => void
   setSelectedLabel: (label: string | null) => void
@@ -117,6 +123,7 @@ export function initHexOverlay(
   const biomeColorByLabel = new Map<string, string | null>()
   const cellByAxial = new Map<string, HexCell>()
   let isVisible = false
+  let gridLinesVisible = true
   let selectedLabel: string | null = null
   let biomeColorsActive = biomeColorsEnabled
   // Measure-path state. `measurePathSet` is every cell along the line;
@@ -236,7 +243,7 @@ export function initHexOverlay(
       .attr('data-label', (d) => d.label)
       .text((d) => d.label)
 
-    applyZoomLabels()
+    applyGridLinesVisibility()
     applySelectionStyle()
   }
 
@@ -321,8 +328,13 @@ export function initHexOverlay(
 
   function applyZoomLabels() {
     const z = map.getZoom()
-    const showLabels = z >= LABEL_MIN_ZOOM
+    const showLabels = gridLinesVisible && z >= LABEL_MIN_ZOOM
     hexGroup.selectAll('text').style('display', showLabels ? 'block' : 'none')
+  }
+
+  function applyGridLinesVisibility() {
+    hexGroup.selectAll('line.hex-edge').style('display', gridLinesVisible ? 'block' : 'none')
+    applyZoomLabels()
   }
 
   rebuild(initialHexSize)
@@ -349,7 +361,11 @@ export function initHexOverlay(
     setVisibility: (visible: boolean) => {
       isVisible = visible
       hexGroup.style('display', visible ? 'block' : 'none')
-      if (visible) applyZoomLabels()
+      if (visible) applyGridLinesVisibility()
+    },
+    setShowGridLines: (visible: boolean) => {
+      gridLinesVisible = visible
+      applyGridLinesVisibility()
     },
     setOpacity: (opacity: number) => {
       hexGroup.style('opacity', String(opacity))
