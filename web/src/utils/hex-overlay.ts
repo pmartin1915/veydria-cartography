@@ -25,6 +25,8 @@ import {
   roundAxial,
   sampleHexFeatures,
   getHexBiomeColor,
+  getNeighborBiomes,
+  axialKey,
   type HexCell,
   type AxialCoord,
 } from './hex-grid'
@@ -136,10 +138,14 @@ export function initHexOverlay(
     descriptorsByLabel.clear()
     biomeColorByLabel.clear()
     cellByAxial.clear()
+    // Temporary axial-keyed biome map for neighbor diff. Rebuilt every
+    // rebuild() since cells/features can change.
+    const biomeColorByAxialKey = new Map<string, string | null>()
     for (const cell of cells) {
       descriptorsByLabel.set(cell.label, sampleHexFeatures(cell, features))
       biomeColorByLabel.set(cell.label, getHexBiomeColor(cell, features))
       cellByAxial.set(`${cell.coord.q},${cell.coord.r}`, cell)
+      biomeColorByAxialKey.set(axialKey(cell.coord), biomeColorByLabel.get(cell.label) ?? null)
     }
 
     // Wipe previous geometry. d3's join with key fn on a fresh dataset
@@ -152,6 +158,10 @@ export function initHexOverlay(
       .join('g')
       .attr('class', 'hex-cell')
 
+    // Polygons render the FILL only. Strokes are now drawn as six per-edge
+    // <line> elements per cell (below) so that boundary edges between
+    // different biomes can carry heavier strokes than internal seams —
+    // unreachable with a single polygon stroke-width attribute.
     cellSel
       .append('polygon')
       .attr('points', (d) => d.corners.map(([x, y]) => `${x},${svgY(y)}`).join(' '))
@@ -163,10 +173,49 @@ export function initHexOverlay(
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
         return c ? '0.18' : '0.04'
       })
-      .attr('stroke', 'rgba(212, 168, 84, 0.85)')
-      .attr('stroke-width', 1.0)
-      .attr('vector-effect', 'non-scaling-stroke')
+      .attr('stroke', 'none')
       .attr('data-label', (d) => d.label)
+
+    // Per-edge <line> elements per hex. Boundary edges (neighbor biome differs)
+    // get a heavier double-stroke; same-biome / off-grid seams stay thin. Each
+    // line is tagged with data-cell-label and data-edge-index, plus the
+    // baseline stroke/width as data-base-* so applySelectionStyle can restore
+    // them when the cell leaves a highlight state. At hexSize=30 this produces
+    // ~1320 lines, well within SVG's comfort zone.
+    const EDGE_BOUNDARY_STROKE = 'rgba(150, 108, 52, 0.9)'
+    const EDGE_SEAM_STROKE = 'rgba(212, 168, 84, 0.55)'
+    const EDGE_BOUNDARY_WIDTH = 1.6
+    const EDGE_SEAM_WIDTH = 0.5
+    cellSel.each(function (cell) {
+      const cellG = d3.select<SVGGElement, HexCell>(this)
+      const ownBiome = biomeColorByAxialKey.get(axialKey(cell.coord)) ?? null
+      const neighborBiomes = getNeighborBiomes(cell.coord, biomeColorByAxialKey)
+      for (let i = 0; i < 6; i++) {
+        const [x1, y1Raw] = cell.corners[i]
+        const [x2, y2Raw] = cell.corners[(i + 1) % 6]
+        const neighbor = neighborBiomes[i]
+        // Boundary = same-hex has a biome AND neighbor differs (or doesn't exist).
+        // Off-grid neighbors (null) on biome-bearing hexes count as boundary
+        // so the continental edge gets the heavier stroke.
+        const isBoundary = ownBiome != null && neighbor !== ownBiome
+        const baseStroke = isBoundary ? EDGE_BOUNDARY_STROKE : EDGE_SEAM_STROKE
+        const baseWidth = isBoundary ? EDGE_BOUNDARY_WIDTH : EDGE_SEAM_WIDTH
+        cellG
+          .append('line')
+          .attr('class', 'hex-edge')
+          .attr('x1', x1)
+          .attr('y1', svgY(y1Raw))
+          .attr('x2', x2)
+          .attr('y2', svgY(y2Raw))
+          .attr('stroke', baseStroke)
+          .attr('stroke-width', baseWidth)
+          .attr('vector-effect', 'non-scaling-stroke')
+          .attr('data-cell-label', cell.label)
+          .attr('data-edge-index', i)
+          .attr('data-base-stroke', baseStroke)
+          .attr('data-base-width', String(baseWidth))
+      }
+    })
 
     // Scale label size with hex radius so smaller hexes don't crowd.
     const fontSize = Math.max(5, Math.round(size * 0.16))
@@ -190,6 +239,7 @@ export function initHexOverlay(
 
   function applySelectionStyle() {
     // Priority: measure endpoint > selectedLabel > measure mid-path > journey route > default.
+    // Polygons carry FILL only; edges (below) carry stroke.
     hexGroup.selectAll<SVGPolygonElement, HexCell>('polygon')
       .attr('fill', function () {
         const label = this.getAttribute('data-label') ?? ''
@@ -200,21 +250,27 @@ export function initHexOverlay(
         const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
         return c ? c : 'rgba(212, 168, 84, 0.06)'
       })
+
+    // Edge lines. Same priority chain as polygon fill. Non-highlighted edges
+    // restore from data-base-stroke / data-base-width (set by rebuild based on
+    // neighbor-biome diff).
+    hexGroup.selectAll<SVGLineElement, unknown>('line.hex-edge')
       .attr('stroke', function () {
-        const label = this.getAttribute('data-label') ?? ''
+        const label = this.getAttribute('data-cell-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(186, 226, 244, 0.95)'
         if (label === selectedLabel) return 'rgba(244, 220, 160, 0.95)'
         if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.9)'
         if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.9)'
-        return 'rgba(212, 168, 84, 0.85)'
+        return this.getAttribute('data-base-stroke') ?? 'rgba(212, 168, 84, 0.55)'
       })
       .attr('stroke-width', function () {
-        const label = this.getAttribute('data-label') ?? ''
-        if (measureEndpoints.has(label)) return 2.2
-        if (label === selectedLabel) return 2.0
-        if (measurePathSet.has(label)) return 1.4
-        if (journeyRouteSet.has(label)) return 1.2
-        return 1.0
+        const label = this.getAttribute('data-cell-label') ?? ''
+        if (measureEndpoints.has(label)) return 2.4
+        if (label === selectedLabel) return 2.2
+        if (measurePathSet.has(label)) return 1.6
+        if (journeyRouteSet.has(label)) return 1.4
+        const base = this.getAttribute('data-base-width')
+        return base != null ? Number(base) : 0.5
       })
 
     // Labels mirror the cell-fill priority. Reset everyone first, then

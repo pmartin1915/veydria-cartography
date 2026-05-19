@@ -253,6 +253,52 @@ export function parseHexLabel(label: string): AxialCoord | null {
   return offsetToAxial({ col, row })
 }
 
+// ---------- Edges & neighbors ----------
+
+/**
+ * Pointy-top axial neighbor offsets, ordered to match the edge index of a hex
+ * whose corners are emitted by `hexCorners` (clockwise from top).
+ *
+ * Edge i lies between corners[i] and corners[(i+1) % 6]:
+ *   edge 0 (top → upper-right)     ↔ NE neighbor (+1, -1)
+ *   edge 1 (upper-right → lower-r) ↔ E  neighbor (+1,  0)
+ *   edge 2 (lower-right → bottom)  ↔ SE neighbor ( 0, +1)
+ *   edge 3 (bottom → lower-left)   ↔ SW neighbor (-1, +1)
+ *   edge 4 (lower-left → upper-l)  ↔ W  neighbor (-1,  0)
+ *   edge 5 (upper-left → top)      ↔ NW neighbor ( 0, -1)
+ *
+ * r increases downward in SVG coordinates, hence (q+1, r-1) is upper-right.
+ */
+export const HEX_EDGE_NEIGHBORS: ReadonlyArray<AxialCoord> = [
+  { q: 1, r: -1 },
+  { q: 1, r: 0 },
+  { q: 0, r: 1 },
+  { q: -1, r: 1 },
+  { q: -1, r: 0 },
+  { q: 0, r: -1 },
+]
+
+export function axialKey(coord: AxialCoord): string {
+  return `${coord.q},${coord.r}`
+}
+
+/**
+ * For each of the six edges of the hex at `coord`, return the biome of the
+ * neighboring hex on that edge, or null if no neighbor exists (off-grid) or
+ * the neighbor has no biome.
+ *
+ * `biomeByAxialKey` is keyed by `axialKey({q,r})`. Pure function; no DOM.
+ */
+export function getNeighborBiomes(
+  coord: AxialCoord,
+  biomeByAxialKey: Map<string, string | null>,
+): (string | null)[] {
+  return HEX_EDGE_NEIGHBORS.map((offset) => {
+    const neighborKey = axialKey({ q: coord.q + offset.q, r: coord.r + offset.r })
+    return biomeByAxialKey.get(neighborKey) ?? null
+  })
+}
+
 // ---------- Corners ----------
 
 function hexCorners(centerX: number, centerY: number, hexSize: number): [number, number][] {

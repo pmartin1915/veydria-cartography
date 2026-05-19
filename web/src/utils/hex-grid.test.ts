@@ -16,6 +16,9 @@ import {
   getHexBiomeColor,
   getBiomeAtPoint,
   BIOME_COLORS,
+  HEX_EDGE_NEIGHBORS,
+  axialKey,
+  getNeighborBiomes,
   type AxialCoord,
   type HexCell,
 } from './hex-grid'
@@ -561,5 +564,107 @@ describe('getRouteHexLabels', () => {
     for (let i = 1; i < labels.length; i++) {
       expect(labels[i]).not.toBe(labels[i - 1])
     }
+  })
+})
+
+describe('HEX_EDGE_NEIGHBORS', () => {
+  it('has six entries, one per hex edge', () => {
+    expect(HEX_EDGE_NEIGHBORS).toHaveLength(6)
+  })
+
+  it('matches the documented edge-index ordering (NE, E, SE, SW, W, NW)', () => {
+    expect(HEX_EDGE_NEIGHBORS[0]).toEqual({ q: 1, r: -1 }) // NE
+    expect(HEX_EDGE_NEIGHBORS[1]).toEqual({ q: 1, r: 0 })  // E
+    expect(HEX_EDGE_NEIGHBORS[2]).toEqual({ q: 0, r: 1 })  // SE
+    expect(HEX_EDGE_NEIGHBORS[3]).toEqual({ q: -1, r: 1 }) // SW
+    expect(HEX_EDGE_NEIGHBORS[4]).toEqual({ q: -1, r: 0 }) // W
+    expect(HEX_EDGE_NEIGHBORS[5]).toEqual({ q: 0, r: -1 }) // NW
+  })
+
+  it('every offset has magnitude 1 (axial distance from origin)', () => {
+    for (const offset of HEX_EDGE_NEIGHBORS) {
+      expect(axialDistance({ q: 0, r: 0 }, offset)).toBe(1)
+    }
+  })
+
+  it('offsets are symmetric — every direction has its opposite present', () => {
+    for (const offset of HEX_EDGE_NEIGHBORS) {
+      const opposite = { q: -offset.q, r: -offset.r }
+      const found = HEX_EDGE_NEIGHBORS.some(
+        (o) => o.q === opposite.q && o.r === opposite.r,
+      )
+      expect(found).toBe(true)
+    }
+  })
+})
+
+describe('getNeighborBiomes', () => {
+  it('returns six entries in edge-index order', () => {
+    const biomes = new Map<string, string | null>()
+    expect(getNeighborBiomes({ q: 0, r: 0 }, biomes)).toHaveLength(6)
+  })
+
+  it('returns null for every edge when no neighbors exist', () => {
+    const biomes = new Map<string, string | null>()
+    biomes.set(axialKey({ q: 0, r: 0 }), 'Desert')
+    const result = getNeighborBiomes({ q: 0, r: 0 }, biomes)
+    expect(result).toEqual([null, null, null, null, null, null])
+  })
+
+  it('reads each neighbor by its axial-key', () => {
+    const biomes = new Map<string, string | null>()
+    biomes.set(axialKey({ q: 1, r: -1 }), 'NE-biome')
+    biomes.set(axialKey({ q: 1, r: 0 }), 'E-biome')
+    biomes.set(axialKey({ q: 0, r: 1 }), 'SE-biome')
+    biomes.set(axialKey({ q: -1, r: 1 }), 'SW-biome')
+    biomes.set(axialKey({ q: -1, r: 0 }), 'W-biome')
+    biomes.set(axialKey({ q: 0, r: -1 }), 'NW-biome')
+    const result = getNeighborBiomes({ q: 0, r: 0 }, biomes)
+    expect(result).toEqual(['NE-biome', 'E-biome', 'SE-biome', 'SW-biome', 'W-biome', 'NW-biome'])
+  })
+
+  it('treats explicit-null biome entries the same as missing entries', () => {
+    const biomes = new Map<string, string | null>()
+    biomes.set(axialKey({ q: 1, r: 0 }), null)
+    const result = getNeighborBiomes({ q: 0, r: 0 }, biomes)
+    expect(result[1]).toBeNull()
+  })
+
+  it('works for non-origin source coords', () => {
+    const biomes = new Map<string, string | null>()
+    biomes.set(axialKey({ q: 5, r: 4 }), 'East-of-target')   // E of (4,4)
+    biomes.set(axialKey({ q: 4, r: 3 }), 'NW-of-target')     // NW of (4,4)
+    const result = getNeighborBiomes({ q: 4, r: 4 }, biomes)
+    expect(result[1]).toBe('East-of-target')
+    expect(result[5]).toBe('NW-of-target')
+    expect(result[0]).toBeNull()
+  })
+
+  it('edge-index matches HEX_EDGE_NEIGHBORS exactly', () => {
+    const biomes = new Map<string, string | null>()
+    for (let i = 0; i < 6; i++) {
+      biomes.set(axialKey(HEX_EDGE_NEIGHBORS[i]), `edge-${i}`)
+    }
+    const result = getNeighborBiomes({ q: 0, r: 0 }, biomes)
+    for (let i = 0; i < 6; i++) {
+      expect(result[i]).toBe(`edge-${i}`)
+    }
+  })
+})
+
+describe('axialKey', () => {
+  it('formats axial coord as "q,r"', () => {
+    expect(axialKey({ q: 0, r: 0 })).toBe('0,0')
+    expect(axialKey({ q: -3, r: 5 })).toBe('-3,5')
+  })
+
+  it('is injective — distinct coords produce distinct keys', () => {
+    const keys = new Set<string>()
+    for (let q = -5; q <= 5; q++) {
+      for (let r = -5; r <= 5; r++) {
+        keys.add(axialKey({ q, r }))
+      }
+    }
+    expect(keys.size).toBe(11 * 11)
   })
 })
