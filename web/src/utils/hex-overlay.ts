@@ -68,6 +68,47 @@ export function initHexOverlay(
   g.selectAll('.hex-grid-group').remove()
   const hexGroup = g.append('g').attr('class', 'hex-grid-group')
 
+  // Parchment base layer. feTurbulence-generated cream noise filling a base
+  // <rect> beneath the hex cells. Lives inside hexGroup so it inherits the
+  // layer-visibility toggle — when the hex grid is hidden, the underlying
+  // schematic SVG shows through unmodified.
+  //
+  // Filter is in <defs> at SVG root so the pattern is computed once and reused.
+  // numOctaves intentionally low (perf) and seed is fixed for reproducibility.
+  let defsSel = svg.select<SVGDefsElement>('defs')
+  if (defsSel.empty()) {
+    defsSel = svg.append<SVGDefsElement>('defs')
+  }
+  defsSel.select('#parchment-filter').remove()
+  const parchmentFilter = defsSel
+    .append('filter')
+    .attr('id', 'parchment-filter')
+    .attr('x', '0%').attr('y', '0%')
+    .attr('width', '100%').attr('height', '100%')
+  parchmentFilter
+    .append('feTurbulence')
+    .attr('type', 'fractalNoise')
+    .attr('baseFrequency', '0.85')
+    .attr('numOctaves', '2')
+    .attr('seed', '7')
+  const cTransfer = parchmentFilter.append('feComponentTransfer')
+  // Map grayscale noise to a warm cream cast: R≈0.88-1.0, G≈0.80-0.98,
+  // B≈0.66-0.86. Slight per-channel slope gives subtle fiber variation.
+  cTransfer.append('feFuncR').attr('type', 'linear').attr('slope', '0.14').attr('intercept', '0.88')
+  cTransfer.append('feFuncG').attr('type', 'linear').attr('slope', '0.16').attr('intercept', '0.80')
+  cTransfer.append('feFuncB').attr('type', 'linear').attr('slope', '0.18').attr('intercept', '0.66')
+  cTransfer.append('feFuncA').attr('type', 'linear').attr('slope', '0').attr('intercept', '1')
+
+  hexGroup
+    .append('rect')
+    .attr('class', 'parchment-base')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', SVG_WIDTH)
+    .attr('height', SVG_HEIGHT)
+    .attr('filter', 'url(#parchment-filter)')
+    .attr('opacity', 0.82)
+
   let currentHexSize = initialHexSize
   let cells: HexCell[] = []
   const descriptorsByLabel = new Map<string, string[]>()
