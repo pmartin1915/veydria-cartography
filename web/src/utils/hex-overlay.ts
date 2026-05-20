@@ -37,6 +37,13 @@ export const DEFAULT_HEX_SIZE = 50
 // At zoom levels below this, labels overlap into illegibility — drop them.
 const LABEL_MIN_ZOOM = 1
 
+// Parchment is encoded into the hex polygon fill: cream cells over the
+// continental schematic. When biome colors are on, cells swap to the biome
+// hex; the cream is dropped to keep biomes readable rather than muddied.
+const PARCHMENT_CREAM = '#e8dcc0'
+const PARCHMENT_FILL_OPACITY = '0.35'
+const BIOME_FILL_OPACITY = '0.3'
+
 export interface HexOverlay {
   update: () => void
   destroy: () => void
@@ -76,46 +83,13 @@ export function initHexOverlay(
   g.selectAll('.hex-grid-group').remove()
   const hexGroup = g.append('g').attr('class', 'hex-grid-group')
 
-  // Parchment base layer. feTurbulence-generated cream noise filling a base
-  // <rect> beneath the hex cells. Lives inside hexGroup so it inherits the
-  // layer-visibility toggle — when the hex grid is hidden, the underlying
-  // schematic SVG shows through unmodified.
-  //
-  // Filter is in <defs> at SVG root so the pattern is computed once and reused.
-  // numOctaves intentionally low (perf) and seed is fixed for reproducibility.
-  let defsSel = svg.select<SVGDefsElement>('defs')
-  if (defsSel.empty()) {
-    defsSel = svg.append<SVGDefsElement>('defs')
-  }
-  defsSel.select('#parchment-filter').remove()
-  const parchmentFilter = defsSel
-    .append('filter')
-    .attr('id', 'parchment-filter')
-    .attr('x', '0%').attr('y', '0%')
-    .attr('width', '100%').attr('height', '100%')
-  parchmentFilter
-    .append('feTurbulence')
-    .attr('type', 'fractalNoise')
-    .attr('baseFrequency', '0.85')
-    .attr('numOctaves', '2')
-    .attr('seed', '7')
-  const cTransfer = parchmentFilter.append('feComponentTransfer')
-  // Map grayscale noise to a warm cream cast: R≈0.88-1.0, G≈0.80-0.98,
-  // B≈0.66-0.86. Slight per-channel slope gives subtle fiber variation.
-  cTransfer.append('feFuncR').attr('type', 'linear').attr('slope', '0.14').attr('intercept', '0.88')
-  cTransfer.append('feFuncG').attr('type', 'linear').attr('slope', '0.16').attr('intercept', '0.80')
-  cTransfer.append('feFuncB').attr('type', 'linear').attr('slope', '0.18').attr('intercept', '0.66')
-  cTransfer.append('feFuncA').attr('type', 'linear').attr('slope', '0').attr('intercept', '1')
-
-  hexGroup
-    .append('rect')
-    .attr('class', 'parchment-base')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', SVG_WIDTH)
-    .attr('height', SVG_HEIGHT)
-    .attr('filter', 'url(#parchment-filter)')
-    .attr('opacity', 0.82)
+  // (Previously a full-width parchment base rect lived here — a 1200×800
+  // feTurbulence-filled <rect> beneath the hex cells. It rendered as a
+  // centered "white-fog square" in practice: the source-coord rect didn't
+  // span the visible Leaflet viewport at typical zoom levels, and the
+  // feTurbulence under Leaflet's transform animation read as rudimentary
+  // noise that varied per-zoom. Parchment is now encoded into the hex
+  // polygon fills themselves below — each cell IS a piece of parchment.)
 
   let currentHexSize = initialHexSize
   let cells: HexCell[] = []
@@ -169,18 +143,23 @@ export function initHexOverlay(
     // <line> elements per cell (below) so that boundary edges between
     // different biomes can carry heavier strokes than internal seams —
     // unreachable with a single polygon stroke-width attribute.
+    //
+    // Parchment is no longer a separate base layer; instead, when biome
+    // colors are OFF, each cell is filled with cream at 0.35 opacity —
+    // the hex grid itself reads as a sheet of warm paper laid over the
+    // schematic. When biome colors are ON, the cell takes its biome hex
+    // at 0.3 opacity (enough to read distinctly, low enough to not muddy
+    // the schematic continent shapes underneath).
     cellSel
       .append('polygon')
       .attr('points', (d) => d.corners.map(([x, y]) => `${x},${svgY(y)}`).join(' '))
       .attr('fill', (d) => {
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
-        return c ? c : 'rgba(212, 168, 84, 0.06)'
+        return c ? c : PARCHMENT_CREAM
       })
       .attr('fill-opacity', (d) => {
         const c = biomeColorsActive ? (biomeColorByLabel.get(d.label) || null) : null
-        // 0.14 (was 0.18) — over the parchment base, 0.18 made the darker
-        // brown biomes (Volcanic, Geothermal, Mountain) dominate the view.
-        return c ? '0.14' : '0.04'
+        return c ? BIOME_FILL_OPACITY : PARCHMENT_FILL_OPACITY
       })
       .attr('stroke', 'none')
       .attr('data-label', (d) => d.label)
@@ -255,7 +234,9 @@ export function initHexOverlay(
 
   function applySelectionStyle() {
     // Priority: measure endpoint > selectedLabel > measure mid-path > journey route > default.
-    // Polygons carry FILL only; edges (below) carry stroke.
+    // Polygons carry FILL + FILL-OPACITY (re-applied on every state change so
+    // toggling biome colors off fully reverts to parchment cream rather than
+    // leaving the prior biome alpha in place). Edges (below) carry stroke.
     hexGroup.selectAll<SVGPolygonElement, HexCell>('polygon')
       .attr('fill', function () {
         const label = this.getAttribute('data-label') ?? ''
@@ -264,7 +245,18 @@ export function initHexOverlay(
         if (measurePathSet.has(label)) return 'rgba(126, 196, 230, 0.16)'
         if (journeyRouteSet.has(label)) return 'rgba(228, 176, 80, 0.14)'
         const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
-        return c ? c : 'rgba(212, 168, 84, 0.06)'
+        return c ? c : PARCHMENT_CREAM
+      })
+      .attr('fill-opacity', function () {
+        const label = this.getAttribute('data-label') ?? ''
+        // Highlight states bake their alpha into the fill rgba above, so
+        // their fill-opacity is implicitly 1.0 (don't double-attenuate).
+        if (measureEndpoints.has(label)) return '1'
+        if (label === selectedLabel) return '1'
+        if (measurePathSet.has(label)) return '1'
+        if (journeyRouteSet.has(label)) return '1'
+        const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
+        return c ? BIOME_FILL_OPACITY : PARCHMENT_FILL_OPACITY
       })
 
     // Edge lines. Same priority chain as polygon fill. Non-highlighted edges
