@@ -35,13 +35,18 @@ const SVG_HEIGHT = 800
 const SVG_WIDTH = 1200
 export const DEFAULT_HEX_SIZE = 50
 // At zoom levels below this, labels overlap into illegibility — drop them.
-const LABEL_MIN_ZOOM = 1
+// 0 (was 1) gives one extra zoom-out level of coordinate reference so the
+// overview state isn't a mesh-only view with no label context.
+const LABEL_MIN_ZOOM = 0
 
 // Parchment is encoded into the hex polygon fill: cream cells over the
 // continental schematic. When biome colors are on, cells swap to the biome
 // hex; the cream is dropped to keep biomes readable rather than muddied.
+// PARCHMENT_FILL_OPACITY bumped 0.35 → 0.55 — at 0.35 the cream was
+// indistinguishable from the colored basemap, defeating the "paper laid
+// over the continent" aesthetic.
 const PARCHMENT_CREAM = '#e8dcc0'
-const PARCHMENT_FILL_OPACITY = '0.35'
+const PARCHMENT_FILL_OPACITY = '0.55'
 const BIOME_FILL_OPACITY = '0.3'
 
 export interface HexOverlay {
@@ -170,14 +175,16 @@ export function initHexOverlay(
     // baseline stroke/width as data-base-* so applySelectionStyle can restore
     // them when the cell leaves a highlight state. At hexSize=30 this produces
     // ~1320 lines, well within SVG's comfort zone.
-    // Softened from Cowork's original (1.6w @ alpha 0.9 boundary / 0.5w @
-    // alpha 0.55 seam): at hexSize 50 the dense boundary mesh read as
-    // "darker brown" across a third of the hex grid, especially around
-    // small biome enclaves. Keep boundary > seam hierarchy but ease both.
-    const EDGE_BOUNDARY_STROKE = 'rgba(150, 108, 52, 0.65)'
-    const EDGE_SEAM_STROKE = 'rgba(212, 168, 84, 0.4)'
-    const EDGE_BOUNDARY_WIDTH = 1.1
-    const EDGE_SEAM_WIDTH = 0.4
+    // Re-tuned 2026-05-20 after a visual audit: the earlier softening
+    // (1.1w @ 0.65α boundary / 0.4w @ 0.4α seam) made the two strokes
+    // nearly indistinguishable. Catan-style tile-read needs an obvious
+    // visual hierarchy. Now: boundary much darker + wider, seam much
+    // fainter + thinner, so cross-biome edges pop without re-introducing
+    // the "darker brown mesh" problem we fixed before.
+    const EDGE_BOUNDARY_STROKE = 'rgba(120, 80, 40, 0.85)'
+    const EDGE_SEAM_STROKE = 'rgba(212, 168, 84, 0.28)'
+    const EDGE_BOUNDARY_WIDTH = 1.4
+    const EDGE_SEAM_WIDTH = 0.35
     cellSel.each(function (cell) {
       const cellG = d3.select<SVGGElement, HexCell>(this)
       const ownBiome = biomeColorByAxialKey.get(axialKey(cell.coord)) ?? null
@@ -241,7 +248,12 @@ export function initHexOverlay(
       .attr('fill', function () {
         const label = this.getAttribute('data-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(126, 196, 230, 0.34)'
-        if (label === selectedLabel) return 'rgba(212, 168, 84, 0.22)'
+        // Selected-hex fill bumped 0.22 → 0.45 and shifted toward warm
+        // amber: at 0.22 the click-selection highlight was nearly
+        // invisible (only the per-edge stroke override carried the
+        // signal). The measure-endpoint case was visible because it
+        // uses a brighter blue at 0.34 — bring selected up to parity.
+        if (label === selectedLabel) return 'rgba(244, 220, 160, 0.45)'
         if (measurePathSet.has(label)) return 'rgba(126, 196, 230, 0.16)'
         if (journeyRouteSet.has(label)) return 'rgba(228, 176, 80, 0.14)'
         const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
@@ -266,15 +278,15 @@ export function initHexOverlay(
       .attr('stroke', function () {
         const label = this.getAttribute('data-cell-label') ?? ''
         if (measureEndpoints.has(label)) return 'rgba(186, 226, 244, 0.95)'
-        if (label === selectedLabel) return 'rgba(244, 220, 160, 0.95)'
+        if (label === selectedLabel) return 'rgba(255, 232, 168, 1)'
         if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.9)'
         if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.9)'
         return this.getAttribute('data-base-stroke') ?? 'rgba(212, 168, 84, 0.55)'
       })
       .attr('stroke-width', function () {
         const label = this.getAttribute('data-cell-label') ?? ''
-        if (measureEndpoints.has(label)) return 2.4
-        if (label === selectedLabel) return 2.2
+        if (measureEndpoints.has(label)) return 2.8
+        if (label === selectedLabel) return 2.8
         if (measurePathSet.has(label)) return 1.6
         if (journeyRouteSet.has(label)) return 1.4
         const base = this.getAttribute('data-base-width')
