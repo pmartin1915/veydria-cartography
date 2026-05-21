@@ -39,13 +39,16 @@ export const DEFAULT_HEX_SIZE = 50
 // overview state isn't a mesh-only view with no label context.
 const LABEL_MIN_ZOOM = 0
 
-// Parchment is encoded into the hex polygon fill: cream cells over the
+// Parchment is encoded into the hex polygon fill: warm ochre cells over the
 // continental schematic. When biome colors are on, cells swap to the biome
 // hex; the cream is dropped to keep biomes readable rather than muddied.
 // PARCHMENT_FILL_OPACITY bumped 0.35 → 0.55 — at 0.35 the cream was
 // indistinguishable from the colored basemap, defeating the "paper laid
-// over the continent" aesthetic.
-const PARCHMENT_CREAM = '#e8dcc0'
+// over the continent" aesthetic. PARCHMENT_CREAM shifted #e8dcc0 → #e4cca0
+// (neutral cream → warm ochre) so the hex overlay contrasts with the
+// schematic's already-parchment-toned plateau regions (H-row Ngaru-Bon),
+// which were rendering cream-on-cream and disappearing.
+const PARCHMENT_CREAM = '#e4cca0'
 const PARCHMENT_FILL_OPACITY = '0.55'
 const BIOME_FILL_OPACITY = '0.3'
 
