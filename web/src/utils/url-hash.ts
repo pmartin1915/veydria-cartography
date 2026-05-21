@@ -22,7 +22,15 @@ export interface ViewportState {
   journeyFrom?: string
   journeyTo?: string
   share?: boolean
+  partyPace?: 'slow' | 'normal' | 'fast'
+  partyMount?: 'foot' | 'mounted'
+  partySize?: 'small' | 'medium' | 'large'
+  partyForce?: boolean
 }
+
+const PARTY_PACE_VALUES = ['slow', 'normal', 'fast'] as const
+const PARTY_MOUNT_VALUES = ['foot', 'mounted'] as const
+const PARTY_SIZE_VALUES = ['small', 'medium', 'large'] as const
 
 // Spreadsheet-style hex labels: row letters (one or more) + 1-based column.
 const HEX_LABEL_RE = /^[A-Z]+\d+$/
@@ -77,6 +85,20 @@ export function parseHash(hash: string): ViewportState {
 
   if (params.get('share') === '1') result.share = true
 
+  const partyPace = params.get('partyPace')
+  if (partyPace && (PARTY_PACE_VALUES as readonly string[]).includes(partyPace)) {
+    result.partyPace = partyPace as ViewportState['partyPace']
+  }
+  const partyMount = params.get('partyMount')
+  if (partyMount && (PARTY_MOUNT_VALUES as readonly string[]).includes(partyMount)) {
+    result.partyMount = partyMount as ViewportState['partyMount']
+  }
+  const partySize = params.get('partySize')
+  if (partySize && (PARTY_SIZE_VALUES as readonly string[]).includes(partySize)) {
+    result.partySize = partySize as ViewportState['partySize']
+  }
+  if (params.get('partyForce') === '1') result.partyForce = true
+
   return result
 }
 
@@ -93,6 +115,12 @@ export function buildHash(state: ViewportState): string {
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))
   if (state.share) params.set('share', '1')
+
+  // Party config — omit defaults to keep URLs short
+  if (state.partyPace && state.partyPace !== 'normal') params.set('partyPace', state.partyPace)
+  if (state.partyMount && state.partyMount !== 'foot') params.set('partyMount', state.partyMount)
+  if (state.partySize && state.partySize !== 'medium') params.set('partySize', state.partySize)
+  if (state.partyForce) params.set('partyForce', '1')
 
   const str = params.toString()
   return str ? `#${str}` : ''

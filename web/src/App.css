@@ -3108,6 +3108,95 @@ body {
   color: var(--text-accent);
 }
 
+/* Party config */
+.journey-party {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.journey-party-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  transition: var(--transition-fast);
+}
+
+.journey-party-toggle:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.journey-party-toggle.active {
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+}
+
+.journey-party-summary {
+  flex: 1;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-party-caret {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.journey-party-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.journey-party-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journey-party-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.journey-party-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.journey-party-toggle-row input[type='checkbox'] {
+  cursor: pointer;
+}
+
 /* Field */
 .journey-field {
   display: flex;

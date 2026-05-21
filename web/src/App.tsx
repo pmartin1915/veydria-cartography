@@ -1587,6 +1587,16 @@ function App() {
             selectedBiome={selectedHex?.descriptors[0] ?? null}
             onSeasonChange={setJourneySeason}
             onModeChange={setJourneyModeState}
+            defaultParty={(() => {
+              const h = initialHashRef.current
+              if (!h.partyPace && !h.partyMount && !h.partySize && !h.partyForce) return undefined
+              return {
+                pace: h.partyPace ?? 'normal',
+                mount: h.partyMount ?? 'foot',
+                size: h.partySize ?? 'medium',
+                forcedMarch: !!h.partyForce,
+              }
+            })()}
           />
         )}
 

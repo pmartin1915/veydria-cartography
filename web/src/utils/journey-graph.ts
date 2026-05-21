@@ -25,6 +25,54 @@ export interface JourneyNode {
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
 export type RouteMode = 'direct' | 'fastest' | 'safest' | 'cheapest'
 
+export type TravelPace = 'slow' | 'normal' | 'fast'
+export type Mount = 'foot' | 'mounted'
+export type PartySize = 'small' | 'medium' | 'large' // <5 / 5–10 / 10+
+
+export interface PartyConfig {
+  pace: TravelPace
+  mount: Mount
+  size: PartySize
+  forcedMarch: boolean
+}
+
+export const DEFAULT_PARTY: PartyConfig = {
+  pace: 'normal',
+  mount: 'foot',
+  size: 'medium',
+  forcedMarch: false,
+}
+
+export function isDefaultParty(p: PartyConfig): boolean {
+  return p.pace === 'normal' && p.mount === 'foot' && p.size === 'medium' && !p.forcedMarch
+}
+
+/**
+ * Multiplier applied to the base km/day speed of an edge given the party config.
+ * Chokepoints are deliberately resistant to pace/mount so bottleneck warnings
+ * remain meaningful — at most a 25% lift from forced march, then a small drag
+ * from a large party. Open roads benefit fully from pace and mount.
+ */
+export function getPaceMultiplier(p: PartyConfig, edgeType: JourneyEdge['type']): number {
+  const isChokepoint = edgeType === 'chokepoint'
+
+  let m = 1
+  // Pace
+  if (p.pace === 'slow') m *= 0.75
+  else if (p.pace === 'fast') m *= 1.33
+
+  // Mount: open road benefit only
+  if (p.mount === 'mounted' && !isChokepoint) m *= 1.5
+
+  // Forced march: 25% lift, applies everywhere (it's the point of the toggle)
+  if (p.forcedMarch) m *= 1.25
+
+  // Large party drags caravans through tight terrain
+  if (p.size === 'large' && isChokepoint) m *= 0.9
+
+  return m
+}
+
 export interface SeasonalRestriction {
   warning: string
   blockedIn: Season[]
@@ -337,7 +385,7 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
 /** Dijkstra shortest path with optional seasonal filtering and route mode.
  *  If a season is given, edges blocked in that season get a 10× penalty.
  */
-export function findRoute(graph: Graph, startId: string, endId: string, season?: Season, mode: RouteMode = 'direct'): JourneyRoute | null {
+export function findRoute(graph: Graph, startId: string, endId: string, season?: Season, mode: RouteMode = 'direct', party: PartyConfig = DEFAULT_PARTY): JourneyRoute | null {
   if (!graph.nodes.has(startId) || !graph.nodes.has(endId)) return null
   if (startId === endId) {
     const node = graph.nodes.get(startId)!
@@ -412,7 +460,7 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
   const rawTotalSvg = pathEdges.reduce((sum, e) => sum + e.distanceSvg, 0)
   const totalKm = svgDistanceToKm(rawTotalSvg)
 
-  // Per-segment day estimates based on edge type
+  // Per-segment day estimates based on edge type, modulated by party config
   const speedByType: Record<string, number> = {
     trade_route: 50,
     chokepoint: 12.5,
@@ -421,12 +469,14 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
   }
   for (const edge of pathEdges) {
     const km = svgDistanceToKm(edge.distanceSvg)
-    const speed = speedByType[edge.type] || 25
+    const baseSpeed = speedByType[edge.type] || 25
+    const speed = baseSpeed * getPaceMultiplier(party, edge.type)
     edge.segmentDays = km / speed
   }
 
-  // Mixed travel speed: 25 km/day average for overland
-  const estimatedDays = totalKm / 25
+  // estimatedDays = sum of per-edge segmentDays so it stays consistent with
+  // the day-by-day breakdown (and reflects party config automatically).
+  const estimatedDays = pathEdges.reduce((sum, e) => sum + (e.segmentDays || 0), 0)
 
   const bottlenecks: string[] = []
   const seasonalWarnings: string[] = []
@@ -457,7 +507,8 @@ export function findMultiStopRoute(
   graph: Graph,
   stops: string[],
   season?: Season,
-  mode: RouteMode = 'direct'
+  mode: RouteMode = 'direct',
+  party: PartyConfig = DEFAULT_PARTY
 ): JourneyRoute | null {
   if (stops.length < 2) return null
 
@@ -466,9 +517,10 @@ export function findMultiStopRoute(
   const allBottlenecks: string[] = []
   const allSeasonal: string[] = []
   let totalRawSvg = 0
+  let totalDays = 0
 
   for (let i = 0; i < stops.length - 1; i++) {
-    const leg = findRoute(graph, stops[i], stops[i + 1], season, mode)
+    const leg = findRoute(graph, stops[i], stops[i + 1], season, mode, party)
     if (!leg) return null
 
     if (i === 0) {
@@ -479,6 +531,7 @@ export function findMultiStopRoute(
     }
     allEdges.push(...leg.edges)
     totalRawSvg += leg.totalDistanceSvg
+    totalDays += leg.estimatedDays
     for (const b of leg.bottlenecks) {
       if (!allBottlenecks.includes(b)) allBottlenecks.push(b)
     }
@@ -488,14 +541,13 @@ export function findMultiStopRoute(
   }
 
   const totalKm = svgDistanceToKm(totalRawSvg)
-  const estimatedDays = totalKm / 25
 
   return {
     nodes: allNodes,
     edges: allEdges,
     totalDistanceSvg: totalRawSvg,
     totalKm,
-    estimatedDays,
+    estimatedDays: totalDays,
     bottlenecks: allBottlenecks,
     seasonalWarnings: allSeasonal,
   }
@@ -515,9 +567,10 @@ export function findRouteWithFallback(
   startId: string,
   endId: string,
   season?: Season,
-  mode: RouteMode = 'direct'
+  mode: RouteMode = 'direct',
+  party: PartyConfig = DEFAULT_PARTY
 ): { route: JourneyRoute | null; pivots: JourneyNode[] } {
-  const direct = findRoute(graph, startId, endId, season, mode)
+  const direct = findRoute(graph, startId, endId, season, mode, party)
   if (direct) return { route: direct, pivots: [] }
 
   const civs = Array.from(graph.nodes.values()).filter(n =>
@@ -527,7 +580,7 @@ export function findRouteWithFallback(
   // Try single-civ pivots
   let best: { route: JourneyRoute; pivots: JourneyNode[] } | null = null
   for (const c of civs) {
-    const r = findMultiStopRoute(graph, [startId, c.id, endId], season, mode)
+    const r = findMultiStopRoute(graph, [startId, c.id, endId], season, mode, party)
     if (r && (!best || r.totalKm < best.route.totalKm)) {
       best = { route: r, pivots: [c] }
     }
@@ -538,7 +591,7 @@ export function findRouteWithFallback(
   for (const c1 of civs) {
     for (const c2 of civs) {
       if (c1.id === c2.id) continue
-      const r = findMultiStopRoute(graph, [startId, c1.id, c2.id, endId], season, mode)
+      const r = findMultiStopRoute(graph, [startId, c1.id, c2.id, endId], season, mode, party)
       if (r && (!best || r.totalKm < (best as { route: JourneyRoute }).route.totalKm)) {
         best = { route: r, pivots: [c1, c2] }
       }
@@ -556,12 +609,13 @@ export function findComparisonRoutes(
   graph: Graph,
   startId: string,
   endId: string,
-  season?: Season
+  season?: Season,
+  party: PartyConfig = DEFAULT_PARTY
 ): ComparisonRoutes {
   return {
-    direct: findRouteWithFallback(graph, startId, endId, season, 'direct').route,
-    safest: findRouteWithFallback(graph, startId, endId, season, 'safest').route,
-    cheapest: findRouteWithFallback(graph, startId, endId, season, 'cheapest').route,
+    direct: findRouteWithFallback(graph, startId, endId, season, 'direct', party).route,
+    safest: findRouteWithFallback(graph, startId, endId, season, 'safest', party).route,
+    cheapest: findRouteWithFallback(graph, startId, endId, season, 'cheapest', party).route,
   }
 }
 

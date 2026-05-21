@@ -5,8 +5,8 @@
  * downloadable `.md` file for session prep or archiving.
  */
 
-import type { JourneyRoute, Season, RouteMode } from './journey-graph'
-import { getRouteDifficulty } from './journey-graph'
+import type { JourneyRoute, Season, RouteMode, PartyConfig } from './journey-graph'
+import { getRouteDifficulty, isDefaultParty } from './journey-graph'
 import { buildDailyBreakdown } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import type { SavedJourney } from './journey-saved'
@@ -19,10 +19,20 @@ export interface CampaignLogInput {
     season?: Season
     mode: RouteMode
     edgeBiomes?: (string | undefined)[]
+    party?: PartyConfig
   }
   savedJourneys: SavedJourney[]
   annotations: MapAnnotation[]
   featureNotes?: { featureId: string; note: string }[]
+}
+
+function formatPartyExport(p: PartyConfig): string {
+  const bits: string[] = []
+  bits.push(p.mount)
+  if (p.pace !== 'normal') bits.push(`${p.pace} pace`)
+  bits.push(`${p.size} party`)
+  if (p.forcedMarch) bits.push('forced march')
+  return bits.join(' · ')
 }
 
 function formatDays(days: number): string {
@@ -54,7 +64,8 @@ export function exportJourneyMarkdown(
   route: JourneyRoute,
   season?: Season,
   mode: RouteMode = 'direct',
-  edgeBiomes?: (string | undefined)[]
+  edgeBiomes?: (string | undefined)[],
+  party?: PartyConfig
 ): string {
   const fromName = route.nodes[0]?.name || 'Unknown'
   const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'
@@ -68,6 +79,9 @@ export function exportJourneyMarkdown(
   md += `**Distance:** ${Math.round(route.totalKm)} km  \n`
   md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
   md += `**Mode:** ${mode}  \n`
+  if (party && !isDefaultParty(party)) {
+    md += `**Party:** ${formatPartyExport(party)}  \n`
+  }
   md += `**Difficulty:** ${diff.label}  \n`
   if (season) md += `**Season:** ${season}  \n`
   md += `\n#### Route\n\n`
@@ -106,7 +120,7 @@ export function exportJourneyMarkdown(
     }
   }
 
-  const days = buildDailyBreakdown(route, season, mode)
+  const days = buildDailyBreakdown(route, season, mode, undefined, undefined, party)
   if (days.length > 0) {
     md += `\n#### Day-by-Day\n\n`
     for (const day of days) {
@@ -154,7 +168,8 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       activeJourney.route,
       activeJourney.season,
       activeJourney.mode,
-      activeJourney.edgeBiomes
+      activeJourney.edgeBiomes,
+      activeJourney.party
     )
     md += `\n---\n\n`
   }
@@ -166,6 +181,7 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       md += `### ${i + 1}. ${sj.name || `${sj.fromName} → ${sj.toName}`}\n\n`
       md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
       if (sj.season) md += ` · **Season:** ${sj.season}`
+      if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${formatPartyExport(sj.party)}`
       md += `\n`
       if (sj.waypoints.length > 0) {
         md += `- **Path:** ${sj.fromName} → ${sj.waypoints.join(' → ')} → ${sj.toName}\n`

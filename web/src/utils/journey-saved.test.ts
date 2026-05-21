@@ -8,6 +8,7 @@ import {
   clearSavedJourneys,
   type SavedJourney,
 } from './journey-saved'
+import { DEFAULT_PARTY } from './journey-graph'
 
 // Minimal in-memory localStorage for the node test environment.
 function installLocalStorageStub() {
@@ -43,6 +44,7 @@ function makeJourney(overrides: Partial<SavedJourney> = {}): SavedJourney {
     edgeCount: 1,
     bottlenecks: [],
     seasonalWarnings: [],
+    party: DEFAULT_PARTY,
     ...overrides,
   }
 }

@@ -4,7 +4,7 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, DEFAULT_PARTY, isDefaultParty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig, type TravelPace, type Mount, type PartySize } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
@@ -38,6 +38,10 @@ interface JourneyPlannerProps {
   /** Optional callback fired whenever the route mode changes. */
   onModeChange?: (mode: RouteMode) => void
   onComparisonRoutesComputed?: (routes: ComparisonRoutes) => void
+  /** Initial party config (typically seeded from URL hash on first mount). */
+  defaultParty?: PartyConfig
+  /** Optional callback fired whenever the party config changes. */
+  onPartyChange?: (party: PartyConfig) => void
 }
 
 function formatDays(days: number): string {
@@ -55,7 +59,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -66,6 +70,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [exportToast, setExportToast] = useState<string | null>(null)
   const [season, setSeason] = useState<Season | undefined>(undefined)
   const [mode, setMode] = useState<RouteMode>('direct')
+  const [party, setParty] = useState<PartyConfig>(defaultParty ?? DEFAULT_PARTY)
+  const [partyOpen, setPartyOpen] = useState(false)
   const [waypoints, setWaypoints] = useState<string[]>([])
   const [wpSearch, setWpSearch] = useState('')
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
@@ -156,10 +162,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       didAutoComputeRef.current = true
       setStartId(defaultStartId)
       setEndId(defaultEndId)
-      const result = findRoute(graph, defaultStartId, defaultEndId)
+      const result = findRoute(graph, defaultStartId, defaultEndId, undefined, 'direct', party)
       setRoute(result)
       onRouteComputed(result)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, defaultStartId, defaultEndId, nodes, graph, onRouteComputed])
 
   // Auto-recompute when stops/season/mode change. Debounced so a fast
@@ -171,9 +178,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       let result: JourneyRoute | null
       let pivots: JourneyNode[] = []
       if (stops.length > 2) {
-        result = findMultiStopRoute(graph, stops, season, mode)
+        result = findMultiStopRoute(graph, stops, season, mode, party)
       } else {
-        const fb = findRouteWithFallback(graph, startId, endId, season, mode)
+        const fb = findRouteWithFallback(graph, startId, endId, season, mode, party)
         result = fb.route
         pivots = fb.pivots
       }
@@ -184,7 +191,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
       // Comparison routes: only for simple A→B (no waypoints) and when enabled
       if (compareMode && stops.length === 2) {
-        const comparisons = findComparisonRoutes(graph, startId, endId, season)
+        const comparisons = findComparisonRoutes(graph, startId, endId, season, party)
         setComparisonRoutes(comparisons)
         onComparisonRoutesComputed?.(comparisons)
       } else if (!compareMode) {
@@ -194,7 +201,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }, 250)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, startId, endId, waypoints, season, mode, graph, compareMode])
+  }, [active, startId, endId, waypoints, season, mode, party, graph, compareMode])
 
   // Reset route when closed
   useEffect(() => {
@@ -214,6 +221,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setWpOpenIdx(null)
       setSeason(undefined)
       setMode('direct')
+      setParty(DEFAULT_PARTY)
+      setPartyOpen(false)
       setExportToast(null)
       setDepartureDayOfYear(undefined)
     }
@@ -232,16 +241,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const startNode = nodes.find(n => n.id === startId)
   const endNode = nodes.find(n => n.id === endId)
 
-  function computeRoute(s?: Season, m?: RouteMode) {
+  function computeRoute(s?: Season, m?: RouteMode, p: PartyConfig = party) {
     if (!startId || !endId) return
     const stops = [startId, ...waypoints.filter(Boolean), endId]
     let result: JourneyRoute | null
     let pivots: JourneyNode[] = []
     if (stops.length > 2) {
       // User specified waypoints — honour them exactly.
-      result = findMultiStopRoute(graph, stops, s, m)
+      result = findMultiStopRoute(graph, stops, s, m, p)
     } else {
-      const fb = findRouteWithFallback(graph, startId, endId, s, m)
+      const fb = findRouteWithFallback(graph, startId, endId, s, m, p)
       result = fb.route
       pivots = fb.pivots
     }
@@ -310,6 +319,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     url.hash = buildHash({
       journeyFrom: route.nodes[0]?.id,
       journeyTo: route.nodes[route.nodes.length - 1]?.id,
+      partyPace: party.pace,
+      partyMount: party.mount,
+      partySize: party.size,
+      partyForce: party.forcedMarch,
     })
     try {
       await navigator.clipboard.writeText(url.toString())
@@ -359,6 +372,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     md += `**Distance:** ${Math.round(route.totalKm)} km  \n`
     md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
     md += `**Mode:** ${mode}  \n`
+    if (!isDefaultParty(party)) {
+      const partyBits: string[] = [party.mount]
+      if (party.pace !== 'normal') partyBits.push(`${party.pace} pace`)
+      partyBits.push(`${party.size} party`)
+      if (party.forcedMarch) partyBits.push('forced march')
+      md += `**Party:** ${partyBits.join(' · ')}  \n`
+    }
     md += `**Difficulty:** ${diff.label}  \n`
     if (season) md += `**Season:** ${season}  \n`
     md += `\n### Route\n\n`
@@ -397,7 +417,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
-    const days = buildDailyBreakdown(route, season, mode, undefined, departureDayOfYear)
+    const days = buildDailyBreakdown(route, season, mode, undefined, departureDayOfYear, party)
     if (days.length > 0) {
       md += `\n### Day-by-Day\n\n`
       for (const day of days) {
@@ -467,6 +487,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
+  function handlePartyChange(next: PartyConfig) {
+    setParty(next)
+    onPartyChange?.(next)
+    if (startId && endId) {
+      computeRoute(season, mode, next)
+    }
+  }
+
   function handleSaveRoute() {
     if (!route) return
     const fromName = route.nodes[0]?.name || ''
@@ -490,6 +518,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       edgeCount: route.edges.length,
       bottlenecks: route.bottlenecks,
       seasonalWarnings: route.seasonalWarnings,
+      party,
     }
     const updated = addSavedJourney(entry)
     setSavedJourneys(updated)
@@ -506,13 +535,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setWaypoints(wps)
     setSeason(entry.season)
     setMode(entry.mode)
+    const loadedParty = entry.party ?? DEFAULT_PARTY
+    setParty(loadedParty)
+    onPartyChange?.(loadedParty)
     setStartSearch('')
     setEndSearch('')
     setWpSearch('')
     setWpOpenIdx(null)
     const result = wps.length > 0
-      ? findMultiStopRoute(graph, entry.nodeIds, entry.season, entry.mode)
-      : findRoute(graph, start, end, entry.season, entry.mode)
+      ? findMultiStopRoute(graph, entry.nodeIds, entry.season, entry.mode, loadedParty)
+      : findRoute(graph, start, end, entry.season, entry.mode, loadedParty)
     setRoute(result)
     onRouteComputed(result)
     showExportToast('Journey restored')
@@ -662,6 +694,95 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Party config */}
+        <div className="journey-party">
+          <button
+            className={`journey-party-toggle ${partyOpen ? 'active' : ''}`}
+            onClick={() => setPartyOpen(o => !o)}
+            title="Configure party pace, mount, size, and forced march"
+          >
+            <IconCompass />
+            <span>Party</span>
+            <span className="journey-party-summary">
+              {isDefaultParty(party)
+                ? 'default'
+                : [
+                    party.mount === 'mounted' ? 'mounted' : null,
+                    party.pace !== 'normal' ? `${party.pace}` : null,
+                    party.size !== 'medium' ? party.size : null,
+                    party.forcedMarch ? 'forced' : null,
+                  ].filter(Boolean).join(' · ')}
+            </span>
+            <span className="journey-party-caret">{partyOpen ? '▴' : '▾'}</span>
+          </button>
+          {partyOpen && (
+            <div className="journey-party-body">
+              <div className="journey-party-row">
+                <span className="journey-party-label">Pace</span>
+                <div className="journey-modes-row">
+                  {(['slow', 'normal', 'fast'] as TravelPace[]).map(p => (
+                    <button
+                      key={p}
+                      className={`journey-mode-btn ${party.pace === p ? 'active' : ''}`}
+                      onClick={() => handlePartyChange({ ...party, pace: p })}
+                      title={
+                        p === 'slow'
+                          ? 'Slow march: −25% speed, stealth-friendly'
+                          : p === 'fast'
+                          ? 'Fast march: +33% speed, perception penalty'
+                          : 'Normal march'
+                      }
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="journey-party-row">
+                <span className="journey-party-label">Mount</span>
+                <div className="journey-modes-row">
+                  {(['foot', 'mounted'] as Mount[]).map(m => (
+                    <button
+                      key={m}
+                      className={`journey-mode-btn ${party.mount === m ? 'active' : ''}`}
+                      onClick={() => handlePartyChange({ ...party, mount: m })}
+                      title={m === 'mounted' ? 'Mounted: +50% on open road, no benefit through chokepoints' : 'On foot'}
+                    >
+                      {m === 'foot' ? 'On foot' : 'Mounted'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="journey-party-row">
+                <span className="journey-party-label">Size</span>
+                <div className="journey-modes-row">
+                  {(['small', 'medium', 'large'] as PartySize[]).map(s => (
+                    <button
+                      key={s}
+                      className={`journey-mode-btn ${party.size === s ? 'active' : ''}`}
+                      onClick={() => handlePartyChange({ ...party, size: s })}
+                      title={s === 'small' ? '<5 travellers' : s === 'medium' ? '5–10 travellers' : '10+ travellers — drags through chokepoints'}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="journey-party-row">
+                <span className="journey-party-label">Forced march</span>
+                <label className="journey-party-toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={party.forcedMarch}
+                    onChange={e => handlePartyChange({ ...party, forcedMarch: e.target.checked })}
+                  />
+                  <span>+25% speed, accumulates exhaustion</span>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Compare routes toggle */}
@@ -1145,7 +1266,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             )}
 
             {routeTab === 'days' && (() => {
-              const days = buildDailyBreakdown(route, season, mode, edgeBiomes, departureDayOfYear)
+              const days = buildDailyBreakdown(route, season, mode, edgeBiomes, departureDayOfYear, party)
               if (days.length === 0) {
                 return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
               }

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type PartyConfig } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -159,5 +159,49 @@ describe('findComparisonRoutes', () => {
     expect(winter.safest).not.toBeNull()
     expect(spring.cheapest).not.toBeNull()
     expect(winter.cheapest).not.toBeNull()
+  })
+})
+
+describe('party config affects travel time', () => {
+  it('fast pace yields strictly fewer estimated days than slow pace', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const slow: PartyConfig = { ...DEFAULT_PARTY, pace: 'slow' }
+    const fast: PartyConfig = { ...DEFAULT_PARTY, pace: 'fast' }
+    const rSlow = findRoute(graph, civs[0].id, civs[civs.length - 1].id, undefined, 'direct', slow)
+    const rFast = findRoute(graph, civs[0].id, civs[civs.length - 1].id, undefined, 'direct', fast)
+    expect(rSlow).not.toBeNull()
+    expect(rFast).not.toBeNull()
+    expect(rFast!.estimatedDays).toBeLessThan(rSlow!.estimatedDays)
+    // Distance is geographic and must not change
+    expect(rFast!.totalKm).toBeCloseTo(rSlow!.totalKm, 5)
+  })
+
+  it('mounted speeds up open road but not chokepoints', () => {
+    // Use a route that should include at least some non-chokepoint edges.
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const foot = findRoute(graph, civs[0].id, civs[1].id, undefined, 'direct', DEFAULT_PARTY)
+    const mounted = findRoute(graph, civs[0].id, civs[1].id, undefined, 'direct', { ...DEFAULT_PARTY, mount: 'mounted' })
+    expect(foot).not.toBeNull()
+    expect(mounted).not.toBeNull()
+    // For each chokepoint edge in the route, segmentDays must be identical
+    // (within float tolerance) between foot and mounted.
+    for (let i = 0; i < foot!.edges.length; i++) {
+      const fe = foot!.edges[i]
+      const me = mounted!.edges[i]
+      if (fe.type === 'chokepoint' && me.type === 'chokepoint') {
+        expect(me.segmentDays!).toBeCloseTo(fe.segmentDays!, 6)
+      }
+    }
+    // The overall estimate should still come down (since at least some
+    // non-chokepoint edge will speed up).
+    expect(mounted!.estimatedDays).toBeLessThanOrEqual(foot!.estimatedDays)
+  })
+
+  it('estimatedDays equals sum of per-edge segmentDays', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const r = findRoute(graph, civs[0].id, civs[civs.length - 1].id)
+    expect(r).not.toBeNull()
+    const sumSegments = r!.edges.reduce((s, e) => s + (e.segmentDays || 0), 0)
+    expect(r!.estimatedDays).toBeCloseTo(sumSegments, 6)
   })
 })

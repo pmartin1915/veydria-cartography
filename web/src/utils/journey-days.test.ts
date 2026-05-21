@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildDailyBreakdown } from './journey-days'
-import type { JourneyRoute } from './journey-graph'
+import { DEFAULT_PARTY, type JourneyRoute, type PartyConfig } from './journey-graph'
 
 function makeRoute(opts: { edgeDays: number[]; totalKm: number }): JourneyRoute {
   const nodes = opts.edgeDays.map((_, i) => ({
@@ -187,5 +187,35 @@ describe('journey-days: bucketing', () => {
     expect(days[0].calendarEvents).toBeDefined()
     const eventNames = days[0].calendarEvents!.map(e => e.id)
     expect(eventNames).toContain('basin-khazadari-rate-setting')
+  })
+
+  it('forced march adds an exhaustion line to every day', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const party: PartyConfig = { ...DEFAULT_PARTY, forcedMarch: true }
+    const days = buildDailyBreakdown(route, undefined, 'direct', undefined, undefined, party)
+    expect(days.length).toBe(3)
+    for (const day of days) {
+      expect(day.notable.some(n => n.toLowerCase().includes('forced march'))).toBe(true)
+    }
+  })
+
+  it('day 1 summary line only appears when party differs from default', () => {
+    const route = makeRoute({ edgeDays: [1, 1], totalKm: 50 })
+
+    const defaultDays = buildDailyBreakdown(route, undefined, 'direct', undefined, undefined, DEFAULT_PARTY)
+    expect(defaultDays[0].notable.some(n => n.startsWith('Party:'))).toBe(false)
+
+    const mounted: PartyConfig = { ...DEFAULT_PARTY, mount: 'mounted' }
+    const mountedDays = buildDailyBreakdown(route, undefined, 'direct', undefined, undefined, mounted)
+    expect(mountedDays[0].notable.some(n => n.startsWith('Party:'))).toBe(true)
+    // Summary line only on day 1
+    expect(mountedDays[1].notable.some(n => n.startsWith('Party:'))).toBe(false)
+  })
+
+  it('omits party summary and forced-march line when no party config supplied', () => {
+    const route = makeRoute({ edgeDays: [1], totalKm: 25 })
+    const days = buildDailyBreakdown(route)
+    expect(days[0].notable.some(n => n.startsWith('Party:'))).toBe(false)
+    expect(days[0].notable.some(n => n.toLowerCase().includes('forced march'))).toBe(false)
   })
 })

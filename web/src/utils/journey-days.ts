@@ -10,7 +10,8 @@
  * days. This is the unit a GM uses for session prep.
  */
 
-import type { JourneyRoute, JourneyEdge, JourneyNode, Season, RouteMode } from './journey-graph'
+import type { JourneyRoute, JourneyEdge, JourneyNode, Season, RouteMode, PartyConfig } from './journey-graph'
+import { isDefaultParty } from './journey-graph'
 import { generateEncounters, type Encounter } from './encounters'
 import type { CalendarEvent } from './calendar'
 import { getEventsForDay } from './calendar'
@@ -147,10 +148,20 @@ function campLabelAt(
   return `Camp on the ${edge.name} (between ${fromNode.name} and ${toNode.name})`
 }
 
+function formatPartySummary(p: PartyConfig): string {
+  const bits: string[] = []
+  if (p.mount === 'mounted') bits.push('mounted')
+  if (p.pace !== 'normal') bits.push(`${p.pace} pace`)
+  if (p.size !== 'medium') bits.push(`${p.size} party`)
+  if (p.forcedMarch) bits.push('forced march')
+  return bits.length > 0 ? `Party: ${bits.join(', ')}.` : ''
+}
+
 function notableForDay(
   edgesInDay: { edge: JourneyEdge; portion: number }[],
   dayNum: number,
-  totalDays: number
+  totalDays: number,
+  party?: PartyConfig
 ): string[] {
   const out: string[] = []
   for (const { edge } of edgesInDay) {
@@ -165,8 +176,17 @@ function notableForDay(
       out.push(`Seasonal note on ${edge.name}: ${edge.seasonal}`)
     }
   }
-  if (dayNum === 1) out.unshift('Departure day.')
+  if (dayNum === 1) {
+    out.unshift('Departure day.')
+    if (party && !isDefaultParty(party)) {
+      const summary = formatPartySummary(party)
+      if (summary) out.unshift(summary)
+    }
+  }
   if (dayNum === totalDays) out.push('Arrival day.')
+  if (party?.forcedMarch) {
+    out.push('Forced march — each day costs a level of exhaustion until a long rest.')
+  }
   return out
 }
 
@@ -177,7 +197,8 @@ export function buildDailyBreakdown(
   season?: Season,
   mode: RouteMode = 'direct',
   edgeBiomes?: (string | undefined)[],
-  departureDayOfYear?: number
+  departureDayOfYear?: number,
+  party?: PartyConfig
 ): JourneyDay[] {
   if (!route.edges.length || route.estimatedDays <= 0) return []
 
@@ -277,7 +298,7 @@ export function buildDailyBreakdown(
       campLabel,
       weather: rollWeather(rng, season),
       encounters: encountersByDay.get(d) || [],
-      notable: notableForDay(edgesInDay, d, totalDays),
+      notable: notableForDay(edgesInDay, d, totalDays, party),
       edgesTraversed: edgesInDay,
     }
     if (departureDayOfYear !== undefined && departureDayOfYear > 0) {

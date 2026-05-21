@@ -5,7 +5,27 @@
  * Migrates defensively from legacy veydria-journey-history on first read.
  */
 
-import type { Season, RouteMode } from './journey-graph'
+import type { Season, RouteMode, PartyConfig, TravelPace, Mount, PartySize } from './journey-graph'
+import { DEFAULT_PARTY } from './journey-graph'
+
+const VALID_PACES: TravelPace[] = ['slow', 'normal', 'fast']
+const VALID_MOUNTS: Mount[] = ['foot', 'mounted']
+const VALID_SIZES: PartySize[] = ['small', 'medium', 'large']
+
+function sanitizeParty(raw: unknown): PartyConfig {
+  if (!raw || typeof raw !== 'object') return DEFAULT_PARTY
+  const r = raw as Record<string, unknown>
+  return {
+    pace: VALID_PACES.includes(r.pace as TravelPace) ? (r.pace as TravelPace) : DEFAULT_PARTY.pace,
+    mount: VALID_MOUNTS.includes(r.mount as Mount) ? (r.mount as Mount) : DEFAULT_PARTY.mount,
+    size: VALID_SIZES.includes(r.size as PartySize) ? (r.size as PartySize) : DEFAULT_PARTY.size,
+    forcedMarch: r.forcedMarch === true,
+  }
+}
+
+function partyEquals(a: PartyConfig, b: PartyConfig): boolean {
+  return a.pace === b.pace && a.mount === b.mount && a.size === b.size && a.forcedMarch === b.forcedMarch
+}
 
 const STORAGE_KEY = 'veydria.journeys.v1'
 const LEGACY_KEY = 'veydria-journey-history'
@@ -27,6 +47,7 @@ export interface SavedJourney {
   edgeCount: number
   bottlenecks: string[]
   seasonalWarnings: string[]
+  party?: PartyConfig
 }
 
 function makeDefaultName(from: string, to: string, waypoints: string[]): string {
@@ -75,6 +96,7 @@ function migrateFromLegacy(): SavedJourney[] | null {
         seasonalWarnings: Array.isArray(e.seasonalWarnings)
           ? e.seasonalWarnings.filter((s): s is string => typeof s === 'string')
           : [],
+        party: sanitizeParty(e.party),
       }))
     return migrated
   } catch {
@@ -87,7 +109,9 @@ export function loadSavedJourneys(): SavedJourney[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as SavedJourney[]
-      return Array.isArray(parsed) ? parsed : []
+      if (!Array.isArray(parsed)) return []
+      // Backfill party for v1 entries written before party config existed.
+      return parsed.map(e => ({ ...e, party: sanitizeParty(e.party) }))
     }
     // No v1 data — attempt one-time migration from legacy key
     const migrated = migrateFromLegacy()
@@ -111,11 +135,13 @@ export function saveJourneys(entries: SavedJourney[]) {
 export function addSavedJourney(entry: SavedJourney): SavedJourney[] {
   const existing = loadSavedJourneys()
   // Prevent exact duplicates (same nodeIds + season + mode)
+  const entryParty = sanitizeParty(entry.party)
   const duplicateIndex = existing.findIndex(
     e =>
       JSON.stringify(e.nodeIds) === JSON.stringify(entry.nodeIds) &&
       e.season === entry.season &&
-      e.mode === entry.mode
+      e.mode === entry.mode &&
+      partyEquals(sanitizeParty(e.party), entryParty)
   )
   if (duplicateIndex >= 0) {
     // Move to front (most recent)
