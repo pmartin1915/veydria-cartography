@@ -3197,6 +3197,119 @@ body {
   cursor: pointer;
 }
 
+/* Supply config — mirrors .journey-party with number-input rules */
+.journey-supply {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.journey-supply-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  transition: var(--transition-fast);
+}
+
+.journey-supply-toggle:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.journey-supply-toggle.active {
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+}
+
+.journey-supply-summary {
+  flex: 1;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-supply-caret {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.journey-supply-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.journey-supply-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journey-supply-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.journey-supply-number {
+  width: 80px;
+  padding: 5px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.journey-supply-number:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}
+
+/* Per-day supply line (in the Days tab) */
+.journey-day-supply {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.journey-day-supply.rations-low,
+.journey-day-supply.water-low {
+  color: #c89a4a;
+}
+
+.journey-day-supply.rations-out,
+.journey-day-supply.water-out {
+  color: #c45a3a;
+  font-weight: 600;
+}
+
+.journey-day-supply-warn {
+  font-style: italic;
+}
+
 /* Field */
 .journey-field {
   display: flex;

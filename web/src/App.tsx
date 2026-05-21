@@ -1597,6 +1597,16 @@ function App() {
                 forcedMarch: !!h.partyForce,
               }
             })()}
+            defaultSupply={(() => {
+              const h = initialHashRef.current
+              if (h.supplyRations === undefined && h.supplyWater === undefined && !h.supplyEnc && !h.supplyPack) return undefined
+              return {
+                rationsPerPerson: h.supplyRations ?? 7,
+                waterPerPerson: h.supplyWater ?? 3,
+                encumbrance: h.supplyEnc ?? 'normal',
+                packAnimals: h.supplyPack ?? 'none',
+              }
+            })()}
           />
         )}
 

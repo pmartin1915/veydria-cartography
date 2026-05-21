@@ -26,11 +26,17 @@ export interface ViewportState {
   partyMount?: 'foot' | 'mounted'
   partySize?: 'small' | 'medium' | 'large'
   partyForce?: boolean
+  supplyRations?: number
+  supplyWater?: number
+  supplyEnc?: 'light' | 'normal' | 'heavy'
+  supplyPack?: 'none' | 'few' | 'caravan'
 }
 
 const PARTY_PACE_VALUES = ['slow', 'normal', 'fast'] as const
 const PARTY_MOUNT_VALUES = ['foot', 'mounted'] as const
 const PARTY_SIZE_VALUES = ['small', 'medium', 'large'] as const
+const SUPPLY_ENC_VALUES = ['light', 'normal', 'heavy'] as const
+const SUPPLY_PACK_VALUES = ['none', 'few', 'caravan'] as const
 
 // Spreadsheet-style hex labels: row letters (one or more) + 1-based column.
 const HEX_LABEL_RE = /^[A-Z]+\d+$/
@@ -99,6 +105,25 @@ export function parseHash(hash: string): ViewportState {
   }
   if (params.get('partyForce') === '1') result.partyForce = true
 
+  const supplyRations = params.get('supplyRations')
+  if (supplyRations !== null) {
+    const n = parseFloat(supplyRations)
+    if (!isNaN(n) && n >= 0 && n <= 99) result.supplyRations = n
+  }
+  const supplyWater = params.get('supplyWater')
+  if (supplyWater !== null) {
+    const n = parseFloat(supplyWater)
+    if (!isNaN(n) && n >= 0 && n <= 99) result.supplyWater = n
+  }
+  const supplyEnc = params.get('supplyEnc')
+  if (supplyEnc && (SUPPLY_ENC_VALUES as readonly string[]).includes(supplyEnc)) {
+    result.supplyEnc = supplyEnc as ViewportState['supplyEnc']
+  }
+  const supplyPack = params.get('supplyPack')
+  if (supplyPack && (SUPPLY_PACK_VALUES as readonly string[]).includes(supplyPack)) {
+    result.supplyPack = supplyPack as ViewportState['supplyPack']
+  }
+
   return result
 }
 
@@ -121,6 +146,16 @@ export function buildHash(state: ViewportState): string {
   if (state.partyMount && state.partyMount !== 'foot') params.set('partyMount', state.partyMount)
   if (state.partySize && state.partySize !== 'medium') params.set('partySize', state.partySize)
   if (state.partyForce) params.set('partyForce', '1')
+
+  // Supply config — omit defaults (7 rations / 3 water / normal / none)
+  if (state.supplyRations !== undefined && state.supplyRations !== 7) {
+    params.set('supplyRations', state.supplyRations.toString())
+  }
+  if (state.supplyWater !== undefined && state.supplyWater !== 3) {
+    params.set('supplyWater', state.supplyWater.toString())
+  }
+  if (state.supplyEnc && state.supplyEnc !== 'normal') params.set('supplyEnc', state.supplyEnc)
+  if (state.supplyPack && state.supplyPack !== 'none') params.set('supplyPack', state.supplyPack)
 
   const str = params.toString()
   return str ? `#${str}` : ''

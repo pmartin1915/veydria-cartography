@@ -10,6 +10,16 @@ import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
 import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, hasCrisis, formatCrisisRef, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
+import {
+  DEFAULT_SUPPLY,
+  isDefaultSupply,
+  computeSupplyTimeline,
+  summarizeSupplyPressure,
+  type SupplyConfig,
+  type Encumbrance,
+  type PackAnimals,
+  type SupplyDay,
+} from '../utils/journey-supply'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -42,6 +52,10 @@ interface JourneyPlannerProps {
   defaultParty?: PartyConfig
   /** Optional callback fired whenever the party config changes. */
   onPartyChange?: (party: PartyConfig) => void
+  /** Initial supply config (typically seeded from URL hash on first mount). */
+  defaultSupply?: SupplyConfig
+  /** Optional callback fired whenever the supply config changes. */
+  onSupplyChange?: (supply: SupplyConfig) => void
 }
 
 function formatDays(days: number): string {
@@ -59,7 +73,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -72,6 +86,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [mode, setMode] = useState<RouteMode>('direct')
   const [party, setParty] = useState<PartyConfig>(defaultParty ?? DEFAULT_PARTY)
   const [partyOpen, setPartyOpen] = useState(false)
+  const [supply, setSupply] = useState<SupplyConfig>(defaultSupply ?? DEFAULT_SUPPLY)
+  const [supplyOpen, setSupplyOpen] = useState(false)
   const [waypoints, setWaypoints] = useState<string[]>([])
   const [wpSearch, setWpSearch] = useState('')
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
@@ -323,6 +339,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       partyMount: party.mount,
       partySize: party.size,
       partyForce: party.forcedMarch,
+      supplyRations: supply.rationsPerPerson,
+      supplyWater: supply.waterPerPerson,
+      supplyEnc: supply.encumbrance,
+      supplyPack: supply.packAnimals,
     })
     try {
       await navigator.clipboard.writeText(url.toString())
@@ -379,6 +399,15 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       if (party.forcedMarch) partyBits.push('forced march')
       md += `**Party:** ${partyBits.join(' · ')}  \n`
     }
+    if (!isDefaultSupply(supply)) {
+      const supplyBits: string[] = [
+        `${supply.rationsPerPerson}d rations`,
+        `${supply.waterPerPerson}d water`,
+      ]
+      if (supply.encumbrance !== 'normal') supplyBits.push(`${supply.encumbrance} load`)
+      if (supply.packAnimals !== 'none') supplyBits.push(`pack: ${supply.packAnimals}`)
+      md += `**Supply:** ${supplyBits.join(' · ')}  \n`
+    }
     md += `**Difficulty:** ${diff.label}  \n`
     if (season) md += `**Season:** ${season}  \n`
     md += `\n### Route\n\n`
@@ -419,6 +448,22 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
     const days = buildDailyBreakdown(route, season, mode, undefined, departureDayOfYear, party)
     if (days.length > 0) {
+      // Supply pressure — only emit when a threshold is actually crossed.
+      const biomeForEdge = edgeBiomes
+        ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
+        : undefined
+      const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+      const pressure = summarizeSupplyPressure(supplyTimeline)
+      const pressureLines: string[] = []
+      if (pressure.rationsLowDay !== null) pressureLines.push(`Rations critical on day ${pressure.rationsLowDay}.`)
+      if (pressure.rationsOutDay !== null) pressureLines.push(`Rations exhausted on day ${pressure.rationsOutDay} — forage or turn back.`)
+      if (pressure.waterLowDay !== null) pressureLines.push(`Water critical on day ${pressure.waterLowDay}.`)
+      if (pressure.waterOutDay !== null) pressureLines.push(`Water exhausted on day ${pressure.waterOutDay} — find water or turn back.`)
+      if (pressureLines.length > 0) {
+        md += `\n### Supply pressure\n\n`
+        for (const l of pressureLines) md += `[!] ${l}\n`
+      }
+
       md += `\n### Day-by-Day\n\n`
       for (const day of days) {
         const doyLabel = day.dayOfYear !== undefined ? ` · ${formatDayOfYear(day.dayOfYear)}` : ''
@@ -495,6 +540,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
+  function handleSupplyChange(next: SupplyConfig) {
+    // Supply does not affect routing — no recompute needed.
+    setSupply(next)
+    onSupplyChange?.(next)
+  }
+
   function handleSaveRoute() {
     if (!route) return
     const fromName = route.nodes[0]?.name || ''
@@ -519,6 +570,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       bottlenecks: route.bottlenecks,
       seasonalWarnings: route.seasonalWarnings,
       party,
+      supply,
     }
     const updated = addSavedJourney(entry)
     setSavedJourneys(updated)
@@ -538,6 +590,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     const loadedParty = entry.party ?? DEFAULT_PARTY
     setParty(loadedParty)
     onPartyChange?.(loadedParty)
+    const loadedSupply = entry.supply ?? DEFAULT_SUPPLY
+    setSupply(loadedSupply)
+    onSupplyChange?.(loadedSupply)
     setStartSearch('')
     setEndSearch('')
     setWpSearch('')
@@ -780,6 +835,99 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                   />
                   <span>+25% speed, accumulates exhaustion</span>
                 </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Supply config */}
+        <div className="journey-supply">
+          <button
+            className={`journey-supply-toggle ${supplyOpen ? 'active' : ''}`}
+            onClick={() => setSupplyOpen(o => !o)}
+            title="Configure rations, water, encumbrance, and pack animals"
+          >
+            <IconScroll />
+            <span>Supply</span>
+            <span className="journey-supply-summary">
+              {isDefaultSupply(supply)
+                ? 'default'
+                : [
+                    `${supply.rationsPerPerson}d rations`,
+                    `${supply.waterPerPerson}d water`,
+                    supply.encumbrance !== 'normal' ? `${supply.encumbrance} load` : null,
+                    supply.packAnimals !== 'none' ? `pack: ${supply.packAnimals}` : null,
+                  ].filter(Boolean).join(' · ')}
+            </span>
+            <span className="journey-supply-caret">{supplyOpen ? '▴' : '▾'}</span>
+          </button>
+          {supplyOpen && (
+            <div className="journey-supply-body">
+              <div className="journey-supply-row">
+                <span className="journey-supply-label">Rations / person</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  step={1}
+                  className="journey-supply-number"
+                  value={supply.rationsPerPerson}
+                  onChange={e => {
+                    const n = parseInt(e.target.value, 10)
+                    if (!isNaN(n) && n >= 0 && n <= 99) {
+                      handleSupplyChange({ ...supply, rationsPerPerson: n })
+                    }
+                  }}
+                  title="Days of rations each traveller carries at depart"
+                />
+              </div>
+              <div className="journey-supply-row">
+                <span className="journey-supply-label">Water / person</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  step={1}
+                  className="journey-supply-number"
+                  value={supply.waterPerPerson}
+                  onChange={e => {
+                    const n = parseInt(e.target.value, 10)
+                    if (!isNaN(n) && n >= 0 && n <= 99) {
+                      handleSupplyChange({ ...supply, waterPerPerson: n })
+                    }
+                  }}
+                  title="Days of water each traveller carries at depart"
+                />
+              </div>
+              <div className="journey-supply-row">
+                <span className="journey-supply-label">Encumbrance</span>
+                <div className="journey-modes-row">
+                  {(['light', 'normal', 'heavy'] as Encumbrance[]).map(enc => (
+                    <button
+                      key={enc}
+                      className={`journey-mode-btn ${supply.encumbrance === enc ? 'active' : ''}`}
+                      onClick={() => handleSupplyChange({ ...supply, encumbrance: enc })}
+                      title={enc === 'light' ? '−10% burn rate' : enc === 'heavy' ? '+10% burn rate' : 'Standard load'}
+                    >
+                      {enc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="journey-supply-row">
+                <span className="journey-supply-label">Pack animals</span>
+                <div className="journey-modes-row">
+                  {(['none', 'few', 'caravan'] as PackAnimals[]).map(pa => (
+                    <button
+                      key={pa}
+                      className={`journey-mode-btn ${supply.packAnimals === pa ? 'active' : ''}`}
+                      onClick={() => handleSupplyChange({ ...supply, packAnimals: pa })}
+                      title={pa === 'few' ? '+3 days of capacity' : pa === 'caravan' ? '+7 days of capacity' : 'No animals'}
+                    >
+                      {pa}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -1270,6 +1418,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               if (days.length === 0) {
                 return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
               }
+              const biomeForEdge = edgeBiomes
+                ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
+                : undefined
+              const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+              const supplyByDay = new Map<number, SupplyDay>(supplyTimeline.map(s => [s.dayNum, s]))
               return (
                 <div className="journey-days">
                   <div className="journey-encounters-header">
@@ -1280,6 +1433,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     const primarySegmentIdx = day.edgesTraversed.length > 0
                       ? route.edges.findIndex(e => e === day.edgesTraversed[0].edge)
                       : 0
+                    const supplyDay = supplyByDay.get(day.dayNum)
                     return (
                     <div
                       key={day.dayNum}
@@ -1344,6 +1498,23 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                               <div className="journey-encounter-beat">{enc.beat}</div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                      {supplyDay && (
+                        <div className={`journey-day-line journey-day-supply ${supplyDay.warning ?? ''}`}>
+                          <span className="journey-day-label">Supply:</span>{' '}
+                          Rations {Math.max(0, Math.floor(supplyDay.rationsLeft))}d
+                          {' · '}
+                          Water {Math.max(0, Math.floor(supplyDay.waterLeft))}d
+                          {supplyDay.warning && (
+                            <span className="journey-day-supply-warn">
+                              {' — '}
+                              {supplyDay.warning === 'water-out' ? 'water exhausted'
+                                : supplyDay.warning === 'rations-out' ? 'rations exhausted'
+                                : supplyDay.warning === 'water-low' ? 'water critical'
+                                : 'rations critical'}
+                            </span>
+                          )}
                         </div>
                       )}
                       <div className="journey-day-line journey-day-camp"><IconPin /> {day.campLabel}</div>

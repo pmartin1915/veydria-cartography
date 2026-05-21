@@ -5,13 +5,19 @@
  * downloadable `.md` file for session prep or archiving.
  */
 
-import type { JourneyRoute, Season, RouteMode, PartyConfig } from './journey-graph'
+import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyEdge } from './journey-graph'
 import { getRouteDifficulty, isDefaultParty } from './journey-graph'
 import { buildDailyBreakdown } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import type { SavedJourney } from './journey-saved'
 import type { MapAnnotation } from './annotations'
 import { hasCrisis, formatCrisisRef } from './calendar'
+import type { SupplyConfig } from './journey-supply'
+import {
+  computeSupplyTimeline,
+  isDefaultSupply,
+  summarizeSupplyPressure,
+} from './journey-supply'
 
 export interface CampaignLogInput {
   activeJourney?: {
@@ -20,6 +26,7 @@ export interface CampaignLogInput {
     mode: RouteMode
     edgeBiomes?: (string | undefined)[]
     party?: PartyConfig
+    supply?: SupplyConfig
   }
   savedJourneys: SavedJourney[]
   annotations: MapAnnotation[]
@@ -32,6 +39,15 @@ function formatPartyExport(p: PartyConfig): string {
   if (p.pace !== 'normal') bits.push(`${p.pace} pace`)
   bits.push(`${p.size} party`)
   if (p.forcedMarch) bits.push('forced march')
+  return bits.join(' · ')
+}
+
+function formatSupplyExport(s: SupplyConfig): string {
+  const bits: string[] = []
+  bits.push(`${s.rationsPerPerson}d rations`)
+  bits.push(`${s.waterPerPerson}d water`)
+  if (s.encumbrance !== 'normal') bits.push(`${s.encumbrance} load`)
+  if (s.packAnimals !== 'none') bits.push(`pack: ${s.packAnimals}`)
   return bits.join(' · ')
 }
 
@@ -65,7 +81,8 @@ export function exportJourneyMarkdown(
   season?: Season,
   mode: RouteMode = 'direct',
   edgeBiomes?: (string | undefined)[],
-  party?: PartyConfig
+  party?: PartyConfig,
+  supply?: SupplyConfig
 ): string {
   const fromName = route.nodes[0]?.name || 'Unknown'
   const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'
@@ -81,6 +98,9 @@ export function exportJourneyMarkdown(
   md += `**Mode:** ${mode}  \n`
   if (party && !isDefaultParty(party)) {
     md += `**Party:** ${formatPartyExport(party)}  \n`
+  }
+  if (supply && !isDefaultSupply(supply)) {
+    md += `**Supply:** ${formatSupplyExport(supply)}  \n`
   }
   md += `**Difficulty:** ${diff.label}  \n`
   if (season) md += `**Season:** ${season}  \n`
@@ -121,6 +141,25 @@ export function exportJourneyMarkdown(
   }
 
   const days = buildDailyBreakdown(route, season, mode, undefined, undefined, party)
+
+  // Supply pressure subsection — only when supply is configured and a threshold is crossed.
+  if (supply && days.length > 0 && party) {
+    const biomeForEdge = edgeBiomes
+      ? (e: JourneyEdge) => edgeBiomes[route.edges.indexOf(e)]
+      : undefined
+    const timeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+    const pressure = summarizeSupplyPressure(timeline)
+    const lines: string[] = []
+    if (pressure.rationsLowDay !== null) lines.push(`Rations critical on day ${pressure.rationsLowDay}.`)
+    if (pressure.rationsOutDay !== null) lines.push(`Rations exhausted on day ${pressure.rationsOutDay} — forage or turn back.`)
+    if (pressure.waterLowDay !== null) lines.push(`Water critical on day ${pressure.waterLowDay}.`)
+    if (pressure.waterOutDay !== null) lines.push(`Water exhausted on day ${pressure.waterOutDay} — find water or turn back.`)
+    if (lines.length > 0) {
+      md += `\n#### Supply pressure\n\n`
+      for (const l of lines) md += `[!] ${l}\n`
+    }
+  }
+
   if (days.length > 0) {
     md += `\n#### Day-by-Day\n\n`
     for (const day of days) {
@@ -169,7 +208,8 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       activeJourney.season,
       activeJourney.mode,
       activeJourney.edgeBiomes,
-      activeJourney.party
+      activeJourney.party,
+      activeJourney.supply
     )
     md += `\n---\n\n`
   }
@@ -182,6 +222,7 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
       if (sj.season) md += ` · **Season:** ${sj.season}`
       if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${formatPartyExport(sj.party)}`
+      if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${formatSupplyExport(sj.supply)}`
       md += `\n`
       if (sj.waypoints.length > 0) {
         md += `- **Path:** ${sj.fromName} → ${sj.waypoints.join(' → ')} → ${sj.toName}\n`

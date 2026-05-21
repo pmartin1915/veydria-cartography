@@ -7,10 +7,14 @@
 
 import type { Season, RouteMode, PartyConfig, TravelPace, Mount, PartySize } from './journey-graph'
 import { DEFAULT_PARTY } from './journey-graph'
+import type { SupplyConfig, Encumbrance, PackAnimals } from './journey-supply'
+import { DEFAULT_SUPPLY } from './journey-supply'
 
 const VALID_PACES: TravelPace[] = ['slow', 'normal', 'fast']
 const VALID_MOUNTS: Mount[] = ['foot', 'mounted']
 const VALID_SIZES: PartySize[] = ['small', 'medium', 'large']
+const VALID_ENCUMBRANCE: Encumbrance[] = ['light', 'normal', 'heavy']
+const VALID_PACK_ANIMALS: PackAnimals[] = ['none', 'few', 'caravan']
 
 function sanitizeParty(raw: unknown): PartyConfig {
   if (!raw || typeof raw !== 'object') return DEFAULT_PARTY
@@ -25,6 +29,34 @@ function sanitizeParty(raw: unknown): PartyConfig {
 
 function partyEquals(a: PartyConfig, b: PartyConfig): boolean {
   return a.pace === b.pace && a.mount === b.mount && a.size === b.size && a.forcedMarch === b.forcedMarch
+}
+
+function sanitizeSupply(raw: unknown): SupplyConfig {
+  if (!raw || typeof raw !== 'object') return DEFAULT_SUPPLY
+  const r = raw as Record<string, unknown>
+  const clampNum = (n: unknown, fallback: number): number => {
+    if (typeof n !== 'number' || !isFinite(n) || n < 0 || n > 99) return fallback
+    return n
+  }
+  return {
+    rationsPerPerson: clampNum(r.rationsPerPerson, DEFAULT_SUPPLY.rationsPerPerson),
+    waterPerPerson: clampNum(r.waterPerPerson, DEFAULT_SUPPLY.waterPerPerson),
+    encumbrance: VALID_ENCUMBRANCE.includes(r.encumbrance as Encumbrance)
+      ? (r.encumbrance as Encumbrance)
+      : DEFAULT_SUPPLY.encumbrance,
+    packAnimals: VALID_PACK_ANIMALS.includes(r.packAnimals as PackAnimals)
+      ? (r.packAnimals as PackAnimals)
+      : DEFAULT_SUPPLY.packAnimals,
+  }
+}
+
+function supplyEquals(a: SupplyConfig, b: SupplyConfig): boolean {
+  return (
+    a.rationsPerPerson === b.rationsPerPerson &&
+    a.waterPerPerson === b.waterPerPerson &&
+    a.encumbrance === b.encumbrance &&
+    a.packAnimals === b.packAnimals
+  )
 }
 
 const STORAGE_KEY = 'veydria.journeys.v1'
@@ -48,6 +80,7 @@ export interface SavedJourney {
   bottlenecks: string[]
   seasonalWarnings: string[]
   party?: PartyConfig
+  supply?: SupplyConfig
 }
 
 function makeDefaultName(from: string, to: string, waypoints: string[]): string {
@@ -97,6 +130,7 @@ function migrateFromLegacy(): SavedJourney[] | null {
           ? e.seasonalWarnings.filter((s): s is string => typeof s === 'string')
           : [],
         party: sanitizeParty(e.party),
+        supply: sanitizeSupply(e.supply),
       }))
     return migrated
   } catch {
@@ -110,8 +144,12 @@ export function loadSavedJourneys(): SavedJourney[] {
     if (raw) {
       const parsed = JSON.parse(raw) as SavedJourney[]
       if (!Array.isArray(parsed)) return []
-      // Backfill party for v1 entries written before party config existed.
-      return parsed.map(e => ({ ...e, party: sanitizeParty(e.party) }))
+      // Backfill party + supply for entries written before those fields existed.
+      return parsed.map(e => ({
+        ...e,
+        party: sanitizeParty(e.party),
+        supply: sanitizeSupply(e.supply),
+      }))
     }
     // No v1 data — attempt one-time migration from legacy key
     const migrated = migrateFromLegacy()
@@ -134,14 +172,16 @@ export function saveJourneys(entries: SavedJourney[]) {
 
 export function addSavedJourney(entry: SavedJourney): SavedJourney[] {
   const existing = loadSavedJourneys()
-  // Prevent exact duplicates (same nodeIds + season + mode)
+  // Prevent exact duplicates (same nodeIds + season + mode + party + supply)
   const entryParty = sanitizeParty(entry.party)
+  const entrySupply = sanitizeSupply(entry.supply)
   const duplicateIndex = existing.findIndex(
     e =>
       JSON.stringify(e.nodeIds) === JSON.stringify(entry.nodeIds) &&
       e.season === entry.season &&
       e.mode === entry.mode &&
-      partyEquals(sanitizeParty(e.party), entryParty)
+      partyEquals(sanitizeParty(e.party), entryParty) &&
+      supplyEquals(sanitizeSupply(e.supply), entrySupply)
   )
   if (duplicateIndex >= 0) {
     // Move to front (most recent)
