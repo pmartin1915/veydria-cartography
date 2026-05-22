@@ -4,11 +4,11 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, DEFAULT_PARTY, isDefaultParty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig, type TravelPace, type Mount, type PartySize } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, DEFAULT_PARTY, isDefaultParty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
-import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, hasCrisis, formatCrisisRef, type CalendarEventType } from '../utils/calendar'
+import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import {
   DEFAULT_SUPPLY,
@@ -16,10 +16,10 @@ import {
   computeSupplyTimeline,
   summarizeSupplyPressure,
   type SupplyConfig,
-  type Encumbrance,
-  type PackAnimals,
-  type SupplyDay,
 } from '../utils/journey-supply'
+import PartyConfigBlock from './journey-planner/PartyConfig'
+import SupplyConfigBlock from './journey-planner/SupplyConfig'
+import JourneyDaysTab from './journey-planner/JourneyDaysTab'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -751,187 +751,19 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         </div>
 
-        {/* Party config */}
-        <div className="journey-party">
-          <button
-            className={`journey-party-toggle ${partyOpen ? 'active' : ''}`}
-            onClick={() => setPartyOpen(o => !o)}
-            title="Configure party pace, mount, size, and forced march"
-          >
-            <IconCompass />
-            <span>Party</span>
-            <span className="journey-party-summary">
-              {isDefaultParty(party)
-                ? 'default'
-                : [
-                    party.mount === 'mounted' ? 'mounted' : null,
-                    party.pace !== 'normal' ? `${party.pace}` : null,
-                    party.size !== 'medium' ? party.size : null,
-                    party.forcedMarch ? 'forced' : null,
-                  ].filter(Boolean).join(' · ')}
-            </span>
-            <span className="journey-party-caret">{partyOpen ? '▴' : '▾'}</span>
-          </button>
-          {partyOpen && (
-            <div className="journey-party-body">
-              <div className="journey-party-row">
-                <span className="journey-party-label">Pace</span>
-                <div className="journey-modes-row">
-                  {(['slow', 'normal', 'fast'] as TravelPace[]).map(p => (
-                    <button
-                      key={p}
-                      className={`journey-mode-btn ${party.pace === p ? 'active' : ''}`}
-                      onClick={() => handlePartyChange({ ...party, pace: p })}
-                      title={
-                        p === 'slow'
-                          ? 'Slow march: −25% speed, stealth-friendly'
-                          : p === 'fast'
-                          ? 'Fast march: +33% speed, perception penalty'
-                          : 'Normal march'
-                      }
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="journey-party-row">
-                <span className="journey-party-label">Mount</span>
-                <div className="journey-modes-row">
-                  {(['foot', 'mounted'] as Mount[]).map(m => (
-                    <button
-                      key={m}
-                      className={`journey-mode-btn ${party.mount === m ? 'active' : ''}`}
-                      onClick={() => handlePartyChange({ ...party, mount: m })}
-                      title={m === 'mounted' ? 'Mounted: +50% on open road, no benefit through chokepoints' : 'On foot'}
-                    >
-                      {m === 'foot' ? 'On foot' : 'Mounted'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="journey-party-row">
-                <span className="journey-party-label">Size</span>
-                <div className="journey-modes-row">
-                  {(['small', 'medium', 'large'] as PartySize[]).map(s => (
-                    <button
-                      key={s}
-                      className={`journey-mode-btn ${party.size === s ? 'active' : ''}`}
-                      onClick={() => handlePartyChange({ ...party, size: s })}
-                      title={s === 'small' ? '<5 travellers' : s === 'medium' ? '5–10 travellers' : '10+ travellers — drags through chokepoints'}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="journey-party-row">
-                <span className="journey-party-label">Forced march</span>
-                <label className="journey-party-toggle-row">
-                  <input
-                    type="checkbox"
-                    checked={party.forcedMarch}
-                    onChange={e => handlePartyChange({ ...party, forcedMarch: e.target.checked })}
-                  />
-                  <span>+25% speed, accumulates exhaustion</span>
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
+        <PartyConfigBlock
+          party={party}
+          open={partyOpen}
+          onToggleOpen={() => setPartyOpen(o => !o)}
+          onChange={handlePartyChange}
+        />
 
-        {/* Supply config */}
-        <div className="journey-supply">
-          <button
-            className={`journey-supply-toggle ${supplyOpen ? 'active' : ''}`}
-            onClick={() => setSupplyOpen(o => !o)}
-            title="Configure rations, water, encumbrance, and pack animals"
-          >
-            <IconScroll />
-            <span>Supply</span>
-            <span className="journey-supply-summary">
-              {isDefaultSupply(supply)
-                ? 'default'
-                : [
-                    `${supply.rationsPerPerson}d rations`,
-                    `${supply.waterPerPerson}d water`,
-                    supply.encumbrance !== 'normal' ? `${supply.encumbrance} load` : null,
-                    supply.packAnimals !== 'none' ? `pack: ${supply.packAnimals}` : null,
-                  ].filter(Boolean).join(' · ')}
-            </span>
-            <span className="journey-supply-caret">{supplyOpen ? '▴' : '▾'}</span>
-          </button>
-          {supplyOpen && (
-            <div className="journey-supply-body">
-              <div className="journey-supply-row">
-                <span className="journey-supply-label">Rations / person</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={99}
-                  step={1}
-                  className="journey-supply-number"
-                  value={supply.rationsPerPerson}
-                  onChange={e => {
-                    const n = parseInt(e.target.value, 10)
-                    if (!isNaN(n) && n >= 0 && n <= 99) {
-                      handleSupplyChange({ ...supply, rationsPerPerson: n })
-                    }
-                  }}
-                  title="Days of rations each traveller carries at depart"
-                />
-              </div>
-              <div className="journey-supply-row">
-                <span className="journey-supply-label">Water / person</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={99}
-                  step={1}
-                  className="journey-supply-number"
-                  value={supply.waterPerPerson}
-                  onChange={e => {
-                    const n = parseInt(e.target.value, 10)
-                    if (!isNaN(n) && n >= 0 && n <= 99) {
-                      handleSupplyChange({ ...supply, waterPerPerson: n })
-                    }
-                  }}
-                  title="Days of water each traveller carries at depart"
-                />
-              </div>
-              <div className="journey-supply-row">
-                <span className="journey-supply-label">Encumbrance</span>
-                <div className="journey-modes-row">
-                  {(['light', 'normal', 'heavy'] as Encumbrance[]).map(enc => (
-                    <button
-                      key={enc}
-                      className={`journey-mode-btn ${supply.encumbrance === enc ? 'active' : ''}`}
-                      onClick={() => handleSupplyChange({ ...supply, encumbrance: enc })}
-                      title={enc === 'light' ? '−10% burn rate' : enc === 'heavy' ? '+10% burn rate' : 'Standard load'}
-                    >
-                      {enc}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="journey-supply-row">
-                <span className="journey-supply-label">Pack animals</span>
-                <div className="journey-modes-row">
-                  {(['none', 'few', 'caravan'] as PackAnimals[]).map(pa => (
-                    <button
-                      key={pa}
-                      className={`journey-mode-btn ${supply.packAnimals === pa ? 'active' : ''}`}
-                      onClick={() => handleSupplyChange({ ...supply, packAnimals: pa })}
-                      title={pa === 'few' ? '+3 days of capacity' : pa === 'caravan' ? '+7 days of capacity' : 'No animals'}
-                    >
-                      {pa}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <SupplyConfigBlock
+          supply={supply}
+          open={supplyOpen}
+          onToggleOpen={() => setSupplyOpen(o => !o)}
+          onChange={handleSupplyChange}
+        />
 
         {/* Compare routes toggle */}
         {!shareMode && waypoints.length === 0 && (
@@ -1413,117 +1245,21 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               </>
             )}
 
-            {routeTab === 'days' && (() => {
-              const days = buildDailyBreakdown(route, season, mode, edgeBiomes, departureDayOfYear, party)
-              if (days.length === 0) {
-                return <div className="journey-encounters-empty">Trip too short to break into days. See the Route tab.</div>
-              }
-              const biomeForEdge = edgeBiomes
-                ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
-                : undefined
-              const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
-              const supplyByDay = new Map<number, SupplyDay>(supplyTimeline.map(s => [s.dayNum, s]))
-              return (
-                <div className="journey-days">
-                  <div className="journey-encounters-header">
-                    <span className="journey-encounters-count">{days.length} day{days.length !== 1 ? 's' : ''}</span>
-                    <span className="journey-encounters-seed">Deterministic by route + season</span>
-                  </div>
-                  {days.map((day) => {
-                    const primarySegmentIdx = day.edgesTraversed.length > 0
-                      ? route.edges.findIndex(e => e === day.edgesTraversed[0].edge)
-                      : 0
-                    const supplyDay = supplyByDay.get(day.dayNum)
-                    return (
-                    <div
-                      key={day.dayNum}
-                      className="journey-day"
-                      onClick={() => {
-                        if (route.edges.length > 1) {
-                          setRouteTab('encounters')
-                          setSelectedSegmentIdx(Math.max(0, primarySegmentIdx))
-                        }
-                      }}
-                      title={route.edges.length > 1 ? 'Click to view this day\'s segment in Encounters' : undefined}
-                    >
-                      <div className="journey-day-header">
-                        <span className="journey-day-num">Day {day.dayNum}</span>
-                        {day.dayOfYear !== undefined && (
-                          <span className="journey-day-doy">{formatDayOfYear(day.dayOfYear)}</span>
-                        )}
-                        <span className="journey-day-km">{Math.round(day.kmCovered)} km</span>
-                      </div>
-                      <div className="journey-day-line"><span className="journey-day-label">Start:</span> {day.startLabel}</div>
-                      <div className="journey-day-line journey-day-weather"><IconCloudRain /> {day.weather}</div>
-                      {day.calendarEvents && day.calendarEvents.length > 0 && (
-                        <div className="journey-day-calendar">
-                          {day.calendarEvents.map((ev, i) => {
-                            const crisis = hasCrisis(ev)
-                            const dimmed = highlightCrisisEvents && !crisis
-                            return (
-                              <div
-                                key={i}
-                                className={`journey-calendar-event ${dimmed ? 'dimmed' : ''} ${crisis ? 'crisis' : ''}`}
-                                style={{ borderLeftColor: CALENDAR_EVENT_COLORS[ev.type] }}
-                                title={ev.description + (ev.effect ? `\nEffect: ${ev.effect}` : '') + (ev.crises ? '\nCrisis: ' + ev.crises.map(formatCrisisRef).join(', ') : '')}
-                              >
-                                <span className="journey-calendar-event-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[ev.type] }} />
-                                <span className="journey-calendar-event-name">{ev.name}</span>
-                                {crisis && <span className="journey-calendar-event-crisis">⚡</span>}
-                                {ev.civilization !== 'all' && (
-                                  <span className="journey-calendar-event-civ">{ev.civilization}</span>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                      {day.notable.length > 0 && (
-                        <ul className="journey-day-notable">
-                          {day.notable.map((n, i) => (
-                            <li key={i}>{n}</li>
-                          ))}
-                        </ul>
-                      )}
-                      {!shareMode && day.encounters.length > 0 && (
-                        <div className="journey-day-encounters">
-                          {day.encounters.map((enc, i) => (
-                            <div key={i} className={`journey-encounter ${enc.severity}`}>
-                              <div className="journey-encounter-meta">
-                                <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
-                                <span className="journey-encounter-type">{enc.type}</span>
-                                <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
-                                {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
-                              </div>
-                              <div className="journey-encounter-beat">{enc.beat}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {supplyDay && (
-                        <div className={`journey-day-line journey-day-supply ${supplyDay.warning ?? ''}`}>
-                          <span className="journey-day-label">Supply:</span>{' '}
-                          Rations {Math.max(0, Math.floor(supplyDay.rationsLeft))}d
-                          {' · '}
-                          Water {Math.max(0, Math.floor(supplyDay.waterLeft))}d
-                          {supplyDay.warning && (
-                            <span className="journey-day-supply-warn">
-                              {' — '}
-                              {supplyDay.warning === 'water-out' ? 'water exhausted'
-                                : supplyDay.warning === 'rations-out' ? 'rations exhausted'
-                                : supplyDay.warning === 'water-low' ? 'water critical'
-                                : 'rations critical'}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div className="journey-day-line journey-day-camp"><IconPin /> {day.campLabel}</div>
-                    </div>
-                  )
-                })}
-              </div>
-              )
-            })()}
+            {routeTab === 'days' && (
+              <JourneyDaysTab
+                route={route}
+                season={season}
+                mode={mode}
+                edgeBiomes={edgeBiomes}
+                departureDayOfYear={departureDayOfYear}
+                party={party}
+                supply={supply}
+                shareMode={shareMode}
+                highlightCrisisEvents={highlightCrisisEvents}
+                onSelectSegment={(idx) => setSelectedSegmentIdx(idx)}
+                onSwitchToEncounters={() => setRouteTab('encounters')}
+              />
+            )}
 
             {!shareMode && routeTab === 'encounters' && (
               <div className="journey-encounters">
