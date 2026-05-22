@@ -20,6 +20,7 @@ const CURRENT_LAYERS: LayerVisibility = {
   faction_control: false,
   terrain_cost: false,
   biome_colors: false,
+  explored: false,
 }
 
 const CURRENT_OPACITIES: LayerOpacity = {
@@ -37,6 +38,7 @@ const CURRENT_OPACITIES: LayerOpacity = {
   faction_control: 1,
   terrain_cost: 0.75,
   biome_colors: 1,
+  explored: 1,
 }
 
 // Mirrors App.tsx onApplyPreset: { ...prev, ...preset.layers }

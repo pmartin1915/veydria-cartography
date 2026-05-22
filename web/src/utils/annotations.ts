@@ -17,6 +17,8 @@ const STORAGE_KEY = 'veydria-annotations-v2'
 // for "I dropped a pin on the port".
 export const FEATURE_LINK_MAX_DISTANCE = 40
 
+export type AnnotationKind = 'pin' | 'hex-note' | 'explored'
+
 export interface MapAnnotation {
   id: string
   x: number // SVG coordinate
@@ -28,7 +30,12 @@ export interface MapAnnotation {
   featureId?: string
   featureName?: string
   hexLabel?: string
+  // Optional. Absent = legacy 'pin'. Explored annotations are hex-keyed
+  // bookkeeping for fog-of-war and skipped by markdown exports.
+  kind?: AnnotationKind
 }
+
+const VALID_KINDS: ReadonlySet<string> = new Set(['pin', 'hex-note', 'explored'])
 
 interface FeatureLike {
   type: 'Feature'
@@ -108,6 +115,7 @@ function isValidAnnotation(a: unknown): a is MapAnnotation {
   if (o.featureId !== undefined && typeof o.featureId !== 'string') return false
   if (o.featureName !== undefined && typeof o.featureName !== 'string') return false
   if (o.hexLabel !== undefined && typeof o.hexLabel !== 'string') return false
+  if (o.kind !== undefined && (typeof o.kind !== 'string' || !VALID_KINDS.has(o.kind))) return false
   return true
 }
 
@@ -156,6 +164,59 @@ export function getAnnotationsForHex(
   hexLabel: string
 ): MapAnnotation[] {
   return annotations.filter((a) => a.hexLabel === hexLabel)
+}
+
+/** True for annotations created by the fog-of-war "explored" mechanism. */
+export function isExplored(a: MapAnnotation): boolean {
+  return a.kind === 'explored'
+}
+
+/**
+ * Create a fog-of-war "explored" annotation. Hex-keyed, no user content;
+ * coordinates are zero because the consumer keys off (hexLabel, kind).
+ */
+export function createExploredAnnotation(hexLabel: string): MapAnnotation {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    x: 0,
+    y: 0,
+    label: 'Explored',
+    body: '',
+    color: DEFAULT_ANNOTATION_COLOR,
+    createdAt: Date.now(),
+    hexLabel,
+    kind: 'explored',
+  }
+}
+
+/** Set of hex labels marked explored. */
+export function getExploredHexLabels(annotations: MapAnnotation[]): Set<string> {
+  const out = new Set<string>()
+  for (const a of annotations) {
+    if (a.kind === 'explored' && typeof a.hexLabel === 'string' && a.hexLabel.length > 0) {
+      out.add(a.hexLabel)
+    }
+  }
+  return out
+}
+
+/**
+ * Append one `explored` annotation per hex label not already marked.
+ * Returns a new array; caller persists via saveAnnotations.
+ */
+export function markRouteExplored(
+  annotations: MapAnnotation[],
+  hexLabels: string[]
+): MapAnnotation[] {
+  const already = getExploredHexLabels(annotations)
+  const additions: MapAnnotation[] = []
+  const seen = new Set<string>()
+  for (const label of hexLabels) {
+    if (!label || already.has(label) || seen.has(label)) continue
+    seen.add(label)
+    additions.push(createExploredAnnotation(label))
+  }
+  return additions.length === 0 ? annotations : [...annotations, ...additions]
 }
 
 export function updateAnnotation(
@@ -307,11 +368,12 @@ export function annotationsNearRoute(
 
 /** Export all annotations as standalone campaign notes markdown. */
 export function exportAnnotationsMarkdown(annotations: MapAnnotation[]): string {
-  if (annotations.length === 0) {
+  const visible = annotations.filter((a) => !isExplored(a))
+  if (visible.length === 0) {
     return '## Campaign Notes — Veydria\n\n_No pins yet._\n'
   }
   let md = '## Campaign Notes — Veydria\n\n'
-  for (const a of annotations) {
+  for (const a of visible) {
     md += `### Pin: ${a.label}\n`
     md += `*SVG: (${Math.round(a.x)}, ${Math.round(a.y)})*\n`
     if (a.featureName) {
@@ -334,7 +396,7 @@ export function exportRouteGmNotes(
   annotations: MapAnnotation[],
   routeNodes: { x: number; y: number }[]
 ): string {
-  const nearby = annotationsNearRoute(annotations, routeNodes, 40)
+  const nearby = annotationsNearRoute(annotations, routeNodes, 40).filter((a) => !isExplored(a))
   if (nearby.length === 0) return ''
   let md = '\n### GM Notes\n\n'
   for (const a of nearby) {

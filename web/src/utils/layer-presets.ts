@@ -31,6 +31,7 @@ const ALL_OFF: LayerVisibility = {
   faction_control: false,
   terrain_cost: false,
   biome_colors: false,
+  explored: false,
 }
 
 const FULL_OPACITY: LayerOpacity = {
@@ -48,6 +49,7 @@ const FULL_OPACITY: LayerOpacity = {
   faction_control: 1,
   terrain_cost: 0.75,
   biome_colors: 1,
+  explored: 1,
 }
 
 export const BUILT_IN_PRESETS: LayerPreset[] = [
@@ -70,6 +72,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       faction_control: false,
       terrain_cost: false,
       biome_colors: false,
+      explored: false,
     },
     opacities: { ...FULL_OPACITY },
   },
@@ -167,6 +170,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       faction_control: false,
       terrain_cost: false,
       biome_colors: false,
+      explored: false,
     },
     opacities: { ...FULL_OPACITY },
   },

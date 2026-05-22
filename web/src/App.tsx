@@ -17,7 +17,7 @@ import { formatDistance, type MeasureStats } from './utils/measure'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
-import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation } from './utils/annotations'
+import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation, markRouteExplored, saveAnnotations } from './utils/annotations'
 import { downloadCampaignLog } from './utils/campaign-log'
 import { getAllFeatureNotes } from './utils/feature-notes'
 import { getStarredIds, toggleStarred } from './utils/feature-stars'
@@ -86,6 +86,7 @@ export interface LayerVisibility {
   faction_control: boolean
   terrain_cost: boolean
   biome_colors: boolean
+  explored: boolean
 }
 
 export interface LayerOpacity {
@@ -103,6 +104,7 @@ export interface LayerOpacity {
   faction_control: number
   terrain_cost: number
   biome_colors: number
+  explored: number
 }
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -120,6 +122,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   faction_control: false,
   terrain_cost: false,
   biome_colors: false,
+  explored: false,
 }
 
 const DEFAULT_OPACITY: LayerOpacity = {
@@ -137,6 +140,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   faction_control: 1,
   terrain_cost: 0.75,
   biome_colors: 1,
+  explored: 1,
 }
 
 function App() {
@@ -147,7 +151,13 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS)
+  const [layers, setLayers] = useState<LayerVisibility>(() => {
+    // Share-mode &fog=1 surfaces the dim treatment on initial load so the
+    // recipient sees what the GM intended. They can still toggle it off.
+    const h = initialHashRef.current
+    if (h.fog) return { ...DEFAULT_LAYERS, explored: true }
+    return DEFAULT_LAYERS
+  })
   const [opacities, setOpacities] = useState<LayerOpacity>(DEFAULT_OPACITY)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchExiting, setSearchExiting] = useState(false)
@@ -794,6 +804,14 @@ function App() {
     setAnnotations(prev => deleteAnnotation(prev, id))
   }, [])
 
+  const handleMarkRouteExplored = useCallback((hexLabels: string[]) => {
+    setAnnotations(prev => {
+      const next = markRouteExplored(prev, hexLabels)
+      if (next !== prev) saveAnnotations(next)
+      return next
+    })
+  }, [])
+
   const handleExportAnnotations = useCallback(async () => {
     const md = exportAnnotationsMarkdown(annotations)
     try {
@@ -897,7 +915,11 @@ function App() {
   // the URL has share=1 set, which strips annotations/encounters/edit
   // controls when opened.
   const handleShare = useCallback(async (playerView = false) => {
-    const url = buildShareUrl({ ...viewportRef.current, share: playerView || undefined })
+    const url = buildShareUrl({
+      ...viewportRef.current,
+      share: playerView || undefined,
+      fog: layers.explored || undefined,
+    })
     try {
       await navigator.clipboard.writeText(url)
       showShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
@@ -911,7 +933,7 @@ function App() {
       document.body.removeChild(input)
       showShareToast(playerView ? 'Player-view link copied' : 'Link copied to clipboard')
     }
-  }, [])
+  }, [layers.explored])
 
   // Snapshot button: capture the visible map as a PNG. Tries clipboard
   // first (one-click for Discord paste); falls back to a download.
@@ -1607,6 +1629,7 @@ function App() {
                 packAnimals: h.supplyPack ?? 'none',
               }
             })()}
+            onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
           />
         )}
 

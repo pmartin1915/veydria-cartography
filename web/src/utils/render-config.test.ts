@@ -19,6 +19,7 @@ describe('buildRenderConfig', () => {
       faction_control: true,
       terrain_cost: true,
       biome_colors: true,
+      explored: false,
     }
     const config = buildRenderConfig(layers)
     expect(config.version).toBe(1)

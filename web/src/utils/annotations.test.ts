@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   createAnnotation,
   createHexAnnotation,
+  createExploredAnnotation,
   getAnnotationsForHex,
+  getExploredHexLabels,
+  markRouteExplored,
+  exportAnnotationsMarkdown,
   findNearestFeature,
   loadAnnotations,
   saveAnnotations,
@@ -236,5 +240,88 @@ describe('storage migration v1 → v2', () => {
     expect(loaded).toHaveLength(1)
     expect(loaded[0].featureId).toBe('port-a')
     expect(loaded[0].featureName).toBe('Port A')
+  })
+})
+
+describe('explored annotations (fog of war)', () => {
+  it('createExploredAnnotation produces a well-formed hex-keyed annotation', () => {
+    const ann = createExploredAnnotation('G7')
+    expect(ann.hexLabel).toBe('G7')
+    expect(ann.kind).toBe('explored')
+    expect(ann.label).toBe('Explored')
+    expect(typeof ann.id).toBe('string')
+    expect(ann.id.length).toBeGreaterThan(0)
+  })
+
+  it('round-trips kind through save/load', () => {
+    const ann = createExploredAnnotation('H8')
+    saveAnnotations([ann])
+    const loaded = loadAnnotations()
+    expect(loaded).toHaveLength(1)
+    expect(loaded[0].kind).toBe('explored')
+    expect(loaded[0].hexLabel).toBe('H8')
+  })
+
+  it('legacy annotations without kind survive the validator', () => {
+    const legacy: MapAnnotation = {
+      id: 'legacy', x: 1, y: 2, label: 'old', body: '', color: '#c4a86b', createdAt: 1,
+    }
+    saveAnnotations([legacy])
+    const loaded = loadAnnotations()
+    expect(loaded).toHaveLength(1)
+    expect(loaded[0].kind).toBeUndefined()
+  })
+
+  it('rejects unknown kind values', () => {
+    const bad = { id: 'x', x: 0, y: 0, label: '', body: '', color: '#c4a86b', createdAt: 1, kind: 'bogus' }
+    localStorage.setItem('veydria-annotations-v2', JSON.stringify([bad]))
+    expect(loadAnnotations()).toEqual([])
+  })
+
+  it('getExploredHexLabels returns only explored hex labels', () => {
+    const annotations: MapAnnotation[] = [
+      { id: '1', x: 0, y: 0, label: 'p', body: '', color: '#c4a86b', createdAt: 1, hexLabel: 'A1', kind: 'pin' },
+      { id: '2', x: 0, y: 0, label: 'n', body: '', color: '#c4a86b', createdAt: 2, hexLabel: 'B2', kind: 'hex-note' },
+      { id: '3', x: 0, y: 0, label: 'e', body: '', color: '#c4a86b', createdAt: 3, hexLabel: 'C3', kind: 'explored' },
+      { id: '4', x: 0, y: 0, label: 'e', body: '', color: '#c4a86b', createdAt: 4, hexLabel: 'D4', kind: 'explored' },
+    ]
+    const got = getExploredHexLabels(annotations)
+    expect(got.size).toBe(2)
+    expect(got.has('C3')).toBe(true)
+    expect(got.has('D4')).toBe(true)
+    expect(got.has('A1')).toBe(false)
+  })
+
+  it('markRouteExplored adds new explored entries and dedupes against existing', () => {
+    const initial: MapAnnotation[] = [
+      { id: '1', x: 0, y: 0, label: 'e', body: '', color: '#c4a86b', createdAt: 1, hexLabel: 'A1', kind: 'explored' },
+    ]
+    const next = markRouteExplored(initial, ['A1', 'B2', 'B2', 'C3'])
+    const explored = getExploredHexLabels(next)
+    expect(explored.size).toBe(3)
+    expect(explored.has('A1')).toBe(true)
+    expect(explored.has('B2')).toBe(true)
+    expect(explored.has('C3')).toBe(true)
+    // No duplicate B2 annotation
+    expect(next.filter((a) => a.hexLabel === 'B2')).toHaveLength(1)
+  })
+
+  it('markRouteExplored returns identity when no new hexes', () => {
+    const initial: MapAnnotation[] = [
+      { id: '1', x: 0, y: 0, label: 'e', body: '', color: '#c4a86b', createdAt: 1, hexLabel: 'A1', kind: 'explored' },
+    ]
+    const next = markRouteExplored(initial, ['A1'])
+    expect(next).toBe(initial)
+  })
+
+  it('exportAnnotationsMarkdown skips explored entries', () => {
+    const annotations: MapAnnotation[] = [
+      { id: '1', x: 10, y: 20, label: 'Real pin', body: 'note', color: '#c4a86b', createdAt: 1 },
+      { id: '2', x: 0, y: 0, label: 'Explored', body: '', color: '#c4a86b', createdAt: 2, hexLabel: 'G7', kind: 'explored' },
+    ]
+    const md = exportAnnotationsMarkdown(annotations)
+    expect(md).toContain('Real pin')
+    expect(md).not.toContain('Explored')
+    expect(md).not.toContain('G7')
   })
 })

@@ -20,7 +20,7 @@ import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute, ComparisonRoutes } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
-import { createAnnotation, ANNOTATION_COLORS, findNearestFeature } from '../utils/annotations'
+import { createAnnotation, ANNOTATION_COLORS, findNearestFeature, createExploredAnnotation, getExploredHexLabels, isExplored } from '../utils/annotations'
 import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
 
 interface GeoJSONCollection {
@@ -44,6 +44,7 @@ interface LayerVisibility {
   faction_control: boolean
   terrain_cost: boolean
   biome_colors: boolean
+  explored: boolean
 }
 
 export interface MapViewerProps {
@@ -255,6 +256,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const onAnnotationAddRef = useRef(onAnnotationAdd)
     const onAnnotationUpdateRef = useRef(onAnnotationUpdate)
     const onAnnotationDeleteRef = useRef(onAnnotationDelete)
+    const annotationsRef = useRef(annotations)
     const openPopupIdRef = useRef<string | null>(null)
     const annotationMarkersRef = useRef<Map<string, L.Marker>>(new Map())
     const canvasRendererRef = useRef<L.Canvas | null>(null)
@@ -272,6 +274,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     useEffect(() => { onAnnotationAddRef.current = onAnnotationAdd }, [onAnnotationAdd])
     useEffect(() => { onAnnotationUpdateRef.current = onAnnotationUpdate }, [onAnnotationUpdate])
     useEffect(() => { onAnnotationDeleteRef.current = onAnnotationDelete }, [onAnnotationDelete])
+    useEffect(() => { annotationsRef.current = annotations }, [annotations])
 
     const [zoomLevel, setZoomLevel] = useState<number>(-1)
     const [measurePoints, setMeasurePoints] = useState<Array<{x: number, y: number}>>([])
@@ -753,9 +756,31 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       layerGroupsRef.current.set('trade_route', tradeRouteMock)
 
       // Hex grid overlay — ALL features sampled, not a category subset.
-      const hexOverlay = initHexOverlay(map, geojson.features, hexSize, layers.biome_colors)
+      // onHexRightClick toggles fog-of-war "explored" annotations for the
+      // hex under the cursor. Reads current annotations through the ref so
+      // the closure doesn't go stale.
+      const handleHexRightClick = (label: string) => {
+        const current = annotationsRef.current ?? []
+        const existing = current.find((a) => isExplored(a) && a.hexLabel === label)
+        if (existing) {
+          onAnnotationDeleteRef.current?.(existing.id)
+        } else {
+          onAnnotationAddRef.current?.(createExploredAnnotation(label))
+        }
+      }
+      const hexOverlay = initHexOverlay(
+        map,
+        geojson.features,
+        hexSize,
+        layers.biome_colors,
+        handleHexRightClick,
+      )
       hexOverlay.setOpacity(opacities?.hex_grid ?? 0.7)
       hexOverlayRef.current = hexOverlay
+      // Apply initial fog state synchronously on init so a page-load with
+      // layers.explored=true (e.g. share-mode &fog=1) doesn't flash undimmed.
+      hexOverlay.setFogEnabled(layers.explored)
+      hexOverlay.setExploredHexes(layers.explored ? getExploredHexLabels(annotations ?? []) : null)
       const hexGridMock: OverlayMock = {
         addTo: () => hexOverlay.setVisibility(true),
         removeFrom: () => hexOverlay.setVisibility(false),
@@ -914,6 +939,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (!hexOverlayRef.current) return
       hexOverlayRef.current.setBiomeColorsEnabled(layers.biome_colors)
     }, [layers.biome_colors])
+
+    // Fog of war: dim unexplored hexes when the layer is on. The explored
+    // set is derived from explored-kind annotations, so any add/delete
+    // (right-click here, "Mark route explored" in the planner) re-renders.
+    useEffect(() => {
+      if (!hexOverlayRef.current) return
+      hexOverlayRef.current.setFogEnabled(layers.explored)
+      hexOverlayRef.current.setExploredHexes(
+        layers.explored ? getExploredHexLabels(annotations ?? []) : null,
+      )
+    }, [layers.explored, annotations])
 
     // Combined hex-overlay visibility. The overlay carries TWO independent
     // sub-layers: (a) parchment base + biome polygon fills, (b) hex grid

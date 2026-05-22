@@ -66,6 +66,12 @@ const LAYER_GROUPS: LayerGroup[] = [
       { key: 'trade_route', label: 'Trade Routes', color: '#d4a854', icon: <IconRoute />, opacityControl: true },
     ],
   },
+  {
+    title: 'Campaign',
+    layers: [
+      { key: 'explored', label: 'Explored hexes', color: '#c4a86b', icon: <IconFootsteps /> },
+    ],
+  },
 ]
 
 function ToggleSwitch({ active, color }: { active: boolean; color: string }) {

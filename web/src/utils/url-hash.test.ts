@@ -168,4 +168,24 @@ describe('url-hash', () => {
       expect(parsed.centerY).toBe(800)
     })
   })
+
+  describe('fog of war', () => {
+    it('round-trips fog=1', () => {
+      const hash = buildHash({ share: true, fog: true })
+      expect(hash).toContain('fog=1')
+      const parsed = parseHash(hash)
+      expect(parsed.fog).toBe(true)
+    })
+
+    it('omits fog when false or undefined', () => {
+      expect(buildHash({ share: true })).not.toContain('fog')
+      expect(buildHash({ fog: false })).not.toContain('fog')
+    })
+
+    it('parseHash without fog leaves it undefined', () => {
+      const parsed = parseHash('#share=1')
+      expect(parsed.share).toBe(true)
+      expect(parsed.fog).toBeUndefined()
+    })
+  })
 })

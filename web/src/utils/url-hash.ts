@@ -30,6 +30,8 @@ export interface ViewportState {
   supplyWater?: number
   supplyEnc?: 'light' | 'normal' | 'heavy'
   supplyPack?: 'none' | 'few' | 'caravan'
+  /** Fog-of-war: when paired with share=1, recipient sees the dim treatment on initial load. */
+  fog?: boolean
 }
 
 const PARTY_PACE_VALUES = ['slow', 'normal', 'fast'] as const
@@ -90,6 +92,7 @@ export function parseHash(hash: string): ViewportState {
   }
 
   if (params.get('share') === '1') result.share = true
+  if (params.get('fog') === '1') result.fog = true
 
   const partyPace = params.get('partyPace')
   if (partyPace && (PARTY_PACE_VALUES as readonly string[]).includes(partyPace)) {
@@ -140,6 +143,7 @@ export function buildHash(state: ViewportState): string {
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))
   if (state.share) params.set('share', '1')
+  if (state.fog) params.set('fog', '1')
 
   // Party config — omit defaults to keep URLs short
   if (state.partyPace && state.partyPace !== 'normal') params.set('partyPace', state.partyPace)

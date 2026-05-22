@@ -51,6 +51,15 @@ const LABEL_MIN_ZOOM = 0
 const PARCHMENT_CREAM = '#e4cca0'
 const PARCHMENT_FILL_OPACITY = '0.55'
 const BIOME_FILL_OPACITY = '0.3'
+// Fog of war: when enabled, unexplored hexes dim by overriding fill-opacity.
+// 0.18 chosen as the starting point for the audit pass; the handoff calls out
+// a 0.25-0.3 sweet spot but the dim treatment stacks with the underlying
+// schematic alpha so a lower value reads correctly without losing the cell.
+const PARCHMENT_UNEXPLORED_OPACITY = '0.18'
+// Unexplored edge strokes also fade; the boundary/seam contrast we tuned for
+// parchment over-explored hexes would otherwise re-introduce a mesh look.
+const FOG_EDGE_STROKE = 'rgba(120, 80, 40, 0.18)'
+const FOG_EDGE_WIDTH = 0.4
 
 export interface HexOverlay {
   update: () => void
@@ -68,6 +77,10 @@ export interface HexOverlay {
   setMeasurePath: (labels: string[] | null) => void
   setJourneyRoute: (labels: string[] | null) => void
   setBiomeColorsEnabled: (enabled: boolean) => void
+  /** Toggle fog-of-war dimming. The explored set is preserved across toggles. */
+  setFogEnabled: (enabled: boolean) => void
+  /** Replace the explored-hex set. Pass null to clear. */
+  setExploredHexes: (labels: Set<string> | null) => void
   getHexAtSvg: (svgX: number, svgY: number) => { hex: HexCell; descriptors: string[] } | null
   getHexByLabel: (label: string) => { hex: HexCell; descriptors: string[] } | null
 }
@@ -77,6 +90,7 @@ export function initHexOverlay(
   features: GeoJSONFeature[],
   initialHexSize: number = DEFAULT_HEX_SIZE,
   biomeColorsEnabled: boolean = false,
+  onHexRightClick?: (label: string, event: MouseEvent) => void,
 ): HexOverlay {
   L.svg().addTo(map)
 
@@ -114,6 +128,10 @@ export function initHexOverlay(
   const measureEndpoints = new Set<string>()
   // Journey-route state — hex cells the computed route passes through.
   const journeyRouteSet = new Set<string>()
+  // Fog of war: the explored set and a separate enable flag, because the
+  // set can be populated even while fog is off (toggle should not clear data).
+  let fogEnabled = false
+  let exploredHexes: Set<string> | null = null
 
   function svgY(y: number): number {
     // Leaflet CRS.Simple flips Y. hex-grid produces SVG-space coords
@@ -158,7 +176,7 @@ export function initHexOverlay(
     // schematic. When biome colors are ON, the cell takes its biome hex
     // at 0.3 opacity (enough to read distinctly, low enough to not muddy
     // the schematic continent shapes underneath).
-    cellSel
+    const polygons = cellSel
       .append('polygon')
       .attr('points', (d) => d.corners.map(([x, y]) => `${x},${svgY(y)}`).join(' '))
       .attr('fill', (d) => {
@@ -171,6 +189,14 @@ export function initHexOverlay(
       })
       .attr('stroke', 'none')
       .attr('data-label', (d) => d.label)
+
+    if (onHexRightClick) {
+      polygons.on('contextmenu', function (event: MouseEvent, d) {
+        event.preventDefault()
+        event.stopPropagation()
+        onHexRightClick(d.label, event)
+      })
+    }
 
     // Per-edge <line> elements per hex. Boundary edges (neighbor biome differs)
     // get a heavier double-stroke; same-biome / off-grid seams stay thin. Each
@@ -242,8 +268,21 @@ export function initHexOverlay(
     applySelectionStyle()
   }
 
+  function isFogDimmed(label: string): boolean {
+    // Highlight states always win over fog (a measure endpoint or selected
+    // hex stays bright even if unexplored). Only un-highlighted, unexplored
+    // cells receive the dim treatment.
+    if (!fogEnabled || exploredHexes === null) return false
+    if (exploredHexes.has(label)) return false
+    if (measureEndpoints.has(label)) return false
+    if (label === selectedLabel) return false
+    if (measurePathSet.has(label)) return false
+    if (journeyRouteSet.has(label)) return false
+    return true
+  }
+
   function applySelectionStyle() {
-    // Priority: measure endpoint > selectedLabel > measure mid-path > journey route > default.
+    // Priority: measure endpoint > selectedLabel > measure mid-path > journey route > fog-dim > default.
     // Polygons carry FILL + FILL-OPACITY (re-applied on every state change so
     // toggling biome colors off fully reverts to parchment cream rather than
     // leaving the prior biome alpha in place). Edges (below) carry stroke.
@@ -270,6 +309,7 @@ export function initHexOverlay(
         if (label === selectedLabel) return '1'
         if (measurePathSet.has(label)) return '1'
         if (journeyRouteSet.has(label)) return '1'
+        if (isFogDimmed(label)) return PARCHMENT_UNEXPLORED_OPACITY
         const c = biomeColorsActive ? (biomeColorByLabel.get(label) || null) : null
         return c ? BIOME_FILL_OPACITY : PARCHMENT_FILL_OPACITY
       })
@@ -284,6 +324,7 @@ export function initHexOverlay(
         if (label === selectedLabel) return 'rgba(255, 232, 168, 1)'
         if (measurePathSet.has(label)) return 'rgba(160, 212, 232, 0.9)'
         if (journeyRouteSet.has(label)) return 'rgba(232, 184, 96, 0.9)'
+        if (isFogDimmed(label)) return FOG_EDGE_STROKE
         return this.getAttribute('data-base-stroke') ?? 'rgba(212, 168, 84, 0.55)'
       })
       .attr('stroke-width', function () {
@@ -292,6 +333,7 @@ export function initHexOverlay(
         if (label === selectedLabel) return 2.8
         if (measurePathSet.has(label)) return 1.6
         if (journeyRouteSet.has(label)) return 1.4
+        if (isFogDimmed(label)) return FOG_EDGE_WIDTH
         const base = this.getAttribute('data-base-width')
         return base != null ? Number(base) : 0.5
       })
@@ -302,7 +344,11 @@ export function initHexOverlay(
     // gets a warm amber tint.
     const labels = hexGroup.selectAll<SVGTextElement, HexCell>('text.hex-label')
     labels
-      .attr('fill', 'rgba(78, 52, 28, 0.78)')
+      .attr('fill', function () {
+        const label = this.getAttribute('data-label') ?? ''
+        if (isFogDimmed(label)) return 'rgba(78, 52, 28, 0.22)'
+        return 'rgba(78, 52, 28, 0.78)'
+      })
       .attr('font-weight', null)
     if (measurePathSet.size > 0) {
       labels
@@ -412,6 +458,14 @@ export function initHexOverlay(
     },
     setBiomeColorsEnabled: (enabled: boolean) => {
       biomeColorsActive = enabled
+      applySelectionStyle()
+    },
+    setFogEnabled: (enabled: boolean) => {
+      fogEnabled = enabled
+      applySelectionStyle()
+    },
+    setExploredHexes: (labels: Set<string> | null) => {
+      exploredHexes = labels
       applySelectionStyle()
     },
     getHexAtSvg: (svgX, svgYIn) => {
