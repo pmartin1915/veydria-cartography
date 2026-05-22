@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "sync:data": "node ../scripts/sync-world-data.mjs",
     "generate:calendar": "python ../generator/export/calendar_ts.py",
+    "sim:journey": "vite-node ../scripts/sim/sim-journey.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
