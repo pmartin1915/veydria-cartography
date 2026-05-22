@@ -151,6 +151,18 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  // Viewport-aware deep-linking. Before capturing the initial hash, consume
+  // any `?focus=<kind>:<slug>` query param from worldbuilder's map-viewer
+  // outbound link: it gets spliced into the hash as `#feature=<id>` so the
+  // existing fly-to + select flow handles it without further branching.
+  // Declared before any useState lazy initializer that needs `initialHashRef`
+  // (e.g. the `layers` initializer below reads `h.fog` for share-mode).
+  // See utils/focus-param.ts and worldbuilder/tools/map-viewer/src/utils/cartography-link.js.
+  const initialHashRef = useRef((() => {
+    consumeFocusParam()
+    return parseHash(window.location.hash)
+  })())
+  const viewportRef = useRef(initialHashRef.current)
   const [layers, setLayers] = useState<LayerVisibility>(() => {
     // Share-mode &fog=1 surfaces the dim treatment on initial load so the
     // recipient sees what the GM intended. They can still toggle it off.
@@ -186,16 +198,6 @@ function App() {
   const [coordinateUpdates, setCoordinateUpdates] = useState<Record<string, {name: string, category: string, coords: [number, number]}>>({})
   const mapRef = useRef<MapViewerHandle | null>(null)
 
-  // Viewport-aware deep-linking. Before capturing the initial hash, consume
-  // any `?focus=<kind>:<slug>` query param from worldbuilder's map-viewer
-  // outbound link: it gets spliced into the hash as `#feature=<id>` so the
-  // existing fly-to + select flow handles it without further branching.
-  // See utils/focus-param.ts and worldbuilder/tools/map-viewer/src/utils/cartography-link.js.
-  const initialHashRef = useRef((() => {
-    consumeFocusParam()
-    return parseHash(window.location.hash)
-  })())
-  const viewportRef = useRef(initialHashRef.current)
   const hashUpdateTimeoutRef = useRef<number | null>(null)
   const panelCloseTimeoutRef = useRef<number | null>(null)
   const flyToTimeoutRef = useRef<number | null>(null)
