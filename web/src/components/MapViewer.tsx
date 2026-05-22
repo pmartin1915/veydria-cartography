@@ -954,17 +954,21 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     // Combined hex-overlay visibility. The overlay carries TWO independent
     // sub-layers: (a) parchment base + biome polygon fills, (b) hex grid
     // mesh (edge lines + cell labels). The user-facing toggles map to:
-    //   hex_grid   → grid mesh visible (a + b)
+    //   hex_grid     → grid mesh visible (a + b)
     //   biome_colors → parchment + biome fills visible (a only)
-    // Enabling either toggle shows the parchment base; lines/labels only
+    //   explored     → fog dim requires the parchment polygons to render so
+    //                  the cream→0.28 contrast is actually visible; without
+    //                  this the toggle silently no-ops in the default state
+    //                  (both hex_grid and biome_colors default to false).
+    // Enabling any of these shows the parchment base; lines/labels only
     // appear when hex_grid itself is on. Runs AFTER the dispatcher effect
     // above so it has final say over hexGroup display.
     useEffect(() => {
       if (!hexOverlayRef.current) return
-      const groupVisible = layers.hex_grid || layers.biome_colors
+      const groupVisible = layers.hex_grid || layers.biome_colors || layers.explored
       hexOverlayRef.current.setVisibility(groupVisible)
       hexOverlayRef.current.setShowGridLines(layers.hex_grid)
-    }, [layers.hex_grid, layers.biome_colors])
+    }, [layers.hex_grid, layers.biome_colors, layers.explored])
 
     // Update layer opacity when opacities change
     useEffect(() => {
