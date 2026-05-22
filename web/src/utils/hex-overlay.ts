@@ -55,7 +55,7 @@ const BIOME_FILL_OPACITY = '0.3'
 // 0.18 chosen as the starting point for the audit pass; the handoff calls out
 // a 0.25-0.3 sweet spot but the dim treatment stacks with the underlying
 // schematic alpha so a lower value reads correctly without losing the cell.
-const PARCHMENT_UNEXPLORED_OPACITY = '0.18'
+const PARCHMENT_UNEXPLORED_OPACITY = '0.28'
 // Unexplored edge strokes also fade; the boundary/seam contrast we tuned for
 // parchment over-explored hexes would otherwise re-introduce a mesh look.
 const FOG_EDGE_STROKE = 'rgba(120, 80, 40, 0.18)'
