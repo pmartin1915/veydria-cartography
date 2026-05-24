@@ -20,6 +20,7 @@ output/*.png
 output/*.jpg
 output/*.tif
 output/tiles/
+output/sim/
 
 # IDE
 .vscode/
