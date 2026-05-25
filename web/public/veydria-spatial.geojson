@@ -153905,6 +153905,99 @@
         "stroke-opacity": 0.6,
         "stroke-dasharray": ""
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          360,
+          390
+        ]
+      },
+      "properties": {
+        "id": "tavakh_mehar",
+        "name": "Tavakh-Mehar",
+        "category": "port",
+        "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + mehar 'midway'. The Midway Exchange",
+        "real_world_parallel": "Mediterranean entrepôt analog",
+        "location": "Mid-route sandbar between Basin north shore and Oravan archipelago",
+        "function": "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          630,
+          425
+        ]
+      },
+      "properties": {
+        "id": "kelata_vau",
+        "name": "Kelata-Vau",
+        "category": "oasis",
+        "description": "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          540,
+          580
+        ]
+      },
+      "properties": {
+        "id": "veyd_sahar",
+        "name": "Veyd Sahar",
+        "category": "oasis",
+        "description": "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          980,
+          260
+        ]
+      },
+      "properties": {
+        "id": "dzong_kha",
+        "name": "Dzong-Kha",
+        "category": "oasis",
+        "description": "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          500,
+          490
+        ]
+      },
+      "properties": {
+        "id": "kha_sahar",
+        "name": "Kha-Sahar",
+        "category": "oasis",
+        "description": "Mixed-clan waystation on the Breath-of-Cloud descent. Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari oath.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
     }
   ]
 }
