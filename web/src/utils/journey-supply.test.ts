@@ -167,3 +167,99 @@ describe('journey-supply: encumbrance × pack-animals stacking', () => {
     expect(timeline[0].waterBurnedToday).toBeCloseTo(0.9, 5)
   })
 })
+
+describe('journey-supply: resupplyAtDay', () => {
+  it("'full' tier restores both rations and water to start+packBonus", () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    const days = buildDailyBreakdown(route)
+    const timeline = computeSupplyTimeline(
+      days,
+      DEFAULT_PARTY,
+      DEFAULT_SUPPLY,
+      undefined,
+      undefined,
+      (d) => (d === 3 ? 'full' : 'none'),
+    )
+
+    // Pre-restore on day 3: rations = 7 - 3 = 4, water = 3 - 3 = 0
+    // Post-restore: both back to DEFAULT_SUPPLY (rations 7, water 3, no packBonus)
+    expect(timeline[2].rationsLeft).toBeCloseTo(7, 5)
+    expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
+    // And no water-out warning, since restore happens before warning check
+    expect(timeline[2].warning).toBeUndefined()
+    // Day 4 continues normal burn from the restored state
+    expect(timeline[3].rationsLeft).toBeCloseTo(6, 5)
+    expect(timeline[3].waterLeft).toBeCloseTo(2, 5)
+  })
+
+  it("'water' tier restores water only; rations continue to deplete", () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    const days = buildDailyBreakdown(route)
+    const timeline = computeSupplyTimeline(
+      days,
+      DEFAULT_PARTY,
+      DEFAULT_SUPPLY,
+      undefined,
+      undefined,
+      (d) => (d === 3 ? 'water' : 'none'),
+    )
+
+    // Day 3: rations 7 - 3 = 4 (unchanged by restore), water back to 3
+    expect(timeline[2].rationsLeft).toBeCloseTo(4, 5)
+    expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
+    // Day 5: rations 4 - 2 = 2, water 3 - 2 = 1 (low warning on water, not rations:
+    // rations-low fires at <=2 but water-low has higher priority at <=2)
+    expect(timeline[4].rationsLeft).toBeCloseTo(2, 5)
+    expect(timeline[4].waterLeft).toBeCloseTo(1, 5)
+  })
+
+  it("'none' (and predicate absent) leaves baseline behavior unchanged", () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    const days = buildDailyBreakdown(route)
+    const baseline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY)
+    const withNone = computeSupplyTimeline(
+      days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, () => 'none',
+    )
+    expect(withNone).toEqual(baseline)
+  })
+})
+
+describe('journey-supply: semi-arid biome', () => {
+  it('water burn x1.25 on days that traverse a Savanna edge', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 60 })
+    const days = buildDailyBreakdown(route)
+    const savannaEdge = route.edges[1]
+    const biomeForEdge = (e: JourneyEdge): string | undefined =>
+      e === savannaEdge ? 'Savanna' : undefined
+
+    const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, biomeForEdge)
+
+    expect(timeline[0].waterBurnedToday).toBeCloseTo(1.0, 5)
+    expect(timeline[1].waterBurnedToday).toBeCloseTo(1.25, 5)
+  })
+
+  it('arid takes priority when both arid and semi-arid edges in same day', () => {
+    // Single-day route that spans both biome edges via fractional segmentDays.
+    const route = makeRoute({ edgeDays: [0.5, 0.5], totalKm: 40 })
+    const days = buildDailyBreakdown(route)
+    // The single day should touch both edges. Confirm setup.
+    expect(days.length).toBe(1)
+    const biomeForEdge = (e: JourneyEdge): string | undefined => {
+      if (e === route.edges[0]) return 'Scrubland'
+      if (e === route.edges[1]) return 'Desert'
+      return undefined
+    }
+    const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, biomeForEdge)
+    expect(timeline[0].waterBurnedToday).toBeCloseTo(1.5, 5)
+  })
+})
+
+describe('journey-supply: summer season', () => {
+  it('rations burn x0.95 in summer (tropical biology easing)', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1], totalKm: 80 })
+    const days = buildDailyBreakdown(route, 'summer', 'direct')
+    const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, 'summer')
+
+    expect(timeline[0].rationsBurnedToday).toBeCloseTo(0.95, 5)
+  })
+})

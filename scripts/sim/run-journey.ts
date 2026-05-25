@@ -20,9 +20,22 @@ import {
   type RouteMode,
 } from '../../web/src/utils/journey-graph'
 import { buildDailyBreakdown } from '../../web/src/utils/journey-days'
-import { computeSupplyTimeline, type SupplyConfig } from '../../web/src/utils/journey-supply'
+import { computeSupplyTimeline, type ResupplyTier, type SupplyConfig } from '../../web/src/utils/journey-supply'
 
 export type Graph = ReturnType<typeof buildGraph>
+
+/**
+ * Category → resupply tier. Mirrored from SCOPING-supply-recalibration-2026-05-24.md
+ * section 3a step 1 (Q2 decision log). Civilizations restore both rations and
+ * water; ports/oases restore water only; everything else (landmarks,
+ * chokepoints, contested sites, rivers) grants nothing in v1. Rivers as
+ * linear features are deferred to a later cycle.
+ */
+export function getResupplyTier(category: string): ResupplyTier {
+  if (category === 'civilization') return 'full'
+  if (category === 'port' || category === 'oasis') return 'water'
+  return 'none'
+}
 
 export interface JourneyInputs {
   from: string
@@ -126,12 +139,31 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
     inputs.party,
   )
 
+  // Name → resupply tier. Built from route.nodes (the path's traversed nodes
+  // carry id/name/category). Matches journey-days' "Camp at <name>" format.
+  const nameToTier = new Map<string, ResupplyTier>()
+  for (const n of route.nodes) {
+    nameToTier.set(n.name, getResupplyTier(n.category))
+  }
+  const dayToTier = new Map<number, ResupplyTier>()
+  for (const d of days) {
+    // journey-days emits "Camp at <name>" for mid-route stops at a node, and
+    // "Arrive at <name>" for the destination on the final day. Both qualify.
+    let name: string | undefined
+    if (d.campLabel.startsWith('Camp at ')) name = d.campLabel.slice('Camp at '.length)
+    else if (d.campLabel.startsWith('Arrive at ')) name = d.campLabel.slice('Arrive at '.length)
+    if (!name) continue
+    const tier = nameToTier.get(name)
+    if (tier && tier !== 'none') dayToTier.set(d.dayNum, tier)
+  }
+
   const supply = computeSupplyTimeline(
     days,
     inputs.party,
     inputs.supply,
     undefined,
     inputs.season,
+    dayToTier.size > 0 ? (dayNum) => dayToTier.get(dayNum) ?? 'none' : undefined,
   )
 
   const firstWith = (pred: (s: (typeof supply)[number]) => boolean): number | null => {

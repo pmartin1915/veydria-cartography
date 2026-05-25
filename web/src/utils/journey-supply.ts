@@ -57,6 +57,12 @@ export interface SupplyDay {
 /** Biomes that increase water consumption (water × 1.5 on any day touching one). */
 const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
 
+/** Softer-pressure tier (water × 1.25). Arid takes priority when both are present. */
+const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
+
+/** Tier of supply restored at a day's camp. See `getResupplyTier` (scripts/sim/run-journey.ts). */
+export type ResupplyTier = 'full' | 'water' | 'none'
+
 /**
  * Compute the per-day supply timeline.
  *
@@ -66,8 +72,15 @@ const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
  * @param biomeForEdge  Optional resolver: given a JourneyEdge, return the biome
  *                      name at its midpoint (or undefined). Caller typically
  *                      passes `(e) => edgeBiomes[route.edges.indexOf(e)]`.
- * @param season        Winter bumps ration consumption (the world is tropical;
- *                      no biome is reliably cold).
+ * @param season        Winter bumps ration consumption, summer eases it 5%
+ *                      (the world is tropical; no biome is reliably cold).
+ * @param resupplyAtDay Optional predicate: given a 1-indexed `dayNum`, return
+ *                      the tier of resupply this day's camp grants. `full`
+ *                      restores both rations and water to start+packBonus,
+ *                      `water` restores water only, `none` is no-op. Restore
+ *                      happens after burn but before warning computation, so a
+ *                      day camping at a civilization will not flag water-out
+ *                      from in-transit consumption.
  */
 export function computeSupplyTimeline(
   days: JourneyDay[],
@@ -75,6 +88,7 @@ export function computeSupplyTimeline(
   supply: SupplyConfig,
   biomeForEdge?: (edge: JourneyEdge) => string | undefined,
   season?: Season,
+  resupplyAtDay?: (dayNum: number) => ResupplyTier,
 ): SupplyDay[] {
   if (days.length === 0) return []
 
@@ -88,29 +102,41 @@ export function computeSupplyTimeline(
 
   const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
   const forcedWaterMult = party.forcedMarch ? 1.5 : 1.0
-  const seasonRationsMult = season === 'winter' ? 1.25 : 1.0
+  const seasonRationsMult = season === 'winter' ? 1.25 : season === 'summer' ? 0.95 : 1.0
 
-  let rationsLeft = supply.rationsPerPerson + packBonus
-  let waterLeft = supply.waterPerPerson + packBonus
+  const startingRations = supply.rationsPerPerson + packBonus
+  const startingWater = supply.waterPerPerson + packBonus
+  let rationsLeft = startingRations
+  let waterLeft = startingWater
 
   const out: SupplyDay[] = []
 
   for (const day of days) {
     let arid = false
+    let semiArid = false
     if (biomeForEdge) {
       for (const { edge } of day.edgesTraversed) {
         const b = biomeForEdge(edge)
         if (b && ARID_BIOMES.has(b)) { arid = true; break }
+        if (b && SEMI_ARID_BIOMES.has(b)) semiArid = true
       }
     }
 
-    const biomeWaterMult = arid ? 1.5 : 1.0
+    const biomeWaterMult = arid ? 1.5 : semiArid ? 1.25 : 1.0
 
     const rationsBurned = encMult * forcedRationsMult * seasonRationsMult
     const waterBurned = encMult * forcedWaterMult * biomeWaterMult
 
     rationsLeft -= rationsBurned
     waterLeft -= waterBurned
+
+    const tier = resupplyAtDay?.(day.dayNum) ?? 'none'
+    if (tier === 'full') {
+      rationsLeft = startingRations
+      waterLeft = startingWater
+    } else if (tier === 'water') {
+      waterLeft = startingWater
+    }
 
     let warning: SupplyWarning | undefined
     if (waterLeft <= 0) warning = 'water-out'
