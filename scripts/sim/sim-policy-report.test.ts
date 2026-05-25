@@ -20,7 +20,7 @@ function row(over: Partial<Row>): Row {
     from: 'a', to: 'b', season: 'spring', mode: 'direct', policy: 'naive',
     party_preset: 'standard', party_pace: 'normal', party_mount: 'foot',
     party_size: 'medium', party_forcedMarch: 'false',
-    supply_preset: 'standard', supply_rations: '7', supply_water: '3',
+    supply_preset: 'standard', supply_rations: '12', supply_water: '6',
     supply_encumbrance: 'normal', supply_pack: 'none',
     route_found: 'true', total_km: '100', estimated_days: '10',
     days_count: '10', completed: 'false', finished_reason: 'water-out',

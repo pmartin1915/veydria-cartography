@@ -35,7 +35,7 @@ import type { SupplyConfig } from '../../web/src/utils/journey-supply'
 
 const SUPPLY_PRESETS: Record<string, SupplyConfig> = {
   tight:    { rationsPerPerson: 3,  waterPerPerson: 2, encumbrance: 'light',  packAnimals: 'none' },
-  standard: { rationsPerPerson: 7,  waterPerPerson: 3, encumbrance: 'normal', packAnimals: 'none' },
+  standard: { rationsPerPerson: 12, waterPerPerson: 6, encumbrance: 'normal', packAnimals: 'none' },
   caravan:  { rationsPerPerson: 14, waterPerPerson: 7, encumbrance: 'heavy', packAnimals: 'caravan' },
 }
 

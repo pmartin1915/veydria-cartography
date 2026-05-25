@@ -32,6 +32,7 @@ import {
   setSessionActive as saveSessionActive,
 } from './utils/session-prep'
 import { loadSavedJourneys } from './utils/journey-saved'
+import { DEFAULT_SUPPLY } from './utils/journey-supply'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { downloadRenderConfig } from './utils/render-config'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
@@ -1612,10 +1613,10 @@ function App() {
               const h = initialHashRef.current
               if (h.supplyRations === undefined && h.supplyWater === undefined && !h.supplyEnc && !h.supplyPack) return undefined
               return {
-                rationsPerPerson: h.supplyRations ?? 7,
-                waterPerPerson: h.supplyWater ?? 3,
-                encumbrance: h.supplyEnc ?? 'normal',
-                packAnimals: h.supplyPack ?? 'none',
+                rationsPerPerson: h.supplyRations ?? DEFAULT_SUPPLY.rationsPerPerson,
+                waterPerPerson: h.supplyWater ?? DEFAULT_SUPPLY.waterPerPerson,
+                encumbrance: h.supplyEnc ?? DEFAULT_SUPPLY.encumbrance,
+                packAnimals: h.supplyPack ?? DEFAULT_SUPPLY.packAnimals,
               }
             })()}
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}

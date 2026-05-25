@@ -25,7 +25,7 @@ function makeGridPoint(): GridPoint {
       season: 'spring',
       mode: 'direct',
       party: { pace: 'normal', mount: 'foot', size: 'medium', forcedMarch: false },
-      supply: { rationsPerPerson: 7, waterPerPerson: 3, encumbrance: 'normal', packAnimals: 'none' },
+      supply: { rationsPerPerson: 12, waterPerPerson: 6, encumbrance: 'normal', packAnimals: 'none' },
     },
     supplyPreset: 'standard',
     partyPreset: 'standard',
@@ -44,7 +44,7 @@ function makeTrace(opts: {
     route: { found: true, totalKm: 100, estimatedDays: actions.length, bottlenecks: [], seasonalWarnings: [], pivotIds: [], nodeIds: ['ngaru_bon', 'oravan'], edgeCount: 1 },
     days: actions.map((a, i) => ({
       dayNum: i + 1, kmCovered: 30, startLabel: '', campLabel: '', weather: '', notable: [],
-      encounters: [], calendarEvents: [], rationsLeft: 7 - i, waterLeft: 3 - i,
+      encounters: [], calendarEvents: [], rationsLeft: 12 - i, waterLeft: 6 - i,
       rationsBurnedToday: 1, waterBurnedToday: 1,
       action: a, exhaustionLevel: i === actions.length - 1 ? opts.finalExhaustion ?? 0 : undefined,
     })),

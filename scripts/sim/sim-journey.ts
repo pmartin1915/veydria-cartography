@@ -22,7 +22,7 @@ import {
 } from './run-journey'
 import { POLICIES_LIST, type PolicyName } from './policies'
 import type { PartyConfig, Season, RouteMode } from '../../web/src/utils/journey-graph'
-import type { SupplyConfig } from '../../web/src/utils/journey-supply'
+import { DEFAULT_SUPPLY, type SupplyConfig } from '../../web/src/utils/journey-supply'
 
 /* ─── CLI parsing (no dep — repo convention is `--key value`) ─── */
 
@@ -63,10 +63,10 @@ function parseArgs(argv: string[]): CliArgs {
     forcedMarch: has('forced-march'),
   }
   const supply: SupplyConfig = {
-    rationsPerPerson: num('rations', 7),
-    waterPerPerson: num('water', 3),
-    encumbrance: oneOf(get('encumbrance'), ENCUMB, 'normal'),
-    packAnimals: oneOf(get('pack'), PACKS, 'none'),
+    rationsPerPerson: num('rations', DEFAULT_SUPPLY.rationsPerPerson),
+    waterPerPerson: num('water', DEFAULT_SUPPLY.waterPerPerson),
+    encumbrance: oneOf(get('encumbrance'), ENCUMB, DEFAULT_SUPPLY.encumbrance),
+    packAnimals: oneOf(get('pack'), PACKS, DEFAULT_SUPPLY.packAnimals),
   }
   return {
     from: get('from') || 'ngaru_bon',

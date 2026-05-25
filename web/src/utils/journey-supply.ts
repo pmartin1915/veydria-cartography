@@ -26,8 +26,8 @@ export interface SupplyConfig {
 }
 
 export const DEFAULT_SUPPLY: SupplyConfig = {
-  rationsPerPerson: 7,
-  waterPerPerson: 3,
+  rationsPerPerson: 12,
+  waterPerPerson: 6,
   encumbrance: 'normal',
   packAnimals: 'none',
 }

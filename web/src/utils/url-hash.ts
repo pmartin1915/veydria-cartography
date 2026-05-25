@@ -10,6 +10,8 @@
  * exclusive at the App level (single bottom sheet rule).
  */
 
+import { DEFAULT_SUPPLY } from './journey-supply'
+
 export interface ViewportState {
   featureId?: string
   hexLabel?: string
@@ -151,11 +153,11 @@ export function buildHash(state: ViewportState): string {
   if (state.partySize && state.partySize !== 'medium') params.set('partySize', state.partySize)
   if (state.partyForce) params.set('partyForce', '1')
 
-  // Supply config — omit defaults (7 rations / 3 water / normal / none)
-  if (state.supplyRations !== undefined && state.supplyRations !== 7) {
+  // Supply config — omit defaults (sourced from DEFAULT_SUPPLY)
+  if (state.supplyRations !== undefined && state.supplyRations !== DEFAULT_SUPPLY.rationsPerPerson) {
     params.set('supplyRations', state.supplyRations.toString())
   }
-  if (state.supplyWater !== undefined && state.supplyWater !== 3) {
+  if (state.supplyWater !== undefined && state.supplyWater !== DEFAULT_SUPPLY.waterPerPerson) {
     params.set('supplyWater', state.supplyWater.toString())
   }
   if (state.supplyEnc && state.supplyEnc !== 'normal') params.set('supplyEnc', state.supplyEnc)

@@ -44,7 +44,7 @@ This pivots the rest of the scoping doc. The structural fix (formerly probe 5) i
 
 | Line | Constant | Value | Notes |
 |---|---|---|---|
-| 28–33 | `DEFAULT_SUPPLY` | rations 7 / water 3 / normal / none | Default loadout — what UI ships with |
+| 28–33 | `DEFAULT_SUPPLY` | rations 12 / water 6 / normal / none | Default loadout — what UI ships with (Option H, 2026-05-26) |
 | 58 | `ARID_BIOMES` | `Desert, Sabkha, Steppe, Escarpment` | Touches one in a day → water ×1.5 |
 | 81–83 | `encMult` | light 0.9 / normal 1.0 / heavy 1.1 | Applied to both rations and water |
 | 85–87 | `packBonus` | none 0 / few +3 / caravan +7 | Added once at start; bonuses **both rations and water** (lines 93–94) |

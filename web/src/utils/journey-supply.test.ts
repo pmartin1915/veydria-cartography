@@ -54,24 +54,25 @@ describe('journey-supply: baseline consumption', () => {
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY)
 
     expect(timeline.length).toBe(5)
-    // Rations start at 7, burn 1/day → end at 2
-    expect(timeline[4].rationsLeft).toBeCloseTo(2, 5)
-    // Water starts at 3, burn 1/day → at day 3 is 0, day 4 is -1, day 5 is -2
-    expect(timeline[2].waterLeft).toBeCloseTo(0, 5)
-    expect(timeline[4].waterLeft).toBeCloseTo(-2, 5)
+    // Rations start at 12, burn 1/day → end at 7
+    expect(timeline[4].rationsLeft).toBeCloseTo(7, 5)
+    // Water starts at 6, burn 1/day → day 3 = 3, day 5 = 1
+    expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
+    expect(timeline[4].waterLeft).toBeCloseTo(1, 5)
   })
 
   it('emits water-low and water-out warnings on the right days', () => {
-    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    // 7-day route so the default 6-water budget actually exhausts.
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1, 1, 1], totalKm: 140 })
     const days = buildDailyBreakdown(route)
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY)
     const pressure = summarizeSupplyPressure(timeline)
 
-    // Default water = 3 days. Day 1: 2 left (low). Day 3: 0 (out).
-    expect(pressure.waterLowDay).toBe(1)
-    expect(pressure.waterOutDay).toBe(3)
-    // Default rations = 7. On a 5-day baseline, day 5 hits exactly 2 (low threshold).
-    expect(pressure.rationsLowDay).toBe(5)
+    // Default water = 6. Day 4: 2 left (low). Day 6: 0 (out).
+    expect(pressure.waterLowDay).toBe(4)
+    expect(pressure.waterOutDay).toBe(6)
+    // Default rations = 12. On a 7-day baseline, end at 5 — never crosses low (≤2).
+    expect(pressure.rationsLowDay).toBeNull()
     expect(pressure.rationsOutDay).toBeNull()
   })
 })
@@ -83,10 +84,10 @@ describe('journey-supply: forced march', () => {
     const forcedParty: PartyConfig = { ...DEFAULT_PARTY, forcedMarch: true }
     const timeline = computeSupplyTimeline(days, forcedParty, DEFAULT_SUPPLY)
 
-    // Rations: 7 - (2 * 3) = 1
-    expect(timeline[2].rationsLeft).toBeCloseTo(1, 5)
-    // Water: 3 - (1.5 * 3) = -1.5
-    expect(timeline[2].waterLeft).toBeCloseTo(-1.5, 5)
+    // Rations: 12 - (2 * 3) = 6
+    expect(timeline[2].rationsLeft).toBeCloseTo(6, 5)
+    // Water: 6 - (1.5 * 3) = 1.5
+    expect(timeline[2].waterLeft).toBeCloseTo(1.5, 5)
     // Per-day burn rates
     expect(timeline[0].rationsBurnedToday).toBeCloseTo(2.0, 5)
     expect(timeline[0].waterBurnedToday).toBeCloseTo(1.5, 5)
@@ -105,12 +106,12 @@ describe('journey-supply: arid biome', () => {
 
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, biomeForEdge)
 
-    // Day 1: non-arid, water = 3 - 1 = 2
+    // Day 1: non-arid, water = 6 - 1 = 5
     expect(timeline[0].waterBurnedToday).toBeCloseTo(1.0, 5)
-    expect(timeline[0].waterLeft).toBeCloseTo(2.0, 5)
-    // Day 2: arid (Desert edge), water = 2 - 1.5 = 0.5
+    expect(timeline[0].waterLeft).toBeCloseTo(5.0, 5)
+    // Day 2: arid (Desert edge), water = 5 - 1.5 = 3.5
     expect(timeline[1].waterBurnedToday).toBeCloseTo(1.5, 5)
-    expect(timeline[1].waterLeft).toBeCloseTo(0.5, 5)
+    expect(timeline[1].waterLeft).toBeCloseTo(3.5, 5)
   })
 })
 
@@ -120,8 +121,8 @@ describe('journey-supply: winter season', () => {
     const days = buildDailyBreakdown(route, 'winter', 'direct')
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, 'winter')
 
-    // Rations burn = 1.25/day. 7 - 4*1.25 = 2
-    expect(timeline[3].rationsLeft).toBeCloseTo(2.0, 5)
+    // Rations burn = 1.25/day. 12 - 4*1.25 = 7
+    expect(timeline[3].rationsLeft).toBeCloseTo(7.0, 5)
     expect(timeline[0].rationsBurnedToday).toBeCloseTo(1.25, 5)
   })
 })
@@ -141,18 +142,18 @@ describe('journey-supply: encumbrance × pack-animals stacking', () => {
     const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
     const days = buildDailyBreakdown(route)
     const supply: SupplyConfig = {
-      rationsPerPerson: 7,
-      waterPerPerson: 3,
+      rationsPerPerson: 12,
+      waterPerPerson: 6,
       encumbrance: 'heavy',
       packAnimals: 'caravan',
     }
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, supply)
 
-    // Start: rations = 7 + 7 = 14, water = 3 + 7 = 10
+    // Start: rations = 12 + 7 = 19, water = 6 + 7 = 13
     // Per-day burn: 1.0 * 1.1 = 1.1 (each)
-    // Day 5: rations = 14 - 5.5 = 8.5, water = 10 - 5.5 = 4.5
-    expect(timeline[4].rationsLeft).toBeCloseTo(8.5, 5)
-    expect(timeline[4].waterLeft).toBeCloseTo(4.5, 5)
+    // Day 5: rations = 19 - 5.5 = 13.5, water = 13 - 5.5 = 7.5
+    expect(timeline[4].rationsLeft).toBeCloseTo(13.5, 5)
+    expect(timeline[4].waterLeft).toBeCloseTo(7.5, 5)
     expect(timeline[0].rationsBurnedToday).toBeCloseTo(1.1, 5)
     expect(timeline[0].waterBurnedToday).toBeCloseTo(1.1, 5)
   })
@@ -181,15 +182,15 @@ describe('journey-supply: resupplyAtDay', () => {
       (d) => (d === 3 ? 'full' : 'none'),
     )
 
-    // Pre-restore on day 3: rations = 7 - 3 = 4, water = 3 - 3 = 0
-    // Post-restore: both back to DEFAULT_SUPPLY (rations 7, water 3, no packBonus)
-    expect(timeline[2].rationsLeft).toBeCloseTo(7, 5)
-    expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
+    // Pre-restore on day 3: rations = 12 - 3 = 9, water = 6 - 3 = 3
+    // Post-restore: both back to DEFAULT_SUPPLY (rations 12, water 6, no packBonus)
+    expect(timeline[2].rationsLeft).toBeCloseTo(12, 5)
+    expect(timeline[2].waterLeft).toBeCloseTo(6, 5)
     // And no water-out warning, since restore happens before warning check
     expect(timeline[2].warning).toBeUndefined()
     // Day 4 continues normal burn from the restored state
-    expect(timeline[3].rationsLeft).toBeCloseTo(6, 5)
-    expect(timeline[3].waterLeft).toBeCloseTo(2, 5)
+    expect(timeline[3].rationsLeft).toBeCloseTo(11, 5)
+    expect(timeline[3].waterLeft).toBeCloseTo(5, 5)
   })
 
   it("'water' tier restores water only; rations continue to deplete", () => {
@@ -204,13 +205,12 @@ describe('journey-supply: resupplyAtDay', () => {
       (d) => (d === 3 ? 'water' : 'none'),
     )
 
-    // Day 3: rations 7 - 3 = 4 (unchanged by restore), water back to 3
-    expect(timeline[2].rationsLeft).toBeCloseTo(4, 5)
-    expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
-    // Day 5: rations 4 - 2 = 2, water 3 - 2 = 1 (low warning on water, not rations:
-    // rations-low fires at <=2 but water-low has higher priority at <=2)
-    expect(timeline[4].rationsLeft).toBeCloseTo(2, 5)
-    expect(timeline[4].waterLeft).toBeCloseTo(1, 5)
+    // Day 3: rations 12 - 3 = 9 (unchanged by restore), water back to 6
+    expect(timeline[2].rationsLeft).toBeCloseTo(9, 5)
+    expect(timeline[2].waterLeft).toBeCloseTo(6, 5)
+    // Day 5: rations 9 - 2 = 7, water 6 - 2 = 4 — neither below the ≤2 low threshold.
+    expect(timeline[4].rationsLeft).toBeCloseTo(7, 5)
+    expect(timeline[4].waterLeft).toBeCloseTo(4, 5)
   })
 
   it("'none' (and predicate absent) leaves baseline behavior unchanged", () => {
