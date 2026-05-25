@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildDailyBreakdown, initJourneyState, nextDay } from './journey-days'
 import { DEFAULT_PARTY, type JourneyRoute, type PartyConfig } from './journey-graph'
-import { DEFAULT_SUPPLY } from './journey-supply'
+import { DEFAULT_SUPPLY, computeSupplyTimeline, type ResupplyTier } from './journey-supply'
 
 function makeRoute(opts: { edgeDays: number[]; totalKm: number }): JourneyRoute {
   const nodes = opts.edgeDays.map((_, i) => ({
@@ -354,5 +354,108 @@ describe('journey-days: nextDay action mechanics', () => {
     const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
     const state = initJourneyState({ route, season: 'spring', mode: 'direct' })
     expect(() => nextDay(state, { kind: 'reroute', mode: 'safest' })).toThrow(/graph and state\.endId/)
+  })
+})
+
+describe('journey-days: resupply day mapping parity with legacy name-based walk', () => {
+  /* The policy path resolves a day's resupply tier from `state.resupplyByDay`
+   * (built inside bucketRoute). The legacy sim path resolves it by walking
+   * `days[].campLabel` after buildDailyBreakdown returns and mapping the
+   * named node to a tier. These two mappings must agree — otherwise the
+   * naive policy diverges from the legacy no-policy path on borderline
+   * grids (see HANDOFF-2026-05-26 / parity-fix). */
+
+  /* Mirrors run-journey.ts:212-224 exactly. */
+  function legacyDayToTier(
+    days: ReturnType<typeof buildDailyBreakdown>,
+    route: JourneyRoute,
+    tierFor: (category: string) => ResupplyTier,
+  ): Map<number, ResupplyTier> {
+    const nameToTier = new Map<string, ResupplyTier>()
+    for (const n of route.nodes) nameToTier.set(n.name, tierFor(n.category))
+    const out = new Map<number, ResupplyTier>()
+    for (const d of days) {
+      let name: string | undefined
+      if (d.campLabel.startsWith('Camp at ')) name = d.campLabel.slice('Camp at '.length)
+      else if (d.campLabel.startsWith('Arrive at ')) name = d.campLabel.slice('Arrive at '.length)
+      if (!name) continue
+      const tier = nameToTier.get(name)
+      if (tier && tier !== 'none') out.set(d.dayNum, tier)
+    }
+    return out
+  }
+
+  const tierFor = (cat: string): ResupplyTier => {
+    if (cat === 'civilization') return 'full'
+    if (cat === 'oasis' || cat === 'port') return 'water'
+    return 'none'
+  }
+
+  it('policy path supply timeline equals legacy buildDailyBreakdown+computeSupplyTimeline', () => {
+    /* Multi-edge route with mixed node categories (port start, civilization
+     * mid, oasis mid, civilization end). edgeDays chosen so node-arrival
+     * times include both integer and fractional accNodeDay boundaries —
+     * the shape the old Math.ceil(accNodeDay) rule got wrong. */
+    const route = makeRoute({ edgeDays: [3.5, 2.2, 1.8, 2.5], totalKm: 300 })
+    /* makeRoute defaults categories to port/civilization/oasis based on
+     * position; first node is `port`, last is `oasis`, middle are
+     * `civilization`. tierFor maps all three to a non-'none' tier so every
+     * day is exercised. */
+
+    const a = buildDailyBreakdown(route, 'spring', 'direct', undefined, undefined, DEFAULT_PARTY)
+    const dayToTier = legacyDayToTier(a, route, tierFor)
+    const legacySupply = computeSupplyTimeline(
+      a, DEFAULT_PARTY, DEFAULT_SUPPLY,
+      undefined, 'spring',
+      (d) => dayToTier.get(d) ?? 'none',
+    )
+
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      resupplyTierFor: tierFor,
+    })
+    const policySupply: typeof legacySupply = []
+    let safety = state.totalDays + 5
+    while (!state.finished && safety-- > 0) {
+      const step = nextDay(state, { kind: 'continue' })
+      if (step.supply) policySupply.push(step.supply)
+      state = step.state
+    }
+
+    expect(policySupply.length).toBe(legacySupply.length)
+    for (let i = 0; i < legacySupply.length; i++) {
+      expect(policySupply[i].rationsLeft).toBeCloseTo(legacySupply[i].rationsLeft, 10)
+      expect(policySupply[i].waterLeft).toBeCloseTo(legacySupply[i].waterLeft, 10)
+      expect(policySupply[i].warning).toBe(legacySupply[i].warning)
+    }
+  })
+
+  it('start node resupplies on day 1 (matches "Camp at <origin>" semantics)', () => {
+    /* Regression for the pre-fix bug: bucketRoute used `i === 0 ? 0 : …`
+     * which skipped the origin node entirely, so day 1's "Camp at <origin>"
+     * never granted resupply on the policy path. Uses a long first edge so
+     * day 1 falls within t<=0.15 of the origin (campLabelAt's "Camp at X"
+     * threshold). */
+    const route = makeRoute({ edgeDays: [8, 2, 1], totalKm: 200 })
+    /* First node category in makeRoute is 'port' → tier 'water' here. */
+
+    const a = buildDailyBreakdown(route, 'spring', 'direct')
+    expect(a[0].campLabel.startsWith('Camp at ')).toBe(true)
+
+    /* The policy path's bucketRoute should mark day 1 as 'water' (since
+     * the origin node is a port). Verify by running a low-water supply
+     * config: without origin resupply, day 1 would burn down; with it,
+     * day 1 ends at startingWater. */
+    const lowWater = { ...DEFAULT_SUPPLY, waterPerPerson: 3 }
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: lowWater,
+      resupplyTierFor: tierFor,
+    })
+    const day1 = nextDay(state, { kind: 'continue' })
+    expect(day1.supply).not.toBeNull()
+    /* Origin port → 'water' tier → waterLeft restored to startingWater after burn. */
+    expect(day1.supply!.waterLeft).toBe(state.supplyConstants.startingWater)
   })
 })

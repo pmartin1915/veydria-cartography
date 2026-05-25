@@ -352,31 +352,46 @@ function bucketRoute(
       .filter((c): c is string => !!c)
   )
 
-  /* Pre-bucket resupply tiers from route nodes. Mirrors run-journey.ts's
-   * inline pass — kept here so any caller that supplies `resupplyTierFor`
-   * gets the same camp-day → tier mapping as the sim trace. */
+  /* Pre-bucket resupply tiers per day. Mirrors run-journey.ts's legacy walk
+   * over days[].campLabel: a day grants the tier of whatever node its
+   * campLabel names ("Camp at X" or "Arrive at X"). Mid-edge days
+   * ("Camp on the …") grant no tier — they don't name a node.
+   *
+   * Implementation: for each local day we recompute the end-of-day position
+   * via locateAtDay + the same t<=0.15 / t>=0.85 snap that campLabelAt uses,
+   * then look the resulting node name up in a name→tier map. The final day
+   * always maps to the destination node (matches nextDay's "Arrive at X"
+   * shortcut at journey-days.ts isFinalDay branch).
+   *
+   * Why this care: a previous accNodeDay-based mapping (Math.ceil of
+   * cumulative segmentDays) could land a node on a different day than
+   * campLabelAt did at non-integer node boundaries, causing the policy
+   * supply path to diverge from the legacy supply path. See HANDOFF-2026-05-26. */
   const resupplyByDay: Map<number, ResupplyTier> = new Map()
   if (resupplyTierFor) {
-    /* Cumulative day-equivalents for each route node (0 for start, sum of
-     * preceding segmentDays for subsequent nodes). The node's "camp day"
-     * is the day after the party arrives, ceil()-ed. */
-    let accNodeDay = 0
-    for (let i = 0; i < route.nodes.length; i++) {
-      const node = route.nodes[i]
-      const tier = resupplyTierFor(node.category)
-      if (tier !== 'none') {
-        const localDay = i === 0 ? 0 : Math.min(totalDaysLocal, Math.ceil(accNodeDay))
-        if (localDay >= 1) {
-          const journeyDay = dayOffset + localDay
-          /* Higher-tier wins if two nodes camp on the same day. */
-          const existing = resupplyByDay.get(journeyDay)
-          if (!existing || tierRank(tier) > tierRank(existing)) {
-            resupplyByDay.set(journeyDay, tier)
-          }
+    const nameToTier = new Map<string, ResupplyTier>()
+    for (const n of route.nodes) {
+      nameToTier.set(n.name, resupplyTierFor(n.category))
+    }
+    for (let localDay = 1; localDay <= totalDaysLocal; localDay++) {
+      let nodeName: string | undefined
+      if (localDay === totalDaysLocal) {
+        nodeName = route.nodes[route.nodes.length - 1].name
+      } else {
+        const pos = locateAtDay(route.edges, localDay)
+        if (pos.t <= 0.15) {
+          nodeName = route.nodes[pos.edgeIdx].name
+        } else if (pos.t >= 0.85) {
+          nodeName = (route.nodes[pos.edgeIdx + 1] ?? route.nodes[pos.edgeIdx]).name
         }
       }
-      if (i < route.edges.length) {
-        accNodeDay += route.edges[i].segmentDays || 0
+      if (!nodeName) continue
+      const tier = nameToTier.get(nodeName)
+      if (!tier || tier === 'none') continue
+      const journeyDay = dayOffset + localDay
+      const existing = resupplyByDay.get(journeyDay)
+      if (!existing || tierRank(tier) > tierRank(existing)) {
+        resupplyByDay.set(journeyDay, tier)
       }
     }
   }
