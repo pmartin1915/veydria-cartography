@@ -120,7 +120,7 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }): number 
 // 7 authored on-route features (max 19 km), tight enough to exclude the 3
 // genuinely off-route ones (Khulut/Tavakh-Qarat/Ghadam Thalla at 194–354 km).
 const SNAP_THRESHOLD_SVG = 10
-const SNAPPABLE_CATEGORIES = new Set(['oasis', 'port'])
+const SNAPPABLE_CATEGORIES = new Set(['oasis', 'port', 'caravanserai'])
 
 // Project a point onto a polyline. Returns the arc-length parameter (distance
 // from polyline start along the curve) of the projection, plus the perpendicular

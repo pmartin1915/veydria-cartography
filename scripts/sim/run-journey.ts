@@ -27,12 +27,14 @@ export type Graph = ReturnType<typeof buildGraph>
 /**
  * Category → resupply tier. Mirrored from SCOPING-supply-recalibration-2026-05-24.md
  * section 3a step 1 (Q2 decision log). Civilizations restore both rations and
- * water; ports/oases restore water only; everything else (landmarks,
- * chokepoints, contested sites, rivers) grants nothing in v1. Rivers as
- * linear features are deferred to a later cycle.
+ * water; caravanserai restore rations only (purpose-built relay stations with
+ * grain stores but limited water hauling); ports/oases restore water only;
+ * everything else (landmarks, chokepoints, contested sites, rivers) grants
+ * nothing in v1. Rivers as linear features are deferred to a later cycle.
  */
 export function getResupplyTier(category: string): ResupplyTier {
   if (category === 'civilization') return 'full'
+  if (category === 'caravanserai') return 'rations'
   if (category === 'port' || category === 'oasis') return 'water'
   return 'none'
 }

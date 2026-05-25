@@ -154002,6 +154002,44 @@
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          600,
+          480
+        ]
+      },
+      "properties": {
+        "id": "kalli_xal",
+        "name": "Kalli-Xal",
+        "category": "caravanserai",
+        "etymology": "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a Kheshkai-attested compound for a steppe relay station",
+        "description": "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and corralled mounts kept under a single Kheshkai clan-lord's seal; the grazing toll is settled here before the run to Tepet-Apu. Rations-only resupply: the station hauls grain off the route but cannot offer reliable water beyond what travellers already carry.",
+        "marker-color": "#b87333",
+        "marker-symbol": "lodging"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          960,
+          350
+        ]
+      },
+      "properties": {
+        "id": "zang_kalli",
+        "name": "Zang-Kalli",
+        "category": "caravanserai",
+        "etymology": "Cross-cultural: Ngaru-Bon zang 'copper' + Kheshkai kalli 'house'. The Copper-House — the bilateral copper-for-steel trade names its mid-steppe relay in both clients' registers",
+        "description": "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in.",
+        "marker-color": "#b87333",
+        "marker-symbol": "lodging"
+      }
     }
   ]
 }

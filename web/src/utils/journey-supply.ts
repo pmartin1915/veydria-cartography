@@ -61,7 +61,7 @@ const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
 const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
 
 /** Tier of supply restored at a day's camp. See `getResupplyTier` (scripts/sim/run-journey.ts). */
-export type ResupplyTier = 'full' | 'water' | 'none'
+export type ResupplyTier = 'full' | 'rations' | 'water' | 'none'
 
 /**
  * Compute the per-day supply timeline.
@@ -136,6 +136,8 @@ export function computeSupplyTimeline(
       waterLeft = startingWater
     } else if (tier === 'water') {
       waterLeft = startingWater
+    } else if (tier === 'rations') {
+      rationsLeft = startingRations
     }
 
     let warning: SupplyWarning | undefined
