@@ -122,7 +122,7 @@ Phase 4 identifies the journeys where decisions matter most. Phase 5 drives Play
 ## Cross-cutting decisions
 
 - **TS imports.** vite-node (already a transitive devDep via vitest) handles `.ts` imports from `web/src/utils/...` without compilation. No new dependency. Scripts live at `scripts/sim/` (repo root), mirroring the existing `scripts/sync-world-data.mjs` pattern.
-- **Repro.** Every trace embeds its input params. The journey utils are already seeded from `(route + season + mode)`, so two runs with the same params produce identical traces — Phase 1 commits a baseline `traces/baseline.jsonl` for regression detection.
+- **Repro.** Every trace embeds its input params. The journey utils are already seeded from `(route + season + mode)`, so two runs with the same params produce identical traces — `traces/baseline.jsonl` + `traces/baseline.summary.csv` (tracked, sibling of gitignored `output/sim/`) hold the pre-change snapshot per cycle for regression detection. See `traces/README.md` for the refresh policy.
 - **No engine forks.** If a metric needs new data, the right move is to add it to the engine output, not duplicate logic in the harness. The whole value here is that the harness measures what the player experiences.
 - **Refactor known to be needed:** `GeoJSONFeature` / `GeoJSONCollection` should move out of `App.tsx` to `web/src/types/geojson.ts`. The current shape works under vite-node only because both are interfaces (type-stripped at transform). Phase 3's engine wrapper is a fine moment to bundle this refactor.
 
