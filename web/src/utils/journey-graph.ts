@@ -115,6 +115,50 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }): number 
   return Math.sqrt(dx * dx + dy * dy)
 }
 
+// Perpendicular distance threshold (svg units) for snapping an oasis/port
+// onto a trade-route polyline. 10 svg ≈ 25 km — wide enough to catch the
+// 7 authored on-route features (max 19 km), tight enough to exclude the 3
+// genuinely off-route ones (Khulut/Tavakh-Qarat/Ghadam Thalla at 194–354 km).
+const SNAP_THRESHOLD_SVG = 10
+const SNAPPABLE_CATEGORIES = new Set(['oasis', 'port'])
+
+// Project a point onto a polyline. Returns the arc-length parameter (distance
+// from polyline start along the curve) of the projection, plus the perpendicular
+// distance from the point to the polyline. Picks the segment whose perpendicular
+// projection is closest. Used to (a) test whether an oasis/port lies on a route
+// and (b) place endpoints + snapped waypoints in a consistent arc-length order.
+function projectPointOnPolyline(
+  p: { x: number; y: number },
+  coords: number[][]
+): { tArc: number; perpDist: number } | null {
+  if (coords.length < 2) return null
+  let bestTArc = 0
+  let bestPerpDist = Infinity
+  let cumArc = 0
+  for (let i = 1; i < coords.length; i++) {
+    const ax = coords[i - 1][0]
+    const ay = coords[i - 1][1]
+    const bx = coords[i][0]
+    const by = coords[i][1]
+    const dx = bx - ax
+    const dy = by - ay
+    const segLen2 = dx * dx + dy * dy
+    const segLen = Math.sqrt(segLen2)
+    const tLocal = segLen2 === 0
+      ? 0
+      : Math.max(0, Math.min(1, ((p.x - ax) * dx + (p.y - ay) * dy) / segLen2))
+    const projX = ax + tLocal * dx
+    const projY = ay + tLocal * dy
+    const perpDist = Math.hypot(p.x - projX, p.y - projY)
+    if (perpDist < bestPerpDist) {
+      bestPerpDist = perpDist
+      bestTArc = cumArc + tLocal * segLen
+    }
+    cumArc += segLen
+  }
+  return { tArc: bestTArc, perpDist: bestPerpDist }
+}
+
 // Determine which civilization a point belongs to by nearest centroid
 function findNearestCiv(
   point: { x: number; y: number },
@@ -247,55 +291,145 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     return aliased && nodes.has(aliased) ? aliased : id
   }
 
+  // ── 3.5. Pre-compute oasis/port snap assignments ──
+  // Each oasis/port snaps to its single nearest trade-route polyline (by
+  // perpendicular distance), if within SNAP_THRESHOLD_SVG. This lets the
+  // worldbuilder-authored intent ("Qarat al-Fidda sits on the caravan_thread")
+  // become routable graph topology in section 4 below — without inventing
+  // any new geography. The 3 off-route features (Khulut/Tavakh-Qarat/
+  // Ghadam Thalla) exceed the threshold and stay reachable only via their
+  // existing intra_civ link.
+  const routeSnaps = new Map<string, Array<{ node: JourneyNode; tArc: number }>>()
+  for (const { node } of pointFeatures) {
+    if (!SNAPPABLE_CATEGORIES.has(node.category)) continue
+    let best: { routeId: string; tArc: number; perpDist: number } | null = null
+    for (const f of geojson.features) {
+      if (f.properties.category !== 'trade_route') continue
+      if (f.geometry.type !== 'LineString') continue
+      const routeId = (f.properties.id as string) || (f.properties.name as string) || ''
+      if (!routeId) continue
+      const proj = projectPointOnPolyline(node, f.geometry.coordinates as number[][])
+      if (!proj) continue
+      if (proj.perpDist > SNAP_THRESHOLD_SVG) continue
+      if (!best || proj.perpDist < best.perpDist) {
+        best = { routeId, tArc: proj.tArc, perpDist: proj.perpDist }
+      }
+    }
+    if (best) {
+      const bucket = routeSnaps.get(best.routeId) || []
+      bucket.push({ node, tArc: best.tArc })
+      routeSnaps.set(best.routeId, bucket)
+    }
+  }
+
   // ── 4. Trade routes as edges between civilizations ──
+  // For each trade-route feature, project the endpoints (and any snapped
+  // waypoints from section 3.5) onto the polyline. Build the consecutive-
+  // endpoint-pair chain through any waypoints whose arc-length parameter
+  // falls between the endpoint pair's arc-length range. distanceSvg per
+  // sub-edge = arc-length along the polyline (was: full polyline length
+  // for every endpoint pair — preserved here only for the no-geometry
+  // fallback).
   for (const f of geojson.features) {
     if (f.properties.category !== 'trade_route') continue
     const endpoints = f.properties.endpoints as string[] | undefined
     if (!endpoints || endpoints.length < 2) continue
 
-    // Resolve endpoint ids through aliases
     const resolved = endpoints.map(resolveId)
+    const routeKey = (f.properties.id as string || '').toLowerCase()
+    const routeSeasonalInfo = SEASONAL_DATA[routeKey]
+    const routeName = f.properties.name as string || 'Trade Route'
+    const routeId = (f.properties.id as string) || routeName
 
-    // Calculate route length from LineString
+    const edgeMeta = {
+      type: 'trade_route' as const,
+      name: routeName,
+      bottleneck: f.properties.bottleneck as string | undefined,
+      seasonal: routeSeasonalInfo?.warning,
+      seasonalKey: routeSeasonalInfo ? routeKey : undefined,
+      commodities: f.properties.commodities as string | undefined,
+      consequenceIfClosed: f.properties.consequence_if_closed as string | undefined,
+    }
+
+    // Polyline coordinates + total length (for fallback)
+    let polylineCoords: number[][] | null = null
     let routeLen = 0
     if (f.geometry.type === 'LineString') {
-      const coords = f.geometry.coordinates as number[][]
-      for (let i = 1; i < coords.length; i++) {
+      polylineCoords = f.geometry.coordinates as number[][]
+      for (let i = 1; i < polylineCoords.length; i++) {
         routeLen += dist(
-          { x: coords[i - 1][0], y: coords[i - 1][1] },
-          { x: coords[i][0], y: coords[i][1] }
+          { x: polylineCoords[i - 1][0], y: polylineCoords[i - 1][1] },
+          { x: polylineCoords[i][0], y: polylineCoords[i][1] }
         )
       }
     }
 
-    // Look up seasonal restriction by route name
-    const routeKey = (f.properties.id as string || '').toLowerCase()
-    const routeSeasonalInfo = SEASONAL_DATA[routeKey]
+    const snaps = routeSnaps.get(routeId) || []
 
-    // If route has no geometry length, estimate from centroid-to-centroid
-    if (routeLen === 0) {
-      const nodeA = nodes.get(resolved[0])
-      const nodeB = nodes.get(resolved[1])
-      if (nodeA && nodeB) routeLen = dist(nodeA, nodeB)
+    // Compute the arc-length parameter for each resolved endpoint along the
+    // polyline. Civ centroids generally do NOT lie on the route's polyline
+    // (cities sit inside their territory, roads run along borders), so naive
+    // projection of every endpoint can collapse multiple endpoints onto the
+    // same nearby segment. Anchor the first endpoint to tArc=0 and the last
+    // to tArc=routeLen (the polyline runs between them by construction); only
+    // intermediates (for 3+ endpoint routes) get projected, clamped into the
+    // open interval.
+    let endpointTArcs: number[] | null = null
+    if (polylineCoords && routeLen > 0) {
+      endpointTArcs = resolved.map((id, idx) => {
+        if (idx === 0) return 0
+        if (idx === resolved.length - 1) return routeLen
+        const node = nodes.get(id)
+        if (!node) return (routeLen * idx) / (resolved.length - 1)
+        const proj = projectPointOnPolyline(node, polylineCoords as number[][])
+        return proj ? Math.max(0, Math.min(routeLen, proj.tArc)) : (routeLen * idx) / (resolved.length - 1)
+      })
     }
 
-    // Connect each pair of endpoints (usually just 2)
     for (let i = 0; i < resolved.length - 1; i++) {
-      const a = resolved[i]
-      const b = resolved[i + 1]
-      if (!nodes.has(a) || !nodes.has(b)) continue
-      addEdge({
-        from: a,
-        to: b,
-        distanceSvg: routeLen,
-        type: 'trade_route',
-        name: f.properties.name as string || 'Trade Route',
-        bottleneck: f.properties.bottleneck as string | undefined,
-        seasonal: routeSeasonalInfo?.warning,
-        seasonalKey: routeSeasonalInfo ? routeKey : undefined,
-        commodities: f.properties.commodities as string | undefined,
-        consequenceIfClosed: f.properties.consequence_if_closed as string | undefined,
-      })
+      const aId = resolved[i]
+      const bId = resolved[i + 1]
+      if (!nodes.has(aId) || !nodes.has(bId)) continue
+      const aNode = nodes.get(aId)!
+      const bNode = nodes.get(bId)!
+
+      // Fallback path: no usable geometry — straight civ-to-civ edge.
+      if (!polylineCoords || routeLen === 0 || !endpointTArcs) {
+        addEdge({ from: aId, to: bId, distanceSvg: dist(aNode, bNode), ...edgeMeta })
+        continue
+      }
+
+      const tA = endpointTArcs[i]
+      const tB = endpointTArcs[i + 1]
+      const lo = Math.min(tA, tB)
+      const hi = Math.max(tA, tB)
+      const direction = tA <= tB ? 1 : -1
+
+      const between = snaps
+        .filter(s => s.tArc > lo && s.tArc < hi)
+        .sort((p, q) => direction * (p.tArc - q.tArc))
+
+      // Chain: A → (snapped waypoints in travel order) → B
+      const chain: Array<{ id: string; tArc: number }> = [
+        { id: aId, tArc: tA },
+        ...between.map(s => ({ id: s.node.id, tArc: s.tArc })),
+        { id: bId, tArc: tB },
+      ]
+
+      // If the segment between endpoints collapses (intermediate projection
+      // landed on top of an adjacent endpoint), fall back to civ-civ distance.
+      if (chain.length === 2 && Math.abs(chain[0].tArc - chain[1].tArc) <= 0) {
+        addEdge({ from: aId, to: bId, distanceSvg: dist(aNode, bNode), ...edgeMeta })
+        continue
+      }
+
+      for (let j = 0; j < chain.length - 1; j++) {
+        const x = chain[j]
+        const y = chain[j + 1]
+        const segDist = Math.abs(y.tArc - x.tArc)
+        if (segDist <= 0) continue
+        addEdge({ from: x.id, to: y.id, distanceSvg: segDist, ...edgeMeta })
+      }
     }
   }
 

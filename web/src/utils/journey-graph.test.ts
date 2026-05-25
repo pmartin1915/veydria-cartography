@@ -162,6 +162,87 @@ describe('findComparisonRoutes', () => {
   })
 })
 
+describe('waypoint snap (Option D)', () => {
+  function buildSynth(features: Array<Record<string, unknown>>) {
+    return { type: 'FeatureCollection', features }
+  }
+
+  it('snaps an on-route oasis as a midpoint in trade-route routing', () => {
+    const synth = buildSynth([
+      {
+        type: 'Feature', id: 'civA',
+        properties: { id: 'civA', name: 'Civ A', category: 'civilization', centroid: [0, 0] },
+        geometry: { type: 'Point', coordinates: [0, 0] },
+      },
+      {
+        type: 'Feature', id: 'civB',
+        properties: { id: 'civB', name: 'Civ B', category: 'civilization', centroid: [100, 0] },
+        geometry: { type: 'Point', coordinates: [100, 0] },
+      },
+      {
+        // Sits exactly on the polyline midpoint — perpendicular distance 0.
+        type: 'Feature', id: 'on_route_oasis',
+        properties: { id: 'on_route_oasis', name: 'On-Route Oasis', category: 'oasis' },
+        geometry: { type: 'Point', coordinates: [50, 0] },
+      },
+      {
+        type: 'Feature', id: 'route1',
+        properties: { id: 'route1', name: 'Route 1', category: 'trade_route', endpoints: ['civA', 'civB'] },
+        geometry: { type: 'LineString', coordinates: [[0, 0], [50, 0], [100, 0]] },
+      },
+    ])
+    const g = buildGraph(synth as never)
+    const route = findRoute(g, 'civA', 'civB')
+    expect(route).not.toBeNull()
+    const oasisInRoute = route!.nodes.some(n => n.id === 'on_route_oasis')
+    expect(oasisInRoute, 'oasis on the polyline should appear as a midpoint').toBe(true)
+  })
+
+  it('does not snap an off-route oasis (perpendicular distance > threshold)', () => {
+    const synth = buildSynth([
+      {
+        type: 'Feature', id: 'civA',
+        properties: { id: 'civA', name: 'Civ A', category: 'civilization', centroid: [0, 0] },
+        geometry: { type: 'Point', coordinates: [0, 0] },
+      },
+      {
+        type: 'Feature', id: 'civB',
+        properties: { id: 'civB', name: 'Civ B', category: 'civilization', centroid: [100, 0] },
+        geometry: { type: 'Point', coordinates: [100, 0] },
+      },
+      {
+        // 50 svg perpendicular — well above SNAP_THRESHOLD_SVG (10).
+        type: 'Feature', id: 'off_route_oasis',
+        properties: { id: 'off_route_oasis', name: 'Off-Route Oasis', category: 'oasis' },
+        geometry: { type: 'Point', coordinates: [50, 50] },
+      },
+      {
+        type: 'Feature', id: 'route1',
+        properties: { id: 'route1', name: 'Route 1', category: 'trade_route', endpoints: ['civA', 'civB'] },
+        geometry: { type: 'LineString', coordinates: [[0, 0], [100, 0]] },
+      },
+    ])
+    const g = buildGraph(synth as never)
+    const route = findRoute(g, 'civA', 'civB')
+    expect(route).not.toBeNull()
+    const oasisInRoute = route!.nodes.some(n => n.id === 'off_route_oasis')
+    expect(oasisInRoute, 'oasis 50 svg off the polyline should not be a midpoint').toBe(false)
+  })
+
+  it('real geojson: ngaru_bon → ndjadi threads through Copper-for-Steel-Road waypoints', () => {
+    // Copper-for-Steel Road has two authored on-route oases (Tin Mashraq
+    // ~10 km perp, Dzong-Tamu ~8 km perp). Both should snap and appear as
+    // midpoints on the ngaru_bon → ndjadi route.
+    const route = findRoute(graph, 'ngaru_bon', 'ndjadi')
+    expect(route, 'expected a route between ngaru_bon and ndjadi').not.toBeNull()
+    const waypoints = route!.nodes.filter(n => n.category === 'oasis' || n.category === 'port')
+    expect(
+      waypoints.length,
+      'route along Copper-for-Steel Road should include its on-route oases as midpoints'
+    ).toBeGreaterThanOrEqual(1)
+  })
+})
+
 describe('party config affects travel time', () => {
   it('fast pace yields strictly fewer estimated days than slow pace', () => {
     const civs = nodes.filter(n => n.category === 'civilization')
