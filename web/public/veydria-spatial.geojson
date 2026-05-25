@@ -153916,10 +153916,10 @@
         ]
       },
       "properties": {
-        "id": "tavakh_mehar",
-        "name": "Tavakh-Mehar",
+        "id": "tavakh_rubat",
+        "name": "Tavakh-Rubāṭ",
         "category": "port",
-        "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + mehar 'midway'. The Midway Exchange",
+        "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + rubāṭ (Irrah 'fortified caravanserai/relay-station'). The Exchange Caravanserai",
         "real_world_parallel": "Mediterranean entrepôt analog",
         "location": "Mid-route sandbar between Basin north shore and Oravan archipelago",
         "function": "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor",
@@ -153937,9 +153937,10 @@
         ]
       },
       "properties": {
-        "id": "kelata_vau",
-        "name": "Kelata-Vau",
+        "id": "kelata_tamu",
+        "name": "Kelata-Tamu",
         "category": "oasis",
+        "etymology": "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The Sweetwater of Kelata",
         "description": "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera.",
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
@@ -153955,9 +153956,10 @@
         ]
       },
       "properties": {
-        "id": "veyd_sahar",
-        "name": "Veyd Sahar",
+        "id": "wasi_pukya",
+        "name": "Wasi-Pukya",
         "category": "oasis",
+        "etymology": "Qollari: wasi 'house, lineage' + pukya 'spring'. The Spring-House",
         "description": "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing.",
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
@@ -153976,6 +153978,7 @@
         "id": "dzong_kha",
         "name": "Dzong-Kha",
         "category": "oasis",
+        "etymology": "Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The Fortress of the Blood-Oath",
         "description": "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord.",
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
@@ -153991,9 +153994,10 @@
         ]
       },
       "properties": {
-        "id": "kha_sahar",
-        "name": "Kha-Sahar",
+        "id": "tepet_apu",
+        "name": "Tepet-Apu",
         "category": "oasis",
+        "etymology": "Cross-cultural: Kheshkai tepet 'mountain' + Qollari apu 'lord/mountain'. The Mountain-of-Mountains — the two mountain peoples name the truce site each in their own register",
         "description": "Mixed-clan waystation on the Breath-of-Cloud descent. Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari oath.",
         "marker-color": "#4a9a3a",
         "marker-symbol": "garden"
