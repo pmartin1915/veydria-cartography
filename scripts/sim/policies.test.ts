@@ -114,12 +114,15 @@ describe('policies: risk-averse', () => {
 })
 
 describe('policies: human-like', () => {
-  it('turns back when route is long and both supplies far short', () => {
+  it('turns back in early half when route is long and both supplies far short', () => {
     const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 }) /* 20-day route */
-    const state = initJourneyState({
+    let state = initJourneyState({
       route, season: 'summer', mode: 'direct',
       supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 }, /* dead-on-arrival */
     })
+    /* halfway-guard requires dayNum >= 1 (no day-0 turn-back without
+     * any observed travel). dayNum=1 of a 20-day route is well in the early half. */
+    state = { ...state, dayNum: 1 }
     expect(humanLike(state)).toEqual({ kind: 'turn-back' })
   })
 
@@ -142,5 +145,35 @@ describe('policies: human-like', () => {
     })
     /* Day 1 of a 5-day route with abundant supply → continue. */
     expect(humanLike(state).kind).toBe('continue')
+  })
+
+  it('does NOT turn back when a mid-route oasis rescues low water', () => {
+    /* 10-day route on a single trade-route polyline; mark node 2 as 'oasis'
+     * and provide resupplyTierFor so the engine populates resupplyByDay. */
+    const route = makeRoute({ edgeDays: Array(10).fill(1), totalKm: 250 })
+    route.nodes[2] = { ...route.nodes[2], category: 'oasis' }
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 12, waterPerPerson: 2 }, /* low water, plenty rations */
+      resupplyTierFor: (cat) => cat === 'oasis' ? 'water' : 'none',
+    })
+    state = { ...state, dayNum: 1 } /* past halfway-guard floor; still in early half */
+    /* Pre-fix (naive scalar): water dies in ~2 days vs 9 to go → turn-back.
+     * Post-fix (resupply-aware): the day-2 oasis restores water to startingWater,
+     * so the run survives → policy must not turn back. */
+    expect(humanLike(state).kind).not.toBe('turn-back')
+  })
+
+  it('does NOT turn back past halfway even with critical shortage (sunk-cost guard)', () => {
+    /* 10-day route, past midpoint, both supplies near zero. Pre-change would
+     * turn back; new logic keeps going (or rations) because returning costs
+     * the same supplies as pressing on. */
+    const route = makeRoute({ edgeDays: Array(10).fill(1), totalKm: 250 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 8, waterPerPerson: 8 },
+    })
+    state = { ...state, dayNum: 6, rationsLeft: 1, waterLeft: 1 }
+    expect(humanLike(state).kind).not.toBe('turn-back')
   })
 })

@@ -15,6 +15,8 @@
  */
 
 import type { JourneyState, Action } from '../../web/src/utils/journey-days'
+import { applyDailyBurn, classifyAridity } from '../../web/src/utils/journey-supply'
+import type { ResupplyTier } from '../../web/src/utils/journey-supply'
 
 export type PolicyName = 'naive' | 'greedy-speed' | 'risk-averse' | 'human-like'
 
@@ -76,6 +78,35 @@ function daysToArrival(state: JourneyState): number {
   return state.totalDays - state.dayNum
 }
 
+/* Forward-walk shortfall estimator. Walks remaining days assuming a
+ * `{kind:'continue'}` action each day and applies the engine's actual
+ * burn + resupply semantics via `applyDailyBurn` + `classifyAridity`,
+ * so the prediction never diverges from what nextDay() will do. Returns
+ * the first journey-day index at which each supply hits zero, or null
+ * if it survives to arrival. Resupply tiers from `state.resupplyByDay`
+ * are honoured — an oasis or full-tier camp mid-route correctly
+ * rescues a low supply, matching engine behaviour (BURN then RESTORE).
+ * Continue-only by design: answers "if I just keep walking normally,
+ * do I survive?", which is the cleanest question to gate turn-back on. */
+function estimateShortfallDay(state: JourneyState): { rations: number | null; water: number | null } {
+  let r = state.rationsLeft
+  let w = state.waterLeft
+  let firstR: number | null = null
+  let firstW: number | null = null
+  for (let d = state.dayNum + 1; d <= state.totalDays; d++) {
+    const edgesInDay = state.edgesByDay.get(d) ?? []
+    const aridity = classifyAridity(edgesInDay, state.biomeForEdge)
+    const tier: ResupplyTier = state.resupplyByDay.get(d) ?? 'none'
+    const burn = applyDailyBurn(r, w, state.supplyConstants, state.party, state.season, aridity, tier)
+    r = burn.rationsLeft
+    w = burn.waterLeft
+    if (firstR === null && r <= 0) firstR = d
+    if (firstW === null && w <= 0) firstW = d
+    if (firstR !== null && firstW !== null) break
+  }
+  return { rations: firstR, water: firstW }
+}
+
 /* ─── Baseline policies ─── */
 
 export const naive: Policy = () => ({ kind: 'continue' })
@@ -115,24 +146,45 @@ export const riskAverse: Policy = (state) => {
 }
 
 /**
- * Human-like — balanced GM-style play. Turn back if outcome is clearly
- * unrecoverable. Force-march the final 2 days to close out. Otherwise continue.
+ * Human-like — balanced GM-style play. Resupply-aware: walks the
+ * remaining route applying the engine's burn + restore semantics, then
+ * decides based on whether supplies actually survive (not on a naive
+ * burn-rate divide). Turns back only on truly unrecoverable runs in the
+ * first half of the trip — past halfway, returning costs the same
+ * supplies as pressing on, so turn-back is strictly worse EV.
+ * Force-marches the final 2 days when supplies are healthy. Rations
+ * whenever the forward walk says either supply would run out.
+ *
+ * Calibration history (see HANDOFF 2026-05-26): the prior threshold
+ * (`remaining < toArrival − 2 && toArrival > 5`) drove a 38.8%
+ * turn-back rate and 8.6% completion — worse than naive — because it
+ * ignored mid-route resupply waypoints. Resupply-aware estimate +
+ * sunk-cost halfway guard fixes both.
  */
 export const humanLike: Policy = (state) => {
   const toArrival = daysToArrival(state)
-  const remaining = estimateDaysLeft(state.rationsLeft, state.waterLeft, state)
-  /* Unrecoverable shortfall: would run out > 2 days early on either. */
-  if (remaining.rations < toArrival - 2 && remaining.water < toArrival - 2 && toArrival > 5) {
+  const shortfall = estimateShortfallDay(state)
+  const supplySurvives = shortfall.rations === null && shortfall.water === null
+
+  /* Turn back only if BOTH supplies would hit zero AND we're still in
+   * the first half of the trip (with at least one observed day so the
+   * decision isn't made before any travel). Past halfway, returning
+   * costs the same supplies as continuing — turn-back is strictly worse. */
+  const halfwayGuard = state.dayNum >= 1 && state.dayNum < state.totalDays / 2
+  if (halfwayGuard && shortfall.rations !== null && shortfall.water !== null) {
     return { kind: 'turn-back' }
   }
-  /* Sprint the last 2 days if supplies allow. */
-  if (toArrival <= 2 && remaining.rations >= toArrival && remaining.water >= toArrival) {
+
+  /* Sprint the last 2 days if the continue-only walk shows comfortable survival. */
+  if (toArrival <= 2 && supplySurvives) {
     return { kind: 'force-march' }
   }
-  /* Conserve when supplies look just barely enough. */
-  if (remaining.rations < toArrival + 1 || remaining.water < toArrival + 1) {
+
+  /* Conserve when the forward walk shows either supply running out. */
+  if (!supplySurvives) {
     return { kind: 'ration' }
   }
+
   return { kind: 'continue' }
 }
 
