@@ -64,6 +64,127 @@ const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
 export type ResupplyTier = 'full' | 'rations' | 'water' | 'none'
 
 /**
+ * Per-day burn modifiers an action can impose (Phase 3 sim policies).
+ *
+ * `continue` => {1, 1}, `rest` => {0, 1}, `force-march` => {2, 1.5},
+ * `ration` => {0.5, 1}. Apply on top of the encumbrance/season/forced-march
+ * multipliers already baked into the party/supply config so a party-level
+ * forcedMarch *plus* a per-day force-march action would (deliberately) compound.
+ */
+export interface BurnModifiers {
+  rations: number
+  water: number
+}
+
+const DEFAULT_BURN_MODS: BurnModifiers = { rations: 1, water: 1 }
+
+/**
+ * Tier-1 supply constants derived once from a SupplyConfig. Held in JourneyState
+ * so `applyDailyBurn` can restore to start+packBonus without re-deriving every day.
+ */
+export interface SupplyConstants {
+  encMult: number
+  packBonus: number
+  startingRations: number
+  startingWater: number
+}
+
+export function deriveSupplyConstants(supply: SupplyConfig): SupplyConstants {
+  const encMult = supply.encumbrance === 'light' ? 0.9
+    : supply.encumbrance === 'heavy' ? 1.1
+    : 1.0
+  const packBonus = supply.packAnimals === 'few' ? 3
+    : supply.packAnimals === 'caravan' ? 7
+    : 0
+  return {
+    encMult,
+    packBonus,
+    startingRations: supply.rationsPerPerson + packBonus,
+    startingWater: supply.waterPerPerson + packBonus,
+  }
+}
+
+export type AridityLevel = 'none' | 'semi-arid' | 'arid'
+
+export function classifyAridity(
+  edgesInDay: { edge: JourneyEdge; portion: number }[],
+  biomeForEdge?: (edge: JourneyEdge) => string | undefined,
+): AridityLevel {
+  if (!biomeForEdge) return 'none'
+  let semi: boolean = false
+  for (const { edge } of edgesInDay) {
+    const b = biomeForEdge(edge)
+    if (b && ARID_BIOMES.has(b)) return 'arid'
+    if (b && SEMI_ARID_BIOMES.has(b)) semi = true
+  }
+  return semi ? 'semi-arid' : 'none'
+}
+
+export interface BurnResult {
+  rationsLeft: number
+  waterLeft: number
+  rationsBurnedToday: number
+  waterBurnedToday: number
+  warning?: SupplyWarning
+}
+
+/**
+ * Apply one day's supply burn + optional resupply tier. Pure: takes
+ * pre-day rations/water and returns post-day values. Both
+ * `computeSupplyTimeline` (UI path) and `nextDay` (Phase 3 sim path) call
+ * this so the burn formula has exactly one home.
+ *
+ * Restore happens AFTER burn but BEFORE warning computation, so a day that
+ * camps at a civilization with rations-out from in-transit burn does not
+ * flag rations-out for that day.
+ */
+export function applyDailyBurn(
+  rationsLeft: number,
+  waterLeft: number,
+  constants: SupplyConstants,
+  party: PartyConfig,
+  season: Season | undefined,
+  aridity: AridityLevel,
+  resupplyTier: ResupplyTier,
+  actionMods: BurnModifiers = DEFAULT_BURN_MODS,
+): BurnResult {
+  const { encMult, startingRations, startingWater } = constants
+  const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
+  const forcedWaterMult = party.forcedMarch ? 1.5 : 1.0
+  const seasonRationsMult = season === 'winter' ? 1.25 : season === 'summer' ? 0.95 : 1.0
+  const biomeWaterMult = aridity === 'arid' ? 1.5 : aridity === 'semi-arid' ? 1.25 : 1.0
+
+  const rationsBurned = encMult * forcedRationsMult * seasonRationsMult * actionMods.rations
+  const waterBurned = encMult * forcedWaterMult * biomeWaterMult * actionMods.water
+
+  let nextRations = rationsLeft - rationsBurned
+  let nextWater = waterLeft - waterBurned
+
+  if (resupplyTier === 'full') {
+    nextRations = startingRations
+    nextWater = startingWater
+  } else if (resupplyTier === 'water') {
+    nextWater = startingWater
+  } else if (resupplyTier === 'rations') {
+    nextRations = startingRations
+  }
+
+  let warning: SupplyWarning | undefined
+  if (nextWater <= 0) warning = 'water-out'
+  else if (nextRations <= 0) warning = 'rations-out'
+  else if (nextWater <= 2) warning = 'water-low'
+  else if (nextRations <= 2) warning = 'rations-low'
+
+  return {
+    rationsLeft: nextRations,
+    waterLeft: nextWater,
+    rationsBurnedToday: rationsBurned,
+    waterBurnedToday: waterBurned,
+    warning,
+  }
+}
+
+/**
  * Compute the per-day supply timeline.
  *
  * @param days          Output of `buildDailyBreakdown` (1-indexed by dayNum)
@@ -92,67 +213,25 @@ export function computeSupplyTimeline(
 ): SupplyDay[] {
   if (days.length === 0) return []
 
-  const encMult = supply.encumbrance === 'light' ? 0.9
-    : supply.encumbrance === 'heavy' ? 1.1
-    : 1.0
-
-  const packBonus = supply.packAnimals === 'few' ? 3
-    : supply.packAnimals === 'caravan' ? 7
-    : 0
-
-  const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
-  const forcedWaterMult = party.forcedMarch ? 1.5 : 1.0
-  const seasonRationsMult = season === 'winter' ? 1.25 : season === 'summer' ? 0.95 : 1.0
-
-  const startingRations = supply.rationsPerPerson + packBonus
-  const startingWater = supply.waterPerPerson + packBonus
-  let rationsLeft = startingRations
-  let waterLeft = startingWater
+  const constants = deriveSupplyConstants(supply)
+  let rationsLeft = constants.startingRations
+  let waterLeft = constants.startingWater
 
   const out: SupplyDay[] = []
 
   for (const day of days) {
-    let arid = false
-    let semiArid = false
-    if (biomeForEdge) {
-      for (const { edge } of day.edgesTraversed) {
-        const b = biomeForEdge(edge)
-        if (b && ARID_BIOMES.has(b)) { arid = true; break }
-        if (b && SEMI_ARID_BIOMES.has(b)) semiArid = true
-      }
-    }
-
-    const biomeWaterMult = arid ? 1.5 : semiArid ? 1.25 : 1.0
-
-    const rationsBurned = encMult * forcedRationsMult * seasonRationsMult
-    const waterBurned = encMult * forcedWaterMult * biomeWaterMult
-
-    rationsLeft -= rationsBurned
-    waterLeft -= waterBurned
-
+    const aridity = classifyAridity(day.edgesTraversed, biomeForEdge)
     const tier = resupplyAtDay?.(day.dayNum) ?? 'none'
-    if (tier === 'full') {
-      rationsLeft = startingRations
-      waterLeft = startingWater
-    } else if (tier === 'water') {
-      waterLeft = startingWater
-    } else if (tier === 'rations') {
-      rationsLeft = startingRations
-    }
-
-    let warning: SupplyWarning | undefined
-    if (waterLeft <= 0) warning = 'water-out'
-    else if (rationsLeft <= 0) warning = 'rations-out'
-    else if (waterLeft <= 2) warning = 'water-low'
-    else if (rationsLeft <= 2) warning = 'rations-low'
-
+    const result = applyDailyBurn(rationsLeft, waterLeft, constants, party, season, aridity, tier)
+    rationsLeft = result.rationsLeft
+    waterLeft = result.waterLeft
     out.push({
       dayNum: day.dayNum,
-      rationsLeft,
-      waterLeft,
-      rationsBurnedToday: rationsBurned,
-      waterBurnedToday: waterBurned,
-      warning,
+      rationsLeft: result.rationsLeft,
+      waterLeft: result.waterLeft,
+      rationsBurnedToday: result.rationsBurnedToday,
+      waterBurnedToday: result.waterBurnedToday,
+      warning: result.warning,
     })
   }
 

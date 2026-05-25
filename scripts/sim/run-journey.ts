@@ -19,8 +19,15 @@ import {
   type Season,
   type RouteMode,
 } from '../../web/src/utils/journey-graph'
-import { buildDailyBreakdown } from '../../web/src/utils/journey-days'
-import { computeSupplyTimeline, type ResupplyTier, type SupplyConfig } from '../../web/src/utils/journey-supply'
+import {
+  buildDailyBreakdown,
+  initJourneyState,
+  nextDay,
+  type Action,
+  type JourneyDay,
+} from '../../web/src/utils/journey-days'
+import { computeSupplyTimeline, type ResupplyTier, type SupplyConfig, type SupplyDay } from '../../web/src/utils/journey-supply'
+import { getPolicy, type PolicyName } from './policies'
 
 export type Graph = ReturnType<typeof buildGraph>
 
@@ -50,6 +57,8 @@ export interface JourneyInputs {
   depart?: number
   party: PartyConfig
   supply: SupplyConfig
+  /** Phase 3: optional decision policy. Omit for legacy continue-only path. */
+  policy?: PolicyName
 }
 
 export interface Trace {
@@ -78,11 +87,15 @@ export interface Trace {
     rationsBurnedToday: number
     waterBurnedToday: number
     supplyWarning?: string
+    /** Phase 3: action the policy picked for this day. Absent on legacy traces. */
+    action?: Action['kind']
+    /** Phase 3: cumulative exhaustion at end of day. Absent if zero. */
+    exhaustionLevel?: number
   }>
   summary: {
     daysCount: number
     completed: boolean
-    finishedReason: 'arrived' | 'water-out' | 'rations-out' | 'no-route'
+    finishedReason: 'arrived' | 'water-out' | 'rations-out' | 'no-route' | 'aborted'
     encountersTotal: number
     encountersByType: Record<string, number>
     encountersBySeverity: Record<string, number>
@@ -93,6 +106,8 @@ export interface Trace {
     waterOutDay: number | null
     finalRationsLeft: number
     finalWaterLeft: number
+    /** Phase 3: which policy drove this run, if any. */
+    policy?: PolicyName
   }
 }
 
@@ -131,45 +146,92 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
         waterOutDay: null,
         finalRationsLeft: inputs.supply.rationsPerPerson,
         finalWaterLeft: inputs.supply.waterPerPerson,
+        ...(inputs.policy ? { policy: inputs.policy } : {}),
       },
     }
   }
 
-  const days = buildDailyBreakdown(
-    route,
-    inputs.season,
-    inputs.mode,
-    undefined, // edgeBiomes — arid penalty stays unapplied (matches Phase 1)
-    inputs.depart,
-    inputs.party,
-  )
+  let days: JourneyDay[]
+  let supply: SupplyDay[]
+  let perDayActions: Array<Action['kind']> | undefined
+  let outcomeOverride: 'aborted' | undefined
 
-  // Name → resupply tier. Built from route.nodes (the path's traversed nodes
-  // carry id/name/category). Matches journey-days' "Camp at <name>" format.
-  const nameToTier = new Map<string, ResupplyTier>()
-  for (const n of route.nodes) {
-    nameToTier.set(n.name, getResupplyTier(n.category))
-  }
-  const dayToTier = new Map<number, ResupplyTier>()
-  for (const d of days) {
-    // journey-days emits "Camp at <name>" for mid-route stops at a node, and
-    // "Arrive at <name>" for the destination on the final day. Both qualify.
-    let name: string | undefined
-    if (d.campLabel.startsWith('Camp at ')) name = d.campLabel.slice('Camp at '.length)
-    else if (d.campLabel.startsWith('Arrive at ')) name = d.campLabel.slice('Arrive at '.length)
-    if (!name) continue
-    const tier = nameToTier.get(name)
-    if (tier && tier !== 'none') dayToTier.set(d.dayNum, tier)
-  }
+  if (inputs.policy) {
+    /* Phase 3: policy-driven stepping. nextDay tracks supply directly so the
+     * post-loop computeSupplyTimeline is unnecessary; we still emit days[]
+     * and supply[] arrays with the same shape so the trace mapping is uniform. */
+    const policyFn = getPolicy(inputs.policy)
+    let state = initJourneyState({
+      route,
+      season: inputs.season,
+      mode: inputs.mode,
+      edgeBiomes: undefined,
+      departureDayOfYear: inputs.depart,
+      party: inputs.party,
+      supply: inputs.supply,
+      graph,
+      endId: inputs.to,
+      resupplyTierFor: getResupplyTier,
+    })
+    const collected: JourneyDay[] = []
+    const collectedSupply: SupplyDay[] = []
+    const actions: Array<Action['kind']> = []
+    /* Hard iteration cap: at most 2× the route's day budget to bound runaway
+     * loops (rest can in principle extend a journey indefinitely). */
+    const safetyMax = (state.totalDays + 1) * 2
+    let safety = safetyMax
+    while (!state.finished && safety-- > 0) {
+      const action = policyFn(state)
+      const step = nextDay(state, action)
+      if (!step.advanced) {
+        /* Reroute returned no-route, or finished mid-flight. Break to avoid spin. */
+        break
+      }
+      if (step.day) collected.push(step.day)
+      if (step.supply) collectedSupply.push(step.supply)
+      /* Reroute emits no day but should still be recorded in the action log. */
+      if (action.kind === 'reroute') actions.push('reroute')
+      else if (step.day) actions.push(action.kind)
+      state = step.state
+    }
+    days = collected
+    supply = collectedSupply
+    perDayActions = actions
+    if (state.outcome === 'aborted') outcomeOverride = 'aborted'
+  } else {
+    /* Legacy continue-only path. Byte-identical output to pre-Phase-3. */
+    days = buildDailyBreakdown(
+      route,
+      inputs.season,
+      inputs.mode,
+      undefined,
+      inputs.depart,
+      inputs.party,
+    )
 
-  const supply = computeSupplyTimeline(
-    days,
-    inputs.party,
-    inputs.supply,
-    undefined,
-    inputs.season,
-    dayToTier.size > 0 ? (dayNum) => dayToTier.get(dayNum) ?? 'none' : undefined,
-  )
+    const nameToTier = new Map<string, ResupplyTier>()
+    for (const n of route.nodes) {
+      nameToTier.set(n.name, getResupplyTier(n.category))
+    }
+    const dayToTier = new Map<number, ResupplyTier>()
+    for (const d of days) {
+      let name: string | undefined
+      if (d.campLabel.startsWith('Camp at ')) name = d.campLabel.slice('Camp at '.length)
+      else if (d.campLabel.startsWith('Arrive at ')) name = d.campLabel.slice('Arrive at '.length)
+      if (!name) continue
+      const tier = nameToTier.get(name)
+      if (tier && tier !== 'none') dayToTier.set(d.dayNum, tier)
+    }
+
+    supply = computeSupplyTimeline(
+      days,
+      inputs.party,
+      inputs.supply,
+      undefined,
+      inputs.season,
+      dayToTier.size > 0 ? (dayNum) => dayToTier.get(dayNum) ?? 'none' : undefined,
+    )
+  }
 
   const firstWith = (pred: (s: (typeof supply)[number]) => boolean): number | null => {
     const hit = supply.find(pred)
@@ -184,11 +246,13 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
   const ranOutBeforeArrival =
     (rationsOutDay !== null && rationsOutDay < arrivalDay) ||
     (waterOutDay !== null && waterOutDay < arrivalDay)
-  const finishedReason: Trace['summary']['finishedReason'] = ranOutBeforeArrival
-    ? (waterOutDay !== null && (rationsOutDay === null || waterOutDay <= rationsOutDay)
-        ? 'water-out'
-        : 'rations-out')
-    : 'arrived'
+  const finishedReason: Trace['summary']['finishedReason'] = outcomeOverride === 'aborted'
+    ? 'aborted'
+    : ranOutBeforeArrival
+      ? (waterOutDay !== null && (rationsOutDay === null || waterOutDay <= rationsOutDay)
+          ? 'water-out'
+          : 'rations-out')
+      : 'arrived'
 
   const encountersByType: Record<string, number> = {}
   const encountersBySeverity: Record<string, number> = {}
@@ -203,26 +267,37 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
     calendarEventsTotal += d.calendarEvents?.length ?? 0
   }
 
-  const tracedDays: Trace['days'] = days.map((d, i) => ({
-    dayNum: d.dayNum,
-    kmCovered: round(d.kmCovered),
-    startLabel: d.startLabel,
-    campLabel: d.campLabel,
-    weather: d.weather,
-    notable: d.notable,
-    encounters: d.encounters.map(e => ({
-      type: e.type,
-      severity: e.severity,
-      biome: e.biome,
-      beat: e.beat,
-    })),
-    calendarEvents: (d.calendarEvents ?? []).map(c => ({ name: c.name, civ: (c as { civ?: string }).civ })),
-    rationsLeft: round(supply[i].rationsLeft),
-    waterLeft: round(supply[i].waterLeft),
-    rationsBurnedToday: round(supply[i].rationsBurnedToday),
-    waterBurnedToday: round(supply[i].waterBurnedToday),
-    supplyWarning: supply[i].warning,
-  }))
+  const tracedDays: Trace['days'] = days.map((d, i) => {
+    const row: Trace['days'][number] = {
+      dayNum: d.dayNum,
+      kmCovered: round(d.kmCovered),
+      startLabel: d.startLabel,
+      campLabel: d.campLabel,
+      weather: d.weather,
+      notable: d.notable,
+      encounters: d.encounters.map(e => ({
+        type: e.type,
+        severity: e.severity,
+        biome: e.biome,
+        beat: e.beat,
+      })),
+      calendarEvents: (d.calendarEvents ?? []).map(c => ({ name: c.name, civ: (c as { civ?: string }).civ })),
+      rationsLeft: round(supply[i].rationsLeft),
+      waterLeft: round(supply[i].waterLeft),
+      rationsBurnedToday: round(supply[i].rationsBurnedToday),
+      waterBurnedToday: round(supply[i].waterBurnedToday),
+      supplyWarning: supply[i].warning,
+    }
+    /* Phase 3: only add policy fields when a policy ran. Preserves
+     * byte-identical legacy traces. */
+    if (perDayActions) {
+      row.action = perDayActions[i]
+    }
+    if (d.exhaustionLevel !== undefined && d.exhaustionLevel > 0) {
+      row.exhaustionLevel = d.exhaustionLevel
+    }
+    return row
+  })
 
   return {
     inputs,
@@ -251,6 +326,7 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
       waterOutDay,
       finalRationsLeft: round(supply[supply.length - 1]?.rationsLeft ?? inputs.supply.rationsPerPerson),
       finalWaterLeft: round(supply[supply.length - 1]?.waterLeft ?? inputs.supply.waterPerPerson),
+      ...(inputs.policy ? { policy: inputs.policy } : {}),
     },
   }
 }

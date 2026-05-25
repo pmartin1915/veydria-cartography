@@ -11,10 +11,12 @@
  */
 
 import type { JourneyRoute, JourneyEdge, JourneyNode, Season, RouteMode, PartyConfig } from './journey-graph'
-import { isDefaultParty } from './journey-graph'
+import { DEFAULT_PARTY, isDefaultParty, findRouteWithFallback } from './journey-graph'
 import { generateEncounters, type Encounter } from './encounters'
 import type { CalendarEvent } from './calendar'
 import { getEventsForDay } from './calendar'
+import type { SupplyConfig, ResupplyTier, SupplyConstants, SupplyDay, SupplyWarning } from './journey-supply'
+import { DEFAULT_SUPPLY, deriveSupplyConstants, applyDailyBurn, classifyAridity, type AridityLevel, type BurnModifiers } from './journey-supply'
 
 export interface JourneyDay {
   dayNum: number
@@ -29,6 +31,8 @@ export interface JourneyDay {
   calendarEvents?: CalendarEvent[]
   /** Absolute day-of-year (1–365) if departure date is set. */
   dayOfYear?: number
+  /** Cumulative exhaustion (Phase 3). Omitted when zero to keep legacy traces byte-stable. */
+  exhaustionLevel?: number
 }
 
 /* ─── Hash + RNG (kept self-contained so this module is independent) ─── */
@@ -190,23 +194,110 @@ function notableForDay(
   return out
 }
 
-/* ─── Public API ─── */
+/* ─── Phase 3 sim API: state + per-day stepping ─── */
 
-export function buildDailyBreakdown(
-  route: JourneyRoute,
-  season?: Season,
-  mode: RouteMode = 'direct',
-  edgeBiomes?: (string | undefined)[],
-  departureDayOfYear?: number,
+export type Action =
+  | { kind: 'continue' }
+  | { kind: 'rest' }
+  | { kind: 'force-march' }
+  | { kind: 'ration' }
+  | { kind: 'reroute'; mode: RouteMode }
+  | { kind: 'turn-back' }
+
+/**
+ * Terminal state of a journey. `in-progress` is the running state;
+ * `arrived` fires on the final day; `aborted` fires when a policy
+ * picks `turn-back`. Supply outages do NOT terminate by themselves —
+ * the day's `supply.warning` surfaces them; callers (sim summarizer)
+ * decide what to do.
+ */
+export type DayOutcome =
+  | 'in-progress'
+  | 'arrived'
+  | 'aborted'
+
+export interface JourneyState {
+  /* Inputs (the harness never mutates these directly; reroute swaps route + cache.) */
+  route: JourneyRoute
+  season?: Season
+  mode: RouteMode
+  party: PartyConfig
+  supply: SupplyConfig
+  edgeBiomes?: (string | undefined)[]
+  departureDayOfYear?: number
+
+  /* For reroute support (sim harness only; buildDailyBreakdown omits) */
+  graph?: import('./journey-graph').Graph
+  endId?: string
+  resupplyTierFor?: (category: string) => ResupplyTier
+  biomeForEdge?: (edge: JourneyEdge) => string | undefined
+
+  /* Derived per-route (recomputed on reroute). dayOffset shifts the
+   * new route's day numbering so the journey-level dayNum continues. */
+  totalDays: number
+  dayOffset: number
+  routeSeed: number
+  encountersByDay: Map<number, Encounter[]>
+  edgesByDay: Map<number, { edge: JourneyEdge; portion: number }[]>
+  resupplyByDay: Map<number, ResupplyTier>
+  routeCivs: Set<string>
+  supplyConstants: SupplyConstants
+
+  /* Mutable per step */
+  dayNum: number /* last completed day (0 at init) */
+  rationsLeft: number
+  waterLeft: number
+  exhaustionLevel: number
+  finished: boolean
+  outcome: DayOutcome
+}
+
+export interface JourneyStateOpts {
+  route: JourneyRoute
+  season?: Season
+  mode?: RouteMode
+  edgeBiomes?: (string | undefined)[]
+  departureDayOfYear?: number
   party?: PartyConfig
-): JourneyDay[] {
-  if (!route.edges.length || route.estimatedDays <= 0) return []
+  supply?: SupplyConfig
+  /* Sim-harness-only fields. UI path leaves them undefined. */
+  graph?: import('./journey-graph').Graph
+  endId?: string
+  resupplyTierFor?: (category: string) => ResupplyTier
+  biomeForEdge?: (edge: JourneyEdge) => string | undefined
+}
 
-  const totalDays = Math.max(1, Math.ceil(route.estimatedDays))
+export interface NextDayResult {
+  state: JourneyState
+  day: JourneyDay | null
+  supply: SupplyDay | null
+  outcome: DayOutcome
+  /** True if this call advanced state at all (false when called on a finished state). */
+  advanced: boolean
+}
+
+/* Internal: bucket encounters + edges + resupply tiers for a given route
+ * segment starting at `dayOffset`. Pure — does not look at JourneyState. */
+function bucketRoute(
+  route: JourneyRoute,
+  season: Season | undefined,
+  mode: RouteMode,
+  edgeBiomes: (string | undefined)[] | undefined,
+  dayOffset: number,
+  resupplyTierFor?: (category: string) => ResupplyTier,
+): {
+  totalDays: number
+  routeSeed: number
+  encountersByDay: Map<number, Encounter[]>
+  edgesByDay: Map<number, { edge: JourneyEdge; portion: number }[]>
+  resupplyByDay: Map<number, ResupplyTier>
+  routeCivs: Set<string>
+} {
+  const totalDaysLocal = Math.max(1, Math.ceil(route.estimatedDays))
   const sig = route.nodes.map(n => n.id).join('|') + '#' + (season || 'any') + '#' + mode + '#days'
-  const seed = djb2Hash(sig)
+  const routeSeed = djb2Hash(sig)
 
-  // Pre-bucket encounters by their edge's midpoint day.
+  /* Pre-bucket encounters by their edge's midpoint day, offset to journey day. */
   const allEncounters = generateEncounters(route, season, mode, edgeBiomes)
   const encountersByDay: Map<number, Encounter[]> = new Map()
   let acc = 0
@@ -217,12 +308,13 @@ export function buildDailyBreakdown(
     acc += ed
   }
   for (const enc of allEncounters) {
-    const day = Math.min(totalDays, edgeMidpointDay[enc.segmentIdx] || 1)
+    const localDay = Math.min(totalDaysLocal, edgeMidpointDay[enc.segmentIdx] || 1)
+    const day = dayOffset + localDay
     if (!encountersByDay.has(day)) encountersByDay.set(day, [])
     encountersByDay.get(day)!.push(enc)
   }
 
-  // Pre-compute edges traversed within each day (including partial edges).
+  /* Pre-compute edges traversed within each day (incl. partial edges). */
   const edgesByDay: Map<number, { edge: JourneyEdge; portion: number }[]> = new Map()
   acc = 0
   for (let i = 0; i < route.edges.length; i++) {
@@ -232,10 +324,9 @@ export function buildDailyBreakdown(
     acc = endT
 
     const firstDay = Math.max(1, Math.ceil(startT + 0.001))
-    const lastDay = Math.min(totalDays, Math.ceil(endT))
+    const lastDay = Math.min(totalDaysLocal, Math.ceil(endT))
     if (firstDay > lastDay) {
-      // Edge entirely in a single day; assign to its midpoint day
-      const d = edgeMidpointDay[i]
+      const d = dayOffset + edgeMidpointDay[i]
       const list = edgesByDay.get(d) || []
       list.push({ edge: route.edges[i], portion: 1 })
       edgesByDay.set(d, list)
@@ -247,70 +338,355 @@ export function buildDailyBreakdown(
       const overlap = Math.min(endT, dayEndT) - Math.max(startT, dayStartT)
       const portion = ed > 0 ? clampPortion(overlap / ed) : 0
       if (portion <= 0) continue
-      const list = edgesByDay.get(d) || []
+      const journeyDay = dayOffset + d
+      const list = edgesByDay.get(journeyDay) || []
       list.push({ edge: route.edges[i], portion })
-      edgesByDay.set(d, list)
+      edgesByDay.set(journeyDay, list)
     }
   }
 
-  // Extract civilizations the route passes through for calendar filtering.
-  // GeoJSON uses snake_case (e.g. ngaru_bon); calendar uses kebab-case (ngaru-bon).
+  /* Civilizations on the route (kebab-case) for calendar filtering. */
   const routeCivs = new Set(
     route.nodes
       .map(n => n.civ?.replace(/_/g, '-'))
       .filter((c): c is string => !!c)
   )
 
-  const totalKm = route.totalKm
-  const days: JourneyDay[] = []
-  for (let d = 1; d <= totalDays; d++) {
-    const rng = mulberry32(seed + d * 7919)
-    const edgesInDay = edgesByDay.get(d) || []
-    const kmCovered = edgesInDay.reduce((sum, { edge, portion }) => {
-      const edgeKm = route.totalDistanceSvg > 0
-        ? totalKm * (edge.distanceSvg / route.totalDistanceSvg)
-        : 0
-      return sum + edgeKm * portion
-    }, 0)
-
-    // Start label = where dawn finds the party. For day 1 this is the
-    // origin node; otherwise it's wherever the prior day ended.
-    let startLabel: string
-    if (d === 1) {
-      startLabel = `Depart ${route.nodes[0].name}`
-    } else {
-      const prevPos = locateAtDay(route.edges, d - 1)
-      startLabel = `Resume from ${campLabelAt(route.nodes, route.edges, prevPos.edgeIdx, prevPos.t).replace(/^Camp (?:at|on the) /, '')}`
+  /* Pre-bucket resupply tiers from route nodes. Mirrors run-journey.ts's
+   * inline pass — kept here so any caller that supplies `resupplyTierFor`
+   * gets the same camp-day → tier mapping as the sim trace. */
+  const resupplyByDay: Map<number, ResupplyTier> = new Map()
+  if (resupplyTierFor) {
+    /* Cumulative day-equivalents for each route node (0 for start, sum of
+     * preceding segmentDays for subsequent nodes). The node's "camp day"
+     * is the day after the party arrives, ceil()-ed. */
+    let accNodeDay = 0
+    for (let i = 0; i < route.nodes.length; i++) {
+      const node = route.nodes[i]
+      const tier = resupplyTierFor(node.category)
+      if (tier !== 'none') {
+        const localDay = i === 0 ? 0 : Math.min(totalDaysLocal, Math.ceil(accNodeDay))
+        if (localDay >= 1) {
+          const journeyDay = dayOffset + localDay
+          /* Higher-tier wins if two nodes camp on the same day. */
+          const existing = resupplyByDay.get(journeyDay)
+          if (!existing || tierRank(tier) > tierRank(existing)) {
+            resupplyByDay.set(journeyDay, tier)
+          }
+        }
+      }
+      if (i < route.edges.length) {
+        accNodeDay += route.edges[i].segmentDays || 0
+      }
     }
-
-    let campLabel: string
-    if (d === totalDays) {
-      campLabel = `Arrive at ${route.nodes[route.nodes.length - 1].name}`
-    } else {
-      const pos = locateAtDay(route.edges, d)
-      campLabel = campLabelAt(route.nodes, route.edges, pos.edgeIdx, pos.t)
-    }
-
-    const day: JourneyDay = {
-      dayNum: d,
-      kmCovered,
-      startLabel,
-      campLabel,
-      weather: rollWeather(rng, season),
-      encounters: encountersByDay.get(d) || [],
-      notable: notableForDay(edgesInDay, d, totalDays, party),
-      edgesTraversed: edgesInDay,
-    }
-    if (departureDayOfYear !== undefined && departureDayOfYear > 0) {
-      const doy = ((departureDayOfYear - 1 + d - 1) % 365) + 1
-      day.dayOfYear = doy
-      const events = getEventsForDay(doy)
-      day.calendarEvents = routeCivs.size > 0
-        ? events.filter(ev => ev.civilization === 'all' || routeCivs.has(ev.civilization))
-        : events
-    }
-    days.push(day)
   }
 
+  return {
+    totalDays: dayOffset + totalDaysLocal,
+    routeSeed,
+    encountersByDay,
+    edgesByDay,
+    resupplyByDay,
+    routeCivs,
+  }
+}
+
+function tierRank(t: ResupplyTier): number {
+  if (t === 'full') return 3
+  if (t === 'rations') return 2
+  if (t === 'water') return 1
+  return 0
+}
+
+/**
+ * Initialise a stepping state for a route. UI callers (buildDailyBreakdown)
+ * pass only narrative inputs; the sim harness also passes graph/endId/
+ * resupplyTierFor/biomeForEdge so reroute + supply tracking work.
+ */
+export function initJourneyState(opts: JourneyStateOpts): JourneyState {
+  const route = opts.route
+  const season = opts.season
+  const mode = opts.mode ?? 'direct'
+  const party = opts.party ?? DEFAULT_PARTY
+  const supply = opts.supply ?? DEFAULT_SUPPLY
+  const constants = deriveSupplyConstants(supply)
+
+  /* Empty/zero-day route: produce a finished state that emits nothing. */
+  if (!route.edges.length || route.estimatedDays <= 0) {
+    return {
+      route, season, mode, party, supply,
+      edgeBiomes: opts.edgeBiomes,
+      departureDayOfYear: opts.departureDayOfYear,
+      graph: opts.graph,
+      endId: opts.endId,
+      resupplyTierFor: opts.resupplyTierFor,
+      biomeForEdge: opts.biomeForEdge,
+      totalDays: 0,
+      dayOffset: 0,
+      routeSeed: 0,
+      encountersByDay: new Map(),
+      edgesByDay: new Map(),
+      resupplyByDay: new Map(),
+      routeCivs: new Set(),
+      supplyConstants: constants,
+      dayNum: 0,
+      rationsLeft: constants.startingRations,
+      waterLeft: constants.startingWater,
+      exhaustionLevel: 0,
+      finished: true,
+      outcome: 'arrived',
+    }
+  }
+
+  const buckets = bucketRoute(route, season, mode, opts.edgeBiomes, 0, opts.resupplyTierFor)
+
+  return {
+    route, season, mode, party, supply,
+    edgeBiomes: opts.edgeBiomes,
+    departureDayOfYear: opts.departureDayOfYear,
+    graph: opts.graph,
+    endId: opts.endId,
+    resupplyTierFor: opts.resupplyTierFor,
+    biomeForEdge: opts.biomeForEdge,
+    totalDays: buckets.totalDays,
+    dayOffset: 0,
+    routeSeed: buckets.routeSeed,
+    encountersByDay: buckets.encountersByDay,
+    edgesByDay: buckets.edgesByDay,
+    resupplyByDay: buckets.resupplyByDay,
+    routeCivs: buckets.routeCivs,
+    supplyConstants: constants,
+    dayNum: 0,
+    rationsLeft: constants.startingRations,
+    waterLeft: constants.startingWater,
+    exhaustionLevel: 0,
+    finished: false,
+    outcome: 'in-progress',
+  }
+}
+
+function burnModsForAction(action: Action): BurnModifiers {
+  if (action.kind === 'rest') return { rations: 0, water: 1 }
+  if (action.kind === 'force-march') return { rations: 2, water: 1.5 }
+  if (action.kind === 'ration') return { rations: 0.5, water: 1 }
+  /* continue, reroute, turn-back use default 1×1. */
+  return { rations: 1, water: 1 }
+}
+
+function exhaustionDeltaForAction(action: Action): number {
+  if (action.kind === 'rest') return -1
+  if (action.kind === 'force-march') return 1
+  if (action.kind === 'ration') return 1
+  return 0
+}
+
+/**
+ * Step one day forward. Pure: returns a fresh state, never mutates the input.
+ *
+ * Actions:
+ * - `continue`   — normal day, default burn.
+ * - `rest`       — zero km, zero ration burn, full water burn, exhaustion −1.
+ * - `force-march` — ×2 ration / ×1.5 water burn this day, exhaustion +1.
+ * - `ration`     — half ration burn this day, exhaustion +1.
+ * - `reroute`    — snap to current node, re-route via findRouteWithFallback,
+ *                  recompute buckets for the new route segment. Requires
+ *                  `state.graph` + `state.endId` (sim harness only).
+ * - `turn-back`  — applies a normal day's burn (party is hiking back) and
+ *                  marks the journey aborted.
+ */
+export function nextDay(state: JourneyState, action: Action): NextDayResult {
+  if (state.finished) {
+    return { state, day: null, supply: null, outcome: state.outcome, advanced: false }
+  }
+
+  /* Reroute is a state-only operation: swap route + buckets, emit no day. */
+  if (action.kind === 'reroute') {
+    if (!state.graph || !state.endId) {
+      throw new Error('nextDay({kind:"reroute"}) requires state.graph and state.endId')
+    }
+    /* Snap current position to the closer endpoint of the current edge. */
+    const pos = locateAtDay(state.route.edges, state.dayNum - state.dayOffset)
+    const snapIdx = pos.t >= 0.5 ? pos.edgeIdx + 1 : pos.edgeIdx
+    const snapNode = state.route.nodes[snapIdx]
+    if (!snapNode) {
+      throw new Error('nextDay reroute: could not snap to a route node')
+    }
+    const { route: newRoute } = findRouteWithFallback(
+      state.graph, snapNode.id, state.endId, state.season, action.mode, state.party,
+    )
+    if (!newRoute) {
+      /* No alternate route — caller should treat as no-op or follow up with
+       * a turn-back. Returning advanced=false signals the action did nothing. */
+      return { state, day: null, supply: null, outcome: state.outcome, advanced: false }
+    }
+    const newBuckets = bucketRoute(newRoute, state.season, action.mode, state.edgeBiomes, state.dayNum, state.resupplyTierFor)
+    const nextState: JourneyState = {
+      ...state,
+      route: newRoute,
+      mode: action.mode,
+      totalDays: newBuckets.totalDays,
+      dayOffset: state.dayNum,
+      routeSeed: newBuckets.routeSeed,
+      encountersByDay: newBuckets.encountersByDay,
+      edgesByDay: newBuckets.edgesByDay,
+      resupplyByDay: newBuckets.resupplyByDay,
+      routeCivs: newBuckets.routeCivs,
+    }
+    return { state: nextState, day: null, supply: null, outcome: 'in-progress', advanced: true }
+  }
+
+  const d = state.dayNum + 1
+  const localDay = d - state.dayOffset
+  const isFinalDay = d === state.totalDays
+  const rng = mulberry32(state.routeSeed + localDay * 7919)
+  const baseEdgesInDay = state.edgesByDay.get(d) || []
+  const edgesInDay = action.kind === 'rest' ? [] : baseEdgesInDay
+
+  const totalKm = state.route.totalKm
+  const totalDistanceSvg = state.route.totalDistanceSvg
+  const kmCovered = edgesInDay.reduce((sum, { edge, portion }) => {
+    const edgeKm = totalDistanceSvg > 0 ? totalKm * (edge.distanceSvg / totalDistanceSvg) : 0
+    return sum + edgeKm * portion
+  }, 0)
+
+  let startLabel: string
+  if (d === 1) {
+    startLabel = `Depart ${state.route.nodes[0].name}`
+  } else {
+    const prevLocal = (d - 1) - state.dayOffset
+    /* If the prior day was a rest (dayOffset boundary), prevLocal could be 0;
+     * that maps to "at the origin of the current route segment". */
+    if (prevLocal <= 0) {
+      startLabel = `Resume from ${state.route.nodes[0].name}`
+    } else {
+      const prevPos = locateAtDay(state.route.edges, prevLocal)
+      startLabel = `Resume from ${campLabelAt(state.route.nodes, state.route.edges, prevPos.edgeIdx, prevPos.t).replace(/^Camp (?:at|on the) /, '')}`
+    }
+  }
+
+  let campLabel: string
+  if (action.kind === 'rest') {
+    /* Rest in place: campLabel matches the prior day's camp (or origin on day 1). */
+    if (d === 1) {
+      campLabel = `Camp at ${state.route.nodes[0].name}`
+    } else {
+      const prevLocal = (d - 1) - state.dayOffset
+      if (prevLocal <= 0) {
+        campLabel = `Camp at ${state.route.nodes[0].name}`
+      } else {
+        const prevPos = locateAtDay(state.route.edges, prevLocal)
+        campLabel = campLabelAt(state.route.nodes, state.route.edges, prevPos.edgeIdx, prevPos.t)
+      }
+    }
+  } else if (isFinalDay) {
+    campLabel = `Arrive at ${state.route.nodes[state.route.nodes.length - 1].name}`
+  } else {
+    const pos = locateAtDay(state.route.edges, localDay)
+    campLabel = campLabelAt(state.route.nodes, state.route.edges, pos.edgeIdx, pos.t)
+  }
+
+  const day: JourneyDay = {
+    dayNum: d,
+    kmCovered,
+    startLabel,
+    campLabel,
+    weather: rollWeather(rng, state.season),
+    encounters: action.kind === 'rest' ? [] : (state.encountersByDay.get(d) || []),
+    notable: action.kind === 'rest'
+      ? ['Rest day — no progress.']
+      : notableForDay(edgesInDay, d, state.totalDays, state.party),
+    edgesTraversed: edgesInDay,
+  }
+  if (action.kind === 'force-march' && !state.party.forcedMarch) {
+    /* Engine party.forcedMarch already emits its own notable; only add
+     * the per-day version when the party isn't on a baseline forced march. */
+    day.notable.push('Force-march — supplies burn faster, exhaustion +1.')
+  }
+  if (action.kind === 'ration') {
+    day.notable.push('Half-ration — supplies stretch, exhaustion +1.')
+  }
+  if (state.departureDayOfYear !== undefined && state.departureDayOfYear > 0) {
+    const doy = ((state.departureDayOfYear - 1 + d - 1) % 365) + 1
+    day.dayOfYear = doy
+    const events = getEventsForDay(doy)
+    day.calendarEvents = state.routeCivs.size > 0
+      ? events.filter(ev => ev.civilization === 'all' || state.routeCivs.has(ev.civilization))
+      : events
+  }
+
+  /* Supply burn. Resupply tier applies to camp on day d (state-derived). */
+  const aridity: AridityLevel = classifyAridity(edgesInDay, state.biomeForEdge)
+  const resupplyTier: ResupplyTier = state.resupplyByDay.get(d) ?? 'none'
+  const burn = applyDailyBurn(
+    state.rationsLeft, state.waterLeft, state.supplyConstants,
+    state.party, state.season, aridity, resupplyTier, burnModsForAction(action),
+  )
+
+  /* Exhaustion. Floor at 0; rest never drops below 0. */
+  const exhaustion = Math.max(0, state.exhaustionLevel + exhaustionDeltaForAction(action))
+  if (exhaustion > 0) day.exhaustionLevel = exhaustion
+
+  /* Terminal state. Supply outage doesn't auto-terminate (legacy parity);
+   * callers read supply.warning to react. Only turn-back / arrival do. */
+  let outcome: DayOutcome = 'in-progress'
+  let finished = false
+  if (action.kind === 'turn-back') {
+    outcome = 'aborted'
+    finished = true
+    day.notable.push(`Turn back on day ${d}.`)
+  } else if (isFinalDay) {
+    outcome = 'arrived'
+    finished = true
+  }
+
+  const supply: SupplyDay = {
+    dayNum: d,
+    rationsLeft: burn.rationsLeft,
+    waterLeft: burn.waterLeft,
+    rationsBurnedToday: burn.rationsBurnedToday,
+    waterBurnedToday: burn.waterBurnedToday,
+    warning: burn.warning,
+  }
+
+  const nextState: JourneyState = {
+    ...state,
+    dayNum: d,
+    rationsLeft: burn.rationsLeft,
+    waterLeft: burn.waterLeft,
+    exhaustionLevel: exhaustion,
+    finished,
+    outcome,
+  }
+
+  return { state: nextState, day, supply, outcome, advanced: true }
+}
+
+/* ─── Public API (UI-facing) ─── */
+
+export function buildDailyBreakdown(
+  route: JourneyRoute,
+  season?: Season,
+  mode: RouteMode = 'direct',
+  edgeBiomes?: (string | undefined)[],
+  departureDayOfYear?: number,
+  party?: PartyConfig
+): JourneyDay[] {
+  let state = initJourneyState({ route, season, mode, edgeBiomes, departureDayOfYear, party })
+  const days: JourneyDay[] = []
+  /* Hard cap on iterations as a defensive floor — totalDays is the natural bound. */
+  let safety = state.totalDays + 1
+  while (!state.finished && safety-- > 0) {
+    const result = nextDay(state, { kind: 'continue' })
+    if (result.day) days.push(result.day)
+    state = result.state
+  }
   return days
 }
+
+/* Allow other modules to reach the encounter-bucketing logic when needed
+ * (kept as named exports rather than a sub-module to keep this file the
+ * single home for journey-step semantics). */
+export { generateEncounters }
+/* Re-export aridity/burn types so sim consumers can import everything
+ * step-related from one place. */
+export type { AridityLevel } from './journey-supply'

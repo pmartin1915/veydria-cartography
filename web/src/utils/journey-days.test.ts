@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { buildDailyBreakdown } from './journey-days'
+import { buildDailyBreakdown, initJourneyState, nextDay } from './journey-days'
 import { DEFAULT_PARTY, type JourneyRoute, type PartyConfig } from './journey-graph'
+import { DEFAULT_SUPPLY } from './journey-supply'
 
 function makeRoute(opts: { edgeDays: number[]; totalKm: number }): JourneyRoute {
   const nodes = opts.edgeDays.map((_, i) => ({
@@ -217,5 +218,141 @@ describe('journey-days: bucketing', () => {
     const days = buildDailyBreakdown(route)
     expect(days[0].notable.some(n => n.startsWith('Party:'))).toBe(false)
     expect(days[0].notable.some(n => n.toLowerCase().includes('forced march'))).toBe(false)
+  })
+})
+
+describe('journey-days: nextDay parity with buildDailyBreakdown', () => {
+  /* The parity gate: initJourneyState + loop nextDay({continue}) must produce
+   * the same JourneyDay[] that buildDailyBreakdown produces. This is what
+   * keeps the UI (which calls buildDailyBreakdown) and the sim (which steps
+   * via nextDay) on the same engine. */
+
+  function sameJourneyDays(a: ReturnType<typeof buildDailyBreakdown>, b: ReturnType<typeof buildDailyBreakdown>): void {
+    expect(b.length).toBe(a.length)
+    for (let i = 0; i < a.length; i++) {
+      expect(b[i].dayNum).toBe(a[i].dayNum)
+      expect(b[i].kmCovered).toBeCloseTo(a[i].kmCovered, 10)
+      expect(b[i].startLabel).toBe(a[i].startLabel)
+      expect(b[i].campLabel).toBe(a[i].campLabel)
+      expect(b[i].weather).toBe(a[i].weather)
+      expect(b[i].notable).toEqual(a[i].notable)
+      expect(b[i].encounters).toEqual(a[i].encounters)
+      expect(b[i].dayOfYear).toBe(a[i].dayOfYear)
+      expect(b[i].calendarEvents).toEqual(a[i].calendarEvents)
+      expect(b[i].edgesTraversed.length).toBe(a[i].edgesTraversed.length)
+    }
+  }
+
+  function runContinueLoop(route: JourneyRoute, season: 'spring' | 'summer' | 'autumn' | 'winter' | undefined, departureDayOfYear?: number, party?: PartyConfig) {
+    let state = initJourneyState({ route, season, mode: 'direct', departureDayOfYear, party })
+    const out = []
+    let safety = state.totalDays + 5
+    while (!state.finished && safety-- > 0) {
+      const result = nextDay(state, { kind: 'continue' })
+      if (result.day) out.push(result.day)
+      state = result.state
+    }
+    return out
+  }
+
+  it('matches buildDailyBreakdown for a 5-day continue-only run', () => {
+    const route = makeRoute({ edgeDays: [2, 2, 1], totalKm: 125 })
+    const a = buildDailyBreakdown(route, 'summer', 'direct')
+    const b = runContinueLoop(route, 'summer')
+    sameJourneyDays(a, b)
+  })
+
+  it('matches across all four seasons', () => {
+    const route = makeRoute({ edgeDays: [1.5, 2.0, 0.5, 1.0], totalKm: 200 })
+    for (const season of ['spring', 'summer', 'autumn', 'winter'] as const) {
+      const a = buildDailyBreakdown(route, season, 'direct')
+      const b = runContinueLoop(route, season)
+      sameJourneyDays(a, b)
+    }
+  })
+
+  it('matches with departureDayOfYear set (calendar wrap)', () => {
+    const route = makeRoute({ edgeDays: [2, 1, 1], totalKm: 100 })
+    const a = buildDailyBreakdown(route, 'winter', 'direct', undefined, 364)
+    const b = runContinueLoop(route, 'winter', 364)
+    sameJourneyDays(a, b)
+  })
+
+  it('matches with forced-march party config', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const party: PartyConfig = { ...DEFAULT_PARTY, forcedMarch: true }
+    const a = buildDailyBreakdown(route, 'spring', 'direct', undefined, undefined, party)
+    const b = runContinueLoop(route, 'spring', undefined, party)
+    sameJourneyDays(a, b)
+  })
+})
+
+describe('journey-days: nextDay action mechanics', () => {
+  it('rest emits zero km, no encounters, exhaustion stays floored at 0', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'summer', mode: 'direct' })
+    const step = nextDay(state, { kind: 'rest' })
+    expect(step.day).not.toBeNull()
+    expect(step.day!.kmCovered).toBe(0)
+    expect(step.day!.encounters).toEqual([])
+    expect(step.day!.edgesTraversed).toEqual([])
+    expect(step.day!.notable.some(n => /rest/i.test(n))).toBe(true)
+    /* Initial exhaustion is 0; rest -1 floored at 0 → no exhaustionLevel field. */
+    expect(step.day!.exhaustionLevel).toBeUndefined()
+    expect(step.state.exhaustionLevel).toBe(0)
+  })
+
+  it('force-march doubles ration burn and bumps exhaustion', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct', supply: DEFAULT_SUPPLY })
+    const continueStep = nextDay(state, { kind: 'continue' })
+    const forceState = initJourneyState({ route, season: 'spring', mode: 'direct', supply: DEFAULT_SUPPLY })
+    const forceStep = nextDay(forceState, { kind: 'force-march' })
+    expect(forceStep.supply!.rationsBurnedToday).toBeCloseTo(continueStep.supply!.rationsBurnedToday * 2, 5)
+    expect(forceStep.supply!.waterBurnedToday).toBeCloseTo(continueStep.supply!.waterBurnedToday * 1.5, 5)
+    expect(forceStep.state.exhaustionLevel).toBe(1)
+    expect(forceStep.day!.exhaustionLevel).toBe(1)
+  })
+
+  it('ration halves the ration burn and bumps exhaustion', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct', supply: DEFAULT_SUPPLY })
+    const continueStep = nextDay(state, { kind: 'continue' })
+    const rationState = initJourneyState({ route, season: 'spring', mode: 'direct', supply: DEFAULT_SUPPLY })
+    const rationStep = nextDay(rationState, { kind: 'ration' })
+    expect(rationStep.supply!.rationsBurnedToday).toBeCloseTo(continueStep.supply!.rationsBurnedToday * 0.5, 5)
+    expect(rationStep.state.exhaustionLevel).toBe(1)
+  })
+
+  it('rest decrements exhaustion (after a force-march bumps it up)', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct' })
+    state = nextDay(state, { kind: 'force-march' }).state
+    expect(state.exhaustionLevel).toBe(1)
+    state = nextDay(state, { kind: 'rest' }).state
+    expect(state.exhaustionLevel).toBe(0)
+    /* Another rest should stay at 0 (floor). */
+    state = nextDay(state, { kind: 'rest' }).state
+    expect(state.exhaustionLevel).toBe(0)
+  })
+
+  it('turn-back finishes the journey with outcome="aborted"', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct' })
+    state = nextDay(state, { kind: 'continue' }).state
+    const aborted = nextDay(state, { kind: 'turn-back' })
+    expect(aborted.state.finished).toBe(true)
+    expect(aborted.outcome).toBe('aborted')
+    expect(aborted.day!.notable.some(n => /turn back/i.test(n))).toBe(true)
+    /* Further steps are no-ops. */
+    const noop = nextDay(aborted.state, { kind: 'continue' })
+    expect(noop.advanced).toBe(false)
+    expect(noop.day).toBeNull()
+  })
+
+  it('reroute requires graph + endId; throws otherwise', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const state = initJourneyState({ route, season: 'spring', mode: 'direct' })
+    expect(() => nextDay(state, { kind: 'reroute', mode: 'safest' })).toThrow(/graph and state\.endId/)
   })
 })

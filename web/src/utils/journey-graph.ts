@@ -103,7 +103,7 @@ export interface JourneyRoute {
   seasonalWarnings: string[]
 }
 
-interface Graph {
+export interface Graph {
   nodes: Map<string, JourneyNode>
   adj: Map<string, Array<{ to: string; edge: JourneyEdge }>>
 }

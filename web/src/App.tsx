@@ -44,21 +44,8 @@ import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
 import CompendiumPanel from './components/CompendiumPanel'
 
-// GeoJSON types
-export interface GeoJSONFeature {
-  type: 'Feature'
-  geometry: {
-    type: string
-    coordinates: number[] | number[][] | number[][][]
-  }
-  properties: Record<string, unknown>
-}
-
-export interface GeoJSONCollection {
-  type: 'FeatureCollection'
-  metadata?: Record<string, unknown>
-  features: GeoJSONFeature[]
-}
+import type { GeoJSONFeature, GeoJSONCollection } from './types/geojson'
+export type { GeoJSONFeature, GeoJSONCollection }
 
 // Lore index types
 export interface LoreEntry {
