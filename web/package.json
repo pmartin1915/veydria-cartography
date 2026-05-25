@@ -11,6 +11,7 @@
     "generate:calendar": "python ../generator/export/calendar_ts.py",
     "sim:journey": "vite-node ../scripts/sim/sim-journey.ts --",
     "sim:batch": "vite-node ../scripts/sim/sim-batch.ts --",
+    "sim:policy-report": "vite-node ../scripts/sim/sim-policy-report.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"

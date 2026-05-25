@@ -20,7 +20,7 @@ import {
   runJourney,
   type JourneyInputs,
 } from './run-journey'
-import type { PolicyName } from './policies'
+import { POLICIES_LIST, type PolicyName } from './policies'
 import type { PartyConfig, Season, RouteMode } from '../../web/src/utils/journey-graph'
 import type { SupplyConfig } from '../../web/src/utils/journey-supply'
 
@@ -37,7 +37,6 @@ const MOUNTS = ['foot', 'mounted'] as const
 const SIZES = ['small', 'medium', 'large'] as const
 const ENCUMB = ['light', 'normal', 'heavy'] as const
 const PACKS = ['none', 'few', 'caravan'] as const
-const POLICIES_LIST = ['naive', 'greedy-speed', 'risk-averse', 'human-like'] as const
 
 function parseArgs(argv: string[]): CliArgs {
   const get = (k: string): string | undefined => {

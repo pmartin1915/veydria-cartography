@@ -143,6 +143,8 @@ export const POLICIES: Record<PolicyName, Policy> = {
   'human-like': humanLike,
 }
 
+export const POLICIES_LIST: PolicyName[] = Object.keys(POLICIES) as PolicyName[]
+
 export function getPolicy(name: PolicyName): Policy {
   const p = POLICIES[name]
   if (!p) throw new Error(`Unknown policy: ${name}`)
