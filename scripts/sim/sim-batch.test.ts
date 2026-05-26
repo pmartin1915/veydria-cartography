@@ -169,10 +169,10 @@ describe('sim-batch: toRow', () => {
     expect(row.action_continue).toBe('') /* No trace → empty mix even on policy path. */
   })
 
-  it('produces one row per (point, policy) when called for each of the 4 policies', () => {
+  it('produces one row per (point, policy) when called for each policy', () => {
     const point = makeGridPoint()
     const rows = POLICIES_LIST.map(p => toRow(point, makeTrace({ policy: p }), '', p))
-    expect(rows).toHaveLength(4)
+    expect(rows).toHaveLength(POLICIES_LIST.length)
     expect(rows.map(r => r.policy).sort()).toEqual([...POLICIES_LIST].sort())
   })
 })

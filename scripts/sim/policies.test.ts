@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { naive, greedySpeed, riskAverse, humanLike, getPolicy } from './policies'
+import { naive, greedySpeed, riskAverse, humanLike, adaptive, getPolicy } from './policies'
 import { initJourneyState } from '../../web/src/utils/journey-days'
 import { DEFAULT_PARTY, type JourneyRoute } from '../../web/src/utils/journey-graph'
 import { DEFAULT_SUPPLY } from '../../web/src/utils/journey-supply'
@@ -37,13 +37,14 @@ describe('policies: registry + determinism', () => {
     expect(getPolicy('greedy-speed')).toBe(greedySpeed)
     expect(getPolicy('risk-averse')).toBe(riskAverse)
     expect(getPolicy('human-like')).toBe(humanLike)
+    expect(getPolicy('adaptive')).toBe(adaptive)
   })
 
   it('each policy is deterministic — same state produces same action', () => {
     const route = makeRoute({ edgeDays: [2, 2, 1], totalKm: 125 })
     const stateA = initJourneyState({ route, season: 'summer', mode: 'direct', supply: DEFAULT_SUPPLY })
     const stateB = initJourneyState({ route, season: 'summer', mode: 'direct', supply: DEFAULT_SUPPLY })
-    for (const p of [naive, greedySpeed, riskAverse, humanLike]) {
+    for (const p of [naive, greedySpeed, riskAverse, humanLike, adaptive]) {
       expect(p(stateA)).toEqual(p(stateB))
     }
   })
@@ -175,5 +176,107 @@ describe('policies: human-like', () => {
     })
     state = { ...state, dayNum: 6, rationsLeft: 1, waterLeft: 1 }
     expect(humanLike(state).kind).not.toBe('turn-back')
+  })
+})
+
+describe('policies: adaptive', () => {
+  /* A minimal Graph stub — the policy only checks non-nullness of state.graph
+   * and state.endId. The engine never reaches into them from the policy path
+   * (it only does so during nextDay({kind:'reroute',...}), which we don't call
+   * here — we only assert what the policy returns). */
+  const STUB_GRAPH = { nodes: new Map(), adj: new Map() }
+
+  it('triggers reroute when both supplies forecast shortfall early-mid journey with graph available', () => {
+    const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 },
+    })
+    state = { ...state, dayNum: 1, graph: STUB_GRAPH, endId: 'n20' }
+    expect(adaptive(state)).toEqual({ kind: 'reroute', mode: 'fastest' })
+  })
+
+  it('does NOT reroute when graph is missing (UI-shape state); delegates to humanLike', () => {
+    const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 },
+    })
+    state = { ...state, dayNum: 1 }
+    expect(adaptive(state).kind).not.toBe('reroute')
+    expect(adaptive(state)).toEqual(humanLike(state))
+  })
+
+  it('does NOT reroute on day 0 (no observed travel yet)', () => {
+    const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 })
+    const state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 },
+    })
+    /* dayNum=0 is the initial state — no day has been observed.
+     * Adaptive defers to humanLike, whose own halfwayGuard also blocks
+     * turn-back on dayNum=0, so the action will be 'ration' (or whatever
+     * humanLike picks for fresh-start tight supplies). */
+    const stateWithGraph = { ...state, graph: STUB_GRAPH, endId: 'n20' }
+    expect(adaptive(stateWithGraph).kind).not.toBe('reroute')
+    expect(adaptive(stateWithGraph)).toEqual(humanLike(stateWithGraph))
+  })
+
+  it('does NOT reroute past midpoint (runway guard)', () => {
+    const route = makeRoute({ edgeDays: Array(10).fill(1), totalKm: 250 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 8, waterPerPerson: 8 },
+    })
+    state = {
+      ...state,
+      dayNum: 7, /* past midpoint of 10-day route */
+      rationsLeft: 1, waterLeft: 1,
+      graph: STUB_GRAPH, endId: 'n10',
+    }
+    expect(adaptive(state).kind).not.toBe('reroute')
+    expect(adaptive(state)).toEqual(humanLike(state))
+  })
+
+  it('does NOT reroute when already on fastest mode (no useful target)', () => {
+    const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'fastest',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 },
+    })
+    state = { ...state, dayNum: 1, graph: STUB_GRAPH, endId: 'n20' }
+    expect(adaptive(state).kind).not.toBe('reroute')
+    expect(adaptive(state)).toEqual(humanLike(state))
+  })
+
+  it('does NOT reroute twice (dayOffset > 0 latch)', () => {
+    const route = makeRoute({ edgeDays: Array(20).fill(1), totalKm: 500 })
+    let state = initJourneyState({
+      route, season: 'summer', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 3, waterPerPerson: 2 },
+    })
+    state = {
+      ...state,
+      dayNum: 2,
+      dayOffset: 1, /* simulate that a reroute already happened this run */
+      graph: STUB_GRAPH, endId: 'n20',
+    }
+    expect(adaptive(state).kind).not.toBe('reroute')
+    expect(adaptive(state)).toEqual(humanLike(state))
+  })
+
+  it('does NOT reroute when only one supply forecasts shortfall', () => {
+    /* Abundant rations, very tight water → only water predicts shortfall.
+     * Adaptive's predicate requires BOTH — falls through to humanLike (which
+     * will ration since !supplySurvives but rations.shortfall===null suppresses
+     * the turn-back). */
+    const route = makeRoute({ edgeDays: Array(15).fill(1), totalKm: 375 })
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      supply: { ...DEFAULT_SUPPLY, rationsPerPerson: 30, waterPerPerson: 3 },
+    })
+    state = { ...state, dayNum: 1, graph: STUB_GRAPH, endId: 'n15' }
+    expect(adaptive(state).kind).not.toBe('reroute')
+    expect(adaptive(state)).toEqual(humanLike(state))
   })
 })

@@ -7,18 +7,21 @@
  * reproducible. They read state.rationsLeft / waterLeft / exhaustionLevel
  * / route geometry, and pick from the Action grammar.
  *
- * The four baselines establish a survival-rate spread:
+ * The five baselines establish a survival-rate spread:
  *   naive        → no agency, always continue. Establishes the floor.
  *   greedy-speed → force-march by default, ration if supplies look tight.
  *   risk-averse  → rest on severe weather, ration on low supplies, turn back if both critical.
  *   human-like   → balanced: turn back if unrecoverable, sprint the last leg, otherwise continue.
+ *   adaptive     → human-like + a once-per-run reroute escape hatch: when both
+ *                  supplies forecast shortfall early-mid journey on a non-fastest
+ *                  route, switch to 'fastest' and continue from there.
  */
 
 import type { JourneyState, Action } from '../../web/src/utils/journey-days'
 import { applyDailyBurn, classifyAridity } from '../../web/src/utils/journey-supply'
 import type { ResupplyTier } from '../../web/src/utils/journey-supply'
 
-export type PolicyName = 'naive' | 'greedy-speed' | 'risk-averse' | 'human-like'
+export type PolicyName = 'naive' | 'greedy-speed' | 'risk-averse' | 'human-like' | 'adaptive'
 
 export type Policy = (state: JourneyState) => Action
 
@@ -188,11 +191,51 @@ export const humanLike: Policy = (state) => {
   return { kind: 'continue' }
 }
 
+/**
+ * Adaptive — human-like with a reroute escape hatch. The only policy that
+ * emits `{kind:'reroute'}`. Wraps `humanLike` so the A/B against it cleanly
+ * isolates the value of the reroute affordance.
+ *
+ * Reroute fires once per run when ALL hold:
+ *   - state.graph + state.endId set (sim path; UI path always falls through)
+ *   - state.dayNum >= 1 (at least one observed day completed — matches
+ *     humanLike's halfwayGuard floor; otherwise humanLike's turn-back at
+ *     dayNum=1 would always preempt before the reroute branch can fire)
+ *   - state.dayOffset === 0 (latch: once we've rerouted, dayOffset > 0 and
+ *     this branch is permanently off — no oscillation, no double-switch)
+ *   - state.mode !== 'fastest' (no useful target to switch to)
+ *   - state.dayNum < state.totalDays / 2 (early enough for runway)
+ *   - both estimateShortfallDay supplies predict an outage (continue-only
+ *     walk says we don't survive on this route)
+ *
+ * Target mode is `'fastest'` — supply shortfall is the trigger, so minimising
+ * remaining days is the right counter-move. Other targets (safest/cheapest)
+ * address different motivations and are left for future variants.
+ */
+export const adaptive: Policy = (state) => {
+  const canConsiderReroute =
+    state.graph != null &&
+    state.endId != null &&
+    state.dayNum >= 1 &&
+    state.dayOffset === 0 &&
+    state.mode !== 'fastest'
+
+  if (canConsiderReroute && state.dayNum < state.totalDays / 2) {
+    const shortfall = estimateShortfallDay(state)
+    if (shortfall.rations !== null && shortfall.water !== null) {
+      return { kind: 'reroute', mode: 'fastest' }
+    }
+  }
+
+  return humanLike(state)
+}
+
 export const POLICIES: Record<PolicyName, Policy> = {
   'naive': naive,
   'greedy-speed': greedySpeed,
   'risk-averse': riskAverse,
   'human-like': humanLike,
+  'adaptive': adaptive,
 }
 
 export const POLICIES_LIST: PolicyName[] = Object.keys(POLICIES) as PolicyName[]
