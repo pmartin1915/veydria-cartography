@@ -294,6 +294,10 @@ export interface ModeBreakdownRow {
   meanCivStopsOnRoute: number
   /** Phase 4: mean any-resupply-stops-on-route (full + water tier). */
   meanResupplyStopsOnRoute: number
+  /** Phase 4: mean of the longest km-stretch between full-restore nodes per
+   *  route. Probes stop spacing/cadence — large values at small civ-stop counts
+   *  indicate routes that cluster full restores near endpoints. */
+  meanMaxResupplyGapKm: number
   meanCompletion: number
   meanRegretPp: number
 }
@@ -363,12 +367,12 @@ export function computeModeBreakdown(
       out.push({
         mode, meanKm: 0, meanEncountersTotal: 0, meanModerateSevere: 0,
         encountersPer100Km: 0, meanCivStopsOnRoute: 0, meanResupplyStopsOnRoute: 0,
-        meanCompletion: 0, meanRegretPp: 0,
+        meanMaxResupplyGapKm: 0, meanCompletion: 0, meanRegretPp: 0,
       })
       continue
     }
     let kmSum = 0, encSum = 0, modSevSum = 0, compSum = 0
-    let civStopSum = 0, resupplyStopSum = 0
+    let civStopSum = 0, resupplyStopSum = 0, maxGapSum = 0
     for (const r of modeRows) {
       kmSum += Number(r.total_km || 0)
       encSum += Number(r.encounters_total || 0)
@@ -376,6 +380,7 @@ export function computeModeBreakdown(
       modSevSum += sev.moderate + sev.severe
       civStopSum += Number(r.civ_stops_on_route || 0)
       resupplyStopSum += Number(r.resupply_stops_on_route || 0)
+      maxGapSum += Number(r.max_resupply_gap_km || 0)
       if (r.completed === 'true') compSum++
     }
     const n = modeRows.length
@@ -388,6 +393,7 @@ export function computeModeBreakdown(
       encountersPer100Km: meanKm === 0 ? 0 : (encSum / n) / meanKm * 100,
       meanCivStopsOnRoute: civStopSum / n,
       meanResupplyStopsOnRoute: resupplyStopSum / n,
+      meanMaxResupplyGapKm: maxGapSum / n,
       meanCompletion: compSum / n,
       meanRegretPp: regretCount[mode] === 0 ? 0 : (regretSum[mode] / regretCount[mode]) * 100,
     })
@@ -398,7 +404,7 @@ export function computeModeBreakdown(
 export function sectionModeBreakdown(rows: Row[], modes: string[], presets: string[]): string {
   const headers = [
     'mode', 'mean km', 'encounters', 'mod+sev', 'enc / 100km',
-    'civ stops', 'any resupply', 'completion', 'regret pp',
+    'civ stops', 'any resupply', 'max gap km', 'completion', 'regret pp',
   ]
   const presetSections: string[] = []
   for (const preset of presets) {
@@ -411,6 +417,7 @@ export function sectionModeBreakdown(rows: Row[], modes: string[], presets: stri
       b.encountersPer100Km.toFixed(2),
       b.meanCivStopsOnRoute.toFixed(1),
       b.meanResupplyStopsOnRoute.toFixed(1),
+      b.meanMaxResupplyGapKm.toFixed(0),
       `${(b.meanCompletion * 100).toFixed(1)}%`,
       b.meanRegretPp.toFixed(1),
     ])
@@ -422,12 +429,17 @@ export function sectionModeBreakdown(rows: Row[], modes: string[], presets: stri
     '`mean km` is route length; `mod+sev` is the count of encounters with mechanical supply cost ' +
     '(mild are cosmetic); `enc / 100km` is encounter density per unit distance; ' +
     '`civ stops` is the count of full-restore nodes (civilization + caravanserai) on the route — ' +
-    'the recovery channel for encounter cost; `any resupply` adds ports + oases (water-only restore).\n\n' +
+    'the recovery channel for encounter cost; `any resupply` adds ports + oases (water-only restore); ' +
+    '`max gap km` is the longest km-stretch between full-restore nodes on the route — the spacing ' +
+    'companion to `civ stops` (same count can hide very different mid-route gap lengths).\n\n' +
     'If a high-regret mode has the largest `mean km` but similar `enc / 100km`, the penalty is a ' +
     '**length effect** (more rolls per trip). If it has comparable km but larger `enc / 100km` or ' +
     '`mod+sev`, the penalty is **biome / route composition** (denser danger per km). ' +
     'If it has comparable km and density but fewer `civ stops`, the penalty is **resupply asymmetry** — ' +
-    'the route geometrically bypasses the restore stops that would have absorbed the encounter cost.\n',
+    'the route geometrically bypasses the restore stops that would have absorbed the encounter cost. ' +
+    'If `civ stops` look comparable across modes but `max gap km` is much larger on the regret-heavy ' +
+    'mode, the penalty is **resupply spacing** — same stop count, but clustered near endpoints with ' +
+    'a long unsupported mid-route stretch.\n',
     presetSections.join('\n'),
   ].join('\n')
 }

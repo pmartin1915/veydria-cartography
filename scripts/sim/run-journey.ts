@@ -113,6 +113,11 @@ export interface Trace {
     /** Phase 4: count of nodes on the route with any non-'none' resupply tier
      * (adds ports + oases on top of civStopsOnRoute). */
     resupplyStopsOnRoute: number
+    /** Phase 4: longest km-stretch between full-restore nodes on the route
+     * (including route start and end as boundary closers). Probes whether
+     * direct-mode routes cluster their full stops near the endpoints, leaving
+     * a long mid-route gap that raw stop-count can't surface. */
+    maxResupplyGapKm: number
     /** Phase 3: which policy drove this run, if any. */
     policy?: PolicyName
   }
@@ -155,6 +160,7 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
         finalWaterLeft: inputs.supply.waterPerPerson,
         civStopsOnRoute: 0,
         resupplyStopsOnRoute: 0,
+        maxResupplyGapKm: 0,
         ...(inputs.policy ? { policy: inputs.policy } : {}),
       },
     }
@@ -278,11 +284,24 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
 
   let civStopsOnRoute = 0
   let resupplyStopsOnRoute = 0
-  for (const n of route.nodes) {
-    const tier = getResupplyTier(n.category)
+  /* Track the longest km-stretch between full-restore nodes. Walk in order,
+   * accumulating each inbound edge's km onto a running gap; when the
+   * destination node is full-tier, capture-and-reset. After the walk, any
+   * trailing gap (route ended without a full node) still counts. */
+  let maxResupplyGapKm = 0
+  let currentGapKm = 0
+  const kmPerSvg = route.totalDistanceSvg > 0 ? route.totalKm / route.totalDistanceSvg : 0
+  for (let i = 0; i < route.nodes.length; i++) {
+    const tier = getResupplyTier(route.nodes[i].category)
     if (tier === 'full') civStopsOnRoute++
     if (tier !== 'none') resupplyStopsOnRoute++
+    if (i > 0) currentGapKm += route.edges[i - 1].distanceSvg * kmPerSvg
+    if (tier === 'full') {
+      if (currentGapKm > maxResupplyGapKm) maxResupplyGapKm = currentGapKm
+      currentGapKm = 0
+    }
   }
+  if (currentGapKm > maxResupplyGapKm) maxResupplyGapKm = currentGapKm
 
   const tracedDays: Trace['days'] = days.map((d, i) => {
     const row: Trace['days'][number] = {
@@ -345,6 +364,7 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
       finalWaterLeft: round(supply[supply.length - 1]?.waterLeft ?? inputs.supply.waterPerPerson),
       civStopsOnRoute,
       resupplyStopsOnRoute,
+      maxResupplyGapKm: round(maxResupplyGapKm),
       ...(inputs.policy ? { policy: inputs.policy } : {}),
     },
   }

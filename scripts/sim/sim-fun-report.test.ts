@@ -186,6 +186,30 @@ describe('mode breakdown: computeModeBreakdown', () => {
     expect(fastest.encountersPer100Km).toBe(0)
     expect(fastest.meanCivStopsOnRoute).toBe(0)
     expect(fastest.meanResupplyStopsOnRoute).toBe(0)
+    expect(fastest.meanMaxResupplyGapKm).toBe(0)
+  })
+
+  it('averages max_resupply_gap_km per mode (spacing probe, independent of count)', () => {
+    /* Phase 4 follow-on: two modes with identical civ-stop count but very
+     * different max-gap — exactly the case the new column is meant to surface. */
+    const rows: Row[] = [
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '1200',
+               civ_stops_on_route: '2', max_resupply_gap_km: '800' }),
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '1200',
+               civ_stops_on_route: '2', max_resupply_gap_km: '900' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '1300',
+               civ_stops_on_route: '2', max_resupply_gap_km: '400' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '1300',
+               civ_stops_on_route: '2', max_resupply_gap_km: '500' }),
+    ]
+    const out = computeModeBreakdown(rows, ['direct', 'fastest'], 'caravan')
+    const direct = out.find(b => b.mode === 'direct')!
+    const fastest = out.find(b => b.mode === 'fastest')!
+    expect(direct.meanMaxResupplyGapKm).toBeCloseTo(850, 5)
+    expect(fastest.meanMaxResupplyGapKm).toBeCloseTo(450, 5)
+    /* civ stops are identical — the differentiation comes only from the gap. */
+    expect(direct.meanCivStopsOnRoute).toBe(2)
+    expect(fastest.meanCivStopsOnRoute).toBe(2)
   })
 
   it('averages civ_stops_on_route and resupply_stops_on_route per mode', () => {

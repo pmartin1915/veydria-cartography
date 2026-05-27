@@ -220,6 +220,10 @@ export interface SummaryRow {
   civ_stops_on_route: number
   /** Phase 4: count of any non-'none' resupply nodes on the route (adds ports + oases). */
   resupply_stops_on_route: number
+  /** Phase 4: longest km-stretch between full-restore nodes on the route.
+   * Probes stop spacing/cadence — direct routes may match other modes on
+   * count but cluster stops near endpoints, leaving long mid-route gaps. */
+  max_resupply_gap_km: number
   error: string
   /** Phase 3b: action mix counts. Empty on the legacy (no --policy) path. Sum equals days_count. */
   action_continue: number | ''
@@ -244,7 +248,7 @@ export const LEGACY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'rations_low_day', 'water_low_day', 'rations_out_day', 'water_out_day',
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
-  'civ_stops_on_route', 'resupply_stops_on_route',
+  'civ_stops_on_route', 'resupply_stops_on_route', 'max_resupply_gap_km',
   'error',
 ]
 
@@ -258,7 +262,7 @@ export const POLICY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'rations_low_day', 'water_low_day', 'rations_out_day', 'water_out_day',
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
-  'civ_stops_on_route', 'resupply_stops_on_route',
+  'civ_stops_on_route', 'resupply_stops_on_route', 'max_resupply_gap_km',
   'error',
   'action_continue', 'action_rest', 'action_force_march',
   'action_ration', 'action_turn_back', 'action_reroute',
@@ -347,6 +351,7 @@ export function toRow(
       encounters_by_severity_json: '{}',
       civ_stops_on_route: 0,
       resupply_stops_on_route: 0,
+      max_resupply_gap_km: 0,
       error: errorMessage,
       ...mix,
     }
@@ -388,6 +393,7 @@ export function toRow(
     encounters_by_severity_json: JSON.stringify(s.encountersBySeverity),
     civ_stops_on_route: s.civStopsOnRoute,
     resupply_stops_on_route: s.resupplyStopsOnRoute,
+    max_resupply_gap_km: s.maxResupplyGapKm,
     error: '',
     ...mix,
   }
