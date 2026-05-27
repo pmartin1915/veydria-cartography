@@ -12,6 +12,7 @@
     "sim:journey": "vite-node ../scripts/sim/sim-journey.ts --",
     "sim:batch": "vite-node ../scripts/sim/sim-batch.ts --",
     "sim:policy-report": "vite-node ../scripts/sim/sim-policy-report.ts --",
+    "sim:fun-report": "vite-node ../scripts/sim/sim-fun-report.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
