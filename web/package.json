@@ -13,6 +13,7 @@
     "sim:batch": "vite-node ../scripts/sim/sim-batch.ts --",
     "sim:policy-report": "vite-node ../scripts/sim/sim-policy-report.ts --",
     "sim:fun-report": "vite-node ../scripts/sim/sim-fun-report.ts --",
+    "sim:regret-model": "vite-node ../scripts/sim/sim-regret-model.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
