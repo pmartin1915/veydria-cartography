@@ -152,7 +152,19 @@ describe('pivot rate: computePivotRate', () => {
 })
 
 describe('surprise rate: computeSurprise', () => {
-  it('classifies moderate/severe encounters as surprising', () => {
+  it('attributes day N surprise to day N+1 action; skips final day', () => {
+    /* Next-day attribution: a policy chooses each day's action at day-start,
+     * before encounters roll. So a surprise on day N can only show up in the
+     * action picked at the start of day N+1.
+     *
+     * Fixture:
+     *   day 1: mild (routine)    → day 2 ration       → routineNonContinue+1
+     *   day 2: moderate (surp)   → day 3 turn-back    → surprisingNonContinue+1
+     *   day 3: severe (surp)     → day 4 continue     → surprisingDays+1 only
+     *   day 4: last day — skipped entirely (no "tomorrow")
+     *
+     * Expected: totalDays=3, surprisingDays=2, routineDays=1,
+     *           surprisingNonContinue=1, routineNonContinue=1. */
     const t = trace({
       policy: 'naive',
       days: [
@@ -164,11 +176,11 @@ describe('surprise rate: computeSurprise', () => {
     })
     const out = computeSurprise([t])
     const v = out.get('naive')!
-    expect(v.totalDays).toBe(4)
+    expect(v.totalDays).toBe(3)
     expect(v.surprisingDays).toBe(2)              /* days 2 and 3 */
-    expect(v.routineDays).toBe(2)                 /* days 1 and 4 */
-    expect(v.surprisingNonContinue).toBe(2)       /* ration + turn-back */
-    expect(v.routineNonContinue).toBe(0)
+    expect(v.routineDays).toBe(1)                 /* day 1 only (day 4 skipped) */
+    expect(v.surprisingNonContinue).toBe(1)       /* day 2 surprise → day 3 turn-back */
+    expect(v.routineNonContinue).toBe(1)          /* day 1 routine → day 2 ration */
   })
 })
 

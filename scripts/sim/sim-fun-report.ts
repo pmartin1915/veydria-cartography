@@ -386,10 +386,16 @@ export function computeSurprise(traces: Trace[]): Map<string, SurpriseRow> {
       v = { policy, totalDays: 0, surprisingDays: 0, surprisingNonContinue: 0, routineDays: 0, routineNonContinue: 0 }
       m.set(policy, v)
     }
-    for (const d of t.days) {
+    /* Next-day attribution: a surprise on day N can only influence the action
+     * the policy picks at the start of day N+1, because day N's action is
+     * already chosen by the time the encounter rolls (mid-day). Skip the
+     * final day — no "tomorrow" to attribute its action to. */
+    for (let i = 0; i < t.days.length - 1; i++) {
+      const today = t.days[i]
+      const tomorrow = t.days[i + 1]
       v.totalDays++
-      const surp = isSurprisingDay(d)
-      const nonCont = d.action !== undefined && NON_CONTINUE_ACTIONS.has(d.action)
+      const surp = isSurprisingDay(today)
+      const nonCont = tomorrow.action !== undefined && NON_CONTINUE_ACTIONS.has(tomorrow.action)
       if (surp) {
         v.surprisingDays++
         if (nonCont) v.surprisingNonContinue++
@@ -424,7 +430,8 @@ export function sectionSurprise(traces: Trace[], policies: string[]): string {
   return [
     '## Surprise rate\n',
     'A day is **surprising** if it contained a moderate-or-severe encounter. ' +
-    'Action-shift = P(non-continue action | surprising) − P(non-continue action | routine). ' +
+    'Action-shift = P(non-continue **on next day** | surprising today) − P(non-continue **on next day** | routine today). ' +
+    'Next-day attribution because the policy chooses each day\'s action at day-start, before the encounter rolls. ' +
     '**Larger shift = surprises actually drive decisions.**\n',
     table(headers, tableRows),
   ].join('\n')

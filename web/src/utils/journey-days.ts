@@ -629,12 +629,24 @@ export function nextDay(state: JourneyState, action: Action): NextDayResult {
       : events
   }
 
-  /* Supply burn. Resupply tier applies to camp on day d (state-derived). */
+  /* Supply burn. Resupply tier applies to camp on day d (state-derived).
+   * Encounter cost is aggregated from the day's encounters (skipped on rest
+   * days, matching the rest-day encounter drop in day.encounters above). */
   const aridity: AridityLevel = classifyAridity(edgesInDay, state.biomeForEdge)
   const resupplyTier: ResupplyTier = state.resupplyByDay.get(d) ?? 'none'
+  const encounterCost = action.kind === 'rest'
+    ? { rations: 0, water: 0 }
+    : (state.encountersByDay.get(d) ?? []).reduce(
+        (acc, e) => ({
+          rations: acc.rations + e.supplyCost.rations,
+          water: acc.water + e.supplyCost.water,
+        }),
+        { rations: 0, water: 0 },
+      )
   const burn = applyDailyBurn(
     state.rationsLeft, state.waterLeft, state.supplyConstants,
     state.party, state.season, aridity, resupplyTier, burnModsForAction(action),
+    encounterCost,
   )
 
   /* Exhaustion. Floor at 0; rest never drops below 0. */

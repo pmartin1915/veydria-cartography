@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, NOTHING_BEATS, filterNothingBeats } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, filterNothingBeats } from './encounters'
 import type { JourneyRoute } from './journey-graph'
 
 function fakeRoute(): JourneyRoute {
@@ -77,6 +77,35 @@ describe('encounters', () => {
     expect(encounterSeverityLabel('mild')).toBe('Mild')
     expect(encounterSeverityLabel('moderate')).toBe('Moderate')
     expect(encounterSeverityLabel('severe')).toBe('Severe')
+  })
+
+  it('severityCost is deterministic by severity', () => {
+    expect(severityCost('mild')).toEqual({ rations: 0, water: 0 })
+    expect(severityCost('moderate')).toEqual({ rations: 1, water: 1 })
+    expect(severityCost('severe')).toEqual({ rations: 2, water: 2 })
+  })
+
+  it('generateEncounters populates supplyCost on every encounter', () => {
+    // Mix of biome-filtered, season-filtered, and long-edge routes so we
+    // exercise every push site in generateEncounters.
+    const routes: JourneyRoute[] = [
+      fakeRoute(),
+      fakeRouteManyEdges(6, 'chokepoint'),
+      fakeRouteManyEdges(4, 'intra_civ'),
+      fakeRouteManyEdges(3, 'trade_route'),
+    ]
+    let total = 0
+    for (const r of routes) {
+      for (const season of ['spring', 'summer', 'autumn', 'winter'] as const) {
+        const encs = generateEncounters(r, season, 'direct')
+        for (const e of encs) {
+          total++
+          expect(e.supplyCost).toEqual(severityCost(e.severity))
+        }
+      }
+    }
+    // Sanity that the loop actually exercised encounters.
+    expect(total).toBeGreaterThan(0)
   })
 
   it('is deterministic when edgeBiomes are provided', () => {

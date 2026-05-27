@@ -14,6 +14,7 @@ import {
   poolForEdgeType,
   filterBySeason,
   filterByBiome,
+  severityCost,
   type Beat,
   type Encounter,
 } from './encounters'
@@ -65,5 +66,6 @@ export function rollOneOff(opts: RollOneOffOpts): Encounter | null {
     severity: beat.severity,
     narrative: beat.text,
     biome: beat.biome,
+    supplyCost: severityCost(beat.severity),
   }
 }

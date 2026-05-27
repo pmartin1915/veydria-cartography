@@ -147,6 +147,10 @@ export function applyDailyBurn(
   aridity: AridityLevel,
   resupplyTier: ResupplyTier,
   actionMods: BurnModifiers = DEFAULT_BURN_MODS,
+  /** Aggregate supply cost from all encounters on this day. Debited after
+   *  per-day burn but BEFORE resupply restore, so a civ-stop day still
+   *  recovers fully even if an encounter ate the day's surplus. */
+  encounterCost: { rations: number; water: number } = { rations: 0, water: 0 },
 ): BurnResult {
   const { encMult, startingRations, startingWater } = constants
   const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
@@ -157,8 +161,8 @@ export function applyDailyBurn(
   const rationsBurned = encMult * forcedRationsMult * seasonRationsMult * actionMods.rations
   const waterBurned = encMult * forcedWaterMult * biomeWaterMult * actionMods.water
 
-  let nextRations = rationsLeft - rationsBurned
-  let nextWater = waterLeft - waterBurned
+  let nextRations = rationsLeft - rationsBurned - encounterCost.rations
+  let nextWater = waterLeft - waterBurned - encounterCost.water
 
   if (resupplyTier === 'full') {
     nextRations = startingRations
@@ -178,8 +182,11 @@ export function applyDailyBurn(
   return {
     rationsLeft: nextRations,
     waterLeft: nextWater,
-    rationsBurnedToday: rationsBurned,
-    waterBurnedToday: waterBurned,
+    /* rationsBurnedToday / waterBurnedToday are "total day debit" — include
+     * encounter cost so trace consumers see the realized loss. The encounter
+     * breakdown is recoverable from day.encounters[].supplyCost. */
+    rationsBurnedToday: rationsBurned + encounterCost.rations,
+    waterBurnedToday: waterBurned + encounterCost.water,
     warning,
   }
 }

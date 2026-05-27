@@ -17,6 +17,16 @@ export interface Encounter {
   narrative: string
   /** If this encounter was drawn from a biome-specific beat, the biome name. */
   biome?: string
+  /** Supply cost debited end-of-day, before resupply restore. Pure function of severity (see severityCost). */
+  supplyCost: { rations: number; water: number }
+}
+
+/** Deterministic severity → supply cost table. Mild stays cosmetic (0/0);
+ *  moderate burns one day-equivalent (1/1); severe burns two (2/2). */
+export function severityCost(severity: Encounter['severity']): { rations: number; water: number } {
+  if (severity === 'severe') return { rations: 2, water: 2 }
+  if (severity === 'moderate') return { rations: 1, water: 1 }
+  return { rations: 0, water: 0 }
 }
 
 /* ─── Seeded RNG ─── */
@@ -227,6 +237,7 @@ export function generateEncounters(
         severity: nothing.severity,
         narrative: nothing.text,
         biome: nothing.biome,
+        supplyCost: severityCost(nothing.severity),
       })
       continue
     }
@@ -239,6 +250,7 @@ export function generateEncounters(
       severity: beat.severity,
       narrative: beat.text,
       biome: beat.biome,
+      supplyCost: severityCost(beat.severity),
     })
 
     // Long legs get a second encounter
@@ -254,6 +266,7 @@ export function generateEncounters(
           severity: beat2.severity,
           narrative: beat2.text,
           biome: beat2.biome,
+          supplyCost: severityCost(beat2.severity),
         })
       }
     }

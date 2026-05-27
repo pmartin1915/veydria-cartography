@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { buildDailyBreakdown } from './journey-days'
 import { DEFAULT_PARTY, type JourneyRoute, type PartyConfig, type JourneyEdge } from './journey-graph'
 import {
+  applyDailyBurn,
   computeSupplyTimeline,
+  deriveSupplyConstants,
   DEFAULT_SUPPLY,
   isDefaultSupply,
   summarizeSupplyPressure,
@@ -261,5 +263,67 @@ describe('journey-supply: summer season', () => {
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, 'summer')
 
     expect(timeline[0].rationsBurnedToday).toBeCloseTo(0.95, 5)
+  })
+})
+
+describe('journey-supply: applyDailyBurn encounter cost', () => {
+  const constants = deriveSupplyConstants(DEFAULT_SUPPLY)
+
+  it('omitting encounterCost is unchanged from baseline burn', () => {
+    const baseline = applyDailyBurn(10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none')
+    expect(baseline.rationsLeft).toBeCloseTo(9, 5)
+    expect(baseline.waterLeft).toBeCloseTo(4, 5)
+    expect(baseline.rationsBurnedToday).toBeCloseTo(1, 5)
+    expect(baseline.waterBurnedToday).toBeCloseTo(1, 5)
+  })
+
+  it('severe encounter cost subtracts 2 rations and 2 water on top of burn', () => {
+    const r = applyDailyBurn(
+      10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none',
+      undefined, { rations: 2, water: 2 },
+    )
+    // 10 - 1 burn - 2 encounter = 7; 5 - 1 burn - 2 encounter = 2
+    expect(r.rationsLeft).toBeCloseTo(7, 5)
+    expect(r.waterLeft).toBeCloseTo(2, 5)
+    // rationsBurnedToday/waterBurnedToday is total day debit (burn + encounter)
+    expect(r.rationsBurnedToday).toBeCloseTo(3, 5)
+    expect(r.waterBurnedToday).toBeCloseTo(3, 5)
+  })
+
+  it('moderate encounter cost subtracts 1 ration and 1 water', () => {
+    const r = applyDailyBurn(
+      10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none',
+      undefined, { rations: 1, water: 1 },
+    )
+    expect(r.rationsLeft).toBeCloseTo(8, 5)
+    expect(r.waterLeft).toBeCloseTo(3, 5)
+  })
+
+  it('encounter cost is debited BEFORE resupply restore — full-tier civ stop still restores', () => {
+    // Day at a 'full' tier camp: encounter cost should not prevent full restore.
+    const r = applyDailyBurn(
+      3, 2, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, { rations: 2, water: 2 },
+    )
+    // Even though 3 - 1 - 2 = 0 and 2 - 1 - 2 = -1, the 'full' restore
+    // overwrites both to start+packBonus (default supply = 12 / 6).
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater)
+    // But the "burned today" reflects the realized loss before restore.
+    expect(r.rationsBurnedToday).toBeCloseTo(3, 5)
+    expect(r.waterBurnedToday).toBeCloseTo(3, 5)
+  })
+
+  it('multiple-encounter day costs sum (pass aggregated cost)', () => {
+    // Two severes on the same day → caller aggregates to {4, 4}.
+    const r = applyDailyBurn(
+      12, 6, constants, DEFAULT_PARTY, undefined, 'none', 'none',
+      undefined, { rations: 4, water: 4 },
+    )
+    // 12 - 1 - 4 = 7; 6 - 1 - 4 = 1
+    expect(r.rationsLeft).toBeCloseTo(7, 5)
+    expect(r.waterLeft).toBeCloseTo(1, 5)
+    // Hits 'water-low' warning at <= 2 (water = 1).
+    expect(r.warning).toBe('water-low')
   })
 })
