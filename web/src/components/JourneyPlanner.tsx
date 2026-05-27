@@ -21,6 +21,7 @@ import PartyConfigBlock from './journey-planner/PartyConfig'
 import SupplyConfigBlock from './journey-planner/SupplyConfig'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
 import { computeModeRiskWarning } from '../utils/journey-mode-risk'
+import { computeEncounterDensityWarning } from '../utils/journey-encounter-density'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -430,9 +431,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
+    const encounters = generateEncounters(route, season, mode, edgeBiomes)
     const modeRiskWarning = computeModeRiskWarning(mode, supply)
+    const densityWarning = computeEncounterDensityWarning(mode, encounters)
     const allWarnings = [...route.bottlenecks, ...route.seasonalWarnings]
     if (modeRiskWarning) allWarnings.push(modeRiskWarning)
+    if (densityWarning) allWarnings.push(densityWarning)
     if (allWarnings.length > 0) {
       md += `\n### Warnings\n\n`
       for (const w of allWarnings) {
@@ -440,7 +444,6 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
-    const encounters = generateEncounters(route, season, mode, edgeBiomes)
     if (encounters.length > 0) {
       md += `\n### Encounters\n\n`
       for (const enc of encounters) {
@@ -1274,6 +1277,19 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
                   <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconWarning /> Mode Risk</div>
                   <div className="journey-bottleneck">{modeRisk}</div>
+                </div>
+              )
+            })()}
+
+            {/* Encounter-density warning (sibling to mode risk) */}
+            {(() => {
+              const densityEncounters = generateEncounters(route, season, mode, edgeBiomes)
+              const densityWarning = computeEncounterDensityWarning(mode, densityEncounters)
+              if (!densityWarning) return null
+              return (
+                <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
+                  <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconWarning /> Encounter Density</div>
+                  <div className="journey-bottleneck">{densityWarning}</div>
                 </div>
               )
             })()}
