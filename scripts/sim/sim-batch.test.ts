@@ -94,6 +94,13 @@ describe('sim-batch: column schemas', () => {
     expect(POLICY_COLUMNS).toContain('resupply_stops_on_route')
     expect(POLICY_COLUMNS).toContain('max_resupply_gap_km')
   })
+
+  it('both schemas include the Phase 4 dynamic resupply-fires columns', () => {
+    expect(LEGACY_COLUMNS).toContain('resupply_fires_full_count')
+    expect(LEGACY_COLUMNS).toContain('resupply_fires_water_count')
+    expect(POLICY_COLUMNS).toContain('resupply_fires_full_count')
+    expect(POLICY_COLUMNS).toContain('resupply_fires_water_count')
+  })
 })
 
 describe('sim-batch: computeActionMix', () => {

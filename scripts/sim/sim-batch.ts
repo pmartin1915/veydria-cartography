@@ -224,6 +224,14 @@ export interface SummaryRow {
    * Probes stop spacing/cadence — direct routes may match other modes on
    * count but cluster stops near endpoints, leaving long mid-route gaps. */
   max_resupply_gap_km: number
+  /** Phase 4 dynamic: count of days where applyDailyBurn's restore branch
+   * actually fired at the 'full' tier (civilization or caravanserai camp).
+   * Pairs with civ_stops_on_route to distinguish "stop existed" from "stop helped". */
+  resupply_fires_full_count: number
+  /** Phase 4 dynamic: count of days where the restore branch fired at the
+   * 'water' tier (oasis/port camp). Tracked separately — water-tier doesn't
+   * help the rations budget. */
+  resupply_fires_water_count: number
   error: string
   /** Phase 3b: action mix counts. Empty on the legacy (no --policy) path. Sum equals days_count. */
   action_continue: number | ''
@@ -249,6 +257,7 @@ export const LEGACY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
   'civ_stops_on_route', 'resupply_stops_on_route', 'max_resupply_gap_km',
+  'resupply_fires_full_count', 'resupply_fires_water_count',
   'error',
 ]
 
@@ -263,6 +272,7 @@ export const POLICY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
   'civ_stops_on_route', 'resupply_stops_on_route', 'max_resupply_gap_km',
+  'resupply_fires_full_count', 'resupply_fires_water_count',
   'error',
   'action_continue', 'action_rest', 'action_force_march',
   'action_ration', 'action_turn_back', 'action_reroute',
@@ -352,6 +362,8 @@ export function toRow(
       civ_stops_on_route: 0,
       resupply_stops_on_route: 0,
       max_resupply_gap_km: 0,
+      resupply_fires_full_count: 0,
+      resupply_fires_water_count: 0,
       error: errorMessage,
       ...mix,
     }
@@ -394,6 +406,8 @@ export function toRow(
     civ_stops_on_route: s.civStopsOnRoute,
     resupply_stops_on_route: s.resupplyStopsOnRoute,
     max_resupply_gap_km: s.maxResupplyGapKm,
+    resupply_fires_full_count: s.resupplyFiresFullCount,
+    resupply_fires_water_count: s.resupplyFiresWaterCount,
     error: '',
     ...mix,
   }

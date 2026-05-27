@@ -187,6 +187,8 @@ describe('mode breakdown: computeModeBreakdown', () => {
     expect(fastest.meanCivStopsOnRoute).toBe(0)
     expect(fastest.meanResupplyStopsOnRoute).toBe(0)
     expect(fastest.meanMaxResupplyGapKm).toBe(0)
+    expect(fastest.meanResupplyFiresFull).toBe(0)
+    expect(fastest.meanResupplyFiresWater).toBe(0)
   })
 
   it('averages max_resupply_gap_km per mode (spacing probe, independent of count)', () => {
@@ -236,6 +238,28 @@ describe('mode breakdown: computeModeBreakdown', () => {
     expect(direct.meanResupplyStopsOnRoute).toBeCloseTo(2, 5)    /* (1+2+3)/3 */
     expect(fastest.meanCivStopsOnRoute).toBe(3)
     expect(fastest.meanResupplyStopsOnRoute).toBe(4)
+  })
+
+  it('averages resupply_fires_full_count and resupply_fires_water_count per mode (Phase 4 dynamic probe)', () => {
+    /* Direct: stops exist on route but few fire (turn-back or supply-out before reaching them).
+     * Fastest: fewer geometric stops but each one actually fires. */
+    const rows: Row[] = [
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '500',
+               civ_stops_on_route: '3', resupply_fires_full_count: '0', resupply_fires_water_count: '1' }),
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '500',
+               civ_stops_on_route: '3', resupply_fires_full_count: '1', resupply_fires_water_count: '2' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '600',
+               civ_stops_on_route: '2', resupply_fires_full_count: '2', resupply_fires_water_count: '3' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '600',
+               civ_stops_on_route: '2', resupply_fires_full_count: '2', resupply_fires_water_count: '3' }),
+    ]
+    const out = computeModeBreakdown(rows, ['direct', 'fastest'], 'caravan')
+    const direct = out.find(b => b.mode === 'direct')!
+    const fastest = out.find(b => b.mode === 'fastest')!
+    expect(direct.meanResupplyFiresFull).toBeCloseTo(0.5, 5)   /* (0+1)/2 */
+    expect(direct.meanResupplyFiresWater).toBeCloseTo(1.5, 5)  /* (1+2)/2 */
+    expect(fastest.meanResupplyFiresFull).toBeCloseTo(2, 5)
+    expect(fastest.meanResupplyFiresWater).toBeCloseTo(3, 5)
   })
 })
 

@@ -31,10 +31,15 @@ function row(over: Partial<Row>): Row {
 }
 
 describe('extractFeatures', () => {
-  it('returns 5-element vector for a healthy row', () => {
-    const f = extractFeatures(row({ total_km: '1000', encounters_total: '2', civ_stops_on_route: '3', max_resupply_gap_km: '500' }))
+  it('returns 7-element vector for a healthy row', () => {
+    const f = extractFeatures(row({
+      total_km: '1000', encounters_total: '2',
+      civ_stops_on_route: '3', max_resupply_gap_km: '500',
+      resupply_fires_full_count: '2', resupply_fires_water_count: '4',
+    }))
     expect(f).not.toBeNull()
-    expect(f).toEqual([1000, 0.2, 3, 500, 0])  /* density = 2/1000*100 = 0.2; gap/km = 0.5 < 0.95 */
+    /* density = 2/1000*100 = 0.2; gap/km = 0.5 < 0.95 → endpoints flag 0 */
+    expect(f).toEqual([1000, 0.2, 3, 500, 0, 2, 4])
   })
 
   it('returns null when route_found=false', () => {
@@ -53,6 +58,19 @@ describe('extractFeatures', () => {
     expect(justBelow![4]).toBe(0)
     expect(atBoundary![4]).toBe(1)
     expect(above![4]).toBe(1)
+  })
+
+  it('defaults resupply_fires_* columns to 0 when missing (back-compat with pre-Phase-4 CSVs)', () => {
+    /* Row omits the two new columns. The base row() helper sets them via the
+     * spread but here we override-with-undefined to simulate an older CSV. */
+    const r = row({})
+    delete (r as Partial<Row>).resupply_fires_full_count
+    delete (r as Partial<Row>).resupply_fires_water_count
+    const f = extractFeatures(r)
+    expect(f).not.toBeNull()
+    expect(f!.length).toBe(7)
+    expect(f![5]).toBe(0)
+    expect(f![6]).toBe(0)
   })
 })
 

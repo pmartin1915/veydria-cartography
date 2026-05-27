@@ -673,6 +673,7 @@ export function nextDay(state: JourneyState, action: Action): NextDayResult {
     rationsBurnedToday: burn.rationsBurnedToday,
     waterBurnedToday: burn.waterBurnedToday,
     warning: burn.warning,
+    ...(burn.resupplyFired !== undefined ? { resupplyFired: burn.resupplyFired } : {}),
   }
 
   const nextState: JourneyState = {

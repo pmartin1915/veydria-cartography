@@ -91,6 +91,8 @@ export interface Trace {
     action?: Action['kind']
     /** Phase 3: cumulative exhaustion at end of day. Absent if zero. */
     exhaustionLevel?: number
+    /** Phase 4: which resupply tier actually fired this day. Absent on no-restore days. */
+    resupplyFired?: 'water' | 'rations' | 'full'
   }>
   summary: {
     daysCount: number
@@ -118,6 +120,15 @@ export interface Trace {
      * direct-mode routes cluster their full stops near the endpoints, leaving
      * a long mid-route gap that raw stop-count can't surface. */
     maxResupplyGapKm: number
+    /** Phase 4: count of days where applyDailyBurn's restore branch actually
+     * fired at the 'full' tier (civilization or caravanserai camp). Distinguishes
+     * "stop existed on route" (civStopsOnRoute, static) from "stop mechanically
+     * helped" (this, dynamic). */
+    resupplyFiresFullCount: number
+    /** Phase 4: count of days where the restore branch fired at the 'water' tier
+     * (oasis or port camp). Tracked separately because water-tier doesn't help
+     * the rations budget. */
+    resupplyFiresWaterCount: number
     /** Phase 3: which policy drove this run, if any. */
     policy?: PolicyName
   }
@@ -161,6 +172,8 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
         civStopsOnRoute: 0,
         resupplyStopsOnRoute: 0,
         maxResupplyGapKm: 0,
+        resupplyFiresFullCount: 0,
+        resupplyFiresWaterCount: 0,
         ...(inputs.policy ? { policy: inputs.policy } : {}),
       },
     }
@@ -303,6 +316,16 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
   }
   if (currentGapKm > maxResupplyGapKm) maxResupplyGapKm = currentGapKm
 
+  /* Phase 4 dynamic probe: count days where applyDailyBurn's restore branch
+   * actually fired, split by tier. Sourced from SupplyDay.resupplyFired which
+   * applyDailyBurn now echoes alongside the restore. */
+  let resupplyFiresFullCount = 0
+  let resupplyFiresWaterCount = 0
+  for (const s of supply) {
+    if (s.resupplyFired === 'full') resupplyFiresFullCount++
+    else if (s.resupplyFired === 'water') resupplyFiresWaterCount++
+  }
+
   const tracedDays: Trace['days'] = days.map((d, i) => {
     const row: Trace['days'][number] = {
       dayNum: d.dayNum,
@@ -331,6 +354,9 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
     }
     if (d.exhaustionLevel !== undefined && d.exhaustionLevel > 0) {
       row.exhaustionLevel = d.exhaustionLevel
+    }
+    if (supply[i].resupplyFired !== undefined) {
+      row.resupplyFired = supply[i].resupplyFired
     }
     return row
   })
@@ -365,6 +391,8 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
       civStopsOnRoute,
       resupplyStopsOnRoute,
       maxResupplyGapKm: round(maxResupplyGapKm),
+      resupplyFiresFullCount,
+      resupplyFiresWaterCount,
       ...(inputs.policy ? { policy: inputs.policy } : {}),
     },
   }

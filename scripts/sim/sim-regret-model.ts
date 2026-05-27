@@ -74,11 +74,19 @@ export const FEATURE_NAMES = [
   'civ_stops_on_route',
   'max_resupply_gap_km',
   'endpoints_only_flag',
+  'resupply_fires_full_count',
+  'resupply_fires_water_count',
 ] as const
 export type FeatureName = typeof FEATURE_NAMES[number]
 
-/** Returns the 5 features for a row, or null if the row is unusable
- *  (no route, or missing/zero total_km — encounter density would divide by zero). */
+/** Returns the 7 features for a row, or null if the row is unusable
+ *  (no route, or missing/zero total_km — encounter density would divide by zero).
+ *
+ *  The two `resupply_fires_*_count` features are the Phase 4 dynamic probe —
+ *  count of days where applyDailyBurn's restore branch actually fired, split
+ *  by tier. Distinguishes "stop existed on route" (civ_stops_on_route, static)
+ *  from "stop mechanically helped" (this, dynamic). Default to 0 if absent
+ *  (the columns post-date earlier summary.csv files). */
 export function extractFeatures(r: Row): number[] | null {
   if (r.route_found !== 'true') return null
   const totalKm = Number(r.total_km)
@@ -89,7 +97,11 @@ export function extractFeatures(r: Row): number[] | null {
   if (!Number.isFinite(civStops) || !Number.isFinite(maxGap) || !Number.isFinite(encounters)) return null
   const density = (encounters / totalKm) * 100
   const endpointsOnly = maxGap / totalKm >= 0.95 ? 1 : 0
-  return [totalKm, density, civStops, maxGap, endpointsOnly]
+  const firesFull = Number(r.resupply_fires_full_count ?? 0)
+  const firesWater = Number(r.resupply_fires_water_count ?? 0)
+  const firesFullSafe = Number.isFinite(firesFull) ? firesFull : 0
+  const firesWaterSafe = Number.isFinite(firesWater) ? firesWater : 0
+  return [totalKm, density, civStops, maxGap, endpointsOnly, firesFullSafe, firesWaterSafe]
 }
 
 /* ─── OLS via normal equations ─── */
@@ -421,8 +433,8 @@ function renderVerdict(headline: PresetFit): string {
     verdict = `**PARTIAL — combination explains some, not most, of cell regret variance.**`
     next = `Worth the dynamic resupply_fires_count probe: it separates "stop exists geometrically" from "restore branch actually fired" and may carry the missing variance. If that probe also lands < 0.6, the answer is truly multivariate dynamic and a different framing is needed.`
   } else {
-    verdict = `**REJECTED — combination of static features does NOT explain regret.**`
-    next = `Static-geometry budget is fully spent. Next probe must be dynamic: resupply_fires_count is the predecessor's option 1. Thread resupplyTier through SupplyDay → Trace.days[]; touches web/src/utils/journey-supply.ts.`
+    verdict = `**REJECTED — static-plus-dynamic features do NOT explain cell-level regret.**`
+    next = `Both the static-route-geometry budget (segment count, encounter density, civ stops, max resupply gap) and the Phase 4 dynamic probe (resupply_fires_{full,water}_count) have been spent. The combination still under-predicts the between-mode spread within cells. The remaining variance lives off any pre-route-shape feature — likely within-cell-within-mode stochastics (party preset, weather rolls, encounter rolls) or interaction effects (geometry × policy × supply preset). At R² < 0.3 the right move is to stop trying to predict mode-choice regret with this feature class and instead either (a) probe interaction effects directly, or (b) redesign the modes themselves to have more differentiated dynamics.`
   }
   return [
     '## Verdict',
@@ -454,7 +466,7 @@ export function buildReport(rows: Row[]): string {
   sections.push(`Generated: ${new Date().toISOString()}`)
   sections.push(`Total rows: ${rows.length} · Presets fitted: ${[...presetFits.keys()].join(', ')}`)
   sections.push('')
-  sections.push(`Tests the predecessor's "combination of small effects" theory on direct mode's regret amplification: do total_km, encounter density, civ_stops_on_route, max_resupply_gap_km, and endpoints_only_flag jointly predict cell-level regret pp on caravan rows?`)
+  sections.push(`Tests whether the static-plus-dynamic feature set jointly predicts cell-level regret pp on caravan rows. Features: total_km, encounter density, civ_stops_on_route, max_resupply_gap_km, endpoints_only_flag, resupply_fires_full_count, resupply_fires_water_count. The last two are the Phase 4 dynamic probe — days where applyDailyBurn's restore branch actually fired, not just stops that exist geometrically.`)
   sections.push('')
   sections.push(renderPresetSection(headline, true))
   for (const [name, pf] of presetFits) {

@@ -223,6 +223,27 @@ describe('journey-supply: resupplyAtDay', () => {
       days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, () => 'none',
     )
     expect(withNone).toEqual(baseline)
+    // Phase 4 dynamic probe: no-restore days have no resupplyFired field.
+    for (const d of baseline) expect(d.resupplyFired).toBeUndefined()
+  })
+
+  it("SupplyDay.resupplyFired echoes the tier on days the restore branch actually ran", () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    const days = buildDailyBreakdown(route)
+    const timeline = computeSupplyTimeline(
+      days,
+      DEFAULT_PARTY,
+      DEFAULT_SUPPLY,
+      undefined,
+      undefined,
+      (d) => (d === 2 ? 'water' : d === 4 ? 'full' : 'none'),
+    )
+
+    expect(timeline[0].resupplyFired).toBeUndefined()
+    expect(timeline[1].resupplyFired).toBe('water')
+    expect(timeline[2].resupplyFired).toBeUndefined()
+    expect(timeline[3].resupplyFired).toBe('full')
+    expect(timeline[4].resupplyFired).toBeUndefined()
   })
 })
 
@@ -325,5 +346,33 @@ describe('journey-supply: applyDailyBurn encounter cost', () => {
     expect(r.waterLeft).toBeCloseTo(1, 5)
     // Hits 'water-low' warning at <= 2 (water = 1).
     expect(r.warning).toBe('water-low')
+  })
+})
+
+describe('journey-supply: applyDailyBurn resupplyFired echo (Phase 4 dynamic probe)', () => {
+  const constants = deriveSupplyConstants(DEFAULT_SUPPLY)
+
+  it('tier none → resupplyFired omitted', () => {
+    const r = applyDailyBurn(10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none')
+    expect(r.resupplyFired).toBeUndefined()
+  })
+
+  it("tier 'water' → resupplyFired === 'water'", () => {
+    const r = applyDailyBurn(10, 1, constants, DEFAULT_PARTY, undefined, 'none', 'water')
+    expect(r.resupplyFired).toBe('water')
+    expect(r.waterLeft).toBe(constants.startingWater)
+  })
+
+  it("tier 'full' → resupplyFired === 'full'", () => {
+    const r = applyDailyBurn(2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full')
+    expect(r.resupplyFired).toBe('full')
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater)
+  })
+
+  it("tier 'rations' → resupplyFired === 'rations' (engine vocab even though no current category uses it)", () => {
+    const r = applyDailyBurn(1, 5, constants, DEFAULT_PARTY, undefined, 'none', 'rations')
+    expect(r.resupplyFired).toBe('rations')
+    expect(r.rationsLeft).toBe(constants.startingRations)
   })
 })

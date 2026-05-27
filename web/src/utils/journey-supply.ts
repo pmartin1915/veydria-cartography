@@ -52,6 +52,10 @@ export interface SupplyDay {
   waterBurnedToday: number
   /** Highest-priority warning on this day, if any. Priority: water-out > rations-out > water-low > rations-low. */
   warning?: SupplyWarning
+  /** Phase 4: which resupply tier actually fired this day, if any. Distinguishes
+   *  "stop existed on route" (static geometry) from "restore branch mechanically
+   *  ran" (dynamic). Omitted on no-restore days to keep legacy traces byte-stable. */
+  resupplyFired?: 'water' | 'rations' | 'full'
 }
 
 /** Biomes that increase water consumption (water × 1.5 on any day touching one). */
@@ -126,6 +130,9 @@ export interface BurnResult {
   rationsBurnedToday: number
   waterBurnedToday: number
   warning?: SupplyWarning
+  /** Phase 4: echoes the resupply tier when the restore branch ran, otherwise
+   *  omitted. Mirrors SupplyDay.resupplyFired. */
+  resupplyFired?: 'water' | 'rations' | 'full'
 }
 
 /**
@@ -164,13 +171,17 @@ export function applyDailyBurn(
   let nextRations = rationsLeft - rationsBurned - encounterCost.rations
   let nextWater = waterLeft - waterBurned - encounterCost.water
 
+  let resupplyFired: 'water' | 'rations' | 'full' | undefined
   if (resupplyTier === 'full') {
     nextRations = startingRations
     nextWater = startingWater
+    resupplyFired = 'full'
   } else if (resupplyTier === 'water') {
     nextWater = startingWater
+    resupplyFired = 'water'
   } else if (resupplyTier === 'rations') {
     nextRations = startingRations
+    resupplyFired = 'rations'
   }
 
   let warning: SupplyWarning | undefined
@@ -188,6 +199,7 @@ export function applyDailyBurn(
     rationsBurnedToday: rationsBurned + encounterCost.rations,
     waterBurnedToday: waterBurned + encounterCost.water,
     warning,
+    ...(resupplyFired !== undefined ? { resupplyFired } : {}),
   }
 }
 
@@ -239,6 +251,7 @@ export function computeSupplyTimeline(
       rationsBurnedToday: result.rationsBurnedToday,
       waterBurnedToday: result.waterBurnedToday,
       warning: result.warning,
+      ...(result.resupplyFired !== undefined ? { resupplyFired: result.resupplyFired } : {}),
     })
   }
 

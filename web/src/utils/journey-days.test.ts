@@ -458,4 +458,18 @@ describe('journey-days: resupply day mapping parity with legacy name-based walk'
     /* Origin port → 'water' tier → waterLeft restored to startingWater after burn. */
     expect(day1.supply!.waterLeft).toBe(state.supplyConstants.startingWater)
   })
+
+  it('SupplyDay.resupplyFired survives the nextDay flow (Phase 4 dynamic probe)', () => {
+    /* Same setup as the start-node test: origin port → 'water' tier on day 1.
+     * Verifies that BurnResult.resupplyFired echoes into SupplyDay through
+     * nextDay (not just through computeSupplyTimeline). */
+    const route = makeRoute({ edgeDays: [8, 2, 1], totalKm: 200 })
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      resupplyTierFor: tierFor,
+    })
+    const day1 = nextDay(state, { kind: 'continue' })
+    expect(day1.supply!.resupplyFired).toBe('water')
+  })
 })
