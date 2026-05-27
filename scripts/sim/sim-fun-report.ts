@@ -279,6 +279,137 @@ export function sectionModeRegret(
   ].join('\n')
 }
 
+/* ─── Metric 1b: Mode regret breakdown ─── */
+
+export interface ModeBreakdownRow {
+  mode: string
+  meanKm: number
+  meanEncountersTotal: number
+  meanModerateSevere: number
+  encountersPer100Km: number
+  meanCompletion: number
+  meanRegretPp: number
+}
+
+/** Parse encounters_by_severity_json (e.g. `{"mild":2,"moderate":1}`). Returns
+ *  zeros on empty / malformed input. */
+export function parseSeverityCounts(s: string): { mild: number; moderate: number; severe: number } {
+  if (!s) return { mild: 0, moderate: 0, severe: 0 }
+  try {
+    const o = JSON.parse(s) as Record<string, number>
+    return {
+      mild: Number(o.mild ?? 0),
+      moderate: Number(o.moderate ?? 0),
+      severe: Number(o.severe ?? 0),
+    }
+  } catch {
+    return { mild: 0, moderate: 0, severe: 0 }
+  }
+}
+
+/** Per-mode decomposition of regret for a single supply preset.
+ *  Returns mean km / encounter density / severity mix / regret pp per mode,
+ *  so a reader can tell whether mode-regret is driven by route length (more
+ *  encounter rolls) or by encounter density per km (biome composition). */
+export function computeModeBreakdown(
+  rows: Row[],
+  modes: string[],
+  supplyPreset: string,
+): ModeBreakdownRow[] {
+  const subset = rows.filter(r => r.supply_preset === supplyPreset)
+
+  /* Regret: bestRate − thisModeRate per cell, averaged across cells. */
+  const cellKey = (r: Row): string => `${r.from}|${r.to}|${r.season}|${r.party_preset}|${r.policy}`
+  const cells = new Map<string, Map<string, { c: number; n: number }>>()
+  for (const r of subset) {
+    const k = cellKey(r)
+    let cell = cells.get(k)
+    if (!cell) { cell = new Map(); cells.set(k, cell) }
+    let m = cell.get(r.mode)
+    if (!m) { m = { c: 0, n: 0 }; cell.set(r.mode, m) }
+    m.n++
+    if (r.completed === 'true') m.c++
+  }
+  const regretSum: Record<string, number> = {}
+  const regretCount: Record<string, number> = {}
+  for (const mode of modes) { regretSum[mode] = 0; regretCount[mode] = 0 }
+  for (const cell of cells.values()) {
+    let best = 0
+    for (const mode of modes) {
+      const v = cell.get(mode)
+      const r = v && v.n > 0 ? v.c / v.n : 0
+      if (r > best) best = r
+    }
+    for (const mode of modes) {
+      const v = cell.get(mode)
+      const r = v && v.n > 0 ? v.c / v.n : 0
+      regretSum[mode] += (best - r)
+      regretCount[mode] += 1
+    }
+  }
+
+  /* Per-mode means: km, encounters, severity mix, completion. */
+  const out: ModeBreakdownRow[] = []
+  for (const mode of modes) {
+    const modeRows = subset.filter(r => r.mode === mode)
+    if (modeRows.length === 0) {
+      out.push({
+        mode, meanKm: 0, meanEncountersTotal: 0, meanModerateSevere: 0,
+        encountersPer100Km: 0, meanCompletion: 0, meanRegretPp: 0,
+      })
+      continue
+    }
+    let kmSum = 0, encSum = 0, modSevSum = 0, compSum = 0
+    for (const r of modeRows) {
+      kmSum += Number(r.total_km || 0)
+      encSum += Number(r.encounters_total || 0)
+      const sev = parseSeverityCounts(r.encounters_by_severity_json || '')
+      modSevSum += sev.moderate + sev.severe
+      if (r.completed === 'true') compSum++
+    }
+    const n = modeRows.length
+    const meanKm = kmSum / n
+    out.push({
+      mode,
+      meanKm,
+      meanEncountersTotal: encSum / n,
+      meanModerateSevere: modSevSum / n,
+      encountersPer100Km: meanKm === 0 ? 0 : (encSum / n) / meanKm * 100,
+      meanCompletion: compSum / n,
+      meanRegretPp: regretCount[mode] === 0 ? 0 : (regretSum[mode] / regretCount[mode]) * 100,
+    })
+  }
+  return out
+}
+
+export function sectionModeBreakdown(rows: Row[], modes: string[], presets: string[]): string {
+  const headers = ['mode', 'mean km', 'encounters', 'mod+sev', 'enc / 100km', 'completion', 'regret pp']
+  const presetSections: string[] = []
+  for (const preset of presets) {
+    const breakdown = computeModeBreakdown(rows, modes, preset)
+    const tableRows = breakdown.map(b => [
+      b.mode,
+      b.meanKm.toFixed(0),
+      b.meanEncountersTotal.toFixed(1),
+      b.meanModerateSevere.toFixed(1),
+      b.encountersPer100Km.toFixed(2),
+      `${(b.meanCompletion * 100).toFixed(1)}%`,
+      b.meanRegretPp.toFixed(1),
+    ])
+    presetSections.push(`### ${preset} preset\n\n${table(headers, tableRows)}`)
+  }
+  return [
+    '## Mode regret breakdown — segment count vs encounter density\n',
+    'Decomposes mode regret into possible drivers. **Read column-by-column:** ' +
+    '`mean km` is route length; `mod+sev` is the count of encounters with mechanical supply cost ' +
+    '(mild are cosmetic); `enc / 100km` is encounter density per unit distance. ' +
+    'If a high-regret mode has the largest `mean km` but similar `enc / 100km`, the penalty is a ' +
+    '**length effect** (more rolls per trip). If it has comparable km but larger `enc / 100km` or ' +
+    '`mod+sev`, the penalty is **biome / route composition** (denser danger per km).\n',
+    presetSections.join('\n'),
+  ].join('\n')
+}
+
 /* ─── Metric 2: Pivot rate ─── */
 
 export interface PivotRateCell {
@@ -654,6 +785,7 @@ function main(): void {
   sections.push('## TL;DR — Top tuning signals\n')
   sections.push(tldr.length === 0 ? '_(no signals — empty or degenerate input)_' : tldr.map(b => `- ${b}`).join('\n'))
   sections.push(sectionModeRegret(rows, modes, presets, args.topN))
+  sections.push(sectionModeBreakdown(rows, modes, presets))
   sections.push(sectionPivotRate(rows, policies, presets, modes, args.epsilon))
   sections.push(sectionSurprise(traces, policies))
   sections.push(sectionRecovery(traces, policies, presets))

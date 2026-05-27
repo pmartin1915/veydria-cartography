@@ -11,6 +11,8 @@ import { describe, it, expect } from 'vitest'
 import {
   computeModeRegretWorst,
   computeModeRegretByPreset,
+  computeModeBreakdown,
+  parseSeverityCounts,
   computePivotRate,
   computeSurprise,
   computeRecovery,
@@ -123,6 +125,65 @@ describe('mode regret: computeModeRegretByPreset', () => {
     const inner = res.get('standard')!
     expect(inner.get('fastest')).toBe(0)
     expect(inner.get('direct')).toBe(1)
+  })
+})
+
+describe('mode breakdown: parseSeverityCounts', () => {
+  it('parses well-formed severity JSON', () => {
+    expect(parseSeverityCounts('{"mild":2,"moderate":1,"severe":3}')).toEqual({ mild: 2, moderate: 1, severe: 3 })
+  })
+  it('treats empty / "{}" / malformed input as all-zero', () => {
+    expect(parseSeverityCounts('')).toEqual({ mild: 0, moderate: 0, severe: 0 })
+    expect(parseSeverityCounts('{}')).toEqual({ mild: 0, moderate: 0, severe: 0 })
+    expect(parseSeverityCounts('not-json')).toEqual({ mild: 0, moderate: 0, severe: 0 })
+  })
+  it('defaults missing keys to zero', () => {
+    expect(parseSeverityCounts('{"severe":2}')).toEqual({ mild: 0, moderate: 0, severe: 2 })
+  })
+})
+
+describe('mode breakdown: computeModeBreakdown', () => {
+  it('distinguishes length effect from density effect', () => {
+    /* Direct: longer route (600 km), high encounter count (6), 0% completion.
+     * Caravan: shorter (300 km), fewer encounters (3), 100% completion.
+     * Same encounters/km ratio (1/100km) → pure length effect.
+     * Same single cell so regret is unambiguous: direct = 100 pp, caravan = 0 pp. */
+    const rows: Row[] = [
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '600', encounters_total: '6',
+               encounters_by_severity_json: '{"mild":2,"moderate":2,"severe":2}', completed: 'false' }),
+      csvRow({ mode: 'caravan', supply_preset: 'caravan', total_km: '300', encounters_total: '3',
+               encounters_by_severity_json: '{"mild":1,"moderate":1,"severe":1}', completed: 'true' }),
+    ]
+    const out = computeModeBreakdown(rows, ['direct', 'caravan'], 'caravan')
+    const direct = out.find(b => b.mode === 'direct')!
+    const caravan = out.find(b => b.mode === 'caravan')!
+    expect(direct.meanKm).toBe(600)
+    expect(caravan.meanKm).toBe(300)
+    expect(direct.meanModerateSevere).toBe(4)  /* moderate=2 + severe=2 */
+    expect(caravan.meanModerateSevere).toBe(2)
+    expect(direct.encountersPer100Km).toBeCloseTo(1, 5)
+    expect(caravan.encountersPer100Km).toBeCloseTo(1, 5)
+    expect(direct.meanRegretPp).toBe(100)
+    expect(caravan.meanRegretPp).toBe(0)
+  })
+
+  it('filters by supply preset', () => {
+    const rows: Row[] = [
+      csvRow({ mode: 'direct', supply_preset: 'caravan',  total_km: '500', encounters_total: '5', completed: 'false' }),
+      csvRow({ mode: 'direct', supply_preset: 'standard', total_km: '200', encounters_total: '2', completed: 'true'  }),
+    ]
+    const caravanOut = computeModeBreakdown(rows, ['direct'], 'caravan')
+    const standardOut = computeModeBreakdown(rows, ['direct'], 'standard')
+    expect(caravanOut[0].meanKm).toBe(500)
+    expect(standardOut[0].meanKm).toBe(200)
+  })
+
+  it('returns zeros for a mode with no rows under the preset', () => {
+    const rows: Row[] = [csvRow({ mode: 'direct', supply_preset: 'caravan', total_km: '100' })]
+    const out = computeModeBreakdown(rows, ['direct', 'fastest'], 'caravan')
+    const fastest = out.find(b => b.mode === 'fastest')!
+    expect(fastest.meanKm).toBe(0)
+    expect(fastest.encountersPer100Km).toBe(0)
   })
 })
 
