@@ -20,6 +20,7 @@ import {
 import PartyConfigBlock from './journey-planner/PartyConfig'
 import SupplyConfigBlock from './journey-planner/SupplyConfig'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
+import { computeModeRiskWarning } from '../utils/journey-mode-risk'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -429,7 +430,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       }
     }
 
+    const modeRiskWarning = computeModeRiskWarning(mode, supply)
     const allWarnings = [...route.bottlenecks, ...route.seasonalWarnings]
+    if (modeRiskWarning) allWarnings.push(modeRiskWarning)
     if (allWarnings.length > 0) {
       md += `\n### Warnings\n\n`
       for (const w of allWarnings) {
@@ -1262,6 +1265,18 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 ))}
               </div>
             )}
+
+            {/* Mode-risk warning (direct + caravan empirical risk) */}
+            {(() => {
+              const modeRisk = computeModeRiskWarning(mode, supply)
+              if (!modeRisk) return null
+              return (
+                <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
+                  <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconWarning /> Mode Risk</div>
+                  <div className="journey-bottleneck">{modeRisk}</div>
+                </div>
+              )
+            })()}
               </>
             )}
 
