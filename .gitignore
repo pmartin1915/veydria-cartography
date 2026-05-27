@@ -35,3 +35,7 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# Session handoff and scoping notes (working scratch pad — kept locally, not tracked)
+HANDOFF-*.md
+SCOPING-*.md
