@@ -56,6 +56,7 @@ function makeTrace(opts: {
       calendarEventsTotal: 0,
       rationsLowDay: null, waterLowDay: null, rationsOutDay: null, waterOutDay: actions.length,
       finalRationsLeft: 0, finalWaterLeft: 0,
+      civStopsOnRoute: 0, resupplyStopsOnRoute: 0,
       ...(opts.policy ? { policy: opts.policy } : {}),
     },
   }
@@ -83,6 +84,13 @@ describe('sim-batch: column schemas', () => {
     for (const col of LEGACY_COLUMNS) {
       expect(POLICY_COLUMNS).toContain(col)
     }
+  })
+
+  it('both schemas include the Phase 4 resupply-instrumentation columns', () => {
+    expect(LEGACY_COLUMNS).toContain('civ_stops_on_route')
+    expect(LEGACY_COLUMNS).toContain('resupply_stops_on_route')
+    expect(POLICY_COLUMNS).toContain('civ_stops_on_route')
+    expect(POLICY_COLUMNS).toContain('resupply_stops_on_route')
   })
 })
 

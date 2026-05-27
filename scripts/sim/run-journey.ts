@@ -106,6 +106,13 @@ export interface Trace {
     waterOutDay: number | null
     finalRationsLeft: number
     finalWaterLeft: number
+    /** Phase 4: count of nodes on the route where getResupplyTier === 'full'
+     * (civilization or caravanserai). Tests the resupply-asymmetry theory: do
+     * direct routes geometrically bypass full-restore stops? */
+    civStopsOnRoute: number
+    /** Phase 4: count of nodes on the route with any non-'none' resupply tier
+     * (adds ports + oases on top of civStopsOnRoute). */
+    resupplyStopsOnRoute: number
     /** Phase 3: which policy drove this run, if any. */
     policy?: PolicyName
   }
@@ -146,6 +153,8 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
         waterOutDay: null,
         finalRationsLeft: inputs.supply.rationsPerPerson,
         finalWaterLeft: inputs.supply.waterPerPerson,
+        civStopsOnRoute: 0,
+        resupplyStopsOnRoute: 0,
         ...(inputs.policy ? { policy: inputs.policy } : {}),
       },
     }
@@ -267,6 +276,14 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
     calendarEventsTotal += d.calendarEvents?.length ?? 0
   }
 
+  let civStopsOnRoute = 0
+  let resupplyStopsOnRoute = 0
+  for (const n of route.nodes) {
+    const tier = getResupplyTier(n.category)
+    if (tier === 'full') civStopsOnRoute++
+    if (tier !== 'none') resupplyStopsOnRoute++
+  }
+
   const tracedDays: Trace['days'] = days.map((d, i) => {
     const row: Trace['days'][number] = {
       dayNum: d.dayNum,
@@ -326,6 +343,8 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
       waterOutDay,
       finalRationsLeft: round(supply[supply.length - 1]?.rationsLeft ?? inputs.supply.rationsPerPerson),
       finalWaterLeft: round(supply[supply.length - 1]?.waterLeft ?? inputs.supply.waterPerPerson),
+      civStopsOnRoute,
+      resupplyStopsOnRoute,
       ...(inputs.policy ? { policy: inputs.policy } : {}),
     },
   }

@@ -184,6 +184,34 @@ describe('mode breakdown: computeModeBreakdown', () => {
     const fastest = out.find(b => b.mode === 'fastest')!
     expect(fastest.meanKm).toBe(0)
     expect(fastest.encountersPer100Km).toBe(0)
+    expect(fastest.meanCivStopsOnRoute).toBe(0)
+    expect(fastest.meanResupplyStopsOnRoute).toBe(0)
+  })
+
+  it('averages civ_stops_on_route and resupply_stops_on_route per mode', () => {
+    /* Phase 4 resupply-asymmetry probe: three rows per mode so the mean
+     * exercises the division. */
+    const rows: Row[] = [
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '500',
+               civ_stops_on_route: '0', resupply_stops_on_route: '1' }),
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '500',
+               civ_stops_on_route: '1', resupply_stops_on_route: '2' }),
+      csvRow({ mode: 'direct',  supply_preset: 'caravan', total_km: '500',
+               civ_stops_on_route: '2', resupply_stops_on_route: '3' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '600',
+               civ_stops_on_route: '3', resupply_stops_on_route: '4' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '600',
+               civ_stops_on_route: '3', resupply_stops_on_route: '4' }),
+      csvRow({ mode: 'fastest', supply_preset: 'caravan', total_km: '600',
+               civ_stops_on_route: '3', resupply_stops_on_route: '4' }),
+    ]
+    const out = computeModeBreakdown(rows, ['direct', 'fastest'], 'caravan')
+    const direct = out.find(b => b.mode === 'direct')!
+    const fastest = out.find(b => b.mode === 'fastest')!
+    expect(direct.meanCivStopsOnRoute).toBeCloseTo(1, 5)         /* (0+1+2)/3 */
+    expect(direct.meanResupplyStopsOnRoute).toBeCloseTo(2, 5)    /* (1+2+3)/3 */
+    expect(fastest.meanCivStopsOnRoute).toBe(3)
+    expect(fastest.meanResupplyStopsOnRoute).toBe(4)
   })
 })
 

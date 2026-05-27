@@ -215,6 +215,11 @@ export interface SummaryRow {
   final_water_left: number
   encounters_by_type_json: string
   encounters_by_severity_json: string
+  /** Phase 4: count of full-restore nodes on the route (civilization + caravanserai).
+   * Tests whether direct-mode routes geometrically bypass resupply stops. */
+  civ_stops_on_route: number
+  /** Phase 4: count of any non-'none' resupply nodes on the route (adds ports + oases). */
+  resupply_stops_on_route: number
   error: string
   /** Phase 3b: action mix counts. Empty on the legacy (no --policy) path. Sum equals days_count. */
   action_continue: number | ''
@@ -239,6 +244,7 @@ export const LEGACY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'rations_low_day', 'water_low_day', 'rations_out_day', 'water_out_day',
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
+  'civ_stops_on_route', 'resupply_stops_on_route',
   'error',
 ]
 
@@ -252,6 +258,7 @@ export const POLICY_COLUMNS: ReadonlyArray<keyof SummaryRow> = [
   'rations_low_day', 'water_low_day', 'rations_out_day', 'water_out_day',
   'final_rations_left', 'final_water_left',
   'encounters_by_type_json', 'encounters_by_severity_json',
+  'civ_stops_on_route', 'resupply_stops_on_route',
   'error',
   'action_continue', 'action_rest', 'action_force_march',
   'action_ration', 'action_turn_back', 'action_reroute',
@@ -338,6 +345,8 @@ export function toRow(
       final_water_left: inputs.supply.waterPerPerson,
       encounters_by_type_json: '{}',
       encounters_by_severity_json: '{}',
+      civ_stops_on_route: 0,
+      resupply_stops_on_route: 0,
       error: errorMessage,
       ...mix,
     }
@@ -377,6 +386,8 @@ export function toRow(
     final_water_left: s.finalWaterLeft,
     encounters_by_type_json: JSON.stringify(s.encountersByType),
     encounters_by_severity_json: JSON.stringify(s.encountersBySeverity),
+    civ_stops_on_route: s.civStopsOnRoute,
+    resupply_stops_on_route: s.resupplyStopsOnRoute,
     error: '',
     ...mix,
   }

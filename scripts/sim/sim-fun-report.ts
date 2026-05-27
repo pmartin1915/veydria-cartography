@@ -287,6 +287,13 @@ export interface ModeBreakdownRow {
   meanEncountersTotal: number
   meanModerateSevere: number
   encountersPer100Km: number
+  /** Phase 4: mean civ-stops-on-route (full-restore nodes). Tests the
+   *  resupply-asymmetry theory — do direct routes geometrically bypass
+   *  caravanserai/civilization stops, leaving no recovery channel for the
+   *  new encounter cost? */
+  meanCivStopsOnRoute: number
+  /** Phase 4: mean any-resupply-stops-on-route (full + water tier). */
+  meanResupplyStopsOnRoute: number
   meanCompletion: number
   meanRegretPp: number
 }
@@ -355,16 +362,20 @@ export function computeModeBreakdown(
     if (modeRows.length === 0) {
       out.push({
         mode, meanKm: 0, meanEncountersTotal: 0, meanModerateSevere: 0,
-        encountersPer100Km: 0, meanCompletion: 0, meanRegretPp: 0,
+        encountersPer100Km: 0, meanCivStopsOnRoute: 0, meanResupplyStopsOnRoute: 0,
+        meanCompletion: 0, meanRegretPp: 0,
       })
       continue
     }
     let kmSum = 0, encSum = 0, modSevSum = 0, compSum = 0
+    let civStopSum = 0, resupplyStopSum = 0
     for (const r of modeRows) {
       kmSum += Number(r.total_km || 0)
       encSum += Number(r.encounters_total || 0)
       const sev = parseSeverityCounts(r.encounters_by_severity_json || '')
       modSevSum += sev.moderate + sev.severe
+      civStopSum += Number(r.civ_stops_on_route || 0)
+      resupplyStopSum += Number(r.resupply_stops_on_route || 0)
       if (r.completed === 'true') compSum++
     }
     const n = modeRows.length
@@ -375,6 +386,8 @@ export function computeModeBreakdown(
       meanEncountersTotal: encSum / n,
       meanModerateSevere: modSevSum / n,
       encountersPer100Km: meanKm === 0 ? 0 : (encSum / n) / meanKm * 100,
+      meanCivStopsOnRoute: civStopSum / n,
+      meanResupplyStopsOnRoute: resupplyStopSum / n,
       meanCompletion: compSum / n,
       meanRegretPp: regretCount[mode] === 0 ? 0 : (regretSum[mode] / regretCount[mode]) * 100,
     })
@@ -383,7 +396,10 @@ export function computeModeBreakdown(
 }
 
 export function sectionModeBreakdown(rows: Row[], modes: string[], presets: string[]): string {
-  const headers = ['mode', 'mean km', 'encounters', 'mod+sev', 'enc / 100km', 'completion', 'regret pp']
+  const headers = [
+    'mode', 'mean km', 'encounters', 'mod+sev', 'enc / 100km',
+    'civ stops', 'any resupply', 'completion', 'regret pp',
+  ]
   const presetSections: string[] = []
   for (const preset of presets) {
     const breakdown = computeModeBreakdown(rows, modes, preset)
@@ -393,19 +409,25 @@ export function sectionModeBreakdown(rows: Row[], modes: string[], presets: stri
       b.meanEncountersTotal.toFixed(1),
       b.meanModerateSevere.toFixed(1),
       b.encountersPer100Km.toFixed(2),
+      b.meanCivStopsOnRoute.toFixed(1),
+      b.meanResupplyStopsOnRoute.toFixed(1),
       `${(b.meanCompletion * 100).toFixed(1)}%`,
       b.meanRegretPp.toFixed(1),
     ])
     presetSections.push(`### ${preset} preset\n\n${table(headers, tableRows)}`)
   }
   return [
-    '## Mode regret breakdown — segment count vs encounter density\n',
+    '## Mode regret breakdown — segment count, encounter density, resupply asymmetry\n',
     'Decomposes mode regret into possible drivers. **Read column-by-column:** ' +
     '`mean km` is route length; `mod+sev` is the count of encounters with mechanical supply cost ' +
-    '(mild are cosmetic); `enc / 100km` is encounter density per unit distance. ' +
+    '(mild are cosmetic); `enc / 100km` is encounter density per unit distance; ' +
+    '`civ stops` is the count of full-restore nodes (civilization + caravanserai) on the route — ' +
+    'the recovery channel for encounter cost; `any resupply` adds ports + oases (water-only restore).\n\n' +
     'If a high-regret mode has the largest `mean km` but similar `enc / 100km`, the penalty is a ' +
     '**length effect** (more rolls per trip). If it has comparable km but larger `enc / 100km` or ' +
-    '`mod+sev`, the penalty is **biome / route composition** (denser danger per km).\n',
+    '`mod+sev`, the penalty is **biome / route composition** (denser danger per km). ' +
+    'If it has comparable km and density but fewer `civ stops`, the penalty is **resupply asymmetry** — ' +
+    'the route geometrically bypasses the restore stops that would have absorbed the encounter cost.\n',
     presetSections.join('\n'),
   ].join('\n')
 }
