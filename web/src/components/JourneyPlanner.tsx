@@ -1221,30 +1221,6 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
 
             {routeTab === 'route' && (
               <>
-                {/* Path timeline */}
-            <div className="journey-route-path">
-              <div className="journey-path-line" />
-              {route.nodes.map((node, i) => (
-                <div key={node.id} className="journey-path-node">
-                  <div className={`journey-path-dot ${i === 0 ? 'start' : i === route.nodes.length - 1 ? 'end' : 'waypoint'}`} />
-                  <div className="journey-path-info">
-                    <span className="journey-path-name">
-                      <NodeIcon category={node.category} />
-                      {node.name}
-                    </span>
-                    {i < route.edges.length && (
-                      <span className="journey-path-edge">
-                        {route.edges[i].type === 'trade_route' && <IconScroll />}
-                        {route.edges[i].type === 'chokepoint' && <IconMountain />}
-                        {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
-                        {' '}{route.edges[i].name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
             {/* Bottlenecks */}
             {route.bottlenecks.length > 0 && (
               <div className="journey-bottlenecks">
@@ -1269,8 +1245,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               </div>
             )}
 
-            {/* Mode-risk warning (direct + caravan empirical risk) */}
-            {(() => {
+            {/* Mode-risk warning (direct + caravan empirical risk) — GM only, hidden in share mode */}
+            {!shareMode && (() => {
               const modeRisk = computeModeRiskWarning(mode, supply)
               if (!modeRisk) return null
               return (
@@ -1281,8 +1257,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               )
             })()}
 
-            {/* Encounter-density warning (sibling to mode risk) */}
-            {(() => {
+            {/* Encounter-density warning (sibling to mode risk) — GM only, hidden in share mode */}
+            {!shareMode && (() => {
               const densityEncounters = generateEncounters(route, season, mode, edgeBiomes)
               const densityWarning = computeEncounterDensityWarning(mode, densityEncounters)
               if (!densityWarning) return null
@@ -1293,6 +1269,30 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 </div>
               )
             })()}
+
+                {/* Path timeline */}
+            <div className="journey-route-path">
+              <div className="journey-path-line" />
+              {route.nodes.map((node, i) => (
+                <div key={node.id} className="journey-path-node">
+                  <div className={`journey-path-dot ${i === 0 ? 'start' : i === route.nodes.length - 1 ? 'end' : 'waypoint'}`} />
+                  <div className="journey-path-info">
+                    <span className="journey-path-name">
+                      <NodeIcon category={node.category} />
+                      {node.name}
+                    </span>
+                    {i < route.edges.length && (
+                      <span className="journey-path-edge">
+                        {route.edges[i].type === 'trade_route' && <IconScroll />}
+                        {route.edges[i].type === 'chokepoint' && <IconMountain />}
+                        {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
+                        {' '}{route.edges[i].name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
               </>
             )}
 

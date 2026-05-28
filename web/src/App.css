@@ -2505,6 +2505,29 @@ body {
 }
 
 /* ============================================================
+   Journey Planner — base (desktop) rule
+   Declared above the mobile @media block so the bottom-sheet
+   override at max-width:768px wins by source order.
+   ============================================================ */
+
+.journey-planner {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  width: 320px;
+  max-height: calc(100% - 80px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: journeyIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
    Mobile Responsive
    ============================================================ */
 
@@ -2932,25 +2955,10 @@ body {
 
 
 /* ============================================================
-   Journey Planner
+   Journey Planner — sub-component styles
+   (the .journey-planner base rule itself was hoisted above the
+   mobile @media block; see the "Journey Planner — base" section.)
    ============================================================ */
-
-.journey-planner {
-  position: absolute;
-  top: 60px;
-  left: 16px;
-  width: 320px;
-  max-height: calc(100% - 80px);
-  background: var(--bg-card);
-  border: 1px solid var(--border-accent);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: journeyIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 @keyframes journeyIn {
   from { opacity: 0; transform: translateY(-8px); }
@@ -3612,6 +3620,7 @@ body {
 
 .journey-route-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
 }
