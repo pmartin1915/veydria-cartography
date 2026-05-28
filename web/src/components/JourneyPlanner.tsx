@@ -22,6 +22,7 @@ import SupplyConfigBlock from './journey-planner/SupplyConfig'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
 import { computeModeRiskWarning } from '../utils/journey-mode-risk'
 import { computeEncounterDensityWarning } from '../utils/journey-encounter-density'
+import { computeRecommendedMode } from '../utils/journey-mode-recommend'
 import { formatDistance } from '../utils/measure'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -750,22 +751,36 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         </div>
 
-        {/* Route mode selector */}
-        <div className="journey-modes">
-          <span className="journey-modes-label">Route priority</span>
-          <div className="journey-modes-row">
-            {MODES.map(m => (
-              <button
-                key={m.key}
-                className={`journey-mode-btn ${mode === m.key ? 'active' : ''}`}
-                onClick={() => handleModeChange(m.key)}
-                title={m.desc}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Route mode selector — recommends `safest` (badge on the recommended
+            button) when Mode Risk or Encounter Density predicates fire. GM-only;
+            shareMode users see the bare selector. */}
+        {(() => {
+          const recEncounters = (!shareMode && route)
+            ? generateEncounters(route, season, mode, edgeBiomes)
+            : []
+          const rec = !shareMode ? computeRecommendedMode(mode, supply, recEncounters) : null
+          return (
+            <div className="journey-modes">
+              <span className="journey-modes-label">Route priority</span>
+              <div className="journey-modes-row">
+                {MODES.map(m => {
+                  const isRecommended = rec !== null && rec.mode === m.key && rec.mode !== mode
+                  return (
+                    <button
+                      key={m.key}
+                      className={`journey-mode-btn ${mode === m.key ? 'active' : ''} ${isRecommended ? 'recommended' : ''}`}
+                      onClick={() => handleModeChange(m.key)}
+                      title={isRecommended ? `Recommended: ${rec!.reason}` : m.desc}
+                    >
+                      {m.label}
+                      {isRecommended && <span className="journey-mode-rec-badge">Recommended</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         <PartyConfigBlock
           party={party}

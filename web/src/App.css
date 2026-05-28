@@ -3116,6 +3116,24 @@ body {
   color: var(--text-accent);
 }
 
+/* Recommendation badge — gold to match Mode Risk + Encounter Density warning
+   blocks. Never applied to the active mode (badge suppressed in JSX). */
+.journey-mode-btn.recommended {
+  border-color: var(--color-port);
+  box-shadow: 0 0 0 1px rgba(232, 200, 64, 0.3) inset;
+}
+
+.journey-mode-rec-badge {
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--color-port);
+  color: #1a1206;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 /* Party config */
 .journey-party {
   display: flex;
