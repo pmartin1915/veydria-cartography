@@ -46,8 +46,12 @@ interface JourneyPlannerProps {
   /** Dominant biome of the currently selected hex, if any. Passed to the
    *  encounter roller so biome-specific beats surface in the right terrain. */
   selectedBiome?: string | null
+  /** Initial season (typically seeded from URL hash on first mount). */
+  defaultSeason?: Season
   /** Optional callback fired whenever the season selection changes. */
   onSeasonChange?: (season: Season | undefined) => void
+  /** Initial mode (typically seeded from URL hash on first mount). */
+  defaultMode?: RouteMode
   /** Optional callback fired whenever the route mode changes. */
   onModeChange?: (mode: RouteMode) => void
   onComparisonRoutesComputed?: (routes: ComparisonRoutes) => void
@@ -78,7 +82,7 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, onSeasonChange, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -87,8 +91,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [startOpen, setStartOpen] = useState(false)
   const [endOpen, setEndOpen] = useState(false)
   const [exportToast, setExportToast] = useState<string | null>(null)
-  const [season, setSeason] = useState<Season | undefined>(undefined)
-  const [mode, setMode] = useState<RouteMode>('direct')
+  const [season, setSeason] = useState<Season | undefined>(defaultSeason)
+  const [mode, setMode] = useState<RouteMode>(defaultMode ?? 'direct')
   const [party, setParty] = useState<PartyConfig>(defaultParty ?? DEFAULT_PARTY)
   const [partyOpen, setPartyOpen] = useState(false)
   const [supply, setSupply] = useState<SupplyConfig>(defaultSupply ?? DEFAULT_SUPPLY)

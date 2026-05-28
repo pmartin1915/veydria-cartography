@@ -11,6 +11,7 @@
  */
 
 import { DEFAULT_SUPPLY } from './journey-supply'
+import type { Season, RouteMode } from './journey-graph'
 
 export interface ViewportState {
   featureId?: string
@@ -23,6 +24,10 @@ export interface ViewportState {
   centerY?: number
   journeyFrom?: string
   journeyTo?: string
+  /** Planner season — when omitted, planner shows "Any" (season-blind weights). */
+  season?: Season
+  /** Planner mode — default 'direct'; omitted from the hash when at default. */
+  mode?: RouteMode
   share?: boolean
   partyPace?: 'slow' | 'normal' | 'fast'
   partyMount?: 'foot' | 'mounted'
@@ -36,6 +41,8 @@ export interface ViewportState {
   fog?: boolean
 }
 
+const SEASON_VALUES = ['spring', 'summer', 'autumn', 'winter'] as const
+const MODE_VALUES = ['direct', 'fastest', 'safest', 'cheapest'] as const
 const PARTY_PACE_VALUES = ['slow', 'normal', 'fast'] as const
 const PARTY_MOUNT_VALUES = ['foot', 'mounted'] as const
 const PARTY_SIZE_VALUES = ['small', 'medium', 'large'] as const
@@ -74,6 +81,16 @@ export function parseHash(hash: string): ViewportState {
 
   const journeyTo = params.get('journeyTo')
   if (journeyTo) result.journeyTo = journeyTo
+
+  const season = params.get('season')
+  if (season && (SEASON_VALUES as readonly string[]).includes(season)) {
+    result.season = season as Season
+  }
+
+  const mode = params.get('mode')
+  if (mode && (MODE_VALUES as readonly string[]).includes(mode)) {
+    result.mode = mode as RouteMode
+  }
 
   const z = params.get('z')
   if (z !== null) {
@@ -141,6 +158,9 @@ export function buildHash(state: ViewportState): string {
   if (state.hexB) params.set('hexB', state.hexB)
   if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
   if (state.journeyTo) params.set('journeyTo', state.journeyTo)
+  if (state.season) params.set('season', state.season)
+  // Mode default 'direct' is omitted to keep URLs short
+  if (state.mode && state.mode !== 'direct') params.set('mode', state.mode)
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))

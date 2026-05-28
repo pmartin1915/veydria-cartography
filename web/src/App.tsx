@@ -314,8 +314,8 @@ function App() {
 
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
-  const [journeySeason, setJourneySeason] = useState<Season | undefined>(undefined)
-  const [journeyModeState, setJourneyModeState] = useState<RouteMode>('direct')
+  const [journeySeason, setJourneySeason] = useState<Season | undefined>(initialHashRef.current.season)
+  const [journeyModeState, setJourneyModeState] = useState<RouteMode>(initialHashRef.current.mode ?? 'direct')
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
 
@@ -343,6 +343,18 @@ function App() {
       if (panelCloseTimeoutRef.current) clearTimeout(panelCloseTimeoutRef.current)
       if (flyToTimeoutRef.current) clearTimeout(flyToTimeoutRef.current)
     }
+  }, [])
+
+  // Same-tab hash re-hydration. All in-app hash writes use replaceState
+  // (silent) or pair location.hash= with reload(), so this listener only
+  // catches user-driven changes — back/forward navigation, address-bar
+  // paste, or someone editing the URL in DevTools. Reload re-uses the
+  // existing mount-path hydration for every deep-link field (viewport,
+  // journey, feature, hex, share-mode) instead of duplicating that logic.
+  useEffect(() => {
+    const onHashChange = () => { window.location.reload() }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   useEffect(() => {
@@ -952,6 +964,28 @@ function App() {
       showShareToast('Snapshot failed')
     }
   }, [])
+
+  // F-app-6: write planner season + mode to the URL hash so a shared link
+  // round-trips them. Only active while the planner is open; on close, the
+  // existing close handlers strip journeyFrom/journeyTo and reset season/mode
+  // to defaults, and this effect then strips season/mode from the hash.
+  useEffect(() => {
+    if (journeyMode) {
+      viewportRef.current = {
+        ...viewportRef.current,
+        season: journeySeason,
+        mode: journeyModeState,
+      }
+    } else {
+      viewportRef.current = {
+        ...viewportRef.current,
+        season: undefined,
+        mode: undefined,
+      }
+    }
+    const hash = buildHash(viewportRef.current)
+    window.history.replaceState(null, '', hash || window.location.pathname + window.location.search)
+  }, [journeyMode, journeySeason, journeyModeState])
 
   // Refs for keyboard handler to avoid re-binding on every state change
   const searchOpenRef = useRef(searchOpen)
@@ -1597,7 +1631,9 @@ function App() {
             shareMode={shareMode}
             hexSize={hexSize}
             selectedBiome={selectedHex?.descriptors[0] ?? null}
+            defaultSeason={initialHashRef.current.season}
             onSeasonChange={setJourneySeason}
+            defaultMode={initialHashRef.current.mode}
             onModeChange={setJourneyModeState}
             defaultParty={(() => {
               const h = initialHashRef.current

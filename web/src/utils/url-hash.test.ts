@@ -169,6 +169,47 @@ describe('url-hash', () => {
     })
   })
 
+  describe('planner season + mode', () => {
+    it('round-trips season=summer', () => {
+      const hash = buildHash({ season: 'summer' })
+      expect(hash).toContain('season=summer')
+      expect(parseHash(hash).season).toBe('summer')
+    })
+
+    it('round-trips mode=safest', () => {
+      const hash = buildHash({ mode: 'safest' })
+      expect(hash).toContain('mode=safest')
+      expect(parseHash(hash).mode).toBe('safest')
+    })
+
+    it('omits mode=direct (default)', () => {
+      expect(buildHash({ mode: 'direct' })).not.toContain('mode')
+    })
+
+    it('omits season when undefined', () => {
+      expect(buildHash({})).not.toContain('season')
+    })
+
+    it('rejects unknown season/mode values', () => {
+      expect(parseHash('#season=monsoon').season).toBeUndefined()
+      expect(parseHash('#mode=teleport').mode).toBeUndefined()
+    })
+
+    it('round-trips season + mode + journey endpoints together', () => {
+      const original = {
+        journeyFrom: 'tavakh_qarat',
+        journeyTo: 'tavakh_rubat',
+        season: 'autumn' as const,
+        mode: 'safest' as const,
+      }
+      const parsed = parseHash(buildHash(original))
+      expect(parsed.journeyFrom).toBe('tavakh_qarat')
+      expect(parsed.journeyTo).toBe('tavakh_rubat')
+      expect(parsed.season).toBe('autumn')
+      expect(parsed.mode).toBe('safest')
+    })
+  })
+
   describe('fog of war', () => {
     it('round-trips fog=1', () => {
       const hash = buildHash({ share: true, fog: true })
