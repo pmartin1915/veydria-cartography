@@ -347,14 +347,14 @@ function App() {
 
   useEffect(() => {
     // Fetch lore index in parallel with geojson
-    fetch('/veydria-lore.json')
+    fetch(`${import.meta.env.BASE_URL}veydria-lore.json`)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data?.features) setLoreIndex(data.features as LoreIndex)
       })
       .catch(() => { /* lore index is optional */ })
 
-    fetch('/veydria-spatial.geojson')
+    fetch(`${import.meta.env.BASE_URL}veydria-spatial.geojson`)
       .then(async (res) => {
         if (!res.ok) throw new Error(`Failed to load GeoJSON: ${res.status}`)
         const contentLength = +(res.headers.get('content-length') || 0)

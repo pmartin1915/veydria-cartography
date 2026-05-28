@@ -12,7 +12,7 @@ export async function loadCanon(): Promise<CanonData> {
   if (canonCache) return canonCache;
   if (canonPromise) return canonPromise;
 
-  canonPromise = fetch('/canon.json')
+  canonPromise = fetch(`${import.meta.env.BASE_URL}canon.json`)
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to load canon.json: ${res.status}`);
       return res.json();
@@ -29,7 +29,7 @@ export async function loadSearchIndex(): Promise<SearchIndex> {
   if (searchIndexCache) return searchIndexCache;
   if (searchIndexPromise) return searchIndexPromise;
 
-  searchIndexPromise = fetch('/search-index.json')
+  searchIndexPromise = fetch(`${import.meta.env.BASE_URL}search-index.json`)
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to load search-index.json: ${res.status}`);
       return res.json();
@@ -50,7 +50,7 @@ export async function loadMapAnchors(): Promise<MapAnchor> {
   if (mapAnchorsCache) return mapAnchorsCache;
   if (mapAnchorsPromise) return mapAnchorsPromise;
 
-  mapAnchorsPromise = fetch('/map-anchors.json')
+  mapAnchorsPromise = fetch(`${import.meta.env.BASE_URL}map-anchors.json`)
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to load map-anchors.json: ${res.status}`);
       return res.json();

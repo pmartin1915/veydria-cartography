@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Sub-path base for GitHub Pages production builds; root in dev for clean localhost URLs.
+  base: command === 'build' ? '/veydria-cartography/' : '/',
   plugins: [react()],
   server: {
     port: 5173,
@@ -23,4 +25,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
