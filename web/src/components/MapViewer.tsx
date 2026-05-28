@@ -536,8 +536,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // landmark/threshold visibility. Mirrors the route fitBounds at L1040.
       map.fitBounds(bounds, { padding: [20, 20], maxZoom: 1.5 })
 
-      // SVG image overlay
-      L.imageOverlay('/veydria-schematic.svg', bounds).addTo(map)
+      // SVG image overlay. Prefix with Vite's BASE_URL so the GitHub Pages
+      // build (base: /veydria-cartography/) doesn't 404 here; without this
+      // the schematic — which carries the 53 baked-in country name labels —
+      // silently disappears in production and the map loses its country
+      // names entirely.
+      L.imageOverlay(`${import.meta.env.BASE_URL}veydria-schematic.svg`, bounds).addTo(map)
 
       // Separate features by type (computed inline so geojson ref changes
       // don't trigger a full layer rebuild)
