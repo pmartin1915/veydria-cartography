@@ -482,49 +482,56 @@ function capitalizeWord(s: string): string {
  * to a single-word biome descriptor. Buckets chosen against the actual
  * Veydria elevation distribution (-1100 m basin floor → 2600 m highlands).
  */
-// Cross-reviewed (Cowork, 2026-05-19) and tuned against the parchment base
-// layer (feat(hex-overlay): parchment base). Hue pulled 8-12° toward yellow,
-// saturation dropped ~20%, value lifted so cells read as tinted paper not
-// paint chips. Desert/Highland/Mountain kept — already correct ochre/parchment.
+// F2 retune (audit 2026-05-28). The prior palette pulled every hue 8-12°
+// toward yellow and dropped saturation, so the 3-4 biomes within a civ all
+// read as "tinted paper" — at hex-fill opacity, neighbouring biomes were
+// perceptually indistinguishable (within-civ min ΔE 1.5-3.4 over the
+// schematic base). This palette relaxes the warm pull (cool biomes now read
+// cool) and spreads hue/saturation/lightness within each civ's band so every
+// within-civ biome pair clears CIEDE2000 ΔE ≥ 8 composited at BIOME_FILL_OPACITY
+// (0.5) over the parchment/schematic base — a Catan-style cell-to-cell read at
+// continental zoom. Volcanic stays a saturated rust outlier; rare biomes
+// (Coral reef, Geothermal vent, Mangrove) get high-saturation pops. Separation
+// validated by a CIEDE2000 matrix over the file's own civ groupings (below).
 export const BIOME_COLORS: Record<string, string> = {
   // Primary biomes
-  'Cloud forest': '#5e7a4a',
-  'Highland savanna': '#a8b06a',
-  'Desert': '#d4a76a',
-  'Steppe': '#c4c290',
-  'Monsoon delta': '#6a8e5e',
-  'Volcanic archipelago': '#7a543c',
+  'Cloud forest': '#3f7d5a',
+  'Highland savanna': '#b8a64e',
+  'Desert': '#d9a85c',
+  'Steppe': '#d8cf72',
+  'Monsoon delta': '#5a9e58',
+  'Volcanic archipelago': '#8a4228',
   // Secondary — Ngaru-Bon
-  'Miombo woodland': '#7a8848',
-  'Afroalpine heath': '#a6a89a',
-  'River gorge': '#6a7a6a',
+  'Miombo woodland': '#6f8a3e',
+  'Afroalpine heath': '#9aa6a0',
+  'River gorge': '#4a7a72',
   // Secondary — Irrah
-  'Sabkha': '#d8c898',
-  'Oasis': '#8aaa5c',
-  'Escarpment': '#a89878',
+  'Sabkha': '#ece4cc',
+  'Oasis': '#5fa84e',
+  'Escarpment': '#b5764a',
   // Secondary — Kheshkai
-  'Highland grassland': '#b4b878',
-  'Cliff edge': '#9c9686',
-  'River gallery': '#7a967a',
+  'Highland grassland': '#82ad3e',
+  'Cliff edge': '#aaa595',
+  'River gallery': '#3f8f66',
   // Secondary — Ndjadi
-  'Mangrove swamp': '#5a7e58',
-  'Floodplain': '#94a468',
-  'Stone baray': '#adaa92',
+  'Mangrove swamp': '#2f7d6e',
+  'Floodplain': '#a8c25a',
+  'Stone baray': '#9aa8a8',
   // Secondary — Qollari
-  'Mountain terrace': '#76886c',
-  'Fog bank': '#b0b8be',
-  'Cliff road': '#968474',
+  'Mountain terrace': '#8aa06a',
+  'Fog bank': '#b8c2c8',
+  'Cliff road': '#9c7b5c',
   // Secondary — Oravan
-  'Coral reef': '#6a9aa4',
-  'Geothermal vent': '#a8623c',
-  'Strait': '#6a8ea6',
-  // Elevation fallback buckets
-  'Sea': '#6a8ca8',
-  'Plains': '#a4b070',
-  'Hill': '#aaa86c',
-  'Highland': '#a89a6a',
-  'Mountain': '#9a8a6a',
-  'Peak': '#c4beae',
+  'Coral reef': '#3fb0a8',
+  'Geothermal vent': '#d4762f',
+  'Strait': '#4f86b0',
+  // Elevation fallback buckets (own lightness/hue ramp; Sea blue, Peak pale)
+  'Sea': '#5a8ab0',
+  'Plains': '#6f9e44',
+  'Hill': '#bcb84e',
+  'Highland': '#c4a068',
+  'Mountain': '#8a8290',
+  'Peak': '#dcd8cc',
 }
 
 function elevationToBiome(elev: number): string {

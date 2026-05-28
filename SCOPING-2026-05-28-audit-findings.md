@@ -475,3 +475,17 @@ That completes all three deliverables. A note on the handoff format, since it ma
 
 Want me to dig into any specific finding further — e.g., hunt down the exact endpoint tuple that triggers the 2-severe-encounter badge path (F-app-3), or pull the relevant route/encounter logic from the repo to confirm the badge condition in code?
 
+---
+
+## Resolution — cycle C4 (2026-05-28)
+
+GM decisions and follow-up actions recorded after Perry's review. Cycles C1–C3 covered F4, F5, F-app-* fixes (see git log). C4 closes the remaining items:
+
+* **F1 (land-area imbalance):** **Intentional — no fix.** Two hegemons (Irrah, Ngaru Bon) + four smaller polities is the authored design. The four small regions retain enough cells for in-region journeys; no spatial-pipeline rebalance.
+* **F2 (Biome Colors don't differentiate per-cell biomes):** **Resolved.** Root cause was the *palette*, not the renderer — `hex-overlay.ts` already keys each cell by `BIOME_COLORS[biome]`. Retuned all 30 hex codes in `hex-grid.ts` (relaxed the 8-12° warm pull, spread hue/sat/lightness within each civ's band) and raised `BIOME_FILL_OPACITY` 0.3 → 0.5. Validated by a CIEDE2000 matrix over the file's civ groupings: every within-civ biome pair now clears ΔE ≥ 8 composited over the schematic base (was 1.5–3.4 — effectively indistinguishable). See `SCOPING-2026-05-28-biome-palette-retune.md` for the design axis and the four resolved open questions.
+* **F3 (one dominant biome per civ):** **Intentional — no fix.** "Each nation has a signature landscape" is the design; intra-region terrain variety is deliberately low. The F2 palette retune now at least makes the minority biomes within a region *visible*.
+* **F6 (large default hex size):** **Resolved.** `DEFAULT_HEX_SIZE` 50 → 30 in `hex-overlay.ts` so labels are legible at the continental view without manual zoom-in. Auto-scale-to-zoom was considered and declined (more surface area for one-line gain). The 30/50/70 picker is unchanged; `veydria.hexSize` still overrides for returning users. (Note: `hexSize=30` is an already-supported, performance-OK value — ~1320 edge lines.)
+* **F-app-11 (localStorage namespacing):** **Advisory only — no action.** Veydria already namespaces all keys under `veydria.*`; the collision risk is from *other* apps on the shared GH Pages origin, outside Veydria's control. Keep future keys under the prefix.
+
+**OQ2 (700×900 mobile check):** The journey-planner bottom-sheet (`max-height: 78vh`) and the mode row both ship correctly in the built bundle. The mode row is **4 buttons** (Direct/Fastest/Safest/Cheapest), each `flex:1` → ~25% of the full-width sheet, single line, no wrap at 700px — the verification note above said "5-button" but the code defines four. C4 touches no planner-layout CSS, so it cannot regress the C1 header-cascade fix. A live rendered-pixel pass at 700×900 was not run (no browser driver in this environment); recommend a quick DevTools glance when convenient, though the CSS analysis and bundle inspection both indicate fit.
+

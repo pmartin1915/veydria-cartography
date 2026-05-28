@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-28
 **Trigger:** Audit finding F2 (`SCOPING-2026-05-28-audit-findings.md`) — "Biome Colors layer doesn't differentiate per-cell biomes."
-**Status:** Design-only; no code change until Perry approves the axis. Implementation when approved is a one-commit edit to `BIOME_COLORS` in `web/src/utils/hex-grid.ts:489-528`.
+**Status:** ✅ **Implemented (cycle C4, 2026-05-28).** Axis: naturalistic + maximize within-civ separation. All 30 `BIOME_COLORS` hex codes retuned in `web/src/utils/hex-grid.ts`; `BIOME_FILL_OPACITY` raised 0.3 → 0.5 in `web/src/utils/hex-overlay.ts`. Separation validated by a CIEDE2000 matrix (see "Open questions" resolutions below).
 
 ---
 
@@ -68,7 +68,14 @@ Recommended treatments:
 
 Drop the elevation-fallback buckets (`Sea`, `Plains`, `Hill`, `Highland`, `Mountain`, `Peak`) into the same hue grid — they currently sit in the same olive/ochre cluster as the named biomes.
 
-## Open questions for Perry
+## Open questions for Perry — RESOLVED (C4, Perry delegated "you decide")
+
+1. **[RESOLVED → relax the warm pull]** Cool biomes (Cloud forest #3f7d5a, Mangrove #2f7d6e, River gorge #4a7a72, Fog bank #b8c2c8) now read genuinely cool. The warm pull is dropped as a global bias; warmth is now per-biome where naturalistic (Desert, Sabkha, Escarpment, Cliff road).
+2. **[RESOLVED → per-biome read wins; cohesion kept as a soft signal]** Civ cohesion is no longer enforced via shared hue. Within-civ separation is the hard constraint (every pair ΔE ≥ 8 over the base); a civ's "look" survives only incidentally where biomes genuinely share a family. The schematic civ-colour underlay (now at 50%) still gives each region its dominant tone.
+3. **[RESOLVED → naturalistic, not boardgame]** Stayed naturalistic (greens=forest, browns=desert). Readability comes from spreading hue/sat/lightness *within* the naturalistic gamut, not from non-literal colours — except the existing outliers (Volcanic rust, Geothermal orange, Coral teal) which keep their high-saturation pops.
+4. **[RESOLVED → raised to 0.5]** `BIOME_FILL_OPACITY` 0.3 → 0.5. At 0.3 only ~30% of each fill survived over the schematic, compressing within-civ ΔE to ~2-3; 0.5 was required for the palette to clear the ΔE ≥ 8 target while still leaving the schematic as a 50% underlay. Harmonises with the existing `PARCHMENT_FILL_OPACITY` (0.55).
+
+### Original open questions (for reference)
 
 1. **Warm vs neutral bias.** The current palette pulls every hue 8-12° toward yellow (per the inline comment at hex-grid.ts:485-487, tuned against parchment). That helped legibility but suppressed cool biomes (Cloud forest, Mangrove). Keep the warm pull, or relax it so cool biomes read as cool?
 

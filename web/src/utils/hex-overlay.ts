@@ -33,7 +33,7 @@ import {
 
 const SVG_HEIGHT = 800
 const SVG_WIDTH = 1200
-export const DEFAULT_HEX_SIZE = 50
+export const DEFAULT_HEX_SIZE = 30
 // At zoom levels below this, labels overlap into illegibility — drop them.
 // 0 (was 1) gives one extra zoom-out level of coordinate reference so the
 // overview state isn't a mesh-only view with no label context.
@@ -50,7 +50,12 @@ const LABEL_MIN_ZOOM = 0
 // which were rendering cream-on-cream and disappearing.
 const PARCHMENT_CREAM = '#e4cca0'
 const PARCHMENT_FILL_OPACITY = '0.55'
-const BIOME_FILL_OPACITY = '0.3'
+// F2 retune (audit 2026-05-28): bumped 0.3 → 0.5 so the retuned per-biome
+// palette actually reads at continental zoom. At 0.3 only ~30% of each fill's
+// colour survived over the schematic, compressing within-civ ΔE to ~2-3; 0.5
+// lets the biome hues dominate while keeping the schematic civ colour as a
+// 50% underlay. Harmonises with PARCHMENT_FILL_OPACITY (0.55) for no-biome cells.
+const BIOME_FILL_OPACITY = '0.5'
 // Fog of war: when enabled, unexplored hexes dim by overriding fill-opacity.
 // 0.18 chosen as the starting point for the audit pass; the handoff calls out
 // a 0.25-0.3 sweet spot but the dim treatment stacks with the underlying
