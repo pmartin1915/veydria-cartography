@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "generatedAt": "2026-05-13T20:48:11.687Z",
-    "totalFeatures": 21,
-    "totalSnippets": 155,
-    "sourcesScanned": 449
+    "generatedAt": "2026-05-28T20:36:25.600Z",
+    "totalFeatures": 22,
+    "totalSnippets": 182,
+    "sourcesScanned": 580
   },
   "features": {
     "ngaru_bon": [
@@ -23,7 +23,7 @@
         "title": "ecology.encounters.ngaru-bon",
         "category": "ecology",
         "source": "../worldbuilder/ecology/encounters/ngaru_bon.md",
-        "summary": "Dawn on the second day out finds the caravan already moving. The plateau air is cold and mist hangs blue in the shadow-pools beneath the kopjes, those piled granite whalebacks. A pair of southern ground hornbills (*Bucorvus leadbeateri*) is booming in duet somewhere east, the deep *ooomph... ooomph... oo-oo* carrying four or five kilometres over the wet grass, answered by a Swainson's francolin (*Pternistis swainsoni"
+        "summary": "Dawn on the second day out finds the caravan already moving. The plateau air is cold and mist hangs blue in the shadow-pools beneath the kopjes, those piled granite whalebacks. A pair of southern ground hornbills (Bucorvus leadbeateri) is booming in duet somewhere east, the deep ooomph... ooomph... oo-oo carrying four or five kilometres over the wet grass, answered by a Swainson's francolin (Pternistis swainsonii) go…"
       },
       {
         "title": "ecology.biome.ngaru-bon",
@@ -56,28 +56,28 @@
         "summary": "The Irrah drylands and the Ngaru-Bon plateau share **no documented direct political, commercial, or doctrinal coupling**. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the Aethelian Basin's full commercial breadth and by the absence of any contiguous territory or traditional exchange route that does not pass through Basin intermediaries. Irrah's institutional ecol"
       },
       {
-        "title": "factions.cross_civ.ngaru_bon_oravan",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/ngaru-bon-oravan.md",
-        "summary": "The Ngaru-Bon plateau and the Oravan archipelago maintain a **commercial relationship that is structurally productive and politically thin**. The two civs do not share a border, a military alliance, a theological tradition, or a linguistic substrate. Their exchange is routed through the Aethelian Basin's port zones — principally Halani-Tamu — and is governed by institutions on both sides that treat the relationship a"
-      },
-      {
         "title": "magic.system.ngaru_bon_gyamsgra",
         "category": "magic",
         "source": "../worldbuilder/magic/01_civ_systems/ngaru_bon_gyamsgra.md",
         "summary": "Etymology: gyam (forge) + sgra (sound, voice). \"Forge-voice\" — the ancestor-smith guild's sacred register, and the most institutionally monolithic register on the continent.\r \r ## Phonological Character\r \r Gyamsgra's defining feature is the three-tier ancestral sub-register structure:\r \r - Nokul-tier with dental click [ǀ] — cattle-origin blessings\r - Amori-tier with lateral click [ǁ] — inventory and resource-counting…"
       },
       {
-        "title": "religion.institution.ngaru_bon_calendar",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/ngaru_bon_calendar.md",
-        "summary": "The Ngaru-Bon year has two scales. The short scale — what merchants and farmers use — is a solar year of twelve months, anchored to the msasa red leaf-flush and the cool-dry-winter smelting-season opening. The long scale — what matters — is counted in ancestor-smith tier promotions: Nokul, Amori, Lapam. A generation is not a span of time. It is a name that may refer to one mortal, a sequence of inheritors, or a ficti…"
+        "title": "economy.civ.ngaru_bon",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/ngaru_bon.md",
+        "summary": "Ngaru-Bon is the metallurgical apex of the continent. Its bloomeries produce iron bars of a quality no other civilization can match, its crucibles produce steel ingots that exist nowhere else at scale, and its smiths turn out finished work that the whole continent buys: chainmail, curved blades, architectural supports. The plateau also exports copper from Katanga-analog deposits, ivory, and gold, though gold occupies…"
       },
       {
-        "title": "religion.institution.ngaru_bon_smith_guild",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/ngaru_bon_smith_guild.md",
-        "summary": "Legitimize by constraint. The guild controls both ritual and military production. Their Investiture-Controversy-style interdict is a forge-strike -- refusing to produce weapons or reconsecrate tools. Great Zimbabwe's dzimbahwe logic: rainmaker kings depend on ancestor-sanctioned regalia that the guild makes.\r \r ## The Guild Structure\r \r The ancestor-smith guild is patrilineal and hereditary. Membership is by birth in…"
+        "title": "law.civ.ngaru_bon",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/ngaru_bon.md",
+        "summary": "Ngaru-Bon is \"Monolithic\" in the typology of magic/06, the only Veydrian civilization at this position on the Schism Axis, and its legal architecture reflects that singularity: a single institution — the ancestor-smith guild — controls the evidentiary primitive on which all legal authority depends. The Gyamsgra click-and-lateral register is not merely a language of ritual; it is the legal-certification medium. A cons…"
+      },
+      {
+        "title": "law.figures.ngaru_bon",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/ngaru_bon.md",
+        "summary": "Sixty-eight, reputedly never having descended below three thousand meters altitude. Speaker (Gyalpo) of the Inner Council of Ancestor-Smiths (Gyalpo Pho-lha) — the thirteen-smith governing tribunal of the monolithic guild. Sodality affiliation: forge-ancestor (Lapam-tier), the highest consecration-mark authority. Home institution: the central ancestor-shrine at the high-plateau summit, where the Inner Council convene…"
       }
     ],
     "irrah": [
@@ -91,7 +91,7 @@
         "title": "ecology.disease.irrah",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/irrah.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | humma al-'ayn | Trachoma | Year-round; dust/fly-season peaks | Rosewater wash; lid epilation | | rahab al-sadr | Silicosis (\"the stone chest\") | Chronic; wind-readers and stone-cutters | Gum arabic demulcent; palliative | | al-mawt al-aswad | Plague | Caravan/pilgrim season at oases | None effective; isolation | | da' al-kalb | Rab…"
+        "summary": "Trachoma is near-universal: recurrent infection scars the inner eyelid, lashes turn inward, cornea scratched into opacity over years. Women blinded more often (caring for infected children). Silicosis afflicts the Qeturin wind-readers — decades of sand exposure produce slowly worsening breathlessness, dry cough, \"drumming\" when the physician strikes the upper back. Saw-scaled viper: venom unravels clotting, producing…"
       },
       {
         "title": "ecology.domesticates.irrah",
@@ -121,37 +121,37 @@
         "title": "factions.civ.irrah",
         "category": "factions",
         "source": "../worldbuilder/factions/01_civ_factions/irrah.md",
-        "summary": "Irrah is the only Veydrian civ that is not reducible to a single institutional type per [magic/06](../../magic/06_institutional_structure_comparison.md). The Qalībin scholarly order contains three sub-registers, each with a distinct institutional character: **Ṣāliqūn** (the oath-binders, Type 2 \"Institutionalized with reform\" — the active Naturalist Schism sits here); **Qeturīn** (institutional consensus, where tradi"
+        "summary": "Irrah is the only Veydrian civ that is not reducible to a single institutional type per magic/06. The Qalībin scholarly order contains three sub-registers, each with a distinct institutional character: Ṣāliqūn (the oath-binders, Type 2 \"Institutionalized with reform\" — the active Naturalist Schism sits here); Qeturīn (institutional consensus, where traditionalist and naturalist readings converge on outcomes and the S…"
       },
       {
         "title": "factions.resource.irrah_frankincense",
         "category": "factions",
         "source": "../worldbuilder/factions/06_resource_governance/irrah_frankincense.md",
-        "summary": "The Irrah scrublands produce frankincense (*luban-harra*, the resin of *Boswellia sacra*) from limestone-slope groves in the Dhofar-analog highland zone, salt from the sabkha flat-mine complexes at the scrubland's lower margins, and silver from mid-slope outcrop veins. The continent's iron-timber deficit — Irrah lacks both bloomery-grade iron and sufficient charcoal hardwood for sustained metallurgy — makes it critic"
-      },
-      {
-        "title": "factions.cross_civ.basin_irrah",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/basin-irrah.md",
-        "summary": "The Basin↔Irrah relationship is the most institutionally complete Basin-shaping of any contributing civ's resident cohort. Two distinct Irrah Basin postures operate in parallel: a dense, cadence-shifted integration at Halani-Tamu and Tavakh-Qarat, where the Frankincense Syndics and the Northern Qalībin have adapted to Triple-Seal procedural forms; and a Basin-distance-preserving enclave at the Darb in Ki-Mbuhari, whe"
-      },
-      {
-        "title": "factions.cross_civ.irrah_ngaru_bon",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/irrah-ngaru-bon.md",
-        "summary": "The Irrah drylands and the Ngaru-Bon plateau share **no documented direct political, commercial, or doctrinal coupling**. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the Aethelian Basin's full commercial breadth and by the absence of any contiguous territory or traditional exchange route that does not pass through Basin intermediaries. Irrah's institutional ecol"
-      },
-      {
-        "title": "factions.cross_civ.kheshkai_irrah",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/kheshkai-irrah.md",
-        "summary": "The Kheshkai-Irrah relationship is the **oldest documented cross-civ commercial arrangement** on the continent. It predates Khazadari rate-schedule certification, predates the Aethelian Basin's emergence as a continental commercial pivot, and predates every trans-civ institution currently operating. The relationship's durability rests on three layered arrangements: a pre-Basin overland caravan exchange of felt and ho"
+        "summary": "The Irrah scrublands produce frankincense (luban-harra, the resin of Boswellia sacra) from limestone-slope groves in the Dhofar-analog highland zone, salt from the sabkha flat-mine complexes at the scrubland's lower margins, and silver from mid-slope outcrop veins. The continent's iron-timber deficit — Irrah lacks both bloomery-grade iron and sufficient charcoal hardwood for sustained metallurgy — makes it critically…"
       },
       {
         "title": "magic.system.irrah_qalib",
         "category": "magic",
         "source": "../worldbuilder/magic/01_civ_systems/irrah_qalib.md",
         "summary": "Etymology: from the triliteral root √q-l-b (\"to turn, to pour\"). \"The mould\" — the base sacred register of the Qalībin order, with three institutionally-distinct sub-registers: Ṣāliqūn (oath-binders), Qeturīn (wind-readers), and Azmarāʔ (star-readers)."
+      },
+      {
+        "title": "economy.civ.irrah",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/irrah.md",
+        "summary": "Irrah holds the continent's rock-salt monopoly, and the monopoly is the load-bearing fact of its economy. The sabkha slabs cut from its salt-flats, the Taghaza and Taoudenni analog of Veydria, are the most universally accepted inland commodity money on the continent, and the salt itself is the northern anchor of the continental spine against Ndjadi grain. Around the salt, the drylands yield natron, dates, lode silver…"
+      },
+      {
+        "title": "law.civ.irrah",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/irrah.md",
+        "summary": "Irrah has no sovereign who promulgates law in the continental sense. It has no capital city whose decrees bind the confederation's forty named oases, no standing army that enforces judgments across the desert interior, and no priesthood whose authority is accepted by all four social strata without qualification. What Irrah has is a multi-institution legal architecture in which five distinct adjudicating bodies — the…"
+      },
+      {
+        "title": "law.figures.irrah",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/irrah.md",
+        "summary": "Late seventies, immobile with severe arthritis, former desert-crossing khabīr (route-guide) before her ordination into the Ṣāliqūn sub-register of the Qalībin scholarly order. Her sobriquet al-Fiḍḍa (\"of the Silver\") is both her oasis-of-origin (the Silver Oasis, in the northern Ḥārrā shadow) and the canonical metonymy by which junior scholars across the three Qalībin sub-registers refer to her seniority. Home instit…"
       }
     ],
     "kheshkai": [
@@ -159,7 +159,7 @@
         "title": "ecology.disease.kheshkai",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/kheshkai.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | tolgoi-aran | Brucellosis | Year-round; lambing peak | Artemisia, licorice; rest and airag | | qara-yara | Anthrax (\"black sore\") | Hide/felt seasons; soil reactivation | Cautery of eschar; artemisia wash | | tarbagan-aran | Plague (\"marmot sickness\") | Marmot-hunting summer; winter pneumonic | None effective; isolation, burning |…"
+        "summary": "Plague is the steppe's catastrophe. Reservoir: fat marmot (Marmota sibirica). Hunters skinning an ill animal contract bubonic form — sudden high fever, exquisitely tender swelling in groin/armpit/neck, dark purpuric patches. In winter closed gers, it turns pneumonic — blood-tinged cough, near-total mortality, person-to-person. Caravans move it westward. Anthrax: painless raised black eschar on forearms of felt-makers…"
       },
       {
         "title": "ecology.domesticates.kheshkai",
@@ -201,19 +201,7 @@
         "title": "factions.cross_civ.kheshkai_irrah",
         "category": "factions",
         "source": "../worldbuilder/factions/cross_civ_relationships/kheshkai-irrah.md",
-        "summary": "The Kheshkai-Irrah relationship is the **oldest documented cross-civ commercial arrangement** on the continent. It predates Khazadari rate-schedule certification, predates the Aethelian Basin's emergence as a continental commercial pivot, and predates every trans-civ institution currently operating. The relationship's durability rests on three layered arrangements: a pre-Basin overland caravan exchange of felt and ho"
-      },
-      {
-        "title": "factions.cross_civ.kheshkai_oravan",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/kheshkai-oravan.md",
-        "summary": "The Kheshkai steppe and the Oravan archipelago share **no documented direct political coupling**. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the full width of the Aethelian Basin, by the absence of any traditional exchange route that does not pass through Basin intermediaries, and by the complete incompatibility of their institutional forms — Kheshkai's oral, n"
-      },
-      {
-        "title": "factions.cross_civ.kheshkai_qollari",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/kheshkai-qollari.md",
-        "summary": "The Kheshkai steppe and the Qollari highlands share **no documented direct political, commercial, or doctrinal coupling**. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the Aethelian Basin's full commercial breadth, by the absence of any contiguous territory or traditional exchange route that does not pass through Basin intermediaries, and by the complete disjunct"
+        "summary": "The Kheshkai-Irrah relationship is the oldest documented cross-civ commercial arrangement on the continent. It predates Khazadari rate-schedule certification, predates the Aethelian Basin's emergence as a continental commercial pivot, and predates every trans-civ institution currently operating. The relationship's durability rests on three layered arrangements: a pre-Basin overland caravan exchange of felt and horses…"
       },
       {
         "title": "magic.system.kheshkai_varkosh",
@@ -222,10 +210,22 @@
         "summary": "Etymology: var (oath, promise) + kosh (wind). \"Oath-wind\" — the sacred register of the Kheshkai steppe-peoples."
       },
       {
-        "title": "religion.institution.kheshkai_calendar",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/kheshkai_calendar.md",
-        "summary": "The Kheshkai do not have a calendar. This is not an absence. It is a doctrine.\r \r \"Basin calendars are paper and paper does not know the grass.\" The Oral-Memory Council's senior speaker delivered this ruling six master-shaman transmission cycles ago, in response to a Khazadari clerk who proposed that the Council's pasture-rotation hearings be transcribed into Basin contract notation. The ruling stands. The Council ha…"
+        "title": "economy.civ.kheshkai",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/kheshkai.md",
+        "summary": "Kheshkai sells two things the continent cannot do without and a third that is the trade itself. The first is warhorses and remounts, the only cavalry-grade source at scale on the continent, an export that confers military capability no settled neighbor can manufacture. The second is tin, drawn from a Zeravshan-analog source so geologically rare that two or three nodes supply the whole continent, and tin is half of br…"
+      },
+      {
+        "title": "law.civ.kheshkai",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/kheshkai.md",
+        "summary": "Kheshkai is \"Non-institutional\" in the typology of magic/06_institutional_structure_comparison.md, the only Veydrian civilization at this position. Where every other civ has colleges, guilds, lineages, or registers in the formal sense, Kheshkai law operates through personal authority, oral memory, and the vowel-harmony oath. There are no courthouses, no written statutes, no scribal class, and no archive that a fire c…"
+      },
+      {
+        "title": "law.figures.kheshkai",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/kheshkai.md",
+        "summary": "Late sixties, gravel-voiced, of the Aman-Ger household lineage (the aman-root marking oral office, the ger-suffix marking household standing). Head of the Oral-Memory Council (Aman-Sanah Zövlöl) — the confederation's genealogy-and-precedent custodian and the steppe's nearest equivalent to a trial-level court. Home convening ground: the seasonal open-sky arbitration site at the western rim of the Kostkai grazing-circu…"
       }
     ],
     "ndjadi": [
@@ -233,7 +233,7 @@
         "title": "ecology.disease.ndjadi",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/ndjadi.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | mbanga | Urinary schistosomiasis | Year-round, irrigation/laundry sites | Baobab bark decoction; supportive | | ndolongo | Intestinal schistosomiasis | Year-round, rice-paddy and fishing | Astringent barks; neem leaf | | nzalu-meza | Cholera-type diarrhoea | End dry-season, epidemic | Rice-water, gum arabic suspension | | mbingi |…"
+        "summary": "Urinary schistosomiasis is so common that painless bloody urine in boys is considered nearly normal. By middle age: bladder stone and bladder cancer. Guinea worm announces itself 10-14 months after drinking from a fouled pond — a burning blister, a pale thread emerging. Wound the worm onto a stick a finger-breadth per day for weeks; breakage is catastrophic. Emergence season coincides with planting: villages lose a q…"
       },
       {
         "title": "ecology.domesticates.ndjadi",
@@ -257,7 +257,7 @@
         "title": "factions.civ.ndjadi",
         "category": "factions",
         "source": "../worldbuilder/factions/01_civ_factions/ndjadi.md",
-        "summary": "Ndjadi is \"Institutionalized with reform\" in the typology of [magic/06](../../magic/06_institutional_structure_comparison.md), and its position on the Schism Axis is the **Open and active** one — the Vernacular-Habal Movement is named, organized, currently publishing, and recognized as a faction even by the elder colleges that condemn it. The literate scribal infrastructure of the imperial colleges, the *habal* copy-"
+        "summary": "Ndjadi is \"Institutionalized with reform\" in the typology of magic/06, and its position on the Schism Axis is the Open and active one — the Vernacular-Habal Movement is named, organized, currently publishing, and recognized as a faction even by the elder colleges that condemn it. The literate scribal infrastructure of the imperial colleges, the habal copy-service traditions in the delta trading ports, and the river-c…"
       },
       {
         "title": "factions.resource.ndjadi_grain",
@@ -284,22 +284,22 @@
         "summary": "The Ndjadi year is not a circle. It is a pulse — a single annual flood that rises, crests, recedes, and leaves the land either sown or hungry. There is no spring, no summer, no autumn, no winter. There is only the flood, the recession, the growing, and the hungry gap. The calendar is hydrology, not astronomy.\r \r ## The Flood as Year Anchor\r \r The year begins when the Floodwatch Augmented Bureaucracy publishes the flo…"
       },
       {
-        "title": "religion.institution.ndjadi_scribes",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/ndjadi_scribes.md",
-        "summary": "The people who certify correct speech. Since correct speech IS prayer, the scribes who control certification hold a functional veto over any public act that requires liturgical authorization. They are notaries, priests, and cosmological regulators in one institution."
+        "title": "economy.civ.ndjadi",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/ndjadi.md",
+        "summary": "Ndjadi is the breadbasket of Veydria, and that single fact organizes everything else about its economy. The floodplain produces a continental staple surplus in wheat, barley, millet, and rice, the only bulk-carbohydrate output on the continent large enough to feed populations that cannot feed themselves. The surplus exists because the river floods on a predictable cycle and deposits new alluvium each season, a renewa…"
       },
       {
-        "title": "religion.sacred_register.ndjadi_tier_prefixes",
-        "category": "religion",
-        "source": "../worldbuilder/religion/04_sacred_registers/ndjadi_tier_prefixes.md",
-        "summary": "Ndjadi magic is the strongest Vedic analog in Veydria: speaking correctly IS prayer, a misapplied prefix is not a grammar error but a cosmological miscategorization with consequences. The three-tier prefix system (ra-/ka-/nga-) simultaneously classifies cosmological rank, determines liturgical validity, and gates institutional authority."
+        "title": "law.civ.ndjadi",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/ndjadi.md",
+        "summary": "Ndjadi is \"Institutionalized with reform\" in the typology of magic/06_institutional_structure_comparison.md, and its legal architecture mirrors that position: a five-body hierarchy with no single sovereign, where reform pressure is absorbed into tribunal procedure rather than expelled from it. The five bodies are the Court of the Three Mouths (twelve river-lord houses, commercial-arbitration seniority), the House of…"
       },
       {
-        "title": "religion.reform.ndjadi_vernacular_habal",
-        "category": "religion",
-        "source": "../worldbuilder/religion/06_reform_movements/ndjadi_vernacular_habal.md",
-        "summary": "Habal copy-service scribes producing vernacular-glossed sacred-prefix editions. The scribal-cosmological priesthood condemns this as \"if nga- is explained, it ceases to do its cosmological work.\" Pamphlet circulation bypasses senior interpretive authority."
+        "title": "law.figures.ndjadi",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/ndjadi.md",
+        "summary": "Seventy, famously slow-spoken in council, of the Kilomba river-lord house (one of the three senior houses currently holding the rotating chair). Rotating chair of the Court of the Three Mouths (Ki-Jenga wa Mazi Watatu) at Ki-Mbuhari; his current chair-cycle is the second of his career. Tier-prefix: ra- (sky), the highest grade. Noun-class: mbu- (water), conferring the senior river-lord domain. His house's commercial…"
       }
     ],
     "qollari": [
@@ -307,7 +307,7 @@
         "title": "ecology.disease.qollari",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/qollari.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | q'ayma-sonqo | Acute mountain sickness | Any ascent >3000 paces, within hours | Coca leaf; chachacoma; muna | | p'uka-uya | Chronic mountain sickness (Monge's) | Long-term altitude dwellers | Palliative; bloodletting | | qhaqha-sinka | Mucocutaneous leishmaniasis | Yungas cloud-forest, year-round | No cure; supportive | | llakiy-so…"
+        "summary": "Soroche (q'ayma-sonqo, \"the heart gone thin\") strikes within hours above 3,000 paces: pressing headache, nausea, staggering gait. Can progress to ch'aki-sonqo — drowning in the lungs (pink foam, gurgling breath) — fatal unless carried down. Chagas (llakiy-sonqo, \"the sorrowful heart\") from triatomine bug bite at night in thatched houses: Romana's sign (painless one-sided eyelid swelling) in childhood, then decades la…"
       },
       {
         "title": "ecology.domesticates.qollari",
@@ -340,12 +340,6 @@
         "summary": "Qollari is \"Fragmented (conflictual)\" in the typology of [magic/06](../../magic/06_institutional_structure_comparison.md), the second of two civs at the fragmented institutional position and the explicit contrast to Oravan's \"Fragmented (tolerant)\" archipelago politics. Where Oravan's three-Havrana-lineage disagreement is unorganized and tolerated, the Qollari calendar-keeper dispute is administratively organized, do"
       },
       {
-        "title": "factions.crisis.calendar_schism",
-        "category": "factions",
-        "source": "../worldbuilder/factions/03_crises/calendar_schism.md",
-        "summary": "The Calendar Schism is the continental cold war that began when two senior Qollari calendar-keeper lineages produced divergent intercalation calculations for the current cycle, with the result that every date between winter solstice and spring equinox is correct under one lineage's reckoning and void under the other's. Cinchona advance-purchase contracts, mountain-pass corridor-access timings, oath-validity windows, "
-      },
-      {
         "title": "factions.resource.qollari_cinchona",
         "category": "factions",
         "source": "../worldbuilder/factions/06_resource_governance/qollari_cinchona.md",
@@ -364,16 +358,22 @@
         "summary": "Etymology: willka (sacred, sun-related) + qallu (throat, passage, from kullku). \"Sacred tongue\" — the calendrically-gated register of the Qollari."
       },
       {
-        "title": "religion.institution.qollari_calendarists",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/qollari_calendarists.md",
-        "summary": "A vertical hierarchy that legitimizes and constrains in one move. Trade-corridor access IS calendrical access. The calendar-priesthood functions like the Delphic Oracle as inter-polis arbitrator: opacity is power."
+        "title": "economy.civ.qollari",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/qollari.md",
+        "summary": "Qollari sells altitude. Its highland exports are high in value and low in bulk: medicinal bark, the cinchona-analog fever-bark that no lowland can grow, rare dyestuffs of the cochineal kind, and the fine camelid fiber, vicuna-analog above 3,800 meters, that constitutes a wool monopoly the lowlands cannot touch. To these the cloud-states add structural timber from the wetter slopes, silver, gold, processed tin-bronze…"
       },
       {
-        "title": "religion.sacred_register.qollari_ejectives",
-        "category": "religion",
-        "source": "../worldbuilder/religion/04_sacred_registers/qollari_ejectives.md",
-        "summary": "Qollari magic is calendrical: ejective consonants bind to specific days in a ritual calendar, uvulars are reserved for solstitial rites. The practitioner produces consonants the general population can also produce -- the real monopoly is over which utterances are licit when, enforced by a khipu-plus-calendar knot-record that only the calendarist hierarchy can read."
+        "title": "law.civ.qollari",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/qollari.md",
+        "summary": "Qollari is \"Fragmented (conflictual)\" in the typology of magic/06_institutional_structure_comparison.md, and its legal architecture is the most calendrically entangled in Veydria. Where other civs separate law from liturgy as distinct institutional layers, Qollari law is calendrical administration: the same khipu cord-records that compute solstitial intercalation also record labor obligations, certify contracts, and…"
+      },
+      {
+        "title": "law.figures.qollari",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/qollari.md",
+        "summary": "Mid-fifties, narrow-faced, the first in three generations of her lineage to hold dual cliff-road observatory residency and khipu-reading apprenticeship — her predecessors specialized in one or the other, and the dual training is held by the Alto Concordance to mark her as the rightful keeper of the next generation's almanac. Senior calendar-keeper of the Alto Concordance (Hatun Pacha-Kawsay); home observatory at Wawa…"
       }
     ],
     "oravan": [
@@ -381,7 +381,7 @@
         "title": "ecology.disease.oravan",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/oravan.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | vulumala | Malaria (P. falciparum, P. vivax) | Monsoon-peak, lowland reef-village | Bark decoctions; symptomatic turmeric | | laumalu | Dengue (\"bone-break fever\") | Rainy season, stored-water breeding | Kava for pain, coconut-water rehydration | | waimala | Beri-beri (thiamine deficiency) | Year-round, polished-rice communities |…"
+        "summary": "Malaria follows the monsoon; lowland mangrove-backwater villages see year-round cases. Chronic sufferers develop a heavy spleen-cake on the left flank. Dengue onset is abrupt: flushed face, retro-orbital pain, pulse slower than the heat predicts; in the worst form, bleeding gums and black vomit. Unlike malaria, it breeds in stored water jars. Beri-beri is endemic among rice-hulling communities — wet form swells legs…"
       },
       {
         "title": "ecology.domesticates.oravan",
@@ -423,13 +423,7 @@
         "title": "factions.cross_civ.kheshkai_oravan",
         "category": "factions",
         "source": "../worldbuilder/factions/cross_civ_relationships/kheshkai-oravan.md",
-        "summary": "The Kheshkai steppe and the Oravan archipelago share **no documented direct political coupling**. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the full width of the Aethelian Basin, by the absence of any traditional exchange route that does not pass through Basin intermediaries, and by the complete incompatibility of their institutional forms — Kheshkai's oral, n"
-      },
-      {
-        "title": "factions.cross_civ.ngaru_bon_oravan",
-        "category": "factions",
-        "source": "../worldbuilder/factions/cross_civ_relationships/ngaru-bon-oravan.md",
-        "summary": "The Ngaru-Bon plateau and the Oravan archipelago maintain a **commercial relationship that is structurally productive and politically thin**. The two civs do not share a border, a military alliance, a theological tradition, or a linguistic substrate. Their exchange is routed through the Aethelian Basin's port zones — principally Halani-Tamu — and is governed by institutions on both sides that treat the relationship a"
+        "summary": "The Kheshkai steppe and the Oravan archipelago share no documented direct political coupling. This absence is not an oversight; it is a documented structural fact. The two civs are separated by the full width of the Aethelian Basin, by the absence of any traditional exchange route that does not pass through Basin intermediaries, and by the complete incompatibility of their institutional forms — Kheshkai's oral, non-i…"
       },
       {
         "title": "magic.system.oravan_tavamala",
@@ -438,16 +432,22 @@
         "summary": "Etymology: tava (voice) + mala (craft). \"Craft-voice\" — the sacred register of the Oravan palace-priestesshood."
       },
       {
-        "title": "religion.tradition.oravan_fire_house",
-        "category": "religion",
-        "source": "../worldbuilder/religion/01_traditions/oravan_fire_house.md",
-        "summary": "A local intensification on the Water-Covenant substrate, not a separate tradition family. The Fire-House fuses volcanic fire with the oceanic Water theology to produce something no other descendant of the Water-Covenant has: a dual-aspect divinity whose two media (salt water and volcanic fire) are treated as the same creative-destructive force."
+        "title": "economy.civ.oravan",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/oravan.md",
+        "summary": "Oravan trades in things that grow nowhere else. The volcanic archipelago holds two point-source monopolies: obsidian, the sharpest cutting edge available to civilizations without universal iron access, drawn from five islands, and the deep-sea spices, clove and nutmeg and mace, endemic to a handful of islands and a single archipelago cluster. To these the islands add pumice, coral-stone blocks for architecture, cured…"
       },
       {
-        "title": "religion.institution.oravan_calendar",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/oravan_calendar.md",
-        "summary": "The Oravan year is not computed. It is performed. The priestess-queen's body at the solstice Tavamala Consecration is the only instrument capable of opening the sailing year, and her physical absence — whether by death, dispute, or cyclone — closes it. There are no archivists, no knot-records, no star-tables. There is only the ocean-salt register on her left hand and the hearth-fire register on her right, and the dec…"
+        "title": "law.civ.oravan",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/oravan.md",
+        "summary": "Oravan is \"Fragmented (tolerant)\" in the typology of magic/06_institutional_structure_comparison.md, and its legal architecture mirrors that position: a four-body hierarchy with no central sovereign, where enforcement authority is distributed across ritual, commercial, and kinetic tracks that do not acknowledge each other as superior. The four bodies are the Wave Council Plenary (seasonal unanimity-theatre, harbor-mo…"
+      },
+      {
+        "title": "law.figures.oravan",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/oravan.md",
+        "summary": "Mid-forties, ruddy-pale, the first in her matrilineage to read Wazahaki fluently. Priestess-Underwriter of the Harbor Covenant (Pulino Motunua) and — concurrently — chair of the trans-civ Three-Tithe Pool. Home shrine-house: the harbor-mouth Pulino Motunua receipt-room at Kolua-Havrana, where the Covenant's wave-tithe ledger lives in a cedar press whose key Teirun carries on her own person. Married into a Ki-Mbuhari…"
       }
     ],
     "aethelian_basin": [
@@ -467,7 +467,7 @@
         "title": "ecology.disease.aethelian",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/aethelian.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | febbre-tertiana / -quartana | Malaria (P. vivax, P. malariae) | Jul-Oct, lagoons and marshes | Willow bark; wormwood | | peste-nera | Plague | Ship-borne, ~decadal waves | Quarantine; theriac; cupping, bubo cautery | | febbre-maculosa | Typhus (\"spotted fever\") | Crowded quarters, hunger years | Bloodletting; sponging | | tisi | Tu…"
+        "summary": "Plague is the basin's defining catastrophe: ship-borne, returns every 10-15 years. Bubonic form (bubo in groin/armpit, 2-4 day course to death) and winter pneumonic form (bloody cough, near-total mortality). The port cities' innovation: the lazareto on an outer island and the quarantena — forty days of ship-isolation. Typhus runs through galley-holds, garrisons, refugee camps — distinguished from plague by absence of…"
       },
       {
         "title": "ecology.encounters.aethelian",
@@ -485,7 +485,7 @@
         "title": "factions.civ.basin",
         "category": "factions",
         "source": "../worldbuilder/factions/01_civ_factions/basin.md",
-        "summary": "This file is filed under `factions/01_civ_factions/` for organizational continuity with the six per-civ files, but the Basin is not a civilization — it has no native ethnicity, no army, no single language, no chartered authority. The pre-allocation of this path was made in the Batch 1 forward roadmap and is preserved here. What the Basin has, instead, is an institutional ecology dense enough that operating in the Bas"
+        "summary": "This file is filed under factions/01_civ_factions/ for organizational continuity with the six per-civ files, but the Basin is not a civilization — it has no native ethnicity, no army, no single language, no chartered authority. The pre-allocation of this path was made in the Batch 1 forward roadmap and is preserved here. What the Basin has, instead, is an institutional ecology dense enough that operating in the Basin…"
       },
       {
         "title": "factions.trans_civ.basin_merchant_dynasties",
@@ -518,13 +518,19 @@
         "summary": "The Harbor-Oath War is the continental cold war over commercial-oath jurisdiction in Aethelian Basin port cities. It is not a military conflict and has produced no military casualties; it has produced bribery, forum-shopping, competing witness-clerks, sustained pamphleteer-and-counter-pamphleteer warfare, and a single documented assassination two generations back whose recurrence has been a continuing institutional a"
       },
       {
-        "title": "religion.institution.basin_calendar",
-        "category": "religion",
-        "source": "../worldbuilder/religion/02_institutions/basin_calendar.md",
-        "summary": "The Aethelian Basin has no calendar. This is not an absence. It is an architecture.\r \r Where other civilizations declare time — the Qollari priesthood through khipu intercalation, the Oravan priestess-queen through solstice consecration, the Irrah scholar through isnād-certified star-reading — the Basin receives time. Four ports host six foreign calendars and compose from their overlap a commercial rhythm that no sin…"
+        "title": "primary_sources.book.the_kibwana_book.frame",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/the_kibwana_book/00_frame.md",
+        "summary": "This document is the analytical frame for the primary source known by its short title Safari ya Mbu-Kibwana and by the Tongue-Guild's translation gloss as The Kibwana Book. The text itself is in the numbered content files in this directory. This frame is the analytical narrator's introduction to the source, written in v3 register."
       }
     ],
     "lam_chen_pass": [
+      {
+        "title": "Ngaru-Bon Plateau",
+        "category": "geography",
+        "source": "../worldbuilder/geography/regions/ngaru-bon-range.yaml",
+        "summary": "The Lower-Path Kinship is appealing to the Monastery-Citadel Concordat against a guild-sanctioned safety violation that killed an ore-hauler. The appeal is framed as doctrinal — the Concordat's abbatial intermediaries treat it as a labor-supervision matter — but the underlying grievance is political. A player character with standing in either the guild or the Concordat can influence whether the appeal advances or is…"
+      },
       {
         "title": "factions.civ.ngaru-bon",
         "category": "factions",
@@ -552,14 +558,32 @@
       {
         "title": "HANDOFF — 2026-05-10 — Trans-Civ Layer Depth (6-of-6 files)",
         "category": "lore",
-        "source": "../worldbuilder/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
         "summary": "1. **This file** — what shipped, file inventory, validation results."
       },
       {
-        "title": "Veydria Map Viewer",
+        "title": "Handoff — Ngaru-Bon Legal Architecture (ngaru_bon.md First Draft)",
         "category": "lore",
-        "source": "../worldbuilder/tools/map-viewer/README.md",
-        "summary": "Interactive D3 + React reference map for Veydria's continent. Reads geography/*/.yaml plus a hand-tunable data/positions.yaml and renders an SVG map you can click around. The existing geography/veydria-schematic.svg is used as the visual base; this app overlays interactive hit areas on top so each named region, port, chokepoint, oasis, mountain, and sacred site is selectable."
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-15-ngaru-bon-legal-architecture_kimi.md",
+        "summary": "Date: 2026-05-15  \r Instance: Kimi Code CLI  \r Session span: Single continuous session, picking up from ndjadi.md and Q7.2 file-write order.\r \r \r \r ## Executive Summary\r \r Picked up the next file in Q7.2 order after the previous Kimi instance completed ndjadi.md. Surveyed synthesis §Q1.7, §Q5.1.7, §Q5.2.2, canonical ngaru_bon faction file, linguistics YAML, and Perry's resolved slavery categories. Delivered:\r \r 1. la…"
+      },
+      {
+        "title": "Handoff — Post-Push State (2026-05-16, late session)",
+        "category": "lore",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-16-post-push-state.md",
+        "summary": "Date: 2026-05-16 For: The next Claude Code instance Scope: What just shipped, what's still queued, where the open threads sit"
+      },
+      {
+        "title": "Manual Test — Reciprocal Deep-Link",
+        "category": "lore",
+        "source": "../worldbuilder/MANUAL-TEST-2026-05-18-deep-link.md",
+        "summary": "Date: 2026-05-18 (rev. 2) Scope: Verify the two-way deep-link contract between worldbuilder map-viewer (canon-audit surface) and cartography web (play surface). Code under test:"
+      },
+      {
+        "title": "primary_sources.correspondence.basin_dynasty_correspondence.third_week",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/basin_dynasty_correspondence/01_third_week_correspondence.md",
+        "summary": "Four letters of the third week of the cool season, in the order of their dispatch."
       }
     ],
     "a_tzalan_ford": [
@@ -567,7 +591,7 @@
         "title": "factions.civ.ndjadi",
         "category": "factions",
         "source": "../worldbuilder/factions/01_civ_factions/ndjadi.md",
-        "summary": "Ndjadi is \"Institutionalized with reform\" in the typology of [magic/06](../../magic/06_institutional_structure_comparison.md), and its position on the Schism Axis is the **Open and active** one — the Vernacular-Habal Movement is named, organized, currently publishing, and recognized as a faction even by the elder colleges that condemn it. The literate scribal infrastructure of the imperial colleges, the *habal* copy-"
+        "summary": "Ndjadi is \"Institutionalized with reform\" in the typology of magic/06, and its position on the Schism Axis is the Open and active one — the Vernacular-Habal Movement is named, organized, currently publishing, and recognized as a faction even by the elder colleges that condemn it. The literate scribal infrastructure of the imperial colleges, the habal copy-service traditions in the delta trading ports, and the river-c…"
       },
       {
         "title": "factions.crisis.upstream_downstream_window_war",
@@ -586,6 +610,12 @@
         "category": "timeline",
         "source": "../worldbuilder/timeline/worked-examples/obsidian-blockade.md",
         "summary": "This is the canonical demonstration of how Veydria's systems interact. Every layer built in the worldbuilder — geography, economy, religion, linguistics, ecology, timeline, peoples — is visible in this single event. It serves as a template for how narrative content should work in the setting: multi-perspective, no single hero, no single villain, consequences that reshape the continent."
+      },
+      {
+        "title": "HANDOFF — Law-audit follow-up: three decision-required items remain",
+        "category": "lore",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-17-law-p2-cfc-polish-followup.md",
+        "summary": "Date: 2026-05-17 (later same day) Author: Claude Opus 4.7 (Cowork, picking up HANDOFF-2026-05-17-law-p2-cfc-polish.md) Predecessor: HANDOFF-2026-05-17-law-p2-cfc-polish.md (commit 8a63f87) Status: Four mechanical items closed; three decision-required items remain pending Perry's input. Resolution log updated in design/world-architecture/CROSS-INSTANCE-SYNC.md §10a."
       }
     ],
     "qollari_cliff_roads": [
@@ -593,7 +623,7 @@
         "title": "ecology.disease.qollari",
         "category": "ecology",
         "source": "../worldbuilder/ecology/disease/qollari.md",
-        "summary": "| Local Name [PROP] | Real-World Basis | Pattern | Key Treatment | |---|---|---|---| | q'ayma-sonqo | Acute mountain sickness | Any ascent >3000 paces, within hours | Coca leaf; chachacoma; muna | | p'uka-uya | Chronic mountain sickness (Monge's) | Long-term altitude dwellers | Palliative; bloodletting | | qhaqha-sinka | Mucocutaneous leishmaniasis | Yungas cloud-forest, year-round | No cure; supportive | | llakiy-so…"
+        "summary": "Soroche (q'ayma-sonqo, \"the heart gone thin\") strikes within hours above 3,000 paces: pressing headache, nausea, staggering gait. Can progress to ch'aki-sonqo — drowning in the lungs (pink foam, gurgling breath) — fatal unless carried down. Chagas (llakiy-sonqo, \"the sorrowful heart\") from triatomine bug bite at night in thatched houses: Romana's sign (painless one-sided eyelid swelling) in childhood, then decades la…"
       },
       {
         "title": "ecology.domesticates.qollari",
@@ -650,24 +680,42 @@
         "summary": "A vertical hierarchy that legitimizes and constrains in one move. Trade-corridor access IS calendrical access. The calendar-priesthood functions like the Delphic Oracle as inter-polis arbitrator: opacity is power."
       },
       {
-        "title": "religion.deity_figure.karuwel",
-        "category": "religion",
-        "source": "../worldbuilder/religion/03_deities_and_spirits/named_figures/karuwel.md",
-        "summary": "The Qollari Sky figure. The Sky read as impersonal LAW -- calendrical order whose correct measurement licenses corridor access. Not a person who judges but a pattern that either aligns or does not."
+        "title": "law.civ.qollari",
+        "category": "lore",
+        "source": "../worldbuilder/law/01_civ_law/qollari.md",
+        "summary": "Qollari is \"Fragmented (conflictual)\" in the typology of magic/06_institutional_structure_comparison.md, and its legal architecture is the most calendrically entangled in Veydria. Where other civs separate law from liturgy as distinct institutional layers, Qollari law is calendrical administration: the same khipu cord-records that compute solstitial intercalation also record labor obligations, certify contracts, and…"
       },
       {
-        "title": "religion.deity_figure.qullpar",
-        "category": "religion",
-        "source": "../worldbuilder/religion/03_deities_and_spirits/named_figures/qullpar.md",
-        "summary": "The Qollari Ancestor-Stone figure. Mountain-facing, genealogical. The ancestor who became stone, whose back is every road. Reflects Qollari's membership in the Ancestor-Stone complex alongside their Sky-Mandate membership."
+        "title": "law.figures.qollari",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/qollari.md",
+        "summary": "Mid-fifties, narrow-faced, the first in three generations of her lineage to hold dual cliff-road observatory residency and khipu-reading apprenticeship — her predecessors specialized in one or the other, and the dual training is held by the Alto Concordance to mark her as the rightful keeper of the next generation's almanac. Senior calendar-keeper of the Alto Concordance (Hatun Pacha-Kawsay); home observatory at Wawa…"
       }
     ],
     "halkar_straits": [
+      {
+        "title": "Oravan Archipelago",
+        "category": "geography",
+        "source": "../worldbuilder/geography/regions/oravan-archipelago.yaml",
+        "summary": "A major Basin dynasty defaults on an Oravan-underwritten reinsurance agreement. The Covenant's solvency is threatened; the Deep-Water Silent Ones dormant faction moves closer to activation. Player characters with commercial stakes can salvage the agreement, accelerate the default, or profit from the chaos."
+      },
       {
         "title": "Oravan Thalassocracy",
         "category": "linguistics",
         "source": "../worldbuilder/linguistics/cultures/oravan.yaml",
         "summary": "The register maintains strictly open (C)V syllable structure throughout. No elision, no vowel reduction, no consonant-final syllables even under physical labor stress. Vernacular fast-speech reductions (which occasionally close syllables) are forbidden. Every vowel receives full articulation, producing the characteristic flowing cadence audible across workshop courtyards"
+      },
+      {
+        "title": "law.underworld.piracy",
+        "category": "lore",
+        "source": "../worldbuilder/law/03_underworld/piracy.md",
+        "summary": "Piracy is the underworld institution of continental shipping predation, and the institution is shaped, in the first instance, by the absence of any continental naval authority capable of suppressing it. Each of the contributing civilizations of Veydria handles its own coastal waters under its own legal architecture: Oravan binds its archipelago's waters within the tapu and rāhui complex documented at law.civ.oravan,…"
+      },
+      {
+        "title": "primary_sources.determinations.harbor_covenant_rate_determinations.frame",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/harbor_covenant_rate_determinations/00_frame.md",
+        "summary": "This document is the analytical frame for the Harbor Covenant rate-discipline determinations transcribed in this directory. The first determination is the suspension of a Concord-aligned hull-and-cargo binder, in 01_havrana_pulino_binder_suspension.md; future determinations will be added as the corpus is extended. This frame is the analytical narrator's introduction to the venue, written in v3 register."
       }
     ],
     "smith_spring": [
@@ -702,6 +750,12 @@
         "category": "timeline",
         "source": "../worldbuilder/timeline/calendar/qollari.yaml",
         "summary": "Ejective consonants bind to specific days in a ritual calendar; uvulars are reserved for solstitial rites. The real monopoly is over which utterances are licit when, enforced by khipu-plus-knot records that only the calendarist hierarchy can read. Anyone can produce the sound; only calendarists know when to produce it."
+      },
+      {
+        "title": "Handoff — Qollari Calendar Stubs Closed",
+        "category": "lore",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-14-qollari-calendar-stubs-closed.md",
+        "summary": "Date: 2026-05-14\r Instance: Kimi Code CLI\r Preceding work: Search-index runtime fetch + Institutions lens — completed 2026-05-14.\r \r \r \r ## What Just Shipped\r \r ### Qollari Calendar Institution — 3 Missing Sections\r \r Problem: The CalendarCompare lens showed dashed-border stub cells for Qollari in three rows: Political Function, Annual Cycle, and Cross-Calendar Interaction. All six other civilizations had these secti…"
       }
     ],
     "ki_mbuhari": [
@@ -736,16 +790,46 @@
         "summary": "The Oravan archipelago and the Ndjadi river delta share **no border, no direct commodity exchange route, and no linguistic substrate**. The two civs are separated by the Aethelian Basin's full maritime width, by the absence of any traditional overland corridor, and by the incompatibility of their institutional forms — Oravan's matrilineal harbor guilds and Ndjadi's river-lord house system have no shared procedural la"
       },
       {
+        "title": "HANDOFF — 2026-05-10 — Trans-Civ Layer Depth (6-of-6 files)",
+        "category": "lore",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
+        "summary": "1. **This file** — what shipped, file inventory, validation results."
+      },
+      {
+        "title": "Crisis Diagrams",
+        "category": "lore",
+        "source": "../worldbuilder/docs/diagrams/crises/README.md",
+        "summary": "Structural view of each multipolar crisis, generated from factions/03_crises/*.md. Every crisis fans out into its actor camps and funnels into a Resolution Trap — the structural impasse that, by design (Rail 4), it can never escape. The position count on the crisis node is the multipolarity declared in its Primary Fault Line (Rail 6). A companion graph shows the explicit cross-civ couplings."
+      },
+      {
         "title": "The Faction Ecology of Veydria",
         "category": "lore",
         "source": "../worldbuilder/docs/research/FACTIONS-ECOLOGY-claude-2026-04.md",
         "summary": "Why binary opposition is insufficient. Every ongoing Veydrian dispute is in fact a contest among at least five positions, not two. Behind every \"reformer\" stands an apostate who was a reformer in the previous generation and now accepts patronage from the establishment; behind every \"conservative\" there are moderates who privately agree with the reforms but cannot afford to be seen agreeing; and around both there are…"
       },
       {
-        "title": "HANDOFF — 2026-05-10 — Trans-Civ Layer Depth (6-of-6 files)",
+        "title": "law.figures.basin",
         "category": "lore",
-        "source": "../worldbuilder/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
-        "summary": "1. **This file** — what shipped, file inventory, validation results."
+        "source": "../worldbuilder/law/05_figures/basin.md",
+        "summary": "Late fifties, Irrah-born of an Imajīn matrilineal house (the ult Halu particle marks her as daughter-of-Halu of the Halu noble line, a house whose dust-tithe underwriting collapsed two generations ago and whose surviving heirs scattered into Basin commerce). She completed the Filer's Hand training rotation at Tavakh-Qarat in her early twenties — one of the first Imajīn-born factors to do so — and has remained at the…"
+      },
+      {
+        "title": "law.figures.ndjadi",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/ndjadi.md",
+        "summary": "Seventy, famously slow-spoken in council, of the Kilomba river-lord house (one of the three senior houses currently holding the rotating chair). Rotating chair of the Court of the Three Mouths (Ki-Jenga wa Mazi Watatu) at Ki-Mbuhari; his current chair-cycle is the second of his career. Tier-prefix: ra- (sky), the highest grade. Noun-class: mbu- (water), conferring the senior river-lord domain. His house's commercial…"
+      },
+      {
+        "title": "law.figures.oravan",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/oravan.md",
+        "summary": "Mid-forties, ruddy-pale, the first in her matrilineage to read Wazahaki fluently. Priestess-Underwriter of the Harbor Covenant (Pulino Motunua) and — concurrently — chair of the trans-civ Three-Tithe Pool. Home shrine-house: the harbor-mouth Pulino Motunua receipt-room at Kolua-Havrana, where the Covenant's wave-tithe ledger lives in a cedar press whose key Teirun carries on her own person. Married into a Ki-Mbuhari…"
+      },
+      {
+        "title": "primary_sources.correspondence.basin_dynasty_correspondence.third_week",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/basin_dynasty_correspondence/01_third_week_correspondence.md",
+        "summary": "Four letters of the third week of the cool season, in the order of their dispatch."
       }
     ],
     "tavakh_qarat": [
@@ -782,17 +866,47 @@
       {
         "title": "Handoff — Factions Batch 5b Generational Bottlenecks (2026-04-27)",
         "category": "lore",
-        "source": "../worldbuilder/HANDOFF-2026-04-27-factions-batch5b-generational-bottlenecks.md",
+        "source": "../worldbuilder/archive/HANDOFF-2026-04-27-factions-batch5b-generational-bottlenecks.md",
         "summary": "Two new files plus a small modification to factions/01_civ_factions/irrah.md. Audited clean by Gemini 2.5 Pro via mcp__pal__codereview (continuation 5c5a5749-36b8-4f83-9990-ea3d78ff56c2). Local commits only, NOT yet pushed to origin/master per worldbuilder's explicit-go push posture (per combo/ai/DECISIONS.md and VEYDRIA-VISION.md never-auto-push section). Awaiting Perry's go on the diff."
+      },
+      {
+        "title": "Handoff — Post-Push State (2026-05-16, late session)",
+        "category": "lore",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-16-post-push-state.md",
+        "summary": "Date: 2026-05-16 For: The next Claude Code instance Scope: What just shipped, what's still queued, where the open threads sit"
+      },
+      {
+        "title": "law.figures.basin",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/basin.md",
+        "summary": "Late fifties, Irrah-born of an Imajīn matrilineal house (the ult Halu particle marks her as daughter-of-Halu of the Halu noble line, a house whose dust-tithe underwriting collapsed two generations ago and whose surviving heirs scattered into Basin commerce). She completed the Filer's Hand training rotation at Tavakh-Qarat in her early twenties — one of the first Imajīn-born factors to do so — and has remained at the…"
+      },
+      {
+        "title": "law.figures.oravan",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/oravan.md",
+        "summary": "Mid-forties, ruddy-pale, the first in her matrilineage to read Wazahaki fluently. Priestess-Underwriter of the Harbor Covenant (Pulino Motunua) and — concurrently — chair of the trans-civ Three-Tithe Pool. Home shrine-house: the harbor-mouth Pulino Motunua receipt-room at Kolua-Havrana, where the Covenant's wave-tithe ledger lives in a cedar press whose key Teirun carries on her own person. Married into a Ki-Mbuhari…"
+      },
+      {
+        "title": "primary_sources.correspondence.basin_dynasty_correspondence.third_week",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/basin_dynasty_correspondence/01_third_week_correspondence.md",
+        "summary": "Four letters of the third week of the cool season, in the order of their dispatch."
+      },
+      {
+        "title": "primary_sources.determinations.harbor_covenant_rate_determinations.frame",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/harbor_covenant_rate_determinations/00_frame.md",
+        "summary": "This document is the analytical frame for the Harbor Covenant rate-discipline determinations transcribed in this directory. The first determination is the suspension of a Concord-aligned hull-and-cargo binder, in 01_havrana_pulino_binder_suspension.md; future determinations will be added as the corpus is extended. This frame is the analytical narrator's introduction to the venue, written in v3 register."
+      },
+      {
+        "title": "primary_sources.circulars.junior_clerks_circulars.frame",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/junior_clerks_circulars/00_frame.md",
+        "summary": "This document is the analytical frame for the serial primary source known internally as the Working Circulars of the Junior Clerks' Association of the Northern Khazadari Money-Changer Guild and known among Basin junior factors simply as the rate-sheets or the speaker's circulars. The text itself is in the numbered content files in this directory. This frame is the analytical narrator's introduction to the source, wri…"
       }
     ],
     "halani_tamu": [
-      {
-        "title": "factions.trans_civ.basin_informal_cooperation",
-        "category": "factions",
-        "source": "../worldbuilder/factions/02_trans_civ/basin_informal_cooperation.md",
-        "summary": "Basin commerce runs on three load-bearing instruments that the canon documents at their own files: the Khazadari rate-schedule denominates published terms in continental commercial credit ([factions/02_trans_civ/khazadari_internals.md](khazadari_internals.md)); the Triple-Seal cadence gives sealing-rites their procedural-enforceability shape under Triple-Seal Arbitration Court adjudication (the cultural filter docume"
-      },
       {
         "title": "factions.worked_example.ledger_fragment_calendar_schism_cross_post",
         "category": "factions",
@@ -839,13 +953,31 @@
         "title": "factions.cross_civ.ngaru_bon_oravan",
         "category": "factions",
         "source": "../worldbuilder/factions/cross_civ_relationships/ngaru-bon-oravan.md",
-        "summary": "The Ngaru-Bon plateau and the Oravan archipelago maintain a **commercial relationship that is structurally productive and politically thin**. The two civs do not share a border, a military alliance, a theological tradition, or a linguistic substrate. Their exchange is routed through the Aethelian Basin's port zones — principally Halani-Tamu — and is governed by institutions on both sides that treat the relationship a"
+        "summary": "The Ngaru-Bon plateau and the Oravan archipelago maintain a commercial relationship that is structurally productive and politically thin. The two civs do not share a border, a military alliance, a theological tradition, or a linguistic substrate. Their exchange is routed through the Aethelian Basin's port zones — principally Halani-Tamu — and is governed by institutions on both sides that treat the relationship as co…"
       },
       {
         "title": "magic.scenario.mute_saliqun",
         "category": "magic",
         "source": "../worldbuilder/magic/03_scenarios/mute_saliqun.md",
         "summary": "An aged Ṣāliqūn, silent for eleven years, is called to witness a triple-seal contract at the Basin's eastern port of Halani-Tamu. The commissioning merchant's rival has privately retained a junior Ṣāliqūn who will argue, in the inland tribunal if the contract is breached, that the mute witness is void under a minority reading of the isnād-chain."
+      },
+      {
+        "title": "Manual Test — Reciprocal Deep-Link",
+        "category": "lore",
+        "source": "../worldbuilder/MANUAL-TEST-2026-05-18-deep-link.md",
+        "summary": "Date: 2026-05-18 (rev. 2) Scope: Verify the two-way deep-link contract between worldbuilder map-viewer (canon-audit surface) and cartography web (play surface). Code under test:"
+      },
+      {
+        "title": "primary_sources.memoranda.khazadari_syndics_memoranda.frame",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/khazadari_syndics_memoranda/00_frame.md",
+        "summary": "This document is the analytical frame for the working memoranda authored by Temür-Bichig Khoorai, head of the Khazadari-Sponsored Client Syndics, addressed to his Khazadari Inner-Circle sponsors at Halani-Tamu, in the present cool-season cycle. The first memorandum, in 01_xal_mosh_corridor_arbitration.md, documents an Oral-Memory Council hearing on a contested grazing-corridor in the central pasture circuit. Future m…"
+      },
+      {
+        "title": "primary_sources.memoranda.khazadari_syndics_memoranda.xal_mosh_corridor_arbitration",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/khazadari_syndics_memoranda/01_xal_mosh_corridor_arbitration.md",
+        "summary": "To the rate-setter of standing, peace and the schedule's accuracy be upon the receiving hand. The runner-cohort carries this with the standing dispatch fee accounted at the Poch-Kalli ledger; the cohort's foreman has been informed that the dispatch is working-correspondence under your seal-discipline and is not to be opened by any hand but yours or your designated junior's. The standing protocol governs the receipt a…"
       }
     ],
     "dzong_tamu": [
@@ -870,8 +1002,20 @@
       {
         "title": "HANDOFF — 2026-05-10 — Trans-Civ Layer Depth (6-of-6 files)",
         "category": "lore",
-        "source": "../worldbuilder/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
+        "source": "../worldbuilder/archive/HANDOFF-2026-05-10-trans-civ-layer-depth.md",
         "summary": "1. **This file** — what shipped, file inventory, validation results."
+      },
+      {
+        "title": "law.figures.qollari",
+        "category": "lore",
+        "source": "../worldbuilder/law/05_figures/qollari.md",
+        "summary": "Mid-fifties, narrow-faced, the first in three generations of her lineage to hold dual cliff-road observatory residency and khipu-reading apprenticeship — her predecessors specialized in one or the other, and the dual training is held by the Alto Concordance to mark her as the rightful keeper of the next generation's almanac. Senior calendar-keeper of the Alto Concordance (Hatun Pacha-Kawsay); home observatory at Wawa…"
+      },
+      {
+        "title": "primary_sources.book.the_kibwana_book.book_two",
+        "category": "lore",
+        "source": "../worldbuilder/primary-sources/the_kibwana_book/02_book_two_long_road_home.md",
+        "summary": "The first book is of the going-out. This second book is of the coming-back, which is the harder writing. A man going out is twenty and sees the world for the first time and writes what he sees. A man coming back is twenty-three and sees the world for the second time and writes what he had not been able to see the first time, including some of what he had seen and not understood and now thinks he understands and may s…"
       }
     ],
     "highland_steppe_corridor": [
@@ -898,6 +1042,20 @@
         "category": "religion",
         "source": "../worldbuilder/religion/04_sacred_registers/kheshkai_harmony.md",
         "summary": "Kheshkai shamans use vowel-harmony as a binding grammar: an oath in perfect harmony binds; a broken-harmony oath is a non-oath, hearable-but-ineffectual. The system is oral-only (no scribal class), master-to-apprentice on horseback, and identified by \"hearing-gift\" (often perfect-pitch individuals). Each generation renegotiates orthodoxy."
+      }
+    ],
+    "highland_relay": [
+      {
+        "title": "Qollari Highlands",
+        "category": "geography",
+        "source": "../worldbuilder/geography/regions/qollari-highlands.yaml",
+        "summary": "Rumors circulate that a Skyless-Year Assembly — the dormant faction that would declare a liturgically-null year and restart the calendar — has convened in secret. The rumors are false; the Assembly cannot convene without a triggering catastrophe. But someone is spreading them deliberately. A player character who investigates discovers that the Terrace Brotherhood is seeding the rumor to pressure both senior lineages…"
+      },
+      {
+        "title": "economy.civ.qollari",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/qollari.md",
+        "summary": "Qollari sells altitude. Its highland exports are high in value and low in bulk: medicinal bark, the cinchona-analog fever-bark that no lowland can grow, rare dyestuffs of the cochineal kind, and the fine camelid fiber, vicuna-analog above 3,800 meters, that constitutes a wool monopoly the lowlands cannot touch. To these the cloud-states add structural timber from the wetter slopes, silver, gold, processed tin-bronze…"
       }
     ],
     "coastal_monsoon": [
@@ -938,6 +1096,12 @@
         "category": "ecology",
         "source": "../worldbuilder/ecology/regions/irrah.md",
         "summary": "Saharan-Arabian hyper-arid desert with scattered oases and wadi drainages."
+      },
+      {
+        "title": "economy.civ.irrah",
+        "category": "economy",
+        "source": "../worldbuilder/economy/01_civ_economies/irrah.md",
+        "summary": "Irrah holds the continent's rock-salt monopoly, and the monopoly is the load-bearing fact of its economy. The sabkha slabs cut from its salt-flats, the Taghaza and Taoudenni analog of Veydria, are the most universally accepted inland commodity money on the continent, and the salt itself is the northern anchor of the continental spine against Ndjadi grain. Around the salt, the drylands yield natron, dates, lode silver…"
       }
     ],
     "scribal_ladder": [
@@ -974,7 +1138,7 @@
       {
         "title": "HANDOFF — Veydria Map Viewer (Phase 1 shipped)",
         "category": "lore",
-        "source": "../worldbuilder/HANDOFF-2026-04-25-map-viewer-shipped.md",
+        "source": "../worldbuilder/archive/HANDOFF-2026-04-25-map-viewer-shipped.md",
         "summary": "Date: 2026-04-25 Author: Claude Opus 4.7 (1M) Repo: worldbuilder (HEAD 788b80b on master, unpushed pending Perry's go) Plan: ~/.claude/plans/map-work-has-substantial-playful-locket.md (approved, executed)"
       }
     ]

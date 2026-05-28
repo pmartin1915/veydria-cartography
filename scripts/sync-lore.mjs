@@ -150,6 +150,13 @@ function extractMarkdownSummary(body, maxLen = 420) {
   for (const para of paragraphs) {
     const trimmed = para.trim()
     if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('---')) continue
+    // F8 audit fix: markdown tables (paragraphs whose lines are pipe-delimited)
+    // flatten into unreadable "| col | col | |---|---| | r1 | r2 |" runs after
+    // newline collapse below. Skip them and try the next paragraph — the body
+    // renderer handles tables correctly when the full entry is opened.
+    const lines = trimmed.split('\n')
+    const pipeLines = lines.filter(l => /^\s*\|.*\|\s*$/.test(l))
+    if (pipeLines.length >= 2 && pipeLines.length === lines.length) continue
     const plain = trimmed
       .replace(/!\[.*?\]\(.*?\)/g, '')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
