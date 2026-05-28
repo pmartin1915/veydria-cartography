@@ -82,6 +82,27 @@ function NodeIcon({ category }: { category: string }) {
   return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
 }
 
+// Picker label format: "<Civ> · <category>" when the node carries a civ tag,
+// or just "<category>" otherwise. Disambiguates same-name ports (Tavakh-Qarat
+// vs Tavakh-Rubāṭ) without needing a separate UI affordance — F7 audit fix.
+function formatNodeCategory(n: JourneyNode): string {
+  const cat = n.category.replace('_', ' ')
+  if (!n.civ) return cat
+  const civLabel = n.civ.charAt(0).toUpperCase() + n.civ.slice(1)
+  return `${civLabel} · ${cat}`
+}
+
+// F7 audit fix: annotate the Halkar Straits when an edge crosses to/from
+// Oravan from any mainland civ. Oravan is the only archipelago in the
+// canon, so any cross-civ edge touching it is a sea crossing of the same
+// strait.
+function straitAnnotation(from: JourneyNode | undefined, to: JourneyNode | undefined): string | null {
+  if (!from?.civ || !to?.civ) return null
+  if (from.civ === to.civ) return null
+  if (from.civ === 'oravan' || to.civ === 'oravan') return 'Halkar Straits'
+  return null
+}
+
 export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
@@ -432,7 +453,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         const edgeDays = edge.segmentDays ? ` · ~${edge.segmentDays.toFixed(1)} days` : ''
         const icon = edge.type === 'trade_route' ? '≡' :
                      edge.type === 'chokepoint' ? '▲' : '→'
-        md += `   ${icon} ${edge.name} (${edge.type.replace('_', '-')}) · ${edgeKm} km${edgeDays}\n`
+        const strait = straitAnnotation(node, route.nodes[i + 1])
+        const edgeLabel = strait ? `⚓ ${strait} · ${edge.name}` : edge.name
+        md += `   ${icon} ${edgeLabel} (${edge.type.replace('_', '-')}) · ${edgeKm} km${edgeDays}\n`
       }
     }
 
@@ -913,7 +936,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     >
                       <NodeIcon category={n.category} />
                       <span className="journey-dropdown-item-name">{n.name}</span>
-                      <span className="journey-dropdown-item-cat">{n.category.replace('_', ' ')}</span>
+                      <span className="journey-dropdown-item-cat">{formatNodeCategory(n)}</span>
                     </button>
                   ))}
                   {filteredStart.length === 0 && (
@@ -983,7 +1006,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                     >
                       <NodeIcon category={n.category} />
                       <span className="journey-dropdown-item-name">{n.name}</span>
-                      <span className="journey-dropdown-item-cat">{n.category.replace('_', ' ')}</span>
+                      <span className="journey-dropdown-item-cat">{formatNodeCategory(n)}</span>
                     </button>
                   ))}
                   {filteredEnd.length === 0 && (
@@ -1040,7 +1063,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                         >
                           <NodeIcon category={n.category} />
                           <span className="journey-dropdown-item-name">{n.name}</span>
-                          <span className="journey-dropdown-item-cat">{n.category.replace('_', ' ')}</span>
+                          <span className="journey-dropdown-item-cat">{formatNodeCategory(n)}</span>
                         </button>
                       ))}
                       {filteredWp.length === 0 && <div className="journey-dropdown-empty">No matches</div>}
@@ -1300,14 +1323,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                       <NodeIcon category={node.category} />
                       {node.name}
                     </span>
-                    {i < route.edges.length && (
-                      <span className="journey-path-edge">
-                        {route.edges[i].type === 'trade_route' && <IconScroll />}
-                        {route.edges[i].type === 'chokepoint' && <IconMountain />}
-                        {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
-                        {' '}{route.edges[i].name}
-                      </span>
-                    )}
+                    {i < route.edges.length && (() => {
+                      const strait = straitAnnotation(node, route.nodes[i + 1])
+                      return (
+                        <span className="journey-path-edge">
+                          {route.edges[i].type === 'trade_route' && <IconScroll />}
+                          {route.edges[i].type === 'chokepoint' && <IconMountain />}
+                          {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
+                          {' '}{strait ? `⚓ ${strait} · ${route.edges[i].name}` : route.edges[i].name}
+                        </span>
+                      )
+                    })()}
                   </div>
                 </div>
               ))}

@@ -263,6 +263,7 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
       category: cat,
       x,
       y,
+      civ: (f.properties.civ as string) || undefined,
     }
     addNode(node)
     pointFeatures.push({ feature: f, node })

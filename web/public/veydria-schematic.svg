@@ -103,8 +103,8 @@
   " fill="#7a6b55" opacity="0.7"/>
   <rect x="380" y="60" width="620" height="140" fill="url(#mountains)" opacity="0.5"/>
 
-  <!-- Ngaru-Bon label -->
-  <text x="650" y="120" fill="#fff" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">N G A R U - B O N</text>
+  <!-- Ngaru Bon label -->
+  <text x="650" y="120" fill="#fff" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">N G A R U &#160; B O N</text>
   <text x="650" y="136" fill="#ddd" font-family="Georgia, serif" font-size="9" text-anchor="middle">P L A T E A U &#160; (4,000-6,000m)</text>
 
   <!-- Tsetse belt (hatched line below Ngaru-Bon) -->
