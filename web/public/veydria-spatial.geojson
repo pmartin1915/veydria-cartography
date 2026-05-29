@@ -9,47 +9,6 @@
       "ngaru_bon": {
         "hostile": [
           "kheshkai"
-        ],
-        "trade": [
-          "irrah"
-        ]
-      },
-      "irrah": {
-        "trade": [
-          "ndjadi",
-          "ngaru_bon"
-        ]
-      },
-      "kheshkai": {
-        "hostile": [
-          "ngaru_bon"
-        ],
-        "trade": [
-          "qollari"
-        ],
-        "rival": [
-          "ndjadi"
-        ]
-      },
-      "ndjadi": {
-        "trade": [
-          "irrah",
-          "qollari"
-        ],
-        "rival": [
-          "kheshkai"
-        ]
-      },
-      "qollari": {
-        "trade": [
-          "oravan",
-          "kheshkai",
-          "ndjadi"
-        ]
-      },
-      "oravan": {
-        "trade": [
-          "qollari"
         ]
       }
     }
@@ -168,7 +127,7 @@
         "id": "aethelian_basin",
         "name": "Aethelian Basin",
         "category": "water",
-        "description": "Continental trade pivot. Not a producer — a processor, certifier, and neutral ground. No army; enforcement via triple-seal excommunication. Contains multiple port cities with six distinct architectural traditions",
+        "description": "A three-day sail across. Six port cities stand on its shores. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried.",
         "opening": "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea",
         "fill": "#3a7ca5",
         "fillOpacity": 0.6
@@ -152713,7 +152672,7 @@
           "ngaru_bon",
           "kheshkai"
         ],
-        "description": "Singular treacherous land route from Ngaru-Bon plateau down to the steppes. Only exit for Ngaru-Bon exports. Contested for centuries",
+        "description": "One road. Three days under cliff and a day in scree, with no shelter that a determined Council cannot find. Ngaru-Bon depends on the pass for the trade that feeds the plateau; Kheshkai prospers on the traffic that crosses it. The pass has changed hands six times in living memory, and never for long. The first thaw belongs to whoever wintered above, and the wintering above kills men. The widow-tax at the Smith-Spring side is collected by a Khen-Po whose name is not written in the register.",
         "strategic_value": "Closure creates existential famine for Ngaru-Bon within one growing season",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
@@ -152738,7 +152697,7 @@
           "kheshkai",
           "ndjadi"
         ],
-        "description": "Vital ford where Kheshkai steppe cliff edge descends to Ndjadi river delta. Most contested point on the continent",
+        "description": "Where the Kheshkai cliff edge descends to the Ndjadi delta. The ford is two pole-lengths deep at low water and impassable at flood, and for two of the four seasons the only crossing is the seizure of one bank by whichever clan-lord can hold it. Kosh-Taka held it once and held the upstream weirs with it; the delta starved through three growing seasons. The toll is paid in unminted copper, weighed at the ford by a Kheshkai factor who answers to no court the delta recognizes.",
         "strategic_value": "Seizure controls north-south overland trade. Ndjadi can weaponize via upstream river diversion",
         "marker-color": "#f44",
         "marker-symbol": "roadblock"
@@ -152763,7 +152722,7 @@
           "ndjadi",
           "oravan"
         ],
-        "description": "Vertigo-inducing carved paths connecting cloud-forest terraces to lowlands and coast. Can be destroyed to deny pursuit",
+        "description": "The carved descent from the cloud forest takes four days for a loaded llama and six for a sick one. The roads narrow at the upper switchbacks to a man's reach plus a finger, which is the width the calendar-keepers want; the load cap is twenty-five to thirty kilo by ordinance and by what the animal will bear. The cliff-engineers' guild at the Apu-Yana waystation can collapse a half-stade of switchback by removing four wedge-stones, and have done so twice in the memory of the living roadmasters.",
         "strategic_value": "Qollari monopoly on highland-lowland access. Llama 25-30 kg load cap forces dense waystation networks",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
@@ -152788,7 +152747,7 @@
           "oravan",
           "aethelian_basin"
         ],
-        "description": "Narrow passage between Oravan archipelago and Basin. Controls obsidian export and all Oravan maritime access",
+        "description": "The strait is half a march wide at its narrowest. Every Oravan keel that enters the Basin passes through it, and every obsidian shipment in continental commerce passes through it twice, once north and once south. The Halkar pilot-houses are Oravan, the harbor-fees are Oravan, the rates are Oravan, and the Basin ports settle the books at Tavakh-Qarat in the cool season. Three captains in the last cycle preferred the open ocean and the monsoon to the pilot-house. They have not been heard from.",
         "strategic_value": "Oravan naval dominance is absolute in the Basin but cannot enforce land control without allies",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
@@ -152813,7 +152772,7 @@
           "ngaru_bon",
           "irrah"
         ],
-        "description": "Ore-bearing hot spring at the Ngaru-Bon/Irrah frontier. Ngaru-Bon controls upstream forge-precinct; Irrah controls downstream water-rights; Basin merchants use buffer-zone riverbank",
+        "description": "The hot spring rises ore-bearing at the Ngaru-Bon margin and flows three leagues south before the iron is exhausted from the water. The Ngaru-Bon forge-precinct holds the upstream stones; the Irrah salt-collectors hold the downstream pans; the Basin's caravan-masters hold the buffer-riverbank by a working truce no court has authored. Iron and charcoal travel south at the price the season's hostage-children fix. Salt travels north. A factor who proposes a written treaty for the buffer is asked, politely, to leave.",
         "strategic_value": "Shared resource that forces cooperation. Iron and charcoal flow south; salt flows north",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
@@ -152838,7 +152797,7 @@
           "kheshkai",
           "qollari"
         ],
-        "description": "Where cloud forest meets steppe. Only permanent cross-civ sacred site on the continent. Triennial convergence of Kheshkai shamans and Qollari calendarists",
+        "description": "Where the steppe meets cloud forest at the only joint cross-civ sanctuary on the continent. The Kheshkai shamans and the Qollari calendarists convene every third year and the festival-towns swell to a season's bulk in eight days. In the off years the border is a dirt track watched by a single Khen-Po. The Khazadari rate-house at the senior festival town fails twice in three rotations and recapitalizes itself by a method the Inner Circle has chosen not to publish. The wool-trade depends on the festival year falling.",
         "strategic_value": "Massive commercial traffic during festival years creates boom-bust cycle in border towns",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
@@ -152861,7 +152820,7 @@
         "etymology": "Ndjadi: Ki- (settlement) + Mbu- (water) + hari 'surplus'. The Surplus-Water Settlement",
         "real_world_parallel": "Alexandria analog",
         "location": "South shore, where Ndjadi delta enters",
-        "function": "Grain funnel and spice transshipment. Ndjadi grain surplus enters continental circulation here",
+        "function": "The south-shore grain port, where the Ndjadi delta enters the Basin and where the High Granaries' evaporative-cooled stores feed the continental circuit. The Darb caravan-staging quarter on the south side pays no substrate-cistern levy, and the Court of the Three Mouths has chosen, in three reviews, not to revisit the question. The Imajīn caravan-mistresses hold the leverage.",
         "marker-color": "#e8c840",
         "marker-symbol": "harbor",
         "civ": "ndjadi"
@@ -152883,7 +152842,7 @@
         "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + qarat (Irrah 'citadel'). The Exchange Citadel",
         "real_world_parallel": "Venice analog",
         "location": "North shore",
-        "function": "Salt pans, glass production, grain imports. Oldest commercial quarter. Where khazadari money-changers formed",
+        "function": "The north-shore port and the oldest commercial quarter. Inside the pale-gold limestone arcades the Khazadari Inner Circle sets the cross-rate cycle twice a year; the soda-ash glassworks at the periphery kill their senior masters before the fourth cohort can be trained. The Junior Clerks' Association now writes fifteen percent of the port's underwriting at rates the Inner Circle has been silent on for eleven cycles.",
         "marker-color": "#e8c840",
         "marker-symbol": "harbor",
         "civ": "irrah"
@@ -152905,7 +152864,7 @@
         "etymology": "Oravan: hala 'reef, harbor' + ni (genitive particle) + tamu (Basin pidgin 'sweetwater'). The Sweetwater Harbor",
         "real_world_parallel": "Hormuz analog",
         "location": "East shore",
-        "function": "Monsoon switching point. Where Oravan sea-lanes hand off to overland routes. Irrah caravans arrive here",
+        "function": "The east-shore port and the monsoon switching point, where the Oravan sea-lanes hand off to the Irrah overland routes. The Coral Docks collect the Harbor Covenant's wave-tithe; the Qalībin Lodges certify the desert-interior escorts; the Bazaar of the Split between them is neutral ground neither core institution claims. The Tin-Aghīz-Lam-Chen partnership absorbs the uncertified gold-work the Inner Council of Ancestor-Smiths chooses not to see.",
         "marker-color": "#e8c840",
         "marker-symbol": "harbor",
         "civ": "oravan"
@@ -152927,7 +152886,7 @@
         "etymology": "Ngaru-Bon: dzong 'fortress-monastery' + tamu (Basin pidgin 'sweetwater/fresh'). The Fortress Harbor",
         "real_world_parallel": "Kilwa analog",
         "location": "Southeast margin",
-        "function": "Link to Ngaru-Bon gold trade via coastal routes. Where Ngaru-Bon metallurgical exports reach the Basin",
+        "function": "The southeast-margin port, link to the Ngaru-Bon highland trade. The Iron Keep and the Click-Market enforce Stone-tithe collection and acoustic-register-gated guild exchange that the Outer Quarters' mixed laborers cannot, on any plausible career path, be admitted to. The Pacha-Urco householders' annual substrate-rite is the only ceremony in which the Click-Market and the periphery share ground.",
         "marker-color": "#e8c840",
         "marker-symbol": "harbor",
         "civ": "ngaru_bon"
@@ -152947,7 +152906,7 @@
         "name": "Qhabal Ur",
         "category": "contested_site",
         "location": "Basin center",
-        "description": "The Drowned Step — monumental stepped platform partially submerged by tides. Claimed by Oravan (garrison) and Ndjadi (scribal access)",
+        "description": "The Drowned Step. A monumental stepped platform at the Basin's center, half its steps under water at the high tide and dry at the low. The Oravan post a garrison and the Ndjadi post a scribal-access corps. Both claims rest on use rather than charter, and the Triple-Seal Court has declined to hear a docking dispute three times in the present generation. A captain who lands without one of the two flags loses the cargo to whichever flag posts first.",
         "marker-color": "#adf",
         "marker-symbol": "religious-christian"
       }
@@ -152966,7 +152925,7 @@
         "name": "Veyd Kirrha",
         "category": "contested_site",
         "location": "Basin southern rim",
-        "description": "Ash-Oracle — volcanic vent drawing multi-tradition visitors. Oravan, Kheshkai, Qollari, and Irrah scholars converge with competing interpretations",
+        "description": "The Ash-Oracle. A volcanic vent on the Basin's southern rim that vents on no schedule the calendar-keepers have been able to resolve. Oravan, Kheshkai, Qollari, and Irrah scholars come to it in rotation, each reading the ash by the lights of his own tradition, and the four readings on a single venting have never agreed. The local Tongue-Guild factor charges by the cycle for the translation work and does not endorse any reading.",
         "marker-color": "#adf",
         "marker-symbol": "religious-christian"
       }
