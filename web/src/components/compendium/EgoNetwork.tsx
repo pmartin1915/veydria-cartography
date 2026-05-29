@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import type { CanonEntity } from './types';
+import { displayName } from './types';
 
 interface EgoNetworkProps {
   entity: CanonEntity;
@@ -25,7 +26,7 @@ export default function EgoNetwork({ entity, allEntities, onSelectEntity }: EgoN
 
   const { nodes, links } = useMemo(() => {
     const centerId = entity.id;
-    const centerNode = { id: centerId, label: entity.name, x: 0, y: 0, color: '#c4a862' };
+    const centerNode = { id: centerId, label: displayName(entity), x: 0, y: 0, color: '#c4a862' };
 
     const outIds = new Set(entity.cross_refs || []);
     const inIds = new Set(allEntities.filter((e) => e.cross_refs?.includes(centerId)).map((e) => e.id));
@@ -49,7 +50,7 @@ export default function EgoNetwork({ entity, allEntities, onSelectEntity }: EgoN
       const y = Math.sin(angle) * radius;
       const isOutgoing = outIds.has(id);
       const color = isOutgoing ? '#4a9a3a' : '#88ccff';
-      nodes.push({ id, label: neighbor.name, x, y, color });
+      nodes.push({ id, label: displayName(neighbor), x, y, color });
       links.push({ source: isOutgoing ? centerId : id, target: isOutgoing ? id : centerId });
     });
 

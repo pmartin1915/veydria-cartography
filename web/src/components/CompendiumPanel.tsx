@@ -20,6 +20,7 @@ import EgoNetwork from './compendium/EgoNetwork';
 import CalendarCompare from './compendium/CalendarCompare';
 import MatrixCardGrid from './compendium/MatrixCardGrid';
 import { loadCanon, loadSearchIndex, getEntitiesArray, lookupEntity, getMapAnchor } from '../utils/compendium-data';
+import { generateEntityOrientation } from '../utils/entity-orientation';
 import {
   buildWorldbuilderCompendiumUrl,
   buildWorldbuilderHomeUrl,
@@ -420,6 +421,16 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor, allEntitie
           Open in worldbuilder ↗
         </a>
       </div>
+      {entity.family === 'factions' && (
+        <div className="compendium-detail-orientation">
+          <h4>🧭 What is this?</h4>
+          {generateEntityOrientation(entity, allEntities)
+            .split('\n\n')
+            .map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+        </div>
+      )}
       {entity.summary && (
         <div className="compendium-detail-summary">{entity.summary}</div>
       )}
@@ -433,7 +444,7 @@ function EntityDetailView({ entity, onBack, onMapClick, hasMapAnchor, allEntitie
                 <li key={ref}>
                   {related ? (
                     <button className="compendium-ref-link" onClick={() => onSelectEntity(ref)}>
-                      {related.name}
+                      {displayName(related)}
                     </button>
                   ) : (
                     <span className="compendium-ref-missing">{ref}</span>

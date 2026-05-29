@@ -1,14 +1,19 @@
 export interface CanonEntityRaw {
-  name: string;
+  name?: string | null;
   schema_version: string;
   type: string;
   family?: string;
   entity_type?: string;
   civ_scope?: string | string[];
+  civ_pair?: string[];
+  scope?: string;
+  civilization?: string;
   epoch?: string;
   status?: string;
   density?: number;
   summary?: string;
+  lede?: string;
+  tags?: string[];
   cross_refs?: string[];
   backlinks?: string[];
   map_anchor?: {
@@ -103,6 +108,18 @@ export const LENSES: Lens[] = [
   { key: 'figures', label: 'Named Figures', description: 'Deities, prophets, and legendary figures' },
 ];
 
+/**
+ * Human-readable name for an entity. Prefer the canon `name` (now populated
+ * from each source file's H1 by extract-canon.mjs); when it is still absent,
+ * slugify the id's last segment ("factions.civ.oravan" → "Oravan") rather than
+ * showing the raw dotted id. Mirrors worldbuilder's compendium shared.js.
+ */
 export function displayName(entity: CanonEntity): string {
-  return entity.name || entity.id;
+  if (entity.name) return entity.name;
+  if (!entity.id) return 'Unnamed';
+  const slug = entity.id.split('.').pop() ?? entity.id;
+  return slug
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
