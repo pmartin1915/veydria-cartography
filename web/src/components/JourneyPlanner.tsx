@@ -4,7 +4,7 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, DEFAULT_PARTY, isDefaultParty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, straitAnnotation, DEFAULT_PARTY, isDefaultParty, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
 import { rollOneOff } from '../utils/encounter-roller'
 import { buildDailyBreakdown } from '../utils/journey-days'
@@ -91,23 +91,6 @@ function formatNodeCategory(n: JourneyNode): string {
   // Render the civ slug as a display name: "ngaru_bon" → "Ngaru Bon".
   const civLabel = n.civ.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return `${civLabel} · ${cat}`
-}
-
-// F7 audit fix: annotate the Halkar Straits when an edge crosses to/from
-// Oravan from any mainland civ. Oravan is the only archipelago in the
-// canon, so any cross-civ edge touching it is a sea crossing of the same
-// strait.
-function straitAnnotation(from: JourneyNode | undefined, to: JourneyNode | undefined): string | null {
-  if (!from || !to) return null
-  // Oravan is the only archipelago, so an edge with EXACTLY ONE Oravan
-  // endpoint is a sea crossing of the Halkar Straits — true even when the
-  // other endpoint is an untagged contested node (e.g. the mid-strait
-  // sandbar Tavakh-Rubāṭ). Keying on civ presence here would miss that
-  // crossing now that contested sites are deliberately civ-less (F5).
-  const fromOravan = from.civ === 'oravan'
-  const toOravan = to.civ === 'oravan'
-  if (fromOravan === toOravan) return null
-  return 'Halkar Straits'
 }
 
 export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {

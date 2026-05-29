@@ -779,3 +779,20 @@ export function getJourneyNodes(geojson: GeoJSONCollection): JourneyNode[] {
   const graph = buildGraph(geojson)
   return Array.from(graph.nodes.values()).sort((a, b) => a.name.localeCompare(b.name))
 }
+
+// F7 audit fix: annotate the Halkar Straits when an edge crosses to/from
+// Oravan from any mainland civ. Oravan is the only archipelago in the
+// canon, so any cross-civ edge touching it is a sea crossing of the same
+// strait.
+export function straitAnnotation(from: JourneyNode | undefined, to: JourneyNode | undefined): string | null {
+  if (!from || !to) return null
+  // Oravan is the only archipelago, so an edge with EXACTLY ONE Oravan
+  // endpoint is a sea crossing of the Halkar Straits — true even when the
+  // other endpoint is an untagged contested node (e.g. the mid-strait
+  // sandbar Tavakh-Rubāṭ). Keying on civ presence here would miss that
+  // crossing now that contested sites are deliberately civ-less (F5).
+  const fromOravan = from.civ === 'oravan'
+  const toOravan = to.civ === 'oravan'
+  if (fromOravan === toOravan) return null
+  return 'Halkar Straits'
+}
