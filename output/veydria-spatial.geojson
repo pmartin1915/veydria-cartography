@@ -153489,10 +153489,10 @@
       },
       "properties": {
         "id": "zang_ri",
-        "name": "Zang-Ri (Copper Mountain)",
+        "name": "Zang-Ri (Iron Mountain)",
         "category": "landmark",
         "type": "mountain",
-        "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore.",
+        "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore; source of the Ngaru-Bon iron and steel monopoly.",
         "marker-color": "#c4a862",
         "marker-symbol": "star"
       }
