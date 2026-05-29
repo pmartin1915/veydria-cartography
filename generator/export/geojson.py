@@ -67,6 +67,21 @@ def _display_name(key: str) -> str:
     return key.replace("_", " ").title().replace("Al ", "al-").replace("Of ", "of ")
 
 
+def _normalize_numbers(obj: Any) -> Any:
+    """Render integer-valued floats as plain ints (e.g. 455.0 -> 455) so the
+    serialized coordinate output is stable across numpy/scipy versions and
+    matches the committed convention. Non-integer floats keep full precision.
+    """
+    if isinstance(obj, float):
+        return int(obj) if obj.is_integer() else float(obj)
+    if isinstance(obj, dict):
+        return {k: _normalize_numbers(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        # Voronoi polygon coords arrive as lists of tuples; normalize both.
+        return [_normalize_numbers(v) for v in obj]
+    return obj
+
+
 def export_geojson(data: TopologyData, output_path: Path | str | None = None) -> Path:
     """
     Convert TopologyData into a GeoJSON FeatureCollection and write to disk.
@@ -164,42 +179,40 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
         cp_manifest = manifest.get_chokepoint(cp_key)
         coords = cp_manifest.get("coords")
         if coords:
-            features.append(_make_feature(
-                "Point",
-                coords,
-                {
-                    "id": cp_key,
-                    "name": _display_name(cp_key),
-                    "category": "chokepoint",
-                    "type": cp.get("type", ""),
-                    "connects": cp.get("connects", []),
-                    "description": cp.get("description", ""),
-                    "strategic_value": cp.get("strategic_value", ""),
-                    "marker-color": cp_manifest.get("marker_color", "#f44"),
-                    "marker-symbol": cp_manifest.get("marker_symbol", "roadblock"),
-                },
-            ))
+            props = {
+                "id": cp_key,
+                "name": _display_name(cp_key),
+                "category": "chokepoint",
+                "type": cp.get("type", ""),
+                "connects": cp.get("connects", []),
+                "description": cp.get("description", ""),
+                "strategic_value": cp.get("strategic_value", ""),
+                "marker-color": cp_manifest.get("marker_color", "#f44"),
+                "marker-symbol": cp_manifest.get("marker_symbol", "roadblock"),
+            }
+            if cp_manifest.get("civ"):
+                props["civ"] = cp_manifest["civ"]
+            features.append(_make_feature("Point", coords, props))
 
     # --- Port zones ---
     for port_key, port_data in data.port_zones.items():
         port_manifest = manifest.get_port(port_key)
         coords = port_manifest.get("coords")
         if coords:
-            features.append(_make_feature(
-                "Point",
-                coords,
-                {
-                    "id": port_key,
-                    "name": port_data.get("in_world_name", _display_name(port_key)),
-                    "category": "port",
-                    "etymology": port_data.get("etymology", ""),
-                    "real_world_parallel": port_data.get("real_world_parallel", ""),
-                    "location": port_data.get("location", ""),
-                    "function": port_data.get("function", ""),
-                    "marker-color": port_manifest.get("marker_color", "#e8c840"),
-                    "marker-symbol": port_manifest.get("marker_symbol", "harbor"),
-                },
-            ))
+            props = {
+                "id": port_key,
+                "name": port_data.get("in_world_name", _display_name(port_key)),
+                "category": "port",
+                "etymology": port_data.get("etymology", ""),
+                "real_world_parallel": port_data.get("real_world_parallel", ""),
+                "location": port_data.get("location", ""),
+                "function": port_data.get("function", ""),
+                "marker-color": port_manifest.get("marker_color", "#e8c840"),
+                "marker-symbol": port_manifest.get("marker_symbol", "harbor"),
+            }
+            if port_manifest.get("civ"):
+                props["civ"] = port_manifest["civ"]
+            features.append(_make_feature("Point", coords, props))
 
     # --- Contested sites ---
     for site_key, site_data in data.contested_sites.items():
@@ -273,33 +286,31 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
         oasis_manifest = manifest.get_oasis(oasis_key)
         coords = oasis_manifest.get("coords")
         if coords:
-            features.append(_make_feature(
-                "Point",
-                coords,
-                {
-                    "id": oasis_key,
-                    "name": _display_name(oasis_key),
-                    "category": "oasis",
-                    "marker-color": oasis_manifest.get("marker_color", "#4a9a3a"),
-                    "marker-symbol": oasis_manifest.get("marker_symbol", "garden"),
-                },
-            ))
+            props = {
+                "id": oasis_key,
+                "name": _display_name(oasis_key),
+                "category": "oasis",
+                "marker-color": oasis_manifest.get("marker_color", "#4a9a3a"),
+                "marker-symbol": oasis_manifest.get("marker_symbol", "garden"),
+            }
+            if oasis_manifest.get("civ"):
+                props["civ"] = oasis_manifest["civ"]
+            features.append(_make_feature("Point", coords, props))
 
     # --- Named landmarks ---
     for lm in manifest.landmarks:
-        features.append(_make_feature(
-            "Point",
-            lm.get("coords"),
-            {
-                "id": lm.get("id"),
-                "name": lm.get("name"),
-                "category": "landmark",
-                "type": lm.get("type", ""),
-                "description": lm.get("description", ""),
-                "marker-color": lm.get("marker_color", "#c4a862"),
-                "marker-symbol": lm.get("marker_symbol", "star"),
-            },
-        ))
+        props = {
+            "id": lm.get("id"),
+            "name": lm.get("name"),
+            "category": "landmark",
+            "type": lm.get("type", ""),
+            "description": lm.get("description", ""),
+            "marker-color": lm.get("marker_color", "#c4a862"),
+            "marker-symbol": lm.get("marker_symbol", "star"),
+        }
+        if lm.get("civ"):
+            props["civ"] = lm["civ"]
+        features.append(_make_feature("Point", lm.get("coords"), props))
 
     # --- Ndjadi river system ---
     for river_key in manifest.river_names:
@@ -319,6 +330,41 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
             },
         ))
 
+    # --- On-route waystations (manifest-sourced; port-, oasis-, or caravanserai-shaped) ---
+    # These are hand-authored trade-route stops that have no topology entry. They are
+    # appended after the rivers to match the committed feature ordering.
+    for ws_key in manifest.waystation_names:
+        ws = manifest.get_waystation(ws_key)
+        coords = ws.get("coords")
+        if not coords:
+            continue
+        category = ws.get("category", "oasis")
+        if category == "port":
+            props = {
+                "id": ws_key,
+                "name": ws.get("in_world_name", _display_name(ws_key)),
+                "category": "port",
+                "etymology": ws.get("etymology", ""),
+                "real_world_parallel": ws.get("real_world_parallel", ""),
+                "location": ws.get("location", ""),
+                "function": ws.get("function", ""),
+                "marker-color": ws.get("marker_color", "#e8c840"),
+                "marker-symbol": ws.get("marker_symbol", "harbor"),
+            }
+        else:  # oasis / caravanserai share the same prose shape
+            props = {
+                "id": ws_key,
+                "name": ws.get("in_world_name", _display_name(ws_key)),
+                "category": category,
+                "etymology": ws.get("etymology", ""),
+                "description": ws.get("description", ""),
+                "marker-color": ws.get("marker_color", "#4a9a3a"),
+                "marker-symbol": ws.get("marker_symbol", "garden"),
+            }
+        if ws.get("civ"):
+            props["civ"] = ws["civ"]
+        features.append(_make_feature("Point", coords, props))
+
     # --- Assemble FeatureCollection ---
     collection = {
         "type": "FeatureCollection",
@@ -335,6 +381,6 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
     # Write
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(collection, f, indent=2, ensure_ascii=False)
+        json.dump(_normalize_numbers(collection), f, indent=2, ensure_ascii=False)
 
     return output_path

@@ -9,47 +9,6 @@
       "ngaru_bon": {
         "hostile": [
           "kheshkai"
-        ],
-        "trade": [
-          "irrah"
-        ]
-      },
-      "irrah": {
-        "trade": [
-          "ndjadi",
-          "ngaru_bon"
-        ]
-      },
-      "kheshkai": {
-        "hostile": [
-          "ngaru_bon"
-        ],
-        "trade": [
-          "qollari"
-        ],
-        "rival": [
-          "ndjadi"
-        ]
-      },
-      "ndjadi": {
-        "trade": [
-          "irrah",
-          "qollari"
-        ],
-        "rival": [
-          "kheshkai"
-        ]
-      },
-      "qollari": {
-        "trade": [
-          "oravan",
-          "kheshkai",
-          "ndjadi"
-        ]
-      },
-      "oravan": {
-        "trade": [
-          "qollari"
         ]
       }
     }
@@ -168,7 +127,7 @@
         "id": "aethelian_basin",
         "name": "Aethelian Basin",
         "category": "water",
-        "description": "Continental trade pivot. Not a producer — a processor, certifier, and neutral ground. No army; enforcement via triple-seal excommunication. Contains multiple port cities with six distinct architectural traditions",
+        "description": "A three-day sail across. Six port cities stand on its shores. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried.",
         "opening": "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea",
         "fill": "#3a7ca5",
         "fillOpacity": 0.6
@@ -1184,11 +1143,11 @@
             ],
             [
               197.88405470602413,
-              455.0
+              455
             ],
             [
               206.02291392929712,
-              455.0
+              455
             ],
             [
               205.94820164731084,
@@ -1658,8 +1617,8 @@
               441.60421828134326
             ],
             [
-              300.0,
-              450.0
+              300,
+              450
             ],
             [
               298.558964560273,
@@ -4831,8 +4790,8 @@
               659.4968694714285
             ],
             [
-              520.0,
-              660.0
+              520,
+              660
             ],
             [
               524.0847604248103,
@@ -8925,8 +8884,8 @@
               351.4897161445119
             ],
             [
-              1110.0,
-              340.0
+              1110,
+              340
             ],
             [
               1106.9350681267567,
@@ -16226,11 +16185,11 @@
               327.496673403967
             ],
             [
-              270.0,
+              270,
               330.0229101338884
             ],
             [
-              270.0,
+              270,
               319.0751922378601
             ],
             [
@@ -17634,8 +17593,8 @@
               567.9651378185309
             ],
             [
-              430.0,
-              560.0
+              430,
+              560
             ],
             [
               426.2630159959397,
@@ -18395,8 +18354,8 @@
               345.99104332533244
             ],
             [
-              350.0,
-              340.0
+              350,
+              340
             ],
             [
               347.70048528329363,
@@ -19231,11 +19190,11 @@
               352.087199756696
             ],
             [
-              270.0,
+              270,
               350.93467974190276
             ],
             [
-              270.0,
+              270,
               340.17778101926086
             ],
             [
@@ -21730,11 +21689,11 @@
               353.547702391346
             ],
             [
-              130.0,
+              130,
               344.2551912823345
             ],
             [
-              130.0,
+              130,
               360.258267308599
             ],
             [
@@ -25339,8 +25298,8 @@
               528.271995058011
             ],
             [
-              300.0,
-              530.0
+              300,
+              530
             ],
             [
               304.1693078437617,
@@ -26904,11 +26863,11 @@
               387.62756189509474
             ],
             [
-              270.0,
-              380.0
+              270,
+              380
             ],
             [
-              270.0,
+              270,
               372.3774966125026
             ],
             [
@@ -28084,8 +28043,8 @@
               402.11696672377093
             ],
             [
-              150.0,
-              420.0
+              150,
+              420
             ],
             [
               153.85477042776756,
@@ -31049,8 +31008,8 @@
               334.7662294714775
             ],
             [
-              780.0,
-              340.0
+              780,
+              340
             ],
             [
               783.7317435030992,
@@ -31214,8 +31173,8 @@
               309.677017647535
             ],
             [
-              680.0,
-              310.0
+              680,
+              310
             ],
             [
               691.1261545260941,
@@ -32108,12 +32067,12 @@
               199.90493656580063
             ],
             [
-              460.0,
-              200.0
+              460,
+              200
             ],
             [
               459.2592980061038,
-              200.0
+              200
             ],
             [
               457.8578698195293,
@@ -32878,11 +32837,11 @@
           [
             [
               457.2112461657296,
-              200.0
+              200
             ],
             [
               443.30517816186415,
-              200.0
+              200
             ],
             [
               443.18823153482543,
@@ -32898,7 +32857,7 @@
             ],
             [
               457.2112461657296,
-              200.0
+              200
             ]
           ]
         ]
@@ -35329,8 +35288,8 @@
               118.73505825969248
             ],
             [
-              980.0,
-              110.0
+              980,
+              110
             ],
             [
               975.4534686521347,
@@ -40875,11 +40834,11 @@
               368.8485393800917
             ],
             [
-              130.0,
+              130,
               364.38912485756316
             ],
             [
-              130.0,
+              130,
               374.1788075059247
             ],
             [
@@ -42374,11 +42333,11 @@
             ],
             [
               206.02291392929712,
-              455.0
+              455
             ],
             [
               217.34295466569733,
-              455.0
+              455
             ],
             [
               217.78980817476045,
@@ -44522,8 +44481,8 @@
               208.4983316952583
             ],
             [
-              400.0,
-              210.0
+              400,
+              210
             ],
             [
               388.46957223205663,
@@ -45467,12 +45426,12 @@
               369.0794721174735
             ],
             [
-              130.0,
+              130,
               374.1788075059247
             ],
             [
-              130.0,
-              380.0
+              130,
+              380
             ],
             [
               131.658476064712,
@@ -46036,12 +45995,12 @@
               450.4711141868146
             ],
             [
-              190.0,
-              455.0
+              190,
+              455
             ],
             [
               192.6277133028866,
-              455.0
+              455
             ],
             [
               192.4854875669155,
@@ -46664,8 +46623,8 @@
               240.95699797614236
             ],
             [
-              370.0,
-              250.0
+              370,
+              250
             ],
             [
               380.064597055081,
@@ -48597,8 +48556,8 @@
               281.07737354658013
             ],
             [
-              250.0,
-              278.0
+              250,
+              278
             ],
             [
               238.66420957194026,
@@ -50793,8 +50752,8 @@
               427.93083339639503
             ],
             [
-              1080.0,
-              420.0
+              1080,
+              420
             ],
             [
               1080.354190508853,
@@ -51609,8 +51568,8 @@
               477.19637843182187
             ],
             [
-              290.0,
-              490.0
+              290,
+              490
             ],
             [
               291.1487564345184,
@@ -54718,8 +54677,8 @@
               270.0805636506426
             ],
             [
-              180.0,
-              270.0
+              180,
+              270
             ],
             [
               171.2667159111505,
@@ -55165,8 +55124,8 @@
               600.8588657991249
             ],
             [
-              530.0,
-              600.0
+              530,
+              600
             ],
             [
               523.7335942986373,
@@ -55904,11 +55863,11 @@
             ],
             [
               192.6277133028866,
-              455.0
+              455
             ],
             [
               197.88405470602413,
-              455.0
+              455
             ],
             [
               196.9393504174748,
@@ -57510,8 +57469,8 @@
               388.8264364150226
             ],
             [
-              1100.0,
-              380.0
+              1100,
+              380
             ],
             [
               1100.7408290576266,
@@ -60392,8 +60351,8 @@
               59.86992730829132
             ],
             [
-              500.0,
-              60.0
+              500,
+              60
             ],
             [
               498.29609038199936,
@@ -63365,8 +63324,8 @@
               140.7813246679259
             ],
             [
-              1000.0,
-              140.0
+              1000,
+              140
             ],
             [
               998.6721829236891,
@@ -64487,11 +64446,11 @@
             ],
             [
               217.34295466569733,
-              455.0
+              455
             ],
             [
-              220.0,
-              455.0
+              220,
+              455
             ],
             [
               225.63417225102563,
@@ -64882,8 +64841,8 @@
               534.2064610968275
             ],
             [
-              420.0,
-              520.0
+              420,
+              520
             ],
             [
               417.3664219451663,
@@ -66785,8 +66744,8 @@
               284.85989513374
             ],
             [
-              140.0,
-              290.0
+              140,
+              290
             ],
             [
               139.35787319410153,
@@ -70786,8 +70745,8 @@
               267.6121119261566
             ],
             [
-              400.0,
-              280.0
+              400,
+              280
             ],
             [
               400.89791705236104,
@@ -73328,8 +73287,8 @@
               640.6605293519797
             ],
             [
-              700.0,
-              640.0
+              700,
+              640
             ],
             [
               704.1206595391853,
@@ -73383,8 +73342,8 @@
               248.13716087716384
             ],
             [
-              1080.0,
-              240.0
+              1080,
+              240
             ],
             [
               1077.192729738029,
@@ -73795,12 +73754,12 @@
               322.5280655045811
             ],
             [
-              270.0,
+              270,
               319.0751922378601
             ],
             [
-              270.0,
-              310.0
+              270,
+              310
             ],
             [
               267.85460572458993,
@@ -75431,8 +75390,8 @@
               463.5400774147451
             ],
             [
-              1050.0,
-              460.0
+              1050,
+              460
             ],
             [
               1052.2588141054275,
@@ -76918,8 +76877,8 @@
               217.22567524594726
             ],
             [
-              380.0,
-              220.0
+              380,
+              220
             ],
             [
               377.0833646889337,
@@ -77640,8 +77599,8 @@
               649.1574632180476
             ],
             [
-              450.0,
-              650.0
+              450,
+              650
             ],
             [
               469.15165335289953,
@@ -80229,8 +80188,8 @@
               432.59753738303596
             ],
             [
-              250.0,
-              430.0
+              250,
+              430
             ],
             [
               252.3882043064519,
@@ -81705,8 +81664,8 @@
               584.3891665524777
             ],
             [
-              360.0,
-              590.0
+              360,
+              590
             ],
             [
               364.97494310644475,
@@ -83910,8 +83869,8 @@
               94.50430341476107
             ],
             [
-              950.0,
-              90.0
+              950,
+              90
             ],
             [
               944.5359171335244,
@@ -85315,11 +85274,11 @@
               374.03678198719433
             ],
             [
-              270.0,
+              270,
               372.3774966125026
             ],
             [
-              270.0,
+              270,
               350.93467974190276
             ],
             [
@@ -87652,8 +87611,8 @@
               504.3424895769706
             ],
             [
-              950.0,
-              510.0
+              950,
+              510
             ],
             [
               961.9276531318704,
@@ -91779,12 +91738,12 @@
               583.040070677867
             ],
             [
-              460.0,
-              580.0
+              460,
+              580
             ],
             [
               454.4859717549815,
-              580.0
+              580
             ],
             [
               455.8006948348622,
@@ -92720,8 +92679,8 @@
               148.3989698057606
             ],
             [
-              370.0,
-              160.0
+              370,
+              160
             ],
             [
               371.3923824600104,
@@ -94575,8 +94534,8 @@
               299.94578788751113
             ],
             [
-              560.0,
-              300.0
+              560,
+              300
             ],
             [
               561.1887621059915,
@@ -96399,8 +96358,8 @@
               361.5725330738394
             ],
             [
-              330.0,
-              370.0
+              330,
+              370
             ],
             [
               328.0917164609001,
@@ -96560,8 +96519,8 @@
               443.404905250119
             ],
             [
-              380.0,
-              440.0
+              380,
+              440
             ],
             [
               379.20183086142856,
@@ -99121,8 +99080,8 @@
               51.52998163207791
             ],
             [
-              750.0,
-              50.0
+              750,
+              50
             ],
             [
               748.2112460305868,
@@ -102040,12 +101999,12 @@
               578.5215026516839
             ],
             [
-              360.0,
-              580.0
+              360,
+              580
             ],
             [
-              368.0,
-              582.0
+              368,
+              582
             ],
             [
               365.61083344752234,
@@ -102205,8 +102164,8 @@
               337.70048528329363
             ],
             [
-              340.0,
-              330.0
+              340,
+              330
             ],
             [
               336.542719594438,
@@ -103103,11 +103062,11 @@
               353.547702391346
             ],
             [
-              130.0,
+              130,
               360.258267308599
             ],
             [
-              130.0,
+              130,
               364.38912485756316
             ],
             [
@@ -103405,8 +103364,8 @@
               289.36248723823326
             ],
             [
-              460.0,
-              290.0
+              460,
+              290
             ],
             [
               464.23769858238956,
@@ -105174,8 +105133,8 @@
               360.3509871597096
             ],
             [
-              360.0,
-              360.0
+              360,
+              360
             ],
             [
               356.2043118362296,
@@ -107297,8 +107256,8 @@
               599.9498862128895
             ],
             [
-              370.0,
-              610.0
+              370,
+              610
             ],
             [
               376.006475270391,
@@ -107411,8 +107370,8 @@
               550.1304983313029
             ],
             [
-              330.0,
-              560.0
+              330,
+              560
             ],
             [
               333.9666002094914,
@@ -108882,11 +108841,11 @@
               92.06456238449486
             ],
             [
-              380.0,
+              380,
               84.94987280068246
             ],
             [
-              380.0,
+              380,
               103.29835258514781
             ],
             [
@@ -109227,11 +109186,11 @@
               98.27899045005734
             ],
             [
-              380.0,
+              380,
               103.29835258514781
             ],
             [
-              380.0,
+              380,
               108.99343874144633
             ],
             [
@@ -109632,11 +109591,11 @@
             ],
             [
               443.30517816186415,
-              200.0
+              200
             ],
             [
               437.02249913517613,
-              200.0
+              200
             ],
             [
               437.17130615609113,
@@ -113886,8 +113845,8 @@
               187.31185316580024
             ],
             [
-              1040.0,
-              180.0
+              1040,
+              180
             ],
             [
               1036.7337615927747,
@@ -119995,8 +119954,8 @@
               623.0689191889957
             ],
             [
-              400.0,
-              630.0
+              400,
+              630
             ],
             [
               407.19862311464675,
@@ -120332,11 +120291,11 @@
               78.37440619615053
             ],
             [
-              380.0,
-              80.0
+              380,
+              80
             ],
             [
-              380.0,
+              380,
               84.94987280068246
             ],
             [
@@ -120795,12 +120754,12 @@
               112.321356274214
             ],
             [
-              380.0,
+              380,
               108.99343874144633
             ],
             [
-              380.0,
-              120.0
+              380,
+              120
             ],
             [
               377.2785163343107,
@@ -123286,8 +123245,8 @@
               651.2484915316813
             ],
             [
-              600.0,
-              650.0
+              600,
+              650
             ],
             [
               605.996234198501,
@@ -125678,8 +125637,8 @@
               83.31854785531561
             ],
             [
-              900.0,
-              80.0
+              900,
+              80
             ],
             [
               893.9565141097667,
@@ -129718,8 +129677,8 @@
               392.1086326218807
             ],
             [
-              870.0,
-              400.0
+              870,
+              400
             ],
             [
               870.5675815358718,
@@ -130138,11 +130097,11 @@
               338.2229702695102
             ],
             [
-              130.0,
+              130,
               341.6624010964254
             ],
             [
-              130.0,
+              130,
               344.2551912823345
             ],
             [
@@ -131787,11 +131746,11 @@
             ],
             [
               459.2592980061038,
-              200.0
+              200
             ],
             [
               457.2112461657296,
-              200.0
+              200
             ],
             [
               457.8578698195293,
@@ -132641,8 +132600,8 @@
               302.8807619548879
             ],
             [
-              1100.0,
-              300.0
+              1100,
+              300
             ],
             [
               1097.9429630876652,
@@ -135074,8 +135033,8 @@
               455.3178031652424
             ],
             [
-              900.0,
-              460.0
+              900,
+              460
             ],
             [
               905.9394842252175,
@@ -136082,11 +136041,11 @@
               323.13016040263597
             ],
             [
-              130.0,
-              340.0
+              130,
+              340
             ],
             [
-              130.0,
+              130,
               341.6624010964254
             ],
             [
@@ -138021,11 +137980,11 @@
             ],
             [
               454.4859717549815,
-              580.0
+              580
             ],
             [
-              440.0,
-              580.0
+              440,
+              580
             ],
             [
               439.77572622765473,
@@ -138377,8 +138336,8 @@
               491.1948700547162
             ],
             [
-              1000.0,
-              490.0
+              1000,
+              490
             ],
             [
               1001.7987586123443,
@@ -139562,8 +139521,8 @@
               630.0774648488392
             ],
             [
-              700.0,
-              630.0
+              700,
+              630
             ],
             [
               682.0293722621217,
@@ -139676,8 +139635,8 @@
               409.1287457416948
             ],
             [
-              370.0,
-              400.0
+              370,
+              400
             ],
             [
               368.20853724956964,
@@ -140461,11 +140420,11 @@
               336.10483246697714
             ],
             [
-              270.0,
+              270,
               340.17778101926086
             ],
             [
-              270.0,
+              270,
               330.0229101338884
             ],
             [
@@ -141827,11 +141786,11 @@
             ],
             [
               437.02249913517613,
-              200.0
+              200
             ],
             [
-              430.0,
-              200.0
+              430,
+              200
             ],
             [
               426.1061609216866,
@@ -143948,8 +143907,8 @@
               620.9283961974965
             ],
             [
-              620.0,
-              620.0
+              620,
+              620
             ],
             [
               619.5813617139061,
@@ -148944,8 +148903,8 @@
               409.51155255352575
             ],
             [
-              310.0,
-              410.0
+              310,
+              410
             ],
             [
               309.76499590137286,
@@ -149835,8 +149794,8 @@
               179.74648624633377
             ],
             [
-              400.0,
-              190.0
+              400,
+              190
             ],
             [
               403.02419982706334,
@@ -150769,8 +150728,8 @@
               357.76455332914253
             ],
             [
-              860.0,
-              360.0
+              860,
+              360
             ],
             [
               860.4398423928318,
@@ -152545,8 +152504,8 @@
               486.2258925510181
             ],
             [
-              400.0,
-              480.0
+              400,
+              480
             ],
             [
               399.66491582407696,
@@ -152713,10 +152672,11 @@
           "ngaru_bon",
           "kheshkai"
         ],
-        "description": "Singular treacherous land route from Ngaru-Bon plateau down to the steppes. Only exit for Ngaru-Bon exports. Contested for centuries",
+        "description": "One road. Three days under cliff and a day in scree, with no shelter that a determined Council cannot find. Ngaru-Bon depends on the pass for the trade that feeds the plateau; Kheshkai prospers on the traffic that crosses it. The pass has changed hands six times in living memory, and never for long. The first thaw belongs to whoever wintered above, and the wintering above kills men. The widow-tax at the Smith-Spring side is collected by a Khen-Po whose name is not written in the register.",
         "strategic_value": "Closure creates existential famine for Ngaru-Bon within one growing season",
         "marker-color": "#f44",
-        "marker-symbol": "roadblock"
+        "marker-symbol": "roadblock",
+        "civ": "ngaru_bon"
       }
     },
     {
@@ -152737,7 +152697,7 @@
           "kheshkai",
           "ndjadi"
         ],
-        "description": "Vital ford where Kheshkai steppe cliff edge descends to Ndjadi river delta. Most contested point on the continent",
+        "description": "Where the Kheshkai cliff edge descends to the Ndjadi delta. The ford is two pole-lengths deep at low water and impassable at flood, and for two of the four seasons the only crossing is the seizure of one bank by whichever clan-lord can hold it. Kosh-Taka held it once and held the upstream weirs with it; the delta starved through three growing seasons. The toll is paid in unminted copper, weighed at the ford by a Kheshkai factor who answers to no court the delta recognizes.",
         "strategic_value": "Seizure controls north-south overland trade. Ndjadi can weaponize via upstream river diversion",
         "marker-color": "#f44",
         "marker-symbol": "roadblock"
@@ -152762,10 +152722,11 @@
           "ndjadi",
           "oravan"
         ],
-        "description": "Vertigo-inducing carved paths connecting cloud-forest terraces to lowlands and coast. Can be destroyed to deny pursuit",
+        "description": "The carved descent from the cloud forest takes four days for a loaded llama and six for a sick one. The roads narrow at the upper switchbacks to a man's reach plus a finger, which is the width the calendar-keepers want; the load cap is twenty-five to thirty kilo by ordinance and by what the animal will bear. The cliff-engineers' guild at the Apu-Yana waystation can collapse a half-stade of switchback by removing four wedge-stones, and have done so twice in the memory of the living roadmasters.",
         "strategic_value": "Qollari monopoly on highland-lowland access. Llama 25-30 kg load cap forces dense waystation networks",
         "marker-color": "#f44",
-        "marker-symbol": "roadblock"
+        "marker-symbol": "roadblock",
+        "civ": "qollari"
       }
     },
     {
@@ -152786,10 +152747,11 @@
           "oravan",
           "aethelian_basin"
         ],
-        "description": "Narrow passage between Oravan archipelago and Basin. Controls obsidian export and all Oravan maritime access",
+        "description": "The strait is half a march wide at its narrowest. Every Oravan keel that enters the Basin passes through it, and every obsidian shipment in continental commerce passes through it twice, once north and once south. The Halkar pilot-houses are Oravan, the harbor-fees are Oravan, the rates are Oravan, and the Basin ports settle the books at Tavakh-Qarat in the cool season. Three captains in the last cycle preferred the open ocean and the monsoon to the pilot-house. They have not been heard from.",
         "strategic_value": "Oravan naval dominance is absolute in the Basin but cannot enforce land control without allies",
         "marker-color": "#f44",
-        "marker-symbol": "roadblock"
+        "marker-symbol": "roadblock",
+        "civ": "oravan"
       }
     },
     {
@@ -152810,10 +152772,11 @@
           "ngaru_bon",
           "irrah"
         ],
-        "description": "Ore-bearing hot spring at the Ngaru-Bon/Irrah frontier. Ngaru-Bon controls upstream forge-precinct; Irrah controls downstream water-rights; Basin merchants use buffer-zone riverbank",
+        "description": "The hot spring rises ore-bearing at the Ngaru-Bon margin and flows three leagues south before the iron is exhausted from the water. The Ngaru-Bon forge-precinct holds the upstream stones; the Irrah salt-collectors hold the downstream pans; the Basin's caravan-masters hold the buffer-riverbank by a working truce no court has authored. Iron and charcoal travel south at the price the season's hostage-children fix. Salt travels north. A factor who proposes a written treaty for the buffer is asked, politely, to leave.",
         "strategic_value": "Shared resource that forces cooperation. Iron and charcoal flow south; salt flows north",
         "marker-color": "#f44",
-        "marker-symbol": "roadblock"
+        "marker-symbol": "roadblock",
+        "civ": "irrah"
       }
     },
     {
@@ -152834,10 +152797,11 @@
           "kheshkai",
           "qollari"
         ],
-        "description": "Where cloud forest meets steppe. Only permanent cross-civ sacred site on the continent. Triennial convergence of Kheshkai shamans and Qollari calendarists",
+        "description": "Where the steppe meets cloud forest at the only joint cross-civ sanctuary on the continent. The Kheshkai shamans and the Qollari calendarists convene every third year and the festival-towns swell to a season's bulk in eight days. In the off years the border is a dirt track watched by a single Khen-Po. The Khazadari rate-house at the senior festival town fails twice in three rotations and recapitalizes itself by a method the Inner Circle has chosen not to publish. The wool-trade depends on the festival year falling.",
         "strategic_value": "Massive commercial traffic during festival years creates boom-bust cycle in border towns",
         "marker-color": "#f44",
-        "marker-symbol": "roadblock"
+        "marker-symbol": "roadblock",
+        "civ": "kheshkai"
       }
     },
     {
@@ -152856,9 +152820,10 @@
         "etymology": "Ndjadi: Ki- (settlement) + Mbu- (water) + hari 'surplus'. The Surplus-Water Settlement",
         "real_world_parallel": "Alexandria analog",
         "location": "South shore, where Ndjadi delta enters",
-        "function": "Grain funnel and spice transshipment. Ndjadi grain surplus enters continental circulation here",
+        "function": "The south-shore grain port, where the Ndjadi delta enters the Basin and where the High Granaries' evaporative-cooled stores feed the continental circuit. The Darb caravan-staging quarter on the south side pays no substrate-cistern levy, and the Court of the Three Mouths has chosen, in three reviews, not to revisit the question. The Imajīn caravan-mistresses hold the leverage.",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "ndjadi"
       }
     },
     {
@@ -152877,9 +152842,10 @@
         "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + qarat (Irrah 'citadel'). The Exchange Citadel",
         "real_world_parallel": "Venice analog",
         "location": "North shore",
-        "function": "Salt pans, glass production, grain imports. Oldest commercial quarter. Where khazadari money-changers formed",
+        "function": "The north-shore port and the oldest commercial quarter. Inside the pale-gold limestone arcades the Khazadari Inner Circle sets the cross-rate cycle twice a year; the soda-ash glassworks at the periphery kill their senior masters before the fourth cohort can be trained. The Junior Clerks' Association now writes fifteen percent of the port's underwriting at rates the Inner Circle has been silent on for eleven cycles.",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "irrah"
       }
     },
     {
@@ -152898,9 +152864,10 @@
         "etymology": "Oravan: hala 'reef, harbor' + ni (genitive particle) + tamu (Basin pidgin 'sweetwater'). The Sweetwater Harbor",
         "real_world_parallel": "Hormuz analog",
         "location": "East shore",
-        "function": "Monsoon switching point. Where Oravan sea-lanes hand off to overland routes. Irrah caravans arrive here",
+        "function": "The east-shore port and the monsoon switching point, where the Oravan sea-lanes hand off to the Irrah overland routes. The Coral Docks collect the Harbor Covenant's wave-tithe; the Qalībin Lodges certify the desert-interior escorts; the Bazaar of the Split between them is neutral ground neither core institution claims. The Tin-Aghīz-Lam-Chen partnership absorbs the uncertified gold-work the Inner Council of Ancestor-Smiths chooses not to see.",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "oravan"
       }
     },
     {
@@ -152919,9 +152886,10 @@
         "etymology": "Ngaru-Bon: dzong 'fortress-monastery' + tamu (Basin pidgin 'sweetwater/fresh'). The Fortress Harbor",
         "real_world_parallel": "Kilwa analog",
         "location": "Southeast margin",
-        "function": "Link to Ngaru-Bon gold trade via coastal routes. Where Ngaru-Bon metallurgical exports reach the Basin",
+        "function": "The southeast-margin port, link to the Ngaru-Bon highland trade. The Iron Keep and the Click-Market enforce Stone-tithe collection and acoustic-register-gated guild exchange that the Outer Quarters' mixed laborers cannot, on any plausible career path, be admitted to. The Pacha-Urco householders' annual substrate-rite is the only ceremony in which the Click-Market and the periphery share ground.",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "ngaru_bon"
       }
     },
     {
@@ -152938,7 +152906,7 @@
         "name": "Qhabal Ur",
         "category": "contested_site",
         "location": "Basin center",
-        "description": "The Drowned Step — monumental stepped platform partially submerged by tides. Claimed by Oravan (garrison) and Ndjadi (scribal access)",
+        "description": "The Drowned Step. A monumental stepped platform at the Basin's center, half its steps under water at the high tide and dry at the low. The Oravan post a garrison and the Ndjadi post a scribal-access corps. Both claims rest on use rather than charter, and the Triple-Seal Court has declined to hear a docking dispute three times in the present generation. A captain who lands without one of the two flags loses the cargo to whichever flag posts first.",
         "marker-color": "#adf",
         "marker-symbol": "religious-christian"
       }
@@ -152957,7 +152925,7 @@
         "name": "Veyd Kirrha",
         "category": "contested_site",
         "location": "Basin southern rim",
-        "description": "Ash-Oracle — volcanic vent drawing multi-tradition visitors. Oravan, Kheshkai, Qollari, and Irrah scholars converge with competing interpretations",
+        "description": "The Ash-Oracle. A volcanic vent on the Basin's southern rim that vents on no schedule the calendar-keepers have been able to resolve. Oravan, Kheshkai, Qollari, and Irrah scholars come to it in rotation, each reading the ash by the lights of his own tradition, and the four readings on a single venting have never agreed. The local Tongue-Guild factor charges by the cycle for the translation work and does not endorse any reading.",
         "marker-color": "#adf",
         "marker-symbol": "religious-christian"
       }
@@ -153390,7 +153358,8 @@
         "name": "Qarat al-Fidda",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153407,7 +153376,8 @@
         "name": "Ghadam Thalla",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153424,7 +153394,8 @@
         "name": "Tin Mashraq",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153441,7 +153412,8 @@
         "name": "Khulut",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153458,7 +153430,8 @@
         "name": "Zin Iferis",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153475,7 +153448,8 @@
         "name": "Ayn Salqat",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153494,7 +153468,8 @@
         "type": "mountain",
         "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore; source of the Ngaru-Bon iron and steel monopoly.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "ngaru_bon"
       }
     },
     {
@@ -153513,7 +153488,8 @@
         "type": "volcano",
         "description": "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "qollari"
       }
     },
     {
@@ -153532,7 +153508,8 @@
         "type": "mountain",
         "description": "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "kheshkai"
       }
     },
     {
@@ -153551,7 +153528,8 @@
         "type": "city",
         "description": "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "ndjadi"
       }
     },
     {
@@ -153570,7 +153548,8 @@
         "type": "sacred_site",
         "description": "Where the five Ndjadi channels braid together. Contested religious site.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "ndjadi"
       }
     },
     {
@@ -153589,7 +153568,8 @@
         "type": "ruin",
         "description": "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "oravan"
       }
     },
     {
@@ -153608,7 +153588,8 @@
         "type": "fortress",
         "description": "Fortified Qollari settlement built during the Obsidian Blockade.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "qollari"
       }
     },
     {
@@ -153627,7 +153608,8 @@
         "type": "port_city",
         "description": "Main Oravan port island closest to Halkar Straits. Primary settlement.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "oravan"
       }
     },
     {
@@ -153646,7 +153628,8 @@
         "type": "sacred_site",
         "description": "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "oravan"
       }
     },
     {
@@ -153665,7 +153648,8 @@
         "type": "resource",
         "description": "Obsidian-source island. Key strategic resource for Oravan naval power.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "oravan"
       }
     },
     {
@@ -153904,6 +153888,145 @@
         "stroke-width": 1.5,
         "stroke-opacity": 0.6,
         "stroke-dasharray": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          360,
+          390
+        ]
+      },
+      "properties": {
+        "id": "tavakh_rubat",
+        "name": "Tavakh-Rubāṭ",
+        "category": "port",
+        "etymology": "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + rubāṭ (Irrah 'fortified caravanserai/relay-station'). The Exchange Caravanserai",
+        "real_world_parallel": "Mediterranean entrepôt analog",
+        "location": "Mid-route sandbar between Basin north shore and Oravan archipelago",
+        "function": "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor",
+        "marker-color": "#e8c840",
+        "marker-symbol": "harbor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          630,
+          425
+        ]
+      },
+      "properties": {
+        "id": "kelata_tamu",
+        "name": "Kelata-Tamu",
+        "category": "oasis",
+        "etymology": "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The Sweetwater of Kelata",
+        "description": "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden",
+        "civ": "oravan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          540,
+          580
+        ]
+      },
+      "properties": {
+        "id": "wasi_pukya",
+        "name": "Wasi-Pukya",
+        "category": "oasis",
+        "etymology": "Qollari: wasi 'house, lineage' + pukya 'spring'. The Spring-House",
+        "description": "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden",
+        "civ": "qollari"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          980,
+          260
+        ]
+      },
+      "properties": {
+        "id": "dzong_kha",
+        "name": "Dzong-Kha",
+        "category": "oasis",
+        "etymology": "Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The Fortress of the Blood-Oath",
+        "description": "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          500,
+          490
+        ]
+      },
+      "properties": {
+        "id": "tepet_apu",
+        "name": "Tepet-Apu",
+        "category": "oasis",
+        "etymology": "Cross-cultural: Kheshkai tepet 'mountain' + Qollari apu 'lord/mountain'. The Mountain-of-Mountains — the two mountain peoples name the truce site each in their own register",
+        "description": "Mixed-clan waystation on the Breath-of-Cloud descent. Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari oath.",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          600,
+          480
+        ]
+      },
+      "properties": {
+        "id": "kalli_xal",
+        "name": "Kalli-Xal",
+        "category": "caravanserai",
+        "etymology": "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a Kheshkai-attested compound for a steppe relay station",
+        "description": "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and corralled mounts kept under a single Kheshkai clan-lord's seal; the grazing toll is settled here before the run to Tepet-Apu. Rations-only resupply: the station hauls grain off the route but cannot offer reliable water beyond what travellers already carry.",
+        "marker-color": "#b87333",
+        "marker-symbol": "lodging",
+        "civ": "kheshkai"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          960,
+          350
+        ]
+      },
+      "properties": {
+        "id": "zang_kalli",
+        "name": "Zang-Kalli",
+        "category": "caravanserai",
+        "etymology": "Cross-cultural: Ngaru-Bon zang 'iron' + Kheshkai kalli 'house'. The Iron-House — named in both clients' registers for the southbound steel-and-iron leg of the Copper-for-Steel Road (the Ngaru-Bon half of the bilateral trade)",
+        "description": "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in.",
+        "marker-color": "#b87333",
+        "marker-symbol": "lodging",
+        "civ": "kheshkai"
       }
     }
   ]

@@ -27,6 +27,7 @@ class CoordinateManifest:
         self.ports = raw.get("ports", {})
         self.contested_sites = raw.get("contested_sites", {})
         self.oases = raw.get("oases", {})
+        self.waystations = raw.get("waystations", {})
         self.landmarks = raw.get("landmarks", [])
         self.rivers = raw.get("rivers", {})
         self.trade_routes = raw.get("trade_routes", {})
@@ -53,6 +54,10 @@ class CoordinateManifest:
         return list(self.oases.keys())
 
     @property
+    def waystation_names(self) -> list[str]:
+        return list(self.waystations.keys())
+
+    @property
     def river_names(self) -> list[str]:
         return list(self.rivers.keys())
 
@@ -74,6 +79,9 @@ class CoordinateManifest:
 
     def get_oasis(self, name: str) -> dict[str, Any]:
         return self.oases.get(name, {})
+
+    def get_waystation(self, name: str) -> dict[str, Any]:
+        return self.waystations.get(name, {})
 
     def get_river(self, name: str) -> dict[str, Any]:
         return self.rivers.get(name, {})
