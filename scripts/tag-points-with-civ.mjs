@@ -43,7 +43,6 @@ const DELIBERATELY_UNALIGNED = new Set([
   'dzong_kha',      // joint Ngaru-Bon + Kheshkai authority
   'tepet_apu',      // Kheshkai-Qollari mixed-clan truce site
   'tavakh_rubat',   // shared Irrah/Oravan administration (not Qollari)
-  'hassag_nganin',  // absent from worldbuilder canon — drift to resolve
 ])
 
 // Standard ray-casting point-in-polygon. ring is an array of [x, y] pairs.

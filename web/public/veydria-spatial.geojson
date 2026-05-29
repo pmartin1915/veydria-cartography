@@ -153589,7 +153589,8 @@
         "type": "sacred_site",
         "description": "Where the five Ndjadi channels braid together. Contested religious site.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "ndjadi"
       }
     },
     {

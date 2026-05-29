@@ -98,10 +98,16 @@ function formatNodeCategory(n: JourneyNode): string {
 // canon, so any cross-civ edge touching it is a sea crossing of the same
 // strait.
 function straitAnnotation(from: JourneyNode | undefined, to: JourneyNode | undefined): string | null {
-  if (!from?.civ || !to?.civ) return null
-  if (from.civ === to.civ) return null
-  if (from.civ === 'oravan' || to.civ === 'oravan') return 'Halkar Straits'
-  return null
+  if (!from || !to) return null
+  // Oravan is the only archipelago, so an edge with EXACTLY ONE Oravan
+  // endpoint is a sea crossing of the Halkar Straits — true even when the
+  // other endpoint is an untagged contested node (e.g. the mid-strait
+  // sandbar Tavakh-Rubāṭ). Keying on civ presence here would miss that
+  // crossing now that contested sites are deliberately civ-less (F5).
+  const fromOravan = from.civ === 'oravan'
+  const toOravan = to.civ === 'oravan'
+  if (fromOravan === toOravan) return null
+  return 'Halkar Straits'
 }
 
 export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {
