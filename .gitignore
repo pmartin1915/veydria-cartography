@@ -15,6 +15,11 @@ web/node_modules/
 web/dist/
 web/dist2/
 
+# Playwright
+web/playwright-report/
+web/test-results/
+web/.playwright/
+
 # Generated output (keep .gitkeep)
 output/*.png
 output/*.jpg

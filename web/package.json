@@ -16,7 +16,10 @@
     "sim:regret-model": "vite-node ../scripts/sim/sim-regret-model.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "check:size": "node ../scripts/check-bundle-size.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "combo": "file:../../combo",
@@ -29,6 +32,7 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@testing-library/react": "^16.3.2",
     "@types/d3": "^7.4.3",
     "@types/leaflet": "^1.9.8",
