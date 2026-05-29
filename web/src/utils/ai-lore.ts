@@ -12,7 +12,7 @@
 import { djb2Hash, mulberry32 } from './encounters'
 import type { GeoJSONFeature } from '../App'
 
-export type AiLoreType = 'rumors' | 'npcs' | 'tensions'
+export type AiLoreType = 'orientation' | 'rumors' | 'npcs' | 'tensions'
 
 export interface AiLoreSettings {
   apiKey: string | null
@@ -64,6 +64,7 @@ export function saveAiLoreSettings(settings: AiLoreSettings): void {
 /* ─── Cache persistence ─── */
 
 interface CacheEntry {
+  orientation?: string
   rumors?: string
   npcs?: string
   tensions?: string
@@ -156,6 +157,7 @@ export function buildPrompt(feature: GeoJSONFeature, type: AiLoreType): string {
   const worldCtx = `Veydria is a roughly C-shaped fantasy continent wrapped around an enclosed sea, the Aethelian Basin. The basin is the continent's trade pivot — a neutral processor and certifier, not a producer. Six port cities with distinct architectural traditions ring it. Outside the basin: highland steppes north, oasis chains in the southern desert, archipelagos west of the Halkar Straits. Trade routes are specific economic relationships that drive faction tension.`
 
   const instructions: Record<AiLoreType, string> = {
+    orientation: `In plain, concrete language, explain what this place is to someone who has never heard of it and is trying to picture it. Write 2 to 3 short paragraphs. Say plainly: what it physically is and what it would look like; who is there and what they actually do; what it is known for; and what tension or pressure it currently sits under. Stay concrete and grounded — favour everyday words. Do NOT use flowery, literary, or "purple" prose. Do NOT use in-world jargon or invented terms unless you immediately explain them in everyday words.`,
     rumors: `Generate 3 short, concrete rumours (2-3 sentences each) that a traveller might hear about this location. Each rumour should be specific enough to spark a scene, vague enough to leave room for the GM, and grounded in the location's actual function and relationships. Number them 1, 2, 3.`,
     npcs: `Generate 3 memorable NPCs associated with this location. For each, give: a name (culturally appropriate to the location), a one-line role, and a secret or tension. Keep each to 2-3 sentences. Number them 1, 2, 3.`,
     tensions: `Generate 3 local tensions, conflicts, or pressures currently acting on this location. These should be situation hooks — not full adventures, but friction that could escalate. Ground them in trade, geography, or faction relationships. 2-3 sentences each. Number them 1, 2, 3.`,
@@ -388,6 +390,11 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 export function generateMockLore(feature: GeoJSONFeature, type: AiLoreType): string {
+  // Orientation is not a flavour-template pick — it is a plain-language
+  // restatement of the feature's own canon fields, so it works offline and
+  // stays faithful to the data rather than inventing.
+  if (type === 'orientation') return generateMockOrientation(feature)
+
   const id = (feature.properties.id as string) || (feature as unknown as Record<string, unknown>).id as string || 'unknown'
   const name = (feature.properties.name as string) || 'this place'
   const category = (feature.properties.category as string) || 'default'
@@ -396,7 +403,7 @@ export function generateMockLore(feature: GeoJSONFeature, type: AiLoreType): str
   const typeSeed = djb2Hash(type)
   const seed = baseSeed + typeSeed
 
-  const templatesByType: Record<AiLoreType, Record<string, string[]>> = {
+  const templatesByType: Record<Exclude<AiLoreType, 'orientation'>, Record<string, string[]>> = {
     rumors: RUMOR_TEMPLATES,
     npcs: NPC_TEMPLATES,
     tensions: TENSION_TEMPLATES,
@@ -421,4 +428,74 @@ export function generateMockLore(feature: GeoJSONFeature, type: AiLoreType): str
   })
 
   return lines.join('\n\n')
+}
+
+/* ─── Orientation mock (plain-language, built from the feature's own canon fields) ─── */
+
+const CATEGORY_NOUNS: Record<string, string> = {
+  port: 'port city on the Aethelian Basin',
+  chokepoint: 'chokepoint — a narrow passage that controls who and what can get through',
+  oasis: 'oasis settlement out in the desert',
+  civilization: 'civilization',
+  trade_route: 'trade route',
+  contested_site: 'contested site that more than one power lays claim to',
+  water: 'body of water',
+  landmark: 'landmark',
+  river: 'river',
+  default: 'place on the map',
+}
+
+// Present a canon field as a clean sentence: trim, and add a full stop only if
+// it does not already end in terminal punctuation. Fields are shown VERBATIM
+// (no case-folding) so proper nouns like "Venice" survive intact.
+function asSentence(value: unknown): string {
+  const t = String(value).trim()
+  return /[.!?]$/.test(t) ? t : `${t}.`
+}
+
+/**
+ * Plain-language orientation built directly from the feature's canon properties.
+ * Deterministic, offline, and faithful — it restates what is recorded rather than
+ * inventing flavour, and presents each field verbatim under a plain label so messy
+ * or list-style canon entries still read cleanly. The live API path (buildPrompt)
+ * produces a smoother prose version.
+ */
+export function generateMockOrientation(feature: GeoJSONFeature): string {
+  const p = feature.properties
+  const name = (p.name as string) || 'This place'
+  const category = (p.category as string) || 'default'
+  const noun = CATEGORY_NOUNS[category] ?? CATEGORY_NOUNS.default
+
+  const place: string[] = []
+  if (p.location) place.push(String(p.location))
+  else if (p.cardinal) place.push(`${String(p.cardinal)} of the Basin`)
+  if (p.terrain) place.push(String(p.terrain))
+  const placePhrase = place.length ? `, ${place.join(', ')}` : ''
+
+  const paras: string[] = []
+
+  // Lead sentence: what it is and roughly where.
+  let intro = `${name} is a ${noun}${placePhrase}.`
+  if (p.description) intro += ` ${asSentence(p.description)}`
+  paras.push(intro)
+
+  // Labelled facts, presented verbatim so list-style canon fields stay clean.
+  const facts: string[] = []
+  if (p.function) facts.push(`What it's known for: ${asSentence(p.function)}`)
+  if (p.commodities) facts.push(`Goods through it: ${asSentence(p.commodities)}`)
+  if (Array.isArray(p.connects) && p.connects.length) facts.push(`It links ${(p.connects as unknown[]).join(' and ')}.`)
+  if (Array.isArray(p.endpoints) && p.endpoints.length) facts.push(`The route runs between ${(p.endpoints as unknown[]).join(' and ')}.`)
+  if (p.path_description) facts.push(asSentence(p.path_description))
+  if (p.strategic_value) facts.push(`Why it matters: ${asSentence(p.strategic_value)}`)
+  if (p.bottleneck) facts.push(`The pinch point: ${asSentence(p.bottleneck)}`)
+  if (p.consequence_if_closed) facts.push(`If it were shut: ${asSentence(p.consequence_if_closed)}`)
+  if (p.real_world_parallel) facts.push(`Real-world parallel: ${asSentence(p.real_world_parallel)}`)
+  if (facts.length) paras.push(facts.join(' '))
+
+  // Almost-empty fallback.
+  if (paras.length === 1 && !p.description) {
+    paras.push(`Beyond its place on the map, little is recorded about ${name} yet — which makes it a good spot to flesh out.`)
+  }
+
+  return paras.join('\n\n')
 }

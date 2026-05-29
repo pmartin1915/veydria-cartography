@@ -11,7 +11,7 @@ import {
   buildPrompt,
 } from '../utils/ai-lore'
 
-type LoreTab = 'rumors' | 'npcs' | 'tensions'
+type LoreTab = 'orientation' | 'rumors' | 'npcs' | 'tensions'
 
 interface AiLorePanelProps {
   feature: GeoJSONFeature | null
@@ -19,12 +19,14 @@ interface AiLorePanelProps {
 }
 
 const TAB_LABELS: Record<LoreTab, string> = {
+  orientation: 'What is this?',
   rumors: 'Rumours',
   npcs: 'NPCs',
   tensions: 'Tensions',
 }
 
 const TAB_ICONS: Record<LoreTab, string> = {
+  orientation: '🧭',
   rumors: '💬',
   npcs: '👤',
   tensions: '⚡',
@@ -41,8 +43,9 @@ function getFeatureId(feature: GeoJSONFeature): string {
 }
 
 export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProps) {
-  const [activeTab, setActiveTab] = useState<LoreTab>('rumors')
+  const [activeTab, setActiveTab] = useState<LoreTab>('orientation')
   const [tabStates, setTabStates] = useState<Record<LoreTab, TabState>>({
+    orientation: { content: '', loading: false, error: null },
     rumors: { content: '', loading: false, error: null },
     npcs: { content: '', loading: false, error: null },
     tensions: { content: '', loading: false, error: null },
@@ -54,6 +57,7 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
   useEffect(() => {
     if (!feature) {
       setTabStates({
+        orientation: { content: '', loading: false, error: null },
         rumors: { content: '', loading: false, error: null },
         npcs: { content: '', loading: false, error: null },
         tensions: { content: '', loading: false, error: null },
@@ -69,7 +73,7 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
 
     setTabStates((prev) => {
       const next: Record<LoreTab, TabState> = { ...prev }
-      ;(['rumors', 'npcs', 'tensions'] as LoreTab[]).forEach((type) => {
+      ;(['orientation', 'rumors', 'npcs', 'tensions'] as LoreTab[]).forEach((type) => {
         const cached = getCachedLore(id, type)
         if (cached) {
           next[type] = { content: cached, loading: false, error: null }
@@ -175,7 +179,7 @@ export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProp
 
       {/* Tab bar */}
       <div className="ai-lore-tabs">
-        {(['rumors', 'npcs', 'tensions'] as LoreTab[]).map((tab) => (
+        {(['orientation', 'rumors', 'npcs', 'tensions'] as LoreTab[]).map((tab) => (
           <button
             key={tab}
             className={`ai-lore-tab ${activeTab === tab ? 'active' : ''}`}

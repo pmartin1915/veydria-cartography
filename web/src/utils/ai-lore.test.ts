@@ -6,6 +6,7 @@ import {
   setCachedLore,
   clearAiLoreCache,
   generateMockLore,
+  generateMockOrientation,
   fetchAiLore,
   buildPrompt,
   type AiLoreType,
@@ -172,6 +173,53 @@ describe('mock lore generator', () => {
   })
 })
 
+describe('orientation mock', () => {
+  it('builds a plain-language overview from the feature canon fields', () => {
+    const f = mockFeature({
+      name: 'Tavakh-Qarat',
+      category: 'port',
+      description: 'The oldest commercial quarter on the Basin.',
+      function: 'a clearing-house where six peoples trade',
+      commodities: 'glass, salt, frankincense',
+      strategic_value: 'it sets the exchange rates the other ports follow',
+    })
+    const text = generateMockOrientation(f)
+    expect(text).toContain('Tavakh-Qarat')
+    expect(text).toContain('port city')
+    expect(text).toContain('The oldest commercial quarter')
+    expect(text).toContain('glass, salt, frankincense')
+    expect(text).toContain('Why it matters')
+  })
+
+  it('is deterministic', () => {
+    const f = mockFeature()
+    expect(generateMockOrientation(f)).toBe(generateMockOrientation(f))
+  })
+
+  it('is reachable through generateMockLore via the orientation type', () => {
+    const f = mockFeature()
+    expect(generateMockLore(f, 'orientation')).toBe(generateMockOrientation(f))
+  })
+
+  it('handles a sparse feature with a flesh-out hint', () => {
+    const f = mockFeature({ id: 'bare', name: 'Bare Spot', category: 'landmark', description: undefined })
+    const text = generateMockOrientation(f)
+    expect(text).toContain('Bare Spot')
+    expect(text.toLowerCase()).toContain('flesh out')
+  })
+
+  it('is prose, not a numbered list', () => {
+    const f = mockFeature()
+    expect(generateMockOrientation(f)).not.toMatch(/^1\./)
+  })
+
+  it('caches under the orientation type independently', () => {
+    setCachedLore('orient_feat', 'orientation', 'Overview text')
+    expect(getCachedLore('orient_feat', 'orientation')).toBe('Overview text')
+    expect(getCachedLore('orient_feat', 'rumors')).toBeNull()
+  })
+})
+
 describe('buildPrompt', () => {
   it('includes feature name and category', () => {
     const f = mockFeature({ name: 'Ki-Mbuhari', category: 'port' })
@@ -196,6 +244,14 @@ describe('buildPrompt', () => {
     expect(buildPrompt(f, 'rumors')).toContain('rumours')
     expect(buildPrompt(f, 'npcs')).toContain('NPCs')
     expect(buildPrompt(f, 'tensions')).toContain('tensions')
+  })
+
+  it('orientation prompt demands plain language and bans purple prose', () => {
+    const f = mockFeature()
+    const prompt = buildPrompt(f, 'orientation')
+    expect(prompt).toContain('Veydria')
+    expect(prompt).toContain('plain')
+    expect(prompt.toLowerCase()).toContain('purple')
   })
 
   it('requests plain text without markdown', () => {
