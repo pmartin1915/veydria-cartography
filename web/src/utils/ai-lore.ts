@@ -433,7 +433,7 @@ export function generateMockLore(feature: GeoJSONFeature, type: AiLoreType): str
 /* ─── Orientation mock (plain-language, built from the feature's own canon fields) ─── */
 
 const CATEGORY_NOUNS: Record<string, string> = {
-  port: 'port city on the shore of the Aethelian Basin',
+  port: 'port city on the Aethelian Basin',
   chokepoint: 'chokepoint — a narrow passage that controls who and what can get through',
   oasis: 'oasis settlement out in the desert',
   civilization: 'civilization',
@@ -445,14 +445,20 @@ const CATEGORY_NOUNS: Record<string, string> = {
   default: 'place on the map',
 }
 
-function lcFirst(s: string): string {
-  return s.length ? s[0].toLowerCase() + s.slice(1) : s
+// Present a canon field as a clean sentence: trim, and add a full stop only if
+// it does not already end in terminal punctuation. Fields are shown VERBATIM
+// (no case-folding) so proper nouns like "Venice" survive intact.
+function asSentence(value: unknown): string {
+  const t = String(value).trim()
+  return /[.!?]$/.test(t) ? t : `${t}.`
 }
 
 /**
  * Plain-language orientation built directly from the feature's canon properties.
  * Deterministic, offline, and faithful — it restates what is recorded rather than
- * inventing flavour. The live API path (buildPrompt) produces a smoother version.
+ * inventing flavour, and presents each field verbatim under a plain label so messy
+ * or list-style canon entries still read cleanly. The live API path (buildPrompt)
+ * produces a smoother prose version.
  */
 export function generateMockOrientation(feature: GeoJSONFeature): string {
   const p = feature.properties
@@ -460,36 +466,31 @@ export function generateMockOrientation(feature: GeoJSONFeature): string {
   const category = (p.category as string) || 'default'
   const noun = CATEGORY_NOUNS[category] ?? CATEGORY_NOUNS.default
 
-  const where: string[] = []
-  if (p.location) where.push(String(p.location))
-  if (p.cardinal) where.push(`on the ${String(p.cardinal)} side of the Basin`)
-  if (p.terrain) where.push(String(p.terrain))
-  const wherePhrase = where.length ? `, ${where.join(', ')}` : ''
+  const place: string[] = []
+  if (p.location) place.push(String(p.location))
+  else if (p.cardinal) place.push(`${String(p.cardinal)} of the Basin`)
+  if (p.terrain) place.push(String(p.terrain))
+  const placePhrase = place.length ? `, ${place.join(', ')}` : ''
 
   const paras: string[] = []
 
-  // 1. What it is, and where.
-  let intro = `${name} is a ${noun}${wherePhrase}.`
-  if (p.description) intro += ` ${String(p.description)}`
+  // Lead sentence: what it is and roughly where.
+  let intro = `${name} is a ${noun}${placePhrase}.`
+  if (p.description) intro += ` ${asSentence(p.description)}`
   paras.push(intro)
 
-  // 2. What actually happens there.
-  const doings: string[] = []
-  if (p.function) doings.push(`In practice it serves as ${lcFirst(String(p.function))}.`)
-  if (p.commodities) doings.push(`What moves through it: ${String(p.commodities)}.`)
-  if (Array.isArray(p.connects)) doings.push(`It links ${(p.connects as unknown[]).join(' and ')}.`)
-  if (Array.isArray(p.endpoints)) doings.push(`The route runs between ${(p.endpoints as unknown[]).join(' and ')}.`)
-  if (p.path_description) doings.push(String(p.path_description))
-  if (doings.length) paras.push(doings.join(' '))
-
-  // 3. Why it matters / where the friction is.
-  const stakes: string[] = []
-  if (p.strategic_value) stakes.push(`Why it matters: ${lcFirst(String(p.strategic_value))}.`)
-  if (p.bottleneck) stakes.push(`The pinch point: ${String(p.bottleneck)}.`)
-  if (p.consequence_if_closed) stakes.push(`If it were shut: ${String(p.consequence_if_closed)}.`)
-  if (stakes.length) paras.push(stakes.join(' '))
-
-  if (p.real_world_parallel) paras.push(`For a real-world picture, think of ${lcFirst(String(p.real_world_parallel))}.`)
+  // Labelled facts, presented verbatim so list-style canon fields stay clean.
+  const facts: string[] = []
+  if (p.function) facts.push(`What it's known for: ${asSentence(p.function)}`)
+  if (p.commodities) facts.push(`Goods through it: ${asSentence(p.commodities)}`)
+  if (Array.isArray(p.connects) && p.connects.length) facts.push(`It links ${(p.connects as unknown[]).join(' and ')}.`)
+  if (Array.isArray(p.endpoints) && p.endpoints.length) facts.push(`The route runs between ${(p.endpoints as unknown[]).join(' and ')}.`)
+  if (p.path_description) facts.push(asSentence(p.path_description))
+  if (p.strategic_value) facts.push(`Why it matters: ${asSentence(p.strategic_value)}`)
+  if (p.bottleneck) facts.push(`The pinch point: ${asSentence(p.bottleneck)}`)
+  if (p.consequence_if_closed) facts.push(`If it were shut: ${asSentence(p.consequence_if_closed)}`)
+  if (p.real_world_parallel) facts.push(`Real-world parallel: ${asSentence(p.real_world_parallel)}`)
+  if (facts.length) paras.push(facts.join(' '))
 
   // Almost-empty fallback.
   if (paras.length === 1 && !p.description) {
