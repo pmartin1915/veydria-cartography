@@ -74,7 +74,7 @@ The Basin is the map's focal point — a semi-enclosed shallow sea roughly the s
 
 **Color/texture:** Cold grays and browns. Rocky, barren plateau surface with green gorge-bottoms. Possibly snow-capped along the northern edge.
 
-**Key feature:** Zang-Ri (Copper Mountain) — mark as a named peak with mining symbol.
+**Key feature:** Zang-Ri (Iron Mountain) — mark as a named peak with mining symbol.
 
 **Southern edge:** The plateau drops steeply via escarpment to the Irrah desert below. Only one pass breaks through: Lam-Chen Pass on the southern/southeastern edge, connecting down to the Kheshkai steppe.
 
