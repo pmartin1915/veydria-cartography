@@ -885,6 +885,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           <label className="journey-field-label">From</label>
           <div className="journey-dropdown">
             <button
+              data-testid="journey-from"
               className="journey-dropdown-trigger"
               onClick={() => setStartOpen(!startOpen)}
             >
@@ -955,6 +956,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           <label className="journey-field-label">To</label>
           <div className="journey-dropdown">
             <button
+              data-testid="journey-to"
               className="journey-dropdown-trigger"
               onClick={() => setEndOpen(!endOpen)}
             >
@@ -1129,7 +1131,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               </div>
               <div className="journey-stat">
                 <span className="journey-stat-label">Est. Travel</span>
-                <span className="journey-stat-value">{formatDays(route.estimatedDays)}</span>
+                <span className="journey-stat-value" data-testid="est-days">{formatDays(route.estimatedDays)}</span>
               </div>
               <div className="journey-stat">
                 <span className="journey-stat-label">Segments</span>

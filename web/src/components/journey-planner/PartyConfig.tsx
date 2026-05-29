@@ -59,6 +59,7 @@ export default function PartyConfig({ party, open, onToggleOpen, onChange }: Par
               {(['foot', 'mounted'] as Mount[]).map(m => (
                 <button
                   key={m}
+                  data-testid={`mount-${m}`}
                   className={`journey-mode-btn ${party.mount === m ? 'active' : ''}`}
                   onClick={() => onChange({ ...party, mount: m })}
                   title={m === 'mounted' ? 'Mounted: +50% on open road, no benefit through chokepoints' : 'On foot'}
