@@ -288,10 +288,11 @@ describe('party config affects travel time', () => {
 })
 
 describe('journey-graph: authored civ is authoritative (F5)', () => {
-  // Two civ centroids far apart; a port sits on top of civ "near" but is
-  // AUTHORED to "far". The authored label must survive buildGraph instead of
-  // being clobbered by nearest-centroid inference. The real-fixture suite
-  // can't catch this because there authored ≈ nearest for every point.
+  // Two civ centroids far apart; port_x sits on top of civ "near" but is
+  // AUTHORED to "far" (authored must win, not be clobbered by inference);
+  // port_y is unauthored and must stay civ-less (no geometry inference — an
+  // untagged point is deliberately unaligned/contested). The real-fixture
+  // suite can't catch this because there authored ≈ nearest for every point.
   const fixture = {
     type: 'FeatureCollection',
     features: [
@@ -302,10 +303,10 @@ describe('journey-graph: authored civ is authoritative (F5)', () => {
     ],
   }
 
-  it('keeps the authored civ even when a different centroid is nearest', () => {
+  it('keeps the authored civ, and leaves an unauthored point civ-less', () => {
     const g = buildGraph(fixture as never)
-    expect(g.nodes.get('port_x')!.civ).toBe('far')   // authored wins (was 'near' pre-fix)
-    expect(g.nodes.get('port_y')!.civ).toBe('near')  // fallback to nearest when unauthored
+    expect(g.nodes.get('port_x')!.civ).toBe('far')        // authored wins (was 'near' pre-fix)
+    expect(g.nodes.get('port_y')!.civ).toBeUndefined()    // no geometry inference — stays unaligned
   })
 
   it('still routes the intra_civ edge to the nearest centroid (topology unchanged)', () => {

@@ -271,15 +271,15 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
 
   // ── 3. Link each point to its nearest civilization ──
   // node.civ is the AUTHORED label (set in section 2 from f.properties.civ)
-  // and is authoritative; nearest-centroid is only a fallback when the
-  // feature has no authored civ (F5 audit fix). The intra_civ routing edge
-  // always connects to the geometrically NEAREST centroid — it is physical
-  // graph topology carrying a real distance, not a label — so routing and
-  // distances are unchanged regardless of the (possibly different) label.
+  // and is the ONLY source of a civ label (F5). We deliberately do NOT infer
+  // a label from geometry: an untagged point is intentionally unaligned
+  // (contested/shared, e.g. A Tzalan Ford, Qhabal Ur) and must render with no
+  // civ. The intra_civ routing edge still connects to the geometrically
+  // NEAREST centroid — that is physical graph topology carrying a real
+  // distance, not a label — so routing and distances are unaffected.
   for (const { node } of pointFeatures) {
     const nearestCiv = findNearestCiv(node, civNodes)
     if (nearestCiv) {
-      if (!node.civ) node.civ = nearestCiv.id
       const d = dist(node, nearestCiv)
       addEdge({
         from: node.id,
