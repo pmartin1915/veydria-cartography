@@ -299,10 +299,10 @@ oases:
 # --- Named Landmarks ---
 landmarks:
   - id: zang_ri
-    name: "Zang-Ri (Copper Mountain)"
+    name: "Zang-Ri (Iron Mountain)"
     coords: [555, 78]
     type: mountain
-    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore."
+    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore."
     marker_color: "#c4a862"
     marker_symbol: star
 
