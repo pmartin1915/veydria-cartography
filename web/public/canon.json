@@ -76,6 +76,7 @@
       "intra_civ_inter_institutional_coordination": 1,
       "legal_institution": 7,
       "magic_system": 6,
+      "named_basin_figure": 1,
       "named_legal_figure": 7,
       "overview": 7,
       "palimpsest_event": 2,
@@ -104,7 +105,7 @@
     "by_family": {
       "ecology": 32,
       "economy": 9,
-      "factions": 60,
+      "factions": 61,
       "geography": 4,
       "law": 31,
       "linguistics": 6,
@@ -113,7 +114,7 @@
       "religion": 64,
       "timeline": 5
     },
-    "total": 255
+    "total": 256
   },
   "entities": [
     {
@@ -1448,7 +1449,7 @@
       "entity_type": "place_as_actor_faction_ecology",
       "family": "factions",
       "id": "factions.civ.basin",
-      "in_degree": 21,
+      "in_degree": 22,
       "lede": "This file is filed under for organizational continuity with the six per-civ files, but the Basin is not a civilization — it has no native ethnicity, no army, no single language, no chartered authority. The pre-allocation of this path was made in the Batch 1 forward roadmap and is preserved here. What the Basin has, instead, is an institutional ecology dense enough that operating in the Basin requires conforming to a recognizable set of disciplines that none of the six contributing civs imposed and none can unilaterally amend. That ecology is what this file describes.",
       "name": "The Aethelian Basin",
       "scope": "basin",
@@ -1619,7 +1620,7 @@
       "entity_type": "civ_faction_ecology",
       "family": "factions",
       "id": "factions.civ.ndjadi",
-      "in_degree": 39,
+      "in_degree": 40,
       "lede": "Ndjadi is \"Institutionalized with reform\" in the typology of magic/06, and its position on the Schism Axis is the Open and active one — the Vernacular-Habal Movement is named, organized, currently publishing, and recognized as a faction even by the elder colleges that condemn it. The literate scribal infrastructure of the imperial colleges, the habal copy-service traditions in the delta trading ports, and the river-court tribunal apparatus all share a single institutional skeleton across hundreds of leagues of Ngandim floodplain.",
       "map_anchor": {
         "kind": "region",
@@ -1702,7 +1703,7 @@
       "entity_type": "civ_faction_ecology",
       "family": "factions",
       "id": "factions.civ.oravan",
-      "in_degree": 36,
+      "in_degree": 37,
       "lede": "Oravan is \"Fragmented (tolerant)\" in the institutional typology of magic/06, with its three-Havrana-lineage disagreement sitting at the \"Diffuse-tolerant\" position on the Schism Axis — real disagreement, unorganized, no one publishes. Archipelago geography produces three to seven workshop-lineages per island, each holding its own reading of the cost-efficacy question that underwrites Tavamala consecration. No Wave Council committee, no royal priestesshood, no Basin arbitrator can force the three dominant Havrana lineages to agree on what a sixty-year-old priestess's voice binds.",
       "map_anchor": {
         "kind": "region",
@@ -3096,6 +3097,41 @@
       "civ_scope": [],
       "civilization": null,
       "cross_refs": [
+        "factions.civ.basin",
+        "factions.civ.ndjadi",
+        "factions.civ.oravan",
+        "factions.trans_civ.basin_merchant_dynasties",
+        "factions.trans_civ.khazadari_internals",
+        "law.figures.oravan"
+      ],
+      "density": 6,
+      "entity_type": "named_basin_figure",
+      "family": "factions",
+      "id": "factions.figures.basin",
+      "in_degree": 0,
+      "lede": "This file promotes named Basin commercial figures from mention in the place-as-actor file and the merchant-dynasty file into figure dossiers in the convention of law/05figures/oravan.md. The Basin is a place-as-actor, not a civilization (see factions/01civfactions/basin.md); the figures dossiered here carry no single field, because a Basin factor's standing is constituted by trans-civ commercial reach rather than by civ membership, and the compound surnames are themselves the transcript of that reach.",
+      "name": "The Aethelian Basin",
+      "scope": "trans-civ",
+      "source_path": "factions/05_figures/basin.md",
+      "status": "canonical",
+      "summary": "This file promotes named Basin commercial figures from mention in the place-as-actor file and the merchant-dynasty file into figure dossiers in the convention of [law/05_figures/oravan.md](../../law/05_figures/oravan.md). The Basin is a place-as-actor, not a civilization (see…",
+      "tags": [
+        "basin",
+        "figures",
+        "havrana-jenga-house",
+        "merchant-dynasties",
+        "named-individuals",
+        "succession-tempo",
+        "tavakh-qarat",
+        "warehouse-credit"
+      ],
+      "trans_civ": true
+    },
+    {
+      "civ_pair": null,
+      "civ_scope": [],
+      "civilization": null,
+      "cross_refs": [
         "magic.cross_civ.institutional_structure_comparison"
       ],
       "density": 1,
@@ -3440,7 +3476,7 @@
       "entity_type": "trans_civ_faction_ecology",
       "family": "factions",
       "id": "factions.trans_civ.basin_merchant_dynasties",
-      "in_degree": 67,
+      "in_degree": 68,
       "lede": "The Aethelian Basin's four major commercial ports — Tavakh-Qarat at the eastern Irrah-Ndjadi interface, Halani-Tamu at the upriver-cataract gate, Ki-Mbuhari at the central confluence, Dzong-Tamu at the highland-descent shelf — are each currently dominated by a single Basin merchant dynasty whose continental commercial reach exceeds any civ-internal noble lineage's. The four houses are not allied; they compete for one another's port volume on margin and only occasionally share a common interest sufficient to warrant correspondence.",
       "name": "The Basin Merchant Dynasties",
       "scope": "trans-civ",
@@ -3477,7 +3513,7 @@
       "entity_type": "trans_civ_faction_ecology",
       "family": "factions",
       "id": "factions.trans_civ.khazadari_internals",
-      "in_degree": 47,
+      "in_degree": 48,
       "lede": "The Khazadari guild — formally the Northern Khazadari Money-Changer Guild, colloquially \"the Khazadari\" without modifier when context permits — is the continental clearing-house for cross-civ commercial credit. Its rate-setting determines the terms on which Oravan wave-tithe insurance, Ndjadi prefix-notarized contracts, Qollari calendrical-cinchona instruments, Kheshkai pastoral-product underwriting, Ngaru-Bon metallurgical-export receipts, and Irrah caravan-tithe pools all clear at the Aethelian Basin.",
       "name": "The Khazadari Money-Changer Guild",
       "scope": "trans-civ",
@@ -4634,7 +4670,7 @@
       "entity_type": "named_legal_figure",
       "family": "law",
       "id": "law.figures.oravan",
-      "in_degree": 2,
+      "in_degree": 3,
       "name": null,
       "scope": "civ",
       "source_path": "law/05_figures/oravan.md",
@@ -8977,6 +9013,12 @@
     },
     {
       "civilization": null,
+      "entity_type": "named_basin_figure",
+      "id": "factions.figures.basin",
+      "source_path": "factions/05_figures/basin.md"
+    },
+    {
+      "civilization": null,
       "entity_type": "overview",
       "id": "factions.overview",
       "source_path": "factions/00_overview.md"
@@ -9246,5 +9288,5 @@
     }
   ],
   "schema_version": 1,
-  "source_commit": "a3470dfcac8f7e23c87f73e9c98c6026e9eabe7e"
+  "source_commit": "f58568a148d8ababf71cd8c83994c7e1ed81a8dc"
 }

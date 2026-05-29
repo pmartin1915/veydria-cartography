@@ -411,6 +411,11 @@
       "source_path": "factions/04_dormant_factions/00_overview.md"
     },
     {
+      "id": "factions.figures.basin",
+      "search_text": "This file promotes named Basin commercial figures from mention in the place-as-actor file and the merchant-dynasty file into figure dossiers in the convention of law/05figures/oravan.md. The Basin is a place-as-actor, not a civilization (see factions/01civfactions/basin.md); the figures dossiered here carry no single field, because a Basin factor's standing is constituted by trans-civ commercial reach rather than by civ membership, and the compound surnames are themselves the transcript of that reach. Each dossier renders facts already canonical in the source files; no new institutional fact is asserted. Namesake note. The given-name Kaolana below is a Havrana-lineage name shared with the Oravan home Priestess-Matron Kaolana te Havrana-Pulino of the Three-Cove Concord (law/05figures/oravan.md). Per religion/03deitiesandspirits/00taxonomy.md Namesake ≠ Identity, the two are distinct women: the Basin commercial branch of the lineage carries the Havrana-Jenga compound, the home priestess branch the Havrana-Pulino, and the branches diverged generations back when the diaspora-commercial line at Tavakh-Qarat stopped renewing its Halanimoa marriage-alliances. The shared name records…",
+      "source_path": "factions/05_figures/basin.md"
+    },
+    {
       "id": "factions.overview",
       "search_text": "The Core Question Every ongoing Veydrian dispute is in fact a contest among at least five positions, not two. Behind every \"reformer\" stands an apostate who was a reformer in the previous generation and now accepts patronage from the establishment; behind every \"conservative\" there are moderates who privately agree with the reforms but cannot afford to be seen agreeing; and around both there are opportunists who service whichever side currently pays better — and who provide the information flows that make the conflict legible to outsiders. The factions layer names the organizations, leaders, funding bases, and tactical repertoires that make these contests politically concrete. Where and give the theological spine of the disputes, and gives the institutional-type substrate, the factions layer gives the named actors — the specific lineages, councils, pamphlet networks, and merchant dynasties on either side of each contest. Why Binary Opposition Is Insufficient The Qalībin Naturalist Schism is not \"hydrologists vs. traditionalists.\" It is a four-way contest: - Unnamed-Water hardliners in Tūmqat; - moderates who accept hydrological categories while defending ritual performance; -…",
       "source_path": "factions/00_overview.md"
@@ -1248,5 +1253,5 @@
   ],
   "generated_at": null,
   "schema_version": 1,
-  "source_commit": "a3470dfcac8f7e23c87f73e9c98c6026e9eabe7e"
+  "source_commit": "f58568a148d8ababf71cd8c83994c7e1ed81a8dc"
 }
