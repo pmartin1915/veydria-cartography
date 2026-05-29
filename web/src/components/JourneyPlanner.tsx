@@ -88,7 +88,8 @@ function NodeIcon({ category }: { category: string }) {
 function formatNodeCategory(n: JourneyNode): string {
   const cat = n.category.replace('_', ' ')
   if (!n.civ) return cat
-  const civLabel = n.civ.charAt(0).toUpperCase() + n.civ.slice(1)
+  // Render the civ slug as a display name: "ngaru_bon" → "Ngaru Bon".
+  const civLabel = n.civ.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return `${civLabel} · ${cat}`
 }
 

@@ -7,10 +7,20 @@
  * already carry `civ`. Cells (terrain_cell category) and existing-civ
  * polygons are left untouched.
  *
- * The journey-planner's segment labeler previously inferred a point's
- * civ spatially on every render; tagging the source data shifts the
- * inference up-front and makes Tavakh-Qarat (Irrah) vs Tavakh-Rubāṭ
- * (Oravan) disambiguation a property lookup instead of a polygon scan.
+ * The journey-planner's segment labeler now reads the authored `civ`
+ * directly (buildGraph prefers it over nearest-centroid — F5), so tagging
+ * the source data makes civ a property lookup instead of a polygon scan.
+ *
+ * IMPORTANT: point-in-polygon containment is NOT a reliable proxy for
+ * canon ownership. The Irrah polygon is the large eastern hegemon, so
+ * far-east steppe sites (kha_tepet, zang_kalli, dzong_kha) fall inside it
+ * geometrically but belong to Kheshkai/Ngaru-Bon by canon. Those tags were
+ * hand-corrected against worldbuilder canon. This script therefore:
+ *   - NEVER overwrites an existing authored `civ` (canon wins over geometry),
+ *   - WARNS when its PIP result disagrees with an authored value (the check
+ *     that would have caught the mis-tags above),
+ *   - SKIPS ids in DELIBERATELY_UNALIGNED (joint/contested/shared sites that
+ *     must stay untagged), so a re-run can't re-introduce a wrong tag.
  *
  * Idempotent: re-running on already-tagged data is a no-op.
  *
@@ -22,6 +32,19 @@ import { dirname, resolve } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PATH = resolve(__dirname, '..', 'web', 'public', 'veydria-spatial.geojson')
+
+// Sites canon treats as joint / contested / shared (or that have no canon
+// home yet). They must stay untagged — never auto-assign a civ to these,
+// even if they fall inside a civ polygon by point-in-polygon.
+const DELIBERATELY_UNALIGNED = new Set([
+  'a_tzalan_ford',  // contested Kheshkai/Ndjadi crossing
+  'qhabal_ur',      // Oravan-garrisoned, Ndjadi time-share
+  'veyd_kirrha',    // four-tradition oracle, no formal treaty
+  'dzong_kha',      // joint Ngaru-Bon + Kheshkai authority
+  'tepet_apu',      // Kheshkai-Qollari mixed-clan truce site
+  'tavakh_rubat',   // shared Irrah/Oravan administration (not Qollari)
+  'hassag_nganin',  // absent from worldbuilder canon — drift to resolve
+])
 
 // Standard ray-casting point-in-polygon. ring is an array of [x, y] pairs.
 function pointInPolygon(x, y, ring) {
@@ -58,28 +81,49 @@ if (civPolys.length === 0) {
 let tagged = 0
 let skipped = 0
 let unmatched = 0
+let unaligned = 0
+let disagreements = 0
+
+function pipCiv(x, y) {
+  for (const cp of civPolys) {
+    if (pointInPolygon(x, y, cp.ring)) return cp.id
+  }
+  return null
+}
 
 for (const f of data.features) {
   if (f.geometry?.type !== 'Point') continue
-  if (f.properties?.civ) { skipped++; continue }
+  const id = f.properties?.id ?? '(no id)'
   const [x, y] = f.geometry.coordinates
-  let matchedCiv = null
-  for (const cp of civPolys) {
-    if (pointInPolygon(x, y, cp.ring)) {
-      matchedCiv = cp.id
-      break
-    }
+  const matchedCiv = pipCiv(x, y)
+
+  // Never touch deliberately-unaligned sites (canon: joint/contested/shared).
+  if (DELIBERATELY_UNALIGNED.has(id)) {
+    unaligned++
+    continue
   }
+
+  // Already authored: canon wins. Validate that geometry agrees, warn if not.
+  if (f.properties?.civ) {
+    skipped++
+    if (matchedCiv && matchedCiv !== f.properties.civ) {
+      disagreements++
+      console.warn(`  DISAGREEMENT: ${id} authored '${f.properties.civ}', polygon '${matchedCiv}' — authored wins (check canon)`)
+    }
+    continue
+  }
+
+  // Untagged: assign by containment, or report as sea/strait.
   if (matchedCiv) {
     f.properties.civ = matchedCiv
     tagged++
   } else {
     unmatched++
-    console.warn(`  unmatched: ${f.properties?.id ?? '(no id)'} @ ${x.toFixed(1)},${y.toFixed(1)} (likely sea/strait)`)
+    console.warn(`  unmatched: ${id} @ ${x.toFixed(1)},${y.toFixed(1)} (likely sea/strait)`)
   }
 }
 
 // Pretty-print to match the existing geojson formatting (2-space indent).
 writeFileSync(PATH, JSON.stringify(data, null, 2) + '\n')
 
-console.log(`Tagged: ${tagged}, already-tagged: ${skipped}, unmatched: ${unmatched}`)
+console.log(`Tagged: ${tagged}, already-tagged: ${skipped}, unaligned: ${unaligned}, unmatched: ${unmatched}, disagreements: ${disagreements}`)

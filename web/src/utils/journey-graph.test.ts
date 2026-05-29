@@ -286,3 +286,32 @@ describe('party config affects travel time', () => {
     expect(r!.estimatedDays).toBeCloseTo(sumSegments, 6)
   })
 })
+
+describe('journey-graph: authored civ is authoritative (F5)', () => {
+  // Two civ centroids far apart; a port sits on top of civ "near" but is
+  // AUTHORED to "far". The authored label must survive buildGraph instead of
+  // being clobbered by nearest-centroid inference. The real-fixture suite
+  // can't catch this because there authored ≈ nearest for every point.
+  const fixture = {
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', properties: { id: 'near', name: 'Near', category: 'civilization', centroid: [0, 0] }, geometry: { type: 'Point', coordinates: [0, 0] } },
+      { type: 'Feature', properties: { id: 'far', name: 'Far', category: 'civilization', centroid: [100, 100] }, geometry: { type: 'Point', coordinates: [100, 100] } },
+      { type: 'Feature', properties: { id: 'port_x', name: 'Port X', category: 'port', civ: 'far' }, geometry: { type: 'Point', coordinates: [1, 1] } },
+      { type: 'Feature', properties: { id: 'port_y', name: 'Port Y', category: 'port' }, geometry: { type: 'Point', coordinates: [2, 2] } },
+    ],
+  }
+
+  it('keeps the authored civ even when a different centroid is nearest', () => {
+    const g = buildGraph(fixture as never)
+    expect(g.nodes.get('port_x')!.civ).toBe('far')   // authored wins (was 'near' pre-fix)
+    expect(g.nodes.get('port_y')!.civ).toBe('near')  // fallback to nearest when unauthored
+  })
+
+  it('still routes the intra_civ edge to the nearest centroid (topology unchanged)', () => {
+    const g = buildGraph(fixture as never)
+    const intra = g.adj.get('port_x')!.map(e => e.edge).find(e => e.type === 'intra_civ')!
+    expect(intra.to).toBe('near')               // physical hop is unchanged by the label
+    expect(intra.name).toBe('Within Near')
+  })
+})

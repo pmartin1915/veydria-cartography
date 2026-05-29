@@ -152792,7 +152792,7 @@
         "strategic_value": "Oravan naval dominance is absolute in the Basin but cannot enforce land control without allies",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
-        "civ": "qollari"
+        "civ": "oravan"
       }
     },
     {
@@ -152863,7 +152863,8 @@
         "location": "South shore, where Ndjadi delta enters",
         "function": "Grain funnel and spice transshipment. Ndjadi grain surplus enters continental circulation here",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "ndjadi"
       }
     },
     {
@@ -152906,7 +152907,8 @@
         "location": "East shore",
         "function": "Monsoon switching point. Where Oravan sea-lanes hand off to overland routes. Irrah caravans arrive here",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "oravan"
       }
     },
     {
@@ -152927,7 +152929,8 @@
         "location": "Southeast margin",
         "function": "Link to Ngaru-Bon gold trade via coastal routes. Where Ngaru-Bon metallurgical exports reach the Basin",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor"
+        "marker-symbol": "harbor",
+        "civ": "ngaru_bon"
       }
     },
     {
@@ -153450,7 +153453,8 @@
         "name": "Khulut",
         "category": "oasis",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "irrah"
       }
     },
     {
@@ -153525,7 +153529,8 @@
         "type": "volcano",
         "description": "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "qollari"
       }
     },
     {
@@ -153545,7 +153550,7 @@
         "description": "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans.",
         "marker-color": "#c4a862",
         "marker-symbol": "star",
-        "civ": "irrah"
+        "civ": "kheshkai"
       }
     },
     {
@@ -153564,7 +153569,8 @@
         "type": "city",
         "description": "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "ndjadi"
       }
     },
     {
@@ -153602,7 +153608,8 @@
         "type": "ruin",
         "description": "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade.",
         "marker-color": "#c4a862",
-        "marker-symbol": "star"
+        "marker-symbol": "star",
+        "civ": "oravan"
       }
     },
     {
@@ -153941,8 +153948,7 @@
         "location": "Mid-route sandbar between Basin north shore and Oravan archipelago",
         "function": "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor",
         "marker-color": "#e8c840",
-        "marker-symbol": "harbor",
-        "civ": "qollari"
+        "marker-symbol": "harbor"
       }
     },
     {
@@ -153961,7 +153967,8 @@
         "etymology": "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The Sweetwater of Kelata",
         "description": "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera.",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "oravan"
       }
     },
     {
@@ -153980,7 +153987,8 @@
         "etymology": "Qollari: wasi 'house, lineage' + pukya 'spring'. The Spring-House",
         "description": "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing.",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden"
+        "marker-symbol": "garden",
+        "civ": "qollari"
       }
     },
     {
@@ -153999,8 +154007,7 @@
         "etymology": "Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The Fortress of the Blood-Oath",
         "description": "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord.",
         "marker-color": "#4a9a3a",
-        "marker-symbol": "garden",
-        "civ": "irrah"
+        "marker-symbol": "garden"
       }
     },
     {
@@ -154038,7 +154045,8 @@
         "etymology": "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a Kheshkai-attested compound for a steppe relay station",
         "description": "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and corralled mounts kept under a single Kheshkai clan-lord's seal; the grazing toll is settled here before the run to Tepet-Apu. Rations-only resupply: the station hauls grain off the route but cannot offer reliable water beyond what travellers already carry.",
         "marker-color": "#b87333",
-        "marker-symbol": "lodging"
+        "marker-symbol": "lodging",
+        "civ": "kheshkai"
       }
     },
     {
@@ -154058,7 +154066,7 @@
         "description": "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in.",
         "marker-color": "#b87333",
         "marker-symbol": "lodging",
-        "civ": "irrah"
+        "civ": "kheshkai"
       }
     }
   ]
