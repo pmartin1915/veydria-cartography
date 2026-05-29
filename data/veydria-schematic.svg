@@ -317,7 +317,7 @@
   <!-- NAMED FEATURES -->
   <!-- ============================================ -->
 
-  <!-- Zang-Ri (Copper Mountain) -->
+  <!-- Zang-Ri (Iron Mountain) -->
   <path d="M 550 85 L 555 72 L 560 85" fill="none" stroke="#a86" stroke-width="1.2"/>
   <text x="555" y="70" fill="#dca" font-family="Georgia, serif" font-size="6" text-anchor="middle">Zang-Ri</text>
 

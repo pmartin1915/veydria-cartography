@@ -153504,10 +153504,10 @@
       },
       "properties": {
         "id": "zang_ri",
-        "name": "Zang-Ri (Copper Mountain)",
+        "name": "Zang-Ri (Iron Mountain)",
         "category": "landmark",
         "type": "mountain",
-        "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for copper ore.",
+        "description": "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore; source of the Ngaru-Bon iron and steel monopoly.",
         "marker-color": "#c4a862",
         "marker-symbol": "star",
         "civ": "ngaru_bon"
@@ -154063,7 +154063,7 @@
         "id": "zang_kalli",
         "name": "Zang-Kalli",
         "category": "caravanserai",
-        "etymology": "Cross-cultural: Ngaru-Bon zang 'copper' + Kheshkai kalli 'house'. The Copper-House — the bilateral copper-for-steel trade names its mid-steppe relay in both clients' registers",
+        "etymology": "Cross-cultural: Ngaru-Bon zang 'iron' + Kheshkai kalli 'house'. The Iron-House — named in both clients' registers for the southbound steel-and-iron leg of the Copper-for-Steel Road (the Ngaru-Bon half of the bilateral trade)",
         "description": "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in.",
         "marker-color": "#b87333",
         "marker-symbol": "lodging",
