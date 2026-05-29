@@ -204,6 +204,7 @@ chokepoints:
     coords: [940, 168]
     marker_color: "#f44"
     marker_symbol: "roadblock"
+    civ: ngaru_bon
 
   a_tzalan_ford:
     coords: [960, 510]
@@ -214,21 +215,25 @@ chokepoints:
     coords: [880, 200]
     marker_color: "#f44"
     marker_symbol: "roadblock"
+    civ: irrah
 
   breath_of_cloud:
     coords: [900, 440]
     marker_color: "#f44"
     marker_symbol: "roadblock"
+    civ: kheshkai
 
   qollari_cliff_roads:
     coords: [370, 520]
     marker_color: "#f44"
     marker_symbol: "roadblock"
+    civ: qollari
 
   halkar_straits:
     coords: [320, 390]
     marker_color: "#f44"
     marker_symbol: "roadblock"
+    civ: oravan
 
 # --- Basin Port Zones ---
 ports:
@@ -236,21 +241,25 @@ ports:
     coords: [650, 620]
     marker_color: "#e8c840"
     marker_symbol: "harbor"
+    civ: ndjadi
 
   tavakh_qarat:
     coords: [600, 290]
     marker_color: "#e8c840"
     marker_symbol: "harbor"
+    civ: irrah
 
   halani_tamu:
     coords: [860, 420]
     marker_color: "#e8c840"
     marker_symbol: "harbor"
+    civ: oravan
 
   dzong_tamu:
     coords: [830, 560]
     marker_color: "#e8c840"
     marker_symbol: "harbor"
+    civ: ngaru_bon
 
 # --- Contested Sacred Sites ---
 contested_sites:
@@ -270,31 +279,37 @@ oases:
     coords: [730, 260]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
   ghadam_thalla:
     coords: [590, 240]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
   tin_mashraq:
     coords: [950, 240]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
   khulut:
     coords: [680, 320]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
   zin_iferis:
     coords: [820, 230]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
   ayn_salqat:
     coords: [780, 290]
     marker_color: "#4a9a3a"
     marker_symbol: "garden"
+    civ: irrah
 
 # --- Named Landmarks ---
 landmarks:
@@ -302,9 +317,10 @@ landmarks:
     name: "Zang-Ri (Iron Mountain)"
     coords: [555, 78]
     type: mountain
-    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore."
+    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore; source of the Ngaru-Bon iron and steel monopoly."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: ngaru_bon
 
   - id: apu_yana
     name: "Apu-Yana (Black Mountain)"
@@ -313,6 +329,7 @@ landmarks:
     description: "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: qollari
 
   - id: kha_tepet
     name: "Kha-Tepet (Blood Mountain)"
@@ -321,6 +338,7 @@ landmarks:
     description: "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: kheshkai
 
   - id: ki_jenga
     name: "Ki-Jenga"
@@ -329,6 +347,7 @@ landmarks:
     description: "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: ndjadi
 
   - id: hassag_nganin
     name: "Hassag-Nganin (Five-Confluence)"
@@ -337,6 +356,7 @@ landmarks:
     description: "Where the five Ndjadi channels braid together. Contested religious site."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: ndjadi
 
   - id: volata_xal
     name: 'Volata-Xal ("Shipyard in the Dust")'
@@ -345,6 +365,7 @@ landmarks:
     description: "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: oravan
 
   - id: wasi_puma
     name: 'Wasi-Puma ("House of the Lion")'
@@ -353,6 +374,7 @@ landmarks:
     description: "Fortified Qollari settlement built during the Obsidian Blockade."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: qollari
 
   - id: halkar_port
     name: "Halkar"
@@ -361,6 +383,7 @@ landmarks:
     description: "Main Oravan port island closest to Halkar Straits. Primary settlement."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: oravan
 
   - id: first_caldera
     name: "First Caldera"
@@ -369,6 +392,7 @@ landmarks:
     description: "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: oravan
 
   - id: kelata
     name: "Kelata"
@@ -377,6 +401,79 @@ landmarks:
     description: "Obsidian-source island. Key strategic resource for Oravan naval power."
     marker_color: "#c4a862"
     marker_symbol: star
+    civ: oravan
+
+# --- On-route Waystations (hand-authored trade-route stops, appended after rivers in the
+#     GeoJSON feature order). Each carries category: port | oasis | caravanserai. ---
+waystations:
+  tavakh_rubat:
+    category: port
+    coords: [360, 390]
+    in_world_name: "Tavakh-Rubāṭ"
+    etymology: "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + rubāṭ (Irrah 'fortified caravanserai/relay-station'). The Exchange Caravanserai"
+    real_world_parallel: "Mediterranean entrepôt analog"
+    location: "Mid-route sandbar between Basin north shore and Oravan archipelago"
+    function: "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor"
+    marker_color: "#e8c840"
+    marker_symbol: "harbor"
+
+  kelata_tamu:
+    category: oasis
+    coords: [630, 425]
+    in_world_name: "Kelata-Tamu"
+    etymology: "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The Sweetwater of Kelata"
+    description: "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera."
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+    civ: oravan
+
+  wasi_pukya:
+    category: oasis
+    coords: [540, 580]
+    in_world_name: "Wasi-Pukya"
+    etymology: "Qollari: wasi 'house, lineage' + pukya 'spring'. The Spring-House"
+    description: "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing."
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+    civ: qollari
+
+  dzong_kha:
+    category: oasis
+    coords: [980, 260]
+    in_world_name: "Dzong-Kha"
+    etymology: "Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The Fortress of the Blood-Oath"
+    description: "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord."
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  tepet_apu:
+    category: oasis
+    coords: [500, 490]
+    in_world_name: "Tepet-Apu"
+    etymology: "Cross-cultural: Kheshkai tepet 'mountain' + Qollari apu 'lord/mountain'. The Mountain-of-Mountains — the two mountain peoples name the truce site each in their own register"
+    description: "Mixed-clan waystation on the Breath-of-Cloud descent. Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari oath."
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+
+  kalli_xal:
+    category: caravanserai
+    coords: [600, 480]
+    in_world_name: "Kalli-Xal"
+    etymology: "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a Kheshkai-attested compound for a steppe relay station"
+    description: "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and corralled mounts kept under a single Kheshkai clan-lord's seal; the grazing toll is settled here before the run to Tepet-Apu. Rations-only resupply: the station hauls grain off the route but cannot offer reliable water beyond what travellers already carry."
+    marker_color: "#b87333"
+    marker_symbol: "lodging"
+    civ: kheshkai
+
+  zang_kalli:
+    category: caravanserai
+    coords: [960, 350]
+    in_world_name: "Zang-Kalli"
+    etymology: "Cross-cultural: Ngaru-Bon zang 'iron' + Kheshkai kalli 'house'. The Iron-House — named in both clients' registers for the southbound steel-and-iron leg of the Copper-for-Steel Road (the Ngaru-Bon half of the bilateral trade)"
+    description: "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in."
+    marker_color: "#b87333"
+    marker_symbol: "lodging"
+    civ: kheshkai
 
 # --- River Systems ---
 rivers:
