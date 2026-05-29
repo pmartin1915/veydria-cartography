@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type PartyConfig } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, straitAnnotation, DEFAULT_PARTY, type PartyConfig, type JourneyNode } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -314,5 +314,39 @@ describe('journey-graph: authored civ is authoritative (F5)', () => {
     const intra = g.adj.get('port_x')!.map(e => e.edge).find(e => e.type === 'intra_civ')!
     expect(intra.to).toBe('near')               // physical hop is unchanged by the label
     expect(intra.name).toBe('Within Near')
+  })
+})
+
+describe('journey-graph: strait annotation (F5 follow-up)', () => {
+  // Pins the 17af505 fix: strait detection keys on Oravan membership, NOT on
+  // both endpoints carrying a civ tag. The real fixture can't surface the
+  // critical case (an Oravan endpoint paired with an untagged contested node)
+  // because there every routed node is civ-aligned. straitAnnotation is pure,
+  // so we feed it minimal JourneyNode literals directly.
+  const node = (id: string, civ?: string): JourneyNode => ({ id, name: id, category: 'port', x: 0, y: 0, civ })
+
+  it('flags the crossing when exactly one endpoint is Oravan', () => {
+    expect(straitAnnotation(node('isle', 'oravan'), node('coast', 'kheshkai'))).toBe('Halkar Straits')
+    expect(straitAnnotation(node('coast', 'kheshkai'), node('isle', 'oravan'))).toBe('Halkar Straits')
+  })
+
+  it('flags the crossing even when the mainland endpoint is an untagged contested node', () => {
+    // The audit #2 case: mid-strait sandbar Tavakh-Rubāṭ is deliberately
+    // civ-less (F5). Old civ-presence logic missed this crossing.
+    expect(straitAnnotation(node('isle', 'oravan'), node('tavakh-rubat', undefined))).toBe('Halkar Straits')
+  })
+
+  it('returns null for an intra-archipelago hop (both Oravan)', () => {
+    expect(straitAnnotation(node('isle_a', 'oravan'), node('isle_b', 'oravan'))).toBeNull()
+  })
+
+  it('returns null for a mainland-to-mainland edge (neither Oravan)', () => {
+    expect(straitAnnotation(node('a', 'kheshkai'), node('b', 'ndjadi'))).toBeNull()
+    expect(straitAnnotation(node('a', undefined), node('b', undefined))).toBeNull()
+  })
+
+  it('returns null when an endpoint is missing', () => {
+    expect(straitAnnotation(undefined, node('isle', 'oravan'))).toBeNull()
+    expect(straitAnnotation(node('isle', 'oravan'), undefined)).toBeNull()
   })
 })
