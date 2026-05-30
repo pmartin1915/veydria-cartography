@@ -280,6 +280,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const canvasRendererRef = useRef<L.Canvas | null>(null)
     const onHoverHexRef = useRef(onHoverHex)
     const onSelectHexRef = useRef(onSelectHex)
+    const onFeatureClickRef = useRef(onFeatureClick)
     const layersRef = useRef(layers)
 
     // Keep refs in sync so event handlers see current value without re-binding
@@ -288,6 +289,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     useEffect(() => { hexMeasureModeRef.current = hexMeasureMode }, [hexMeasureMode])
     useEffect(() => { onHoverHexRef.current = onHoverHex }, [onHoverHex])
     useEffect(() => { onSelectHexRef.current = onSelectHex }, [onSelectHex])
+    useEffect(() => { onFeatureClickRef.current = onFeatureClick }, [onFeatureClick])
     useEffect(() => { layersRef.current = layers }, [layers])
     useEffect(() => { onAnnotationAddRef.current = onAnnotationAdd }, [onAnnotationAdd])
     useEffect(() => { onAnnotationUpdateRef.current = onAnnotationUpdate }, [onAnnotationUpdate])
@@ -631,7 +633,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             polygon.on('click', () => {
               if (measureModeRef.current) return
-              onFeatureClick(feature)
+              onFeatureClickRef.current(feature)
               if (onFeatureSelect) onFeatureSelect(feature)
             })
             polygon.on('mouseover', function (this: L.Polygon) {
@@ -679,7 +681,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
             polyline.on('click', () => {
               if (measureModeRef.current) return
-              onFeatureClick(feature)
+              onFeatureClickRef.current(feature)
               if (onFeatureSelect) onFeatureSelect(feature)
             })
             polyline.on('mouseover', function (this: L.Polyline) {
@@ -728,7 +730,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
                 return
               }
               if (!isDragging) {
-                onFeatureClick(feature)
+                onFeatureClickRef.current(feature)
                 if (onFeatureSelect) onFeatureSelect(feature)
               }
               isDragging = false
@@ -766,7 +768,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       // Initialize D3 overlay for trade routes
       const tradeRoutes = featuresByCategory['trade_route'] || []
-      const d3Overlay = initD3Overlay(map, tradeRoutes, onFeatureClick)
+      const d3Overlay = initD3Overlay(map, tradeRoutes, (f) => onFeatureClickRef.current(f))
       d3Overlay.setOpacity(opacities?.trade_route ?? 0.75)
       // Store in layer groups ref so it can be toggled
       const tradeRouteMock: OverlayMock = {
@@ -915,7 +917,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         annotationLayerRef.current = null
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [onFeatureClick, initialViewport, onViewportChange])
+    }, [initialViewport, onViewportChange])
 
     // Toggle layer visibility (respecting zoom thresholds)
     useEffect(() => {
