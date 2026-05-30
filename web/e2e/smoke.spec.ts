@@ -17,12 +17,6 @@ const BENIGN_CONSOLE = [
   /favicon/i,
   /ResizeObserver/i,
   /Download the React DevTools/i,
-  // Dev-only React warnings about SVG attribute casing in JSX — React strips these
-  // in production builds, so they never reach users.
-  /Invalid DOM property/i,
-  // Pre-existing, non-fatal: a canvas-glow effect's 2d context is briefly undefined
-  // during teardown. Does not affect rendering. Flagged for a separate fix.
-  /reading 'clearRect'/i,
 ]
 const isBenign = (text: string) => BENIGN_CONSOLE.some((re) => re.test(text))
 

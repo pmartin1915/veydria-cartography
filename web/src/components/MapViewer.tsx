@@ -23,6 +23,24 @@ import type { MapAnnotation } from '../utils/annotations'
 import { createAnnotation, ANNOTATION_COLORS, findNearestFeature, createExploredAnnotation, getExploredHexLabels, isExplored } from '../utils/annotations'
 import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
 
+// Force the canvas renderer to repaint immediately. `setStyle()` only schedules a
+// deferred redraw (Leaflet batches per frame via requestAnimFrame) that often fails to
+// flush, so we call Leaflet's private `_redraw()` to force it. Critical subtlety:
+// `_redraw()` nulls `_redrawRequest` WITHOUT cancelling the rAF that `setStyle()` already
+// scheduled — orphaning that frame. If the map is later torn down (the map-init effect
+// recreates the map on prop-identity churn during load), Leaflet can't cancel the orphan
+// (its id is gone), so it fires after the renderer's `_ctx` is destroyed and throws
+// "Cannot read properties of undefined (reading 'clearRect')". Cancelling first avoids it.
+function flushCanvasRedraw(renderer: L.Canvas | null) {
+  const r = renderer as unknown as { _redrawRequest?: number | null; _redraw?: () => void } | null
+  if (!r) return
+  if (r._redrawRequest) {
+    L.Util.cancelAnimFrame(r._redrawRequest)
+    r._redrawRequest = null
+  }
+  r._redraw?.()
+}
+
 interface GeoJSONCollection {
   type: 'FeatureCollection'
   metadata?: Record<string, unknown>
@@ -320,7 +338,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
           polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
         }
-        ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
+        flushCanvasRedraw(canvasRendererRef.current)
       },
       clearJourneyRoute() {
         if (journeyRouteLayerRef.current && mapRef.current) {
@@ -884,6 +902,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         hexTooltipRef.current = null
         map.remove()
         mapRef.current = null
+        // Drop the renderer ref too (matches how every sibling ref is cleared here):
+        // post-teardown the L.Canvas is detached and its _ctx is gone, so a re-running
+        // terrain/faction effect's flushCanvasRedraw() short-circuits on the null ref
+        // instead of touching the dead renderer. (The orphaned-rAF crash itself is
+        // prevented inside flushCanvasRedraw; this is belt-and-suspenders.)
+        canvasRendererRef.current = null
         layerGroupsRef.current.clear()
         layerRefsRef.current.clear()
         terrainCellMetaRef.current.clear()
@@ -918,7 +942,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // Force the canvas to discard cached strokes and repaint with new fillColor.
       // setStyle alone schedules a deferred redraw that often fails to flush
       // because the canvas renderer batches redraws by frame.
-      ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
+      flushCanvasRedraw(canvasRendererRef.current)
     }, [layers.terrain_cost])
 
     // Faction overlay: tint terrain cells by controlling civilization.
@@ -935,7 +959,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       for (const { polygon, elevation, civ } of terrainCellMetaRef.current.values()) {
         polygon.setStyle({ fillColor: enabled ? (CIV_COLORS[civ] || '#888') : getElevationColor(elevation) })
       }
-      ;(canvasRendererRef.current as unknown as { _redraw?: () => void } | null)?._redraw?.()
+      flushCanvasRedraw(canvasRendererRef.current)
     }, [layers.faction_control, layers.terrain_cost])
 
     // Biome colors: tint hex grid overlay by biome.
@@ -1598,16 +1622,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         )}
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
-          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">
-            <circle cx="24" cy="24" r="20" stroke-opacity="0.25" />
-            <circle cx="24" cy="24" r="14" stroke-opacity="0.12" stroke-dasharray="2 2" />
-            <path d="M24 6 L27 22 L24 24 L21 22 Z" fill="var(--text-accent)" fill-opacity="0.7" stroke="none" />
-            <path d="M24 42 L21 26 L24 24 L27 26 Z" fill="var(--text-muted)" fill-opacity="0.4" stroke="none" />
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <circle cx="24" cy="24" r="20" strokeOpacity="0.25" />
+            <circle cx="24" cy="24" r="14" strokeOpacity="0.12" strokeDasharray="2 2" />
+            <path d="M24 6 L27 22 L24 24 L21 22 Z" fill="var(--text-accent)" fillOpacity="0.7" stroke="none" />
+            <path d="M24 42 L21 26 L24 24 L27 26 Z" fill="var(--text-muted)" fillOpacity="0.4" stroke="none" />
             <line x1="24" y1="3" x2="24" y2="7" />
             <line x1="24" y1="41" x2="24" y2="45" />
             <line x1="3" y1="24" x2="7" y2="24" />
             <line x1="41" y1="24" x2="45" y2="24" />
-            <text x="24" y="10" text-anchor="middle" font-size="5" fill="var(--text-accent)" stroke="none" font-family="var(--font-display)">N</text>
+            <text x="24" y="10" textAnchor="middle" fontSize="5" fill="var(--text-accent)" stroke="none" fontFamily="var(--font-display)">N</text>
           </svg>
         </div>
       </div>
