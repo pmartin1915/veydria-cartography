@@ -287,6 +287,49 @@ describe('party config affects travel time', () => {
   })
 })
 
+describe('findRoute: graph purity (Tier 3b)', () => {
+  // findRoute must not mutate the shared, memoized adjacency edges. Two calls on
+  // the SAME graph with different party configs must be independent — the first
+  // route's per-segment timing must survive the second call.
+  it('does not let a later call overwrite an earlier route\'s segmentDays', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const slow: PartyConfig = { ...DEFAULT_PARTY, pace: 'slow' }
+    const fast: PartyConfig = { ...DEFAULT_PARTY, pace: 'fast' }
+
+    const rSlow = findRoute(graph, civs[0].id, civs[civs.length - 1].id, undefined, 'direct', slow)
+    expect(rSlow).not.toBeNull()
+    // Snapshot the slow route's per-segment days BEFORE the second call.
+    const slowSegments = rSlow!.edges.map(e => e.segmentDays!)
+
+    const rFast = findRoute(graph, civs[0].id, civs[civs.length - 1].id, undefined, 'direct', fast)
+    expect(rFast).not.toBeNull()
+
+    // The earlier (slow) route object must be untouched by the later (fast) call.
+    rSlow!.edges.forEach((e, i) => {
+      expect(e.segmentDays!).toBeCloseTo(slowSegments[i], 9)
+    })
+    // And the two calls genuinely differ (slow pace = more days than fast).
+    expect(rSlow!.estimatedDays).toBeGreaterThan(rFast!.estimatedDays)
+  })
+
+  it('returns edges that are not the shared adjacency-list objects', () => {
+    const civs = nodes.filter(n => n.category === 'civilization')
+    const r = findRoute(graph, civs[0].id, civs[civs.length - 1].id)
+    expect(r).not.toBeNull()
+    expect(r!.edges.length).toBeGreaterThan(0)
+
+    const edge = r!.edges[0]
+    const adjEdge = graph.adj.get(edge.from)?.find(n => n.to === edge.to)?.edge
+    expect(adjEdge, 'route edge should correspond to an adjacency edge').toBeDefined()
+    // Returned edge is a clone, not the cached reference.
+    expect(edge).not.toBe(adjEdge)
+    // Mutating the returned edge must not bleed into the shared graph.
+    const before = adjEdge!.segmentDays
+    edge.segmentDays = 999
+    expect(adjEdge!.segmentDays).toBe(before)
+  })
+})
+
 describe('journey-graph: authored civ is authoritative (F5)', () => {
   // Two civ centroids far apart; port_x sits on top of civ "near" but is
   // AUTHORED to "far" (authored must win, not be clobbered by inference);

@@ -590,7 +590,10 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
     if (node) pathNodes.unshift(node)
     const p = prev.get(u)
     if (p) {
-      pathEdges.unshift(p.edge)
+      // Clone: the edge is a shared reference from graph.adj (memoized once per
+      // geojson). segmentDays below is party-config-dependent, so mutating the
+      // original would bleed one route's timing into every other call's edges.
+      pathEdges.unshift({ ...p.edge })
       u = p.node
     } else {
       u = null
