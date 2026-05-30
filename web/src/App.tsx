@@ -1087,11 +1087,11 @@ function App() {
         <div className="loading-parchment" />
         <div className="loading-content">
           <div className="loading-glow" />
-          <svg className="loading-compass" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="32" cy="32" r="28" stroke-opacity="0.3" />
-            <circle cx="32" cy="32" r="22" stroke-opacity="0.15" stroke-dasharray="2 3" />
-            <path d="M32 8 L36 28 L32 32 L28 28 Z" fill="var(--text-accent)" fill-opacity="0.8" stroke="none" />
-            <path d="M32 56 L28 36 L32 32 L36 36 Z" fill="var(--text-muted)" fill-opacity="0.5" stroke="none" />
+          <svg className="loading-compass" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="32" cy="32" r="28" strokeOpacity="0.3" />
+            <circle cx="32" cy="32" r="22" strokeOpacity="0.15" strokeDasharray="2 3" />
+            <path d="M32 8 L36 28 L32 32 L28 28 Z" fill="var(--text-accent)" fillOpacity="0.8" stroke="none" />
+            <path d="M32 56 L28 36 L32 32 L36 36 Z" fill="var(--text-muted)" fillOpacity="0.5" stroke="none" />
             <line x1="32" y1="4" x2="32" y2="10" />
             <line x1="32" y1="54" x2="32" y2="60" />
             <line x1="4" y1="32" x2="10" y2="32" />
