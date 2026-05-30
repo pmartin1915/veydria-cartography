@@ -1,11 +1,14 @@
-import { useState, useEffect, useCallback, useRef, useReducer, useMemo, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
 import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
 import FactionGraph from './components/FactionGraph'
-import JourneyPlanner from './components/JourneyPlanner'
+// Lazy-loaded: the planner (+ its journey-planner/ subtree) is the largest
+// non-route module and only mounts when the user opens journey mode. Splitting
+// it out keeps it off the first-paint critical path. See Suspense boundary below.
+const JourneyPlanner = lazy(() => import('./components/JourneyPlanner'))
 import HexCoordChip from './components/HexCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
@@ -18,7 +21,6 @@ import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation, markRouteExplored, saveAnnotations } from './utils/annotations'
-import { downloadCampaignLog } from './utils/campaign-log'
 import { getAllFeatureNotes } from './utils/feature-notes'
 import { getStarredIds, toggleStarred } from './utils/feature-stars'
 import {
@@ -901,7 +903,11 @@ function App() {
   // Share button: copy current URL to clipboard. If `playerView` is true,
   // the URL has share=1 set, which strips annotations/encounters/edit
   // controls when opened.
-  const handleDownloadCampaignLog = useCallback(() => {
+  const handleDownloadCampaignLog = useCallback(async () => {
+    // Dynamic import: campaign-log pulls in the day-breakdown, encounter, and
+    // calendar data cluster. Loading it on-demand (this is a deliberate export
+    // action) keeps that ~44 kB off the first-paint critical path.
+    const { downloadCampaignLog } = await import('./utils/campaign-log')
     downloadCampaignLog({
       activeJourney: journeyRoute
         ? { route: journeyRoute, season: journeySeason, mode: journeyModeState }
@@ -1616,6 +1622,15 @@ function App() {
         />
 
         {journeyMode && geojson && (
+          <Suspense fallback={
+            // Carries the .journey-planner class so the panel's "open" state is
+            // detectable the instant journey mode flips on (auto-open from a share
+            // link, or a click) — before the lazy chunk resolves. Also avoids a
+            // blank flash on first open.
+            <div className="journey-planner" aria-busy="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120, opacity: 0.7 }}>
+              Loading planner…
+            </div>
+          }>
           <JourneyPlanner
             geojson={geojson}
             active={journeyMode}
@@ -1657,6 +1672,7 @@ function App() {
             })()}
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
           />
+          </Suspense>
         )}
 
         {measureMode && (
