@@ -72,6 +72,59 @@ describe('campaign-log', () => {
     vi.unstubAllGlobals()
   })
 
+  describe('player-safe isolation', () => {
+    it('strips campaign-note pins, feature notes, and hex notes', () => {
+      const input = {
+        activeJourney: { route: makeRoute(), mode: 'direct' as RouteMode },
+        savedJourneys: [],
+        annotations: [
+          makeAnnotation({ id: 'pin', label: 'Secret Pin', body: 'hidden plot hook' }),
+          makeAnnotation({ id: 'hex', label: 'Hex Secret', body: 'hex plot hook', hexLabel: 'A5' }),
+        ],
+        featureNotes: [{ featureId: 'oravan', note: 'GM-only feature note' }],
+      }
+      const gm = generateCampaignLog({ ...input, playerSafe: false })
+      const player = generateCampaignLog({ ...input, playerSafe: true })
+
+      // GM export carries everything (positive proof the strip is doing work).
+      expect(gm).toContain('Campaign Notes')
+      expect(gm).toContain('Secret Pin')
+      expect(gm).toContain('Hex Notes')
+      expect(gm).toContain('Hex Secret')
+      expect(gm).toContain('Feature Notes')
+      expect(gm).toContain('GM-only feature note')
+
+      // Player export strips all GM annotation surfaces.
+      expect(player).not.toContain('Campaign Notes')
+      expect(player).not.toContain('Secret Pin')
+      expect(player).not.toContain('hidden plot hook')
+      expect(player).not.toContain('Hex Notes')
+      expect(player).not.toContain('Hex Secret')
+      expect(player).not.toContain('hex plot hook')
+      expect(player).not.toContain('Feature Notes')
+      expect(player).not.toContain('GM-only feature note')
+    })
+
+    it('keeps route facts (bottlenecks, seasonal, saved journeys) for players', () => {
+      const input = {
+        activeJourney: { route: makeRoute(), mode: 'direct' as RouteMode },
+        savedJourneys: [makeSavedJourney()],
+        annotations: [],
+      }
+      const player = generateCampaignLog({ ...input, playerSafe: true })
+      expect(player).toContain('Active Journey')
+      expect(player).toContain('Bandit-sign scratched into the pass wall')
+      expect(player).toContain('Spring floods have washed out the ford')
+      expect(player).toContain('Saved Journeys')
+    })
+
+    it('exportJourneyMarkdown(playerSafe) omits the encounters section but keeps the route', () => {
+      const md = exportJourneyMarkdown(makeRoute(), undefined, 'direct', undefined, undefined, undefined, true)
+      expect(md).not.toContain('#### Encounters')
+      expect(md).toContain('#### Route')
+    })
+  })
+
   describe('exportJourneyMarkdown', () => {
     it('includes route title and stats', () => {
       const md = exportJourneyMarkdown(makeRoute())

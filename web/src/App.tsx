@@ -915,9 +915,12 @@ function App() {
       savedJourneys: loadSavedJourneys(),
       annotations,
       featureNotes: getAllFeatureNotes(),
+      // Defensive: the Log button is GM-only (gated !shareMode), but pass the
+      // flag so the export is player-safe even if invoked from a share context.
+      playerSafe: shareMode,
     })
     showLogToast('Campaign log downloaded')
-  }, [journeyRoute, journeySeason, journeyModeState, annotations])
+  }, [journeyRoute, journeySeason, journeyModeState, annotations, shareMode])
 
   // Share button: copy current URL to clipboard. If `playerView` is true,
   // the URL has share=1 set, which strips annotations/encounters/edit

@@ -31,6 +31,13 @@ export interface CampaignLogInput {
   savedJourneys: SavedJourney[]
   annotations: MapAnnotation[]
   featureNotes?: { featureId: string; note: string }[]
+  /**
+   * When true, produce a player-safe log: strips encounters, per-day encounters,
+   * crisis-leverage refs, and all GM annotations (campaign-note pins, feature
+   * notes, hex notes). Route facts, bottlenecks, seasonal warnings, supply
+   * pressure, and the day-by-day breakdown remain.
+   */
+  playerSafe?: boolean
 }
 
 function formatPartyExport(p: PartyConfig): string {
@@ -82,7 +89,8 @@ export function exportJourneyMarkdown(
   mode: RouteMode = 'direct',
   edgeBiomes?: (string | undefined)[],
   party?: PartyConfig,
-  supply?: SupplyConfig
+  supply?: SupplyConfig,
+  playerSafe = false
 ): string {
   const fromName = route.nodes[0]?.name || 'Unknown'
   const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'
@@ -130,7 +138,7 @@ export function exportJourneyMarkdown(
   }
 
   const encounters = generateEncounters(route, season, mode, edgeBiomes)
-  if (encounters.length > 0) {
+  if (!playerSafe && encounters.length > 0) {
     md += `\n#### Encounters\n\n`
     for (const enc of encounters) {
       const segName = route.edges[enc.segmentIdx]?.name || 'Unknown segment'
@@ -173,13 +181,14 @@ export function exportJourneyMarkdown(
         for (const ev of day.calendarEvents) {
           md += `- 📅 **${ev.name}** (${ev.type})`
           if (ev.effect) md += ` — ${ev.effect}`
-          if (hasCrisis(ev) && ev.crises) {
+          // Crisis "leverage" refs are GM plot hooks — keep them out of player exports.
+          if (!playerSafe && hasCrisis(ev) && ev.crises) {
             md += ` — ⚡ Leverage: ${ev.crises.map(formatCrisisRef).join(', ')}`
           }
           md += '\n'
         }
       }
-      if (day.encounters.length > 0) {
+      if (!playerSafe && day.encounters.length > 0) {
         for (const enc of day.encounters) {
           const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
           md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}${biomeTag}): ${enc.beat}\n`
@@ -196,7 +205,7 @@ export function exportJourneyMarkdown(
  * Generate a full campaign-log markdown string.
  */
 export function generateCampaignLog(input: CampaignLogInput): string {
-  const { activeJourney, savedJourneys, annotations, featureNotes } = input
+  const { activeJourney, savedJourneys, annotations, featureNotes, playerSafe = false } = input
   let md = `# Veydria Campaign Log\n\n`
   md += `*Generated on ${new Date().toLocaleDateString()} from [Veydria Cartography](${baseUrl()})*\n\n`
   md += `---\n\n`
@@ -209,7 +218,8 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       activeJourney.mode,
       activeJourney.edgeBiomes,
       activeJourney.party,
-      activeJourney.supply
+      activeJourney.supply,
+      playerSafe
     )
     md += `\n---\n\n`
   }
@@ -240,8 +250,9 @@ export function generateCampaignLog(input: CampaignLogInput): string {
     md += `---\n\n`
   }
 
+  // GM annotations (pins, feature notes, hex notes) are never in player exports.
   // Annotations excluding hex notes
-  const pins = annotations.filter(a => !a.hexLabel)
+  const pins = playerSafe ? [] : annotations.filter(a => !a.hexLabel)
   if (pins.length > 0) {
     md += `## Campaign Notes (${pins.length} pin${pins.length !== 1 ? 's' : ''})\n\n`
     for (const a of pins) {
@@ -255,7 +266,7 @@ export function generateCampaignLog(input: CampaignLogInput): string {
   }
 
   // Feature notes
-  if (featureNotes && featureNotes.length > 0) {
+  if (!playerSafe && featureNotes && featureNotes.length > 0) {
     md += `## Feature Notes\n\n`
     for (const { featureId, note } of featureNotes) {
       md += `### ${featureId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}\n\n`
@@ -265,7 +276,7 @@ export function generateCampaignLog(input: CampaignLogInput): string {
   }
 
   // Hex notes grouped by hex label
-  const hexNotes = annotations.filter(a => a.hexLabel)
+  const hexNotes = playerSafe ? [] : annotations.filter(a => a.hexLabel)
   if (hexNotes.length > 0) {
     md += `## Hex Notes\n\n`
     const byHex = new Map<string, MapAnnotation[]>()
