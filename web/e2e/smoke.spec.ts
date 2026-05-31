@@ -61,6 +61,26 @@ async function computeRoute(page: Page) {
   await expect(page.locator('.journey-route')).toBeVisible()
 }
 
+// Active-party switcher (Tier 2c). createParty enters create mode and commits via
+// Enter (commitCreate switches the active party and closes the dropdown);
+// switchParty re-opens and clicks an existing party by name.
+async function createParty(page: Page, name: string) {
+  const select = page.locator('.journey-party-select')
+  await select.locator('.journey-dropdown-trigger').click()
+  await select.locator('.journey-party-add').click()
+  await select.locator('.journey-dropdown-search').fill(name)
+  await select.locator('.journey-dropdown-search').press('Enter')
+}
+
+async function switchParty(page: Page, name: string) {
+  const select = page.locator('.journey-party-select')
+  await select.locator('.journey-dropdown-trigger').click()
+  await select.locator('.journey-dropdown-item', { hasText: name }).click()
+}
+
+const partyTrigger = (page: Page) =>
+  page.locator('.journey-party-select .journey-dropdown-trigger')
+
 test('map loads with no console errors', async ({ page }) => {
   const errors: string[] = []
   page.on('console', (msg) => {
@@ -180,4 +200,47 @@ test('Share popover opens and copies a player link', async ({ page }) => {
   expect(url).toContain('share=1')
   // The popover closes once the link is copied.
   await expect(popover).not.toBeVisible()
+})
+
+test('creating a party scopes the My journeys list to the active party', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  // Save tags the journey with the active party — "Main party" by default.
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+  // Open the history panel; the saved journey shows under Main party.
+  await page.locator('.journey-history-toggle').click()
+  await expect(page.locator('.journey-history-item')).toHaveCount(1)
+
+  // Spin up a second party — commitCreate switches the active party to it.
+  await createParty(page, 'Scouts')
+  await expect(partyTrigger(page)).toHaveText(/Scouts/)
+
+  // The panel stays open (savedOpen persists); the list is now scoped to Scouts,
+  // which has no saved journeys yet.
+  await expect(page.locator('.journey-history-empty')).toBeVisible()
+  await expect(page.locator('.journey-history-item')).toHaveCount(0)
+
+  // Switching back to Main party brings its saved journey back into view.
+  await switchParty(page, 'Main party')
+  await expect(page.locator('.journey-history-item')).toHaveCount(1)
+})
+
+test('switching party tags the share link with party=', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  // The default "Main party" is omitted from the hash to keep URLs short.
+  await page.getByRole('button', { name: 'Link', exact: true }).click()
+  const defaultUrl = await page.evaluate(() => navigator.clipboard.readText())
+  expect(defaultUrl).not.toContain('party=')
+
+  // A non-default active party is serialised into the share link. The computed
+  // route persists across the switch (Scouts has no saved journey to load), so
+  // the Link button still has a route to copy.
+  await createParty(page, 'Scouts')
+  await page.getByRole('button', { name: 'Link', exact: true }).click()
+  const scoutsUrl = await page.evaluate(() => navigator.clipboard.readText())
+  expect(scoutsUrl).toContain('party=Scouts')
 })
