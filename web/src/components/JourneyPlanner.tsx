@@ -3,7 +3,7 @@ import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
 import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { type Encounter } from '../utils/encounters'
-import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
+import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneysForParty, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
 import { DEFAULT_SUPPLY, type SupplyConfig } from '../utils/journey-supply'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
 import SavedJourneysPanel from './journey-planner/SavedJourneysPanel'
@@ -544,7 +544,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   }
 
   function handleClearSaved() {
-    const updated = clearSavedJourneys()
+    // Scoped to the active party — the My-journeys panel only shows that party's
+    // journeys, so "Clear all" must not wipe other parties' saved routes.
+    const updated = clearSavedJourneysForParty(activePartyName)
     setSavedJourneys(updated)
     showExportToast('My journeys cleared')
   }

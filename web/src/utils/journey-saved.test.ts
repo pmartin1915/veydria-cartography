@@ -6,6 +6,7 @@ import {
   deleteSavedJourney,
   renameSavedJourney,
   clearSavedJourneys,
+  clearSavedJourneysForParty,
   listPartyNames,
   journeysForParty,
   sanitizePartyName,
@@ -261,6 +262,35 @@ describe('journey-saved', () => {
       const result = clearSavedJourneys()
       expect(result).toEqual([])
       expect(loadSavedJourneys()).toEqual([])
+    })
+  })
+
+  describe('clearSavedJourneysForParty', () => {
+    it('removes only the named party, leaving other parties intact', () => {
+      addSavedJourney(makeJourney({ id: 'm', partyName: 'Main party', nodeIds: ['a', 'b'] }))
+      addSavedJourney(makeJourney({ id: 's', partyName: 'Scouts', nodeIds: ['c', 'd'] }))
+
+      const remaining = clearSavedJourneysForParty('Scouts')
+
+      expect(remaining).toHaveLength(1)
+      expect(remaining[0].partyName).toBe('Main party')
+      // Persisted, not just returned.
+      expect(loadSavedJourneys().map(j => j.partyName)).toEqual(['Main party'])
+    })
+
+    it('clears untagged (legacy) entries when targeting the default party', () => {
+      const legacy = makeJourney({ id: 'old', nodeIds: ['a', 'b'] })
+      delete (legacy as Partial<SavedJourney>).partyName
+      addSavedJourney(makeJourney({ id: 's', partyName: 'Scouts', nodeIds: ['c', 'd'] }))
+      localStorage.setItem(
+        'veydria.journeys.v1',
+        JSON.stringify([legacy, ...loadSavedJourneys()]),
+      )
+
+      const remaining = clearSavedJourneysForParty(DEFAULT_PARTY_NAME)
+
+      expect(remaining.every(j => sanitizePartyName(j.partyName) !== DEFAULT_PARTY_NAME)).toBe(true)
+      expect(remaining.map(j => j.partyName)).toEqual(['Scouts'])
     })
   })
 

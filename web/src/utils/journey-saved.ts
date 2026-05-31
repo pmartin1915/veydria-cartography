@@ -242,6 +242,21 @@ export function clearSavedJourneys(): SavedJourney[] {
 }
 
 /**
+ * Clear only the journeys belonging to a given party (Tier 2c), returning the
+ * remaining full list. The My-journeys panel is scoped to the active party, so
+ * its "Clear all" must not wipe other parties' saved routes. Names are coalesced
+ * through sanitizePartyName so legacy / blank entries fold into the default.
+ */
+export function clearSavedJourneysForParty(partyName: string): SavedJourney[] {
+  const target = sanitizePartyName(partyName)
+  const remaining = loadSavedJourneys().filter(
+    e => sanitizePartyName(e.partyName) !== target,
+  )
+  saveJourneys(remaining)
+  return remaining
+}
+
+/**
  * Distinct party names across the given journeys, ordered by the most recent
  * save in each group (newest first), ties broken alphabetically. Names are
  * coalesced through sanitizePartyName so legacy/blank entries fold into
