@@ -1,31 +1,23 @@
-import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import type { GeoJSONCollection } from '../App'
-import {
-  NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
-  IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
-} from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, straitAnnotation, describeParty, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
-import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from '../utils/time-of-day'
-import { rollOneOff } from '../utils/encounter-roller'
-import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, type CalendarEventType } from '../utils/calendar'
-import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
-import {
-  DEFAULT_SUPPLY,
-  type SupplyConfig,
-} from '../utils/journey-supply'
-import PartyConfigBlock from './journey-planner/PartyConfig'
-import SupplyConfigBlock from './journey-planner/SupplyConfig'
+import { IconCompass, IconPin } from './icons'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
+import { type Encounter } from '../utils/encounters'
+import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
+import { DEFAULT_SUPPLY, type SupplyConfig } from '../utils/journey-supply'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
-import { computeModeRiskWarning } from '../utils/journey-mode-risk'
-import { computeEncounterDensityWarning } from '../utils/journey-encounter-density'
-import { computeRecommendedMode } from '../utils/journey-mode-recommend'
-import { formatDistance } from '../utils/measure'
+import SavedJourneysPanel from './journey-planner/SavedJourneysPanel'
+import ActivePartySelect from './journey-planner/ActivePartySelect'
+import JourneyControls from './journey-planner/JourneyControls'
+import JourneyResults from './journey-planner/JourneyResults'
+import JourneyRouteTab from './journey-planner/JourneyRouteTab'
+import JourneyEncountersTab from './journey-planner/JourneyEncountersTab'
+import NodeIcon from './journey-planner/NodeIcon'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
 import { getRouteHexLabels, getBiomeAtPoint } from '../utils/hex-grid'
 import { DEFAULT_HEX_SIZE } from '../utils/hex-overlay'
-import { buildRouteMarkdown, formatDays } from '../utils/journey-export'
+import { buildRouteMarkdown } from '../utils/journey-export'
 
 interface JourneyPlannerProps {
   geojson: GeoJSONCollection
@@ -62,12 +54,8 @@ interface JourneyPlannerProps {
   onSupplyChange?: (supply: SupplyConfig) => void
   /** Fog-of-war: stamp every hex the current route touches as explored. */
   onMarkRouteExplored?: (hexLabels: string[]) => void
-}
-
-// formatDays now lives in utils/journey-export alongside buildRouteMarkdown.
-
-function NodeIcon({ category }: { category: string }) {
-  return <span className="journey-node-icon"><NodeIconSvg category={category} /></span>
+  /** Initial active party name (Tier 2c; typically seeded from URL hash). */
+  defaultPartyName?: string
 }
 
 // Picker label format: "<Civ> · <category>" when the node carries a civ tag,
@@ -81,7 +69,7 @@ function formatNodeCategory(n: JourneyNode): string {
   return `${civLabel} · ${cat}`
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -105,8 +93,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
   const [savedJourneys, setSavedJourneys] = useState<SavedJourney[]>(loadSavedJourneys)
   const [savedOpen, setSavedOpen] = useState(false)
-  const [renamingId, setRenamingId] = useState<string | null>(null)
-  const [renameValue, setRenameValue] = useState('')
+  // Multi-party (Tier 2c). Persists across open/close within a session — it's a
+  // session-level selector, not transient route state, so it's left out of the
+  // reset-on-close effect. New saves are tagged with it; the My-journeys panel
+  // is filtered to it; switching loads that party's most-recent journey.
+  const [activePartyName, setActivePartyName] = useState(() => sanitizePartyName(defaultPartyName))
   const [routeTab, setRouteTab] = useState<'route' | 'days' | 'encounters'>('route')
   const [attempted, setAttempted] = useState(false)
   const [autoPivots, setAutoPivots] = useState<JourneyNode[]>([])
@@ -150,19 +141,21 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     })
   }, [route, geojson])
 
-  const SEASONS: { key: Season; label: string; icon: ReactNode }[] = [
-    { key: 'spring', label: 'Spring', icon: <IconFlower /> },
-    { key: 'summer', label: 'Summer', icon: <IconSun /> },
-    { key: 'autumn', label: 'Autumn', icon: <IconLeafFall /> },
-    { key: 'winter', label: 'Winter', icon: <IconSnowflake /> },
-  ]
+  // Party dropdown options: most-recent-first from saved journeys, always
+  // including the default and the current active name so you can never get
+  // stranded on a party with no way back.
+  const partyNames = useMemo(() => {
+    const result = listPartyNames(savedJourneys)
+    for (const required of [DEFAULT_PARTY_NAME, activePartyName]) {
+      if (!result.includes(required)) result.push(required)
+    }
+    return result
+  }, [savedJourneys, activePartyName])
 
-  const MODES: { key: RouteMode; label: string; desc: string }[] = [
-    { key: 'direct', label: 'Direct', desc: 'Shortest distance' },
-    { key: 'fastest', label: 'Fastest', desc: 'Favour trade routes' },
-    { key: 'safest', label: 'Safest', desc: 'Avoid chokepoints' },
-    { key: 'cheapest', label: 'Cheapest', desc: 'Minimise tolls' },
-  ]
+  const activePartyJourneys = useMemo(
+    () => journeysForParty(savedJourneys, activePartyName),
+    [savedJourneys, activePartyName],
+  )
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -359,6 +352,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       supplyWater: supply.waterPerPerson,
       supplyEnc: supply.encumbrance,
       supplyPack: supply.packAnimals,
+      party: activePartyName,
     })
     try {
       await navigator.clipboard.writeText(url.toString())
@@ -450,6 +444,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
+  // Lighter mode switch used by the comparison cards: set the mode and let the
+  // debounced auto-recompute effect rebuild the route (matches prior behaviour
+  // — the cards never called computeRoute directly).
+  function handleSwitchMode(newMode: RouteMode) {
+    setMode(newMode)
+    onModeChange?.(newMode)
+  }
+
   function handlePartyChange(next: PartyConfig) {
     setParty(next)
     onPartyChange?.(next)
@@ -489,6 +491,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       seasonalWarnings: route.seasonalWarnings,
       party,
       supply,
+      partyName: activePartyName,
     }
     const updated = addSavedJourney(entry)
     setSavedJourneys(updated)
@@ -536,10 +539,27 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     setSavedJourneys(updated)
   }
 
+  function handleRenameSaved(id: string, name: string) {
+    setSavedJourneys(renameSavedJourney(id, name))
+  }
+
   function handleClearSaved() {
     const updated = clearSavedJourneys()
     setSavedJourneys(updated)
     showExportToast('My journeys cleared')
+  }
+
+  function handleSwitchParty(name: string) {
+    const target = sanitizePartyName(name)
+    setActivePartyName(target)
+    // Swap full state: load this party's most-recent saved journey, if any.
+    const latest = journeysForParty(savedJourneys, target)[0]
+    if (latest) handleLoadSaved(latest)
+  }
+
+  function handleCreateParty(name: string) {
+    // A fresh party group — the next Save tags routes with it. No journey loaded.
+    setActivePartyName(sanitizePartyName(name))
   }
 
   if (!active) return null
@@ -560,82 +580,35 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            <span>{savedJourneys.length}</span>
+            <span>{activePartyJourneys.length}</span>
           </button>
           <button className="journey-planner-close" onClick={onClose} title="Close (Esc)">×</button>
         </div>
       </div>
 
-      {/* My journeys panel */}
+      {/* My journeys panel — scoped to the active party (Tier 2c) */}
       {savedOpen && (
-        <div className="journey-history-panel">
-          <div className="journey-history-header">
-            <span className="journey-history-title">My journeys</span>
-            {savedJourneys.length > 0 && (
-              <button className="journey-history-clear" onClick={handleClearSaved}>Clear all</button>
-            )}
-          </div>
-          {savedJourneys.length === 0 && (
-            <div className="journey-history-empty">No saved journeys yet. Compute a route and click Save.</div>
-          )}
-          <div className="journey-history-list">
-            {savedJourneys.map(entry => (
-              <div key={entry.id} className="journey-history-item">
-                <div className="journey-history-info">
-                  {renamingId === entry.id ? (
-                    <input
-                      className="journey-history-name-input"
-                      value={renameValue}
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onBlur={() => {
-                        setSavedJourneys(renameSavedJourney(entry.id, renameValue))
-                        setRenamingId(null)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setSavedJourneys(renameSavedJourney(entry.id, renameValue))
-                          setRenamingId(null)
-                        }
-                        if (e.key === 'Escape') {
-                          setRenamingId(null)
-                        }
-                      }}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      className="journey-history-name"
-                      onClick={() => {
-                        setRenamingId(entry.id)
-                        setRenameValue(entry.name || '')
-                      }}
-                      title="Click to rename"
-                    >
-                      {entry.name || `${entry.fromName} → ${entry.waypoints.length > 0 ? entry.waypoints.join(' → ') + ' → ' : ''}${entry.toName}`}
-                    </div>
-                  )}
-                  <div className="journey-history-meta">
-                    {entry.season && <span className="journey-history-season">{entry.season}</span>}
-                    <span className="journey-history-mode">{entry.mode}</span>
-                    <span>{Math.round(entry.totalKm)} km</span>
-                    <span>~{formatDays(entry.estimatedDays)}</span>
-                  </div>
-                </div>
-                <div className="journey-history-actions">
-                  <button className="journey-history-load" onClick={() => handleLoadSaved(entry)} title="Load journey">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M12 3l9 9-9 9"/></svg>
-                  </button>
-                  <button className="journey-history-delete" onClick={() => handleDeleteSaved(entry.id)} title="Delete">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SavedJourneysPanel
+          savedJourneys={activePartyJourneys}
+          onLoad={handleLoadSaved}
+          onDelete={handleDeleteSaved}
+          onRename={handleRenameSaved}
+          onClearAll={handleClearSaved}
+        />
       )}
 
       <div className="journey-planner-body">
+        {/* Active party — split-party tracking (Tier 2c). GM-only: a share-link
+            recipient sees one party's view, not the switcher. */}
+        {!shareMode && (
+          <ActivePartySelect
+            activePartyName={activePartyName}
+            partyNames={partyNames}
+            onSwitch={handleSwitchParty}
+            onCreate={handleCreateParty}
+          />
+        )}
+
         {/* Start selector */}
         <div className="journey-field" ref={startRef}>
           <label className="journey-field-label">From</label>
@@ -831,178 +804,36 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           + Add waypoint
         </button>
 
-        {/* Season selector */}
-        <div className="journey-seasons">
-          <span className="journey-seasons-label">Season</span>
-          <div className="journey-seasons-row">
-            <button
-              className={`journey-season-btn ${season === undefined ? 'active' : ''}`}
-              onClick={() => handleSeasonChange(undefined)}
-              title="All seasons"
-            >
-              <IconCalendar /> Any
-            </button>
-            {SEASONS.map(s => (
-              <button
-                key={s.key}
-                className={`journey-season-btn ${season === s.key ? 'active' : ''}`}
-                onClick={() => handleSeasonChange(s.key)}
-                title={s.label}
-              >
-                {s.icon} {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Route mode selector — recommends `safest` (badge on the recommended
-            button) when Mode Risk or Encounter Density predicates fire. GM-only;
-            shareMode users see the bare selector. */}
-        {(() => {
-          const recEncounters = (!shareMode && route)
-            ? generateEncounters(route, season, mode, edgeBiomes)
-            : []
-          const rec = !shareMode ? computeRecommendedMode(mode, supply, recEncounters) : null
-          return (
-            <div className="journey-modes">
-              <span className="journey-modes-label">Route priority</span>
-              <div className="journey-modes-row">
-                {MODES.map(m => {
-                  const isRecommended = rec !== null && rec.mode === m.key && rec.mode !== mode
-                  return (
-                    <button
-                      key={m.key}
-                      className={`journey-mode-btn ${mode === m.key ? 'active' : ''} ${isRecommended ? 'recommended' : ''}`}
-                      onClick={() => handleModeChange(m.key)}
-                      title={isRecommended ? `Recommended: ${rec!.reason}` : m.desc}
-                    >
-                      {m.label}
-                      {isRecommended && <span className="journey-mode-rec-badge">Recommended</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
-
-        {/* Actions */}
-        <div className="journey-actions">
-          <button
-            className="journey-btn journey-btn--primary"
-            onClick={handleFindRoute}
-            disabled={!startId || !endId}
-          >
-            Find Route
-          </button>
-          <button
-            className="journey-btn"
-            onClick={handleClear}
-            disabled={!startId && !endId && !route}
-          >
-            Clear
-          </button>
-        </div>
-
-        {/* Party, supply & options — bulky config folded into a collapsed
-            drawer so the primary route inputs + Route/Days/Encounters tabs
-            surface without scrolling. Each inner section keeps its existing
-            shareMode / departure gating unchanged. */}
-        <div className="journey-options-drawer">
-          <button
-            type="button"
-            className={`journey-options-header ${optionsOpen ? 'open' : ''}`}
-            onClick={() => setOptionsOpen(o => !o)}
-            aria-expanded={optionsOpen}
-          >
-            <span className={`journey-options-chevron ${optionsOpen ? '' : 'collapsed'}`}>▾</span>
-            <span className="journey-options-title">Party, supply &amp; options</span>
-          </button>
-          {optionsOpen && (
-            <div className="journey-options-body">
-              <PartyConfigBlock
-                party={party}
-                open={partyOpen}
-                onToggleOpen={() => setPartyOpen(o => !o)}
-                onChange={handlePartyChange}
-              />
-
-              <SupplyConfigBlock
-                supply={supply}
-                open={supplyOpen}
-                onToggleOpen={() => setSupplyOpen(o => !o)}
-                onChange={handleSupplyChange}
-              />
-
-              {/* Compare routes toggle */}
-              {!shareMode && waypoints.length === 0 && (
-                <div className="journey-compare-toggle">
-                  <button
-                    className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
-                    onClick={() => setCompareMode(prev => !prev)}
-                    title="Overlay Direct, Safest, and Cheapest routes on the map"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 20V10M12 20V4M6 20v-6" />
-                    </svg>
-                    <span>Compare routes</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Departure day-of-year */}
-              {!shareMode && (
-                <div className="journey-departure">
-                  <label className="journey-departure-label">Departure</label>
-                  <div className="journey-departure-row">
-                    <input
-                      type="range"
-                      min={1}
-                      max={365}
-                      value={departureDayOfYear ?? 1}
-                      onChange={(e) => setDepartureDayOfYear(Number(e.target.value))}
-                      className="journey-departure-slider"
-                      disabled={departureDayOfYear === undefined}
-                    />
-                    <button
-                      className={`journey-departure-toggle ${departureDayOfYear !== undefined ? 'active' : ''}`}
-                      onClick={() => setDepartureDayOfYear(prev => prev === undefined ? 120 : undefined)}
-                      title={departureDayOfYear !== undefined ? 'Clear departure date' : 'Set departure date for calendar events'}
-                    >
-                      {departureDayOfYear !== undefined ? formatDayOfYear(departureDayOfYear) : 'Any'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Calendar event legend */}
-              {departureDayOfYear !== undefined && (
-                <div className="journey-calendar-legend">
-                  <div className="journey-calendar-legend-header">
-                    <span className="journey-calendar-legend-label">Event key</span>
-                    <button
-                      type="button"
-                      className={`journey-calendar-legend-toggle ${highlightCrisisEvents ? 'active' : ''}`}
-                      onClick={() => setHighlightCrisisEvents(v => !v)}
-                      title="Highlight events that are crisis leverage windows"
-                    >
-                      ⚡ Crisis
-                    </button>
-                  </div>
-                  <div className="journey-calendar-legend-grid">
-                    {(Object.keys(CALENDAR_EVENT_COLORS) as CalendarEventType[]).map(type => (
-                      <div key={type} className="journey-calendar-legend-item" title={type}>
-                        <span className="journey-calendar-legend-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[type] }} />
-                        <span className="journey-calendar-legend-icon">{CALENDAR_EVENT_ICONS[type]}</span>
-                        <span className="journey-calendar-legend-name">{type}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <JourneyControls
+          season={season}
+          onSeasonChange={handleSeasonChange}
+          mode={mode}
+          onModeChange={handleModeChange}
+          shareMode={shareMode}
+          route={route}
+          edgeBiomes={edgeBiomes}
+          party={party}
+          partyOpen={partyOpen}
+          onTogglePartyOpen={() => setPartyOpen(o => !o)}
+          onPartyChange={handlePartyChange}
+          supply={supply}
+          supplyOpen={supplyOpen}
+          onToggleSupplyOpen={() => setSupplyOpen(o => !o)}
+          onSupplyChange={handleSupplyChange}
+          onFindRoute={handleFindRoute}
+          onClear={handleClear}
+          findDisabled={!startId || !endId}
+          clearDisabled={!startId && !endId && !route}
+          optionsOpen={optionsOpen}
+          onToggleOptions={() => setOptionsOpen(o => !o)}
+          compareMode={compareMode}
+          onToggleCompare={() => setCompareMode(prev => !prev)}
+          waypointsLength={waypoints.length}
+          departureDayOfYear={departureDayOfYear}
+          onSetDeparture={setDepartureDayOfYear}
+          highlightCrisisEvents={highlightCrisisEvents}
+          onToggleHighlightCrisis={() => setHighlightCrisisEvents(v => !v)}
+        />
 
         {/* Route results */}
         {route && (
@@ -1045,110 +876,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 JSON
               </button>
             </div>
-            <div className="journey-route-stats">
-              <div className="journey-stat">
-                <span className="journey-stat-label">Distance</span>
-                <span className="journey-stat-value">{formatDistance(route.totalDistanceSvg)}</span>
-              </div>
-              <div className="journey-stat">
-                <span className="journey-stat-label">Est. Travel</span>
-                <span className="journey-stat-value" data-testid="est-days">{formatDays(route.estimatedDays)}</span>
-              </div>
-              <div className="journey-stat">
-                <span className="journey-stat-label">Segments</span>
-                <span className="journey-stat-value">{route.edges.length}</span>
-              </div>
-            </div>
-            <div className="journey-difficulty">
-              {(() => {
-                const diff = getRouteDifficulty(route)
-                return <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
-              })()}
-            </div>
 
-            {/* Comparison stats: side-by-side Direct / Safest / Cheapest */}
-            {compareMode && comparisonRoutes && (
-              <div className="journey-comparison-stats">
-                {(() => {
-                  const entries = [
-                    { key: 'direct' as const, label: 'Direct', color: '#4a9a3a', route: comparisonRoutes.direct },
-                    { key: 'safest' as const, label: 'Safest', color: '#3a7ca5', route: comparisonRoutes.safest },
-                    { key: 'cheapest' as const, label: 'Cheapest', color: '#c4a862', route: comparisonRoutes.cheapest },
-                  ]
-                  const valid = entries.filter(e => e.route)
-                  const bestDistance = valid.length > 0 ? Math.min(...valid.map(e => e.route!.totalDistanceSvg)) : Infinity
-                  const bestDays = valid.length > 0 ? Math.min(...valid.map(e => e.route!.estimatedDays)) : Infinity
-                  const bestSegments = valid.length > 0 ? Math.min(...valid.map(e => e.route!.edges.length)) : Infinity
-                  return entries.map(({ key, label, color, route: cr }) => (
-                    <div
-                      key={key}
-                      className={`journey-comparison-card ${key === mode ? 'journey-comparison-active' : ''}`}
-                      style={{ '--comparison-color': color } as React.CSSProperties}
-                      onClick={() => {
-                        if (cr && key !== mode) {
-                          setMode(key as RouteMode)
-                          onModeChange?.(key as RouteMode)
-                        }
-                      }}
-                      title={cr ? `Switch to ${label} route — ${describeParty(party) || 'default party (on foot)'}` : 'No route found'}
-                    >
-                      <div className="journey-comparison-card-header">
-                        <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
-                        <span className="journey-comparison-label">{label}</span>
-                        {key === mode && <span className="journey-comparison-current">active</span>}
-                      </div>
-                      {cr ? (
-                        <div className="journey-comparison-card-body">
-                          <div className="journey-comparison-stat">
-                            <span className="journey-comparison-stat-label">Distance</span>
-                            <span className="journey-comparison-stat-value">
-                              {formatDistance(cr.totalDistanceSvg)}
-                              {cr.totalDistanceSvg === bestDistance && (
-                                <span className="journey-comparison-trophy" title="Shortest distance">★</span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="journey-comparison-stat">
-                            <span className="journey-comparison-stat-label">Travel</span>
-                            <span className="journey-comparison-stat-value">
-                              {formatDays(cr.estimatedDays)}
-                              {cr.estimatedDays === bestDays && (
-                                <span className="journey-comparison-trophy" title="Fastest route">★</span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="journey-comparison-stat">
-                            <span className="journey-comparison-stat-label">Segments</span>
-                            <span className="journey-comparison-stat-value">
-                              {cr.edges.length}
-                              {cr.edges.length === bestSegments && (
-                                <span className="journey-comparison-trophy" title="Fewest segments">★</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="journey-comparison-no-route">No route</div>
-                      )}
-                    </div>
-                  ))
-                })()}
-              </div>
-            )}
-
-            {routeHexLabels.length > 0 && (
-              <div className="journey-route-hexes">
-                <span className="journey-route-hexes-label">Hex path</span>
-                <span className="journey-route-hexes-value">{routeHexLabels.join(' → ')}</span>
-                <span className="journey-route-hexes-count">{routeHexLabels.length} hex{routeHexLabels.length !== 1 ? 'es' : ''}</span>
-              </div>
-            )}
-
-            {autoPivots.length > 0 && (
-              <div className="journey-auto-pivot">
-                No direct route — auto-routed via {autoPivots.map(p => p.name).join(' and ')}.
-              </div>
-            )}
+            <JourneyResults
+              route={route}
+              mode={mode}
+              compareMode={compareMode}
+              comparisonRoutes={comparisonRoutes}
+              party={party}
+              onSwitchMode={handleSwitchMode}
+              routeHexLabels={routeHexLabels}
+              autoPivots={autoPivots}
+            />
 
             {/* Tabs */}
             <div className="journey-tabs">
@@ -1175,83 +913,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             </div>
 
             {routeTab === 'route' && (
-              <>
-            {/* Bottlenecks */}
-            {route.bottlenecks.length > 0 && (
-              <div className="journey-bottlenecks">
-                <div className="journey-bottlenecks-title"><IconWarning /> Bottlenecks & Risks</div>
-                {route.bottlenecks.map((b, i) => (
-                  <div key={i} className="journey-bottleneck">{b}</div>
-                ))}
-              </div>
-            )}
-
-            {route.bottlenecks.length === 0 && (
-              <div className="journey-no-bottlenecks">✓ No major bottlenecks on this route</div>
-            )}
-
-            {/* Seasonal warnings */}
-            {route.seasonalWarnings.length > 0 && (
-              <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
-                <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconCloudRain /> Seasonal Restrictions</div>
-                {route.seasonalWarnings.map((w, i) => (
-                  <div key={i} className="journey-bottleneck">{w}</div>
-                ))}
-              </div>
-            )}
-
-            {/* Mode-risk warning (direct + caravan empirical risk) — GM only, hidden in share mode */}
-            {!shareMode && (() => {
-              const modeRisk = computeModeRiskWarning(mode, supply)
-              if (!modeRisk) return null
-              return (
-                <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
-                  <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconWarning /> Mode Risk</div>
-                  <div className="journey-bottleneck">{modeRisk}</div>
-                </div>
-              )
-            })()}
-
-            {/* Encounter-density warning (sibling to mode risk) — GM only, hidden in share mode */}
-            {!shareMode && (() => {
-              const densityEncounters = generateEncounters(route, season, mode, edgeBiomes)
-              const densityWarning = computeEncounterDensityWarning(mode, densityEncounters)
-              if (!densityWarning) return null
-              return (
-                <div className="journey-bottlenecks" style={{ background: 'rgba(232, 200, 64, 0.06)', borderColor: 'rgba(232, 200, 64, 0.25)' }}>
-                  <div className="journey-bottlenecks-title" style={{ color: 'var(--color-port)' }}><IconWarning /> Encounter Density</div>
-                  <div className="journey-bottleneck">{densityWarning}</div>
-                </div>
-              )
-            })()}
-
-                {/* Path timeline */}
-            <div className="journey-route-path">
-              <div className="journey-path-line" />
-              {route.nodes.map((node, i) => (
-                <div key={node.id} className="journey-path-node">
-                  <div className={`journey-path-dot ${i === 0 ? 'start' : i === route.nodes.length - 1 ? 'end' : 'waypoint'}`} />
-                  <div className="journey-path-info">
-                    <span className="journey-path-name">
-                      <NodeIcon category={node.category} />
-                      {node.name}
-                    </span>
-                    {i < route.edges.length && (() => {
-                      const strait = straitAnnotation(node, route.nodes[i + 1])
-                      return (
-                        <span className="journey-path-edge">
-                          {route.edges[i].type === 'trade_route' && <IconScroll />}
-                          {route.edges[i].type === 'chokepoint' && <IconMountain />}
-                          {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
-                          {' '}{strait ? `⚓ ${strait} · ${route.edges[i].name}` : route.edges[i].name}
-                        </span>
-                      )
-                    })()}
-                  </div>
-                </div>
-              ))}
-            </div>
-              </>
+              <JourneyRouteTab
+                route={route}
+                mode={mode}
+                supply={supply}
+                season={season}
+                edgeBiomes={edgeBiomes}
+                shareMode={shareMode}
+              />
             )}
 
             {routeTab === 'days' && (
@@ -1271,91 +940,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             )}
 
             {!shareMode && routeTab === 'encounters' && (
-              <div className="journey-encounters">
-                {(() => {
-                  const encounters = generateEncounters(route, season, mode, edgeBiomes)
-                  const handleRoll = () => {
-                    if (route.edges.length === 0) return
-                    const edge = route.edges[selectedSegmentIdx] ?? route.edges[0]
-                    const edgeType = edge.type === 'civ_link' ? 'intra_civ' : edge.type as 'trade_route' | 'chokepoint' | 'intra_civ'
-                    const biome = edgeBiomes?.[selectedSegmentIdx] || selectedBiome || undefined
-                    const rolled = rollOneOff({ edgeType, season, biome })
-                    if (rolled) setOneOffRolls(prev => [rolled, ...prev])
-                  }
-                  const activeEdge = route.edges[selectedSegmentIdx] ?? route.edges[0]
-                  return (
-                    <>
-                      <div className="journey-encounters-header">
-                        <span className="journey-encounters-count">
-                          {encounters.length} beat{encounters.length !== 1 ? 's' : ''}
-                          {oneOffRolls.length > 0 && ` + ${oneOffRolls.length} impromptu`}
-                        </span>
-                        <button
-                          type="button"
-                          className="journey-encounter-roll-btn"
-                          onClick={handleRoll}
-                          title={`Roll for ${activeEdge?.name ?? 'current segment'} (${activeEdge?.type.replace('_', '-') ?? 'unknown'})`}
-                        >
-                          ⟳ Roll one-off
-                        </button>
-                      </div>
-                      {route.edges.length > 1 && (
-                        <div className="journey-segment-chips">
-                          {route.edges.map((edge, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              className={`journey-segment-chip ${i === selectedSegmentIdx ? 'active' : ''}`}
-                              onClick={() => setSelectedSegmentIdx(i)}
-                              title={`${edge.name} (${edge.type.replace('_', '-')})`}
-                            >
-                              {edge.type === 'trade_route' && <IconScroll />}
-                              {edge.type === 'chokepoint' && <IconMountain />}
-                              {(edge.type === 'intra_civ' || edge.type === 'civ_link') && <IconArrow />}
-                              <span className="journey-segment-chip-label">{edge.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      {oneOffRolls.map((enc, i) => (
-                        <div key={`oneoff-${oneOffRolls.length - i}`} className={`journey-encounter journey-encounter--impromptu ${enc.severity}`}>
-                          <div className="journey-encounter-meta">
-                            <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
-                            <span className="journey-encounter-type">{enc.type}</span>
-                            <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
-                            {enc.timeOfDay !== 'day' && (
-                              <span className={`journey-encounter-time ${enc.timeOfDay}`}>{TIME_OF_DAY_GLYPH[enc.timeOfDay]} {TIME_OF_DAY_LABELS[enc.timeOfDay]}</span>
-                            )}
-                            {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
-                            <span className="journey-encounter-segment journey-encounter-segment--impromptu">Impromptu</span>
-                          </div>
-                          <div className="journey-encounter-beat">{enc.beat}</div>
-                        </div>
-                      ))}
-                      {encounters.length === 0 && oneOffRolls.length === 0 && (
-                        <div className="journey-encounters-empty">No encounters generated. Try Roll one-off.</div>
-                      )}
-                      {encounters.map((enc, i) => (
-                        <div key={i} className={`journey-encounter ${enc.severity}`}>
-                          <div className="journey-encounter-meta">
-                            <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
-                            <span className="journey-encounter-type">{enc.type}</span>
-                            <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
-                            {enc.timeOfDay !== 'day' && (
-                              <span className={`journey-encounter-time ${enc.timeOfDay}`}>{TIME_OF_DAY_GLYPH[enc.timeOfDay]} {TIME_OF_DAY_LABELS[enc.timeOfDay]}</span>
-                            )}
-                            {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
-                            {route.edges[enc.segmentIdx] && (
-                              <span className="journey-encounter-segment">{route.edges[enc.segmentIdx].name}</span>
-                            )}
-                          </div>
-                          <div className="journey-encounter-beat">{enc.beat}</div>
-                        </div>
-                      ))}
-                    </>
-                  )
-                })()}
-              </div>
+              <JourneyEncountersTab
+                route={route}
+                season={season}
+                mode={mode}
+                edgeBiomes={edgeBiomes}
+                selectedBiome={selectedBiome}
+                selectedSegmentIdx={selectedSegmentIdx}
+                onSelectSegment={setSelectedSegmentIdx}
+                oneOffRolls={oneOffRolls}
+                onRollOneOff={(enc) => setOneOffRolls(prev => [enc, ...prev])}
+              />
             )}
           </div>
         )}

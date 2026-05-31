@@ -59,6 +59,17 @@ function supplyEquals(a: SupplyConfig, b: SupplyConfig): boolean {
   )
 }
 
+/** Default group name for journeys with no explicit party (Tier 2c). */
+export const DEFAULT_PARTY_NAME = 'Main party'
+const MAX_PARTY_NAME_LEN = 60
+
+/** Trim + length-cap a party name; blank / non-string falls back to the default. */
+export function sanitizePartyName(raw: unknown): string {
+  if (typeof raw !== 'string') return DEFAULT_PARTY_NAME
+  const trimmed = raw.trim().slice(0, MAX_PARTY_NAME_LEN)
+  return trimmed || DEFAULT_PARTY_NAME
+}
+
 const STORAGE_KEY = 'veydria.journeys.v1'
 const LEGACY_KEY = 'veydria-journey-history'
 const MAX_ENTRIES = 20
@@ -81,6 +92,8 @@ export interface SavedJourney {
   seasonalWarnings: string[]
   party?: PartyConfig
   supply?: SupplyConfig
+  /** Multi-party tracking (Tier 2c). Backfills to "Main party" on load. */
+  partyName?: string
 }
 
 function makeDefaultName(from: string, to: string, waypoints: string[]): string {
@@ -131,6 +144,7 @@ function migrateFromLegacy(): SavedJourney[] | null {
           : [],
         party: sanitizeParty(e.party),
         supply: sanitizeSupply(e.supply),
+        partyName: sanitizePartyName(e.partyName),
       }))
     return migrated
   } catch {
@@ -144,11 +158,12 @@ export function loadSavedJourneys(): SavedJourney[] {
     if (raw) {
       const parsed = JSON.parse(raw) as SavedJourney[]
       if (!Array.isArray(parsed)) return []
-      // Backfill party + supply for entries written before those fields existed.
+      // Backfill party + supply + partyName for entries written before those fields existed.
       return parsed.map(e => ({
         ...e,
         party: sanitizeParty(e.party),
         supply: sanitizeSupply(e.supply),
+        partyName: sanitizePartyName(e.partyName),
       }))
     }
     // No v1 data — attempt one-time migration from legacy key
@@ -172,16 +187,20 @@ export function saveJourneys(entries: SavedJourney[]) {
 
 export function addSavedJourney(entry: SavedJourney): SavedJourney[] {
   const existing = loadSavedJourneys()
-  // Prevent exact duplicates (same nodeIds + season + mode + party + supply)
+  // Prevent exact duplicates (same nodeIds + season + mode + party + supply +
+  // partyName). partyName is part of the key so the same route saved under two
+  // different parties stays as two distinct entries (Tier 2c split-party play).
   const entryParty = sanitizeParty(entry.party)
   const entrySupply = sanitizeSupply(entry.supply)
+  const entryPartyName = sanitizePartyName(entry.partyName)
   const duplicateIndex = existing.findIndex(
     e =>
       JSON.stringify(e.nodeIds) === JSON.stringify(entry.nodeIds) &&
       e.season === entry.season &&
       e.mode === entry.mode &&
       partyEquals(sanitizeParty(e.party), entryParty) &&
-      supplyEquals(sanitizeSupply(e.supply), entrySupply)
+      supplyEquals(sanitizeSupply(e.supply), entrySupply) &&
+      sanitizePartyName(e.partyName) === entryPartyName
   )
   if (duplicateIndex >= 0) {
     // Move to front (most recent)
@@ -220,4 +239,30 @@ export function renameSavedJourney(id: string, name: string): SavedJourney[] {
 export function clearSavedJourneys(): SavedJourney[] {
   saveJourneys([])
   return []
+}
+
+/**
+ * Distinct party names across the given journeys, ordered by the most recent
+ * save in each group (newest first), ties broken alphabetically. Names are
+ * coalesced through sanitizePartyName so legacy/blank entries fold into
+ * "Main party". Used to populate the Active-party dropdown (Tier 2c).
+ */
+export function listPartyNames(journeys: SavedJourney[]): string[] {
+  const newest = new Map<string, number>()
+  for (const j of journeys) {
+    const name = sanitizePartyName(j.partyName)
+    const at = typeof j.savedAt === 'number' ? j.savedAt : 0
+    const prev = newest.get(name)
+    if (prev === undefined || at > prev) newest.set(name, at)
+  }
+  return [...newest.keys()].sort((a, b) => {
+    const diff = (newest.get(b) ?? 0) - (newest.get(a) ?? 0)
+    return diff !== 0 ? diff : a.localeCompare(b)
+  })
+}
+
+/** Journeys belonging to a given party name (coalesced through the default). */
+export function journeysForParty(journeys: SavedJourney[], partyName: string): SavedJourney[] {
+  const target = sanitizePartyName(partyName)
+  return journeys.filter(j => sanitizePartyName(j.partyName) === target)
 }

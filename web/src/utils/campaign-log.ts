@@ -9,7 +9,7 @@ import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyEdge } from '
 import { getRouteDifficulty, isDefaultParty, describeParty } from './journey-graph'
 import { buildDailyBreakdown } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
-import type { SavedJourney } from './journey-saved'
+import { listPartyNames, journeysForParty, type SavedJourney } from './journey-saved'
 import type { MapAnnotation } from './annotations'
 import { hasCrisis, formatCrisisRef } from './calendar'
 import type { SupplyConfig } from './journey-supply'
@@ -209,26 +209,33 @@ export function generateCampaignLog(input: CampaignLogInput): string {
 
   if (savedJourneys.length > 0) {
     md += `## Saved Journeys (${savedJourneys.length})\n\n`
-    for (let i = 0; i < savedJourneys.length; i++) {
-      const sj = savedJourneys[i]
-      md += `### ${i + 1}. ${sj.name || `${sj.fromName} → ${sj.toName}`}\n\n`
-      md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
-      if (sj.season) md += ` · **Season:** ${sj.season}`
-      if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${describeParty(sj.party)}`
-      if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${describeSupply(sj.supply)}`
-      md += `\n`
-      if (sj.waypoints.length > 0) {
-        md += `- **Path:** ${sj.fromName} → ${sj.waypoints.join(' → ')} → ${sj.toName}\n`
-      } else {
-        md += `- **Path:** ${sj.fromName} → ${sj.toName}\n`
+    // Group by party name (Tier 2c). Groups ordered by most-recent save; each
+    // group's journeys keep their stored order (most-recent first). Legacy
+    // entries with no partyName fold into "Main party".
+    for (const partyName of listPartyNames(savedJourneys)) {
+      const group = journeysForParty(savedJourneys, partyName)
+      md += `### ${partyName}\n\n`
+      for (let i = 0; i < group.length; i++) {
+        const sj = group[i]
+        md += `#### ${i + 1}. ${sj.name || `${sj.fromName} → ${sj.toName}`}\n\n`
+        md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
+        if (sj.season) md += ` · **Season:** ${sj.season}`
+        if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${describeParty(sj.party)}`
+        if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${describeSupply(sj.supply)}`
+        md += `\n`
+        if (sj.waypoints.length > 0) {
+          md += `- **Path:** ${sj.fromName} → ${sj.waypoints.join(' → ')} → ${sj.toName}\n`
+        } else {
+          md += `- **Path:** ${sj.fromName} → ${sj.toName}\n`
+        }
+        if (sj.bottlenecks.length > 0) {
+          md += `- **Bottlenecks:** ${sj.bottlenecks.join('; ')}\n`
+        }
+        if (sj.seasonalWarnings.length > 0) {
+          md += `- **Seasonal warnings:** ${sj.seasonalWarnings.join('; ')}\n`
+        }
+        md += `\n`
       }
-      if (sj.bottlenecks.length > 0) {
-        md += `- **Bottlenecks:** ${sj.bottlenecks.join('; ')}\n`
-      }
-      if (sj.seasonalWarnings.length > 0) {
-        md += `- **Seasonal warnings:** ${sj.seasonalWarnings.join('; ')}\n`
-      }
-      md += `\n`
     }
     md += `---\n\n`
   }

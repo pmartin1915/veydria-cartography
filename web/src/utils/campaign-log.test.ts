@@ -243,14 +243,40 @@ describe('campaign-log', () => {
         annotations: [],
       })
       expect(md).toContain('## Saved Journeys (2)')
-      expect(md).toContain('### 1. Oravan → Qollari')
-      expect(md).toContain('### 2. The Long March')
+      // Tier 2c: journeys group under their party name (default "Main party").
+      expect(md).toContain('### Main party')
+      expect(md).toContain('#### 1. Oravan → Qollari')
+      expect(md).toContain('#### 2. The Long March')
       expect(md).toContain('**Distance:** 800 km')
       expect(md).toContain('~18 days')
       expect(md).toContain('**Mode:** safest')
       expect(md).toContain('**Season:** winter')
       expect(md).toContain('- **Bottlenecks:** Avalanche zone')
       expect(md).toContain('- **Seasonal warnings:** Ice sheets')
+    })
+
+    it('groups saved journeys under party-name headings (Tier 2c)', () => {
+      const md = generateCampaignLog({
+        savedJourneys: [
+          makeSavedJourney({ id: 'a', fromName: 'Oravan', toName: 'Qollari', partyName: 'Scouts', savedAt: 2000 }),
+          makeSavedJourney({ id: 'b', fromName: 'A', toName: 'B', name: 'Caravan run', partyName: 'Baggage train', savedAt: 1000 }),
+          makeSavedJourney({ id: 'c', fromName: 'X', toName: 'Y', name: 'Legacy trip', savedAt: 1500 }),
+        ],
+        annotations: [],
+      })
+      expect(md).toContain('## Saved Journeys (3)')
+      // Each distinct party becomes its own heading; the untagged entry folds
+      // into "Main party".
+      expect(md).toContain('### Scouts')
+      expect(md).toContain('### Baggage train')
+      expect(md).toContain('### Main party')
+      // Groups are ordered by most-recent save: Scouts (2000) before Main party
+      // (1500) before Baggage train (1000).
+      expect(md.indexOf('### Scouts')).toBeLessThan(md.indexOf('### Main party'))
+      expect(md.indexOf('### Main party')).toBeLessThan(md.indexOf('### Baggage train'))
+      // Numbering restarts within each single-journey group.
+      expect(md).toContain('#### 1. Caravan run')
+      expect(md).toContain('#### 1. Legacy trip')
     })
 
     it('renders saved journey path with waypoints', () => {

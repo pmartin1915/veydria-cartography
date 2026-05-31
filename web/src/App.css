@@ -3649,6 +3649,30 @@ body {
   flex-shrink: 0;
 }
 
+/* Active-party selector (Tier 2c) — accent-tinted so it reads as ambient
+   campaign state, distinct from the From/To route pickers below it. */
+.journey-party-select .journey-dropdown-trigger {
+  background: rgba(196, 168, 98, 0.1);
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+  font-weight: 600;
+}
+
+.journey-party-select .journey-dropdown-trigger:hover {
+  background: rgba(196, 168, 98, 0.16);
+  border-color: var(--border-accent);
+}
+
+.journey-party-select .journey-dropdown-arrow {
+  color: var(--text-accent);
+}
+
+/* "+ New party" set apart from the existing party rows above it. */
+.journey-party-add {
+  color: var(--text-accent);
+  border-top: 1px solid var(--border-subtle);
+}
+
 /* Swap */
 .journey-swap-row {
   display: flex;
