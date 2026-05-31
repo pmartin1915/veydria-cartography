@@ -12,8 +12,10 @@ interface ActivePartySelectProps {
 /**
  * Top-of-planner "Active party" picker (Tier 2c, split-party play). Switching a
  * party loads that party's saved journeys; "+ New party" names a fresh group
- * that the next Save will be tagged with. Reuses the existing journey-dropdown
- * styling. Owns its own open / create-draft state and outside-click close.
+ * that the next Save will be tagged with. Built on the journey-dropdown markup
+ * but carries a scoped accent (`.journey-party-select`, see App.css) so it reads
+ * as ambient campaign state, not a From/To route input. Owns its own open /
+ * create-draft state and outside-click close.
  */
 export default function ActivePartySelect({ activePartyName, partyNames, onSwitch, onCreate }: ActivePartySelectProps) {
   const [open, setOpen] = useState(false)
@@ -42,7 +44,7 @@ export default function ActivePartySelect({ activePartyName, partyNames, onSwitc
   }
 
   return (
-    <div className="journey-field" ref={ref}>
+    <div className="journey-field journey-party-select" ref={ref}>
       <label className="journey-field-label">Active party</label>
       <div className="journey-dropdown">
         <button
