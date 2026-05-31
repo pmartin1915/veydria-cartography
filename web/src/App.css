@@ -286,6 +286,96 @@ body {
   font-family: var(--font-body);
 }
 
+/* --- Share popover (player-facing share menu) --- */
+.share-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.share-popover {
+  position: fixed;
+  z-index: 1600;
+  width: min(280px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-body);
+  animation: share-popover-in 120ms ease-out;
+}
+
+@keyframes share-popover-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.share-popover-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-port);
+  letter-spacing: 0.3px;
+}
+
+.share-popover-desc {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.share-popover-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.share-popover-action:hover {
+  border-color: var(--color-port);
+  background: var(--bg-card-hover);
+  color: var(--color-port);
+}
+
+.share-popover-action svg { flex-shrink: 0; }
+
+.share-popover-action-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-popover-action-label {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.share-popover-action-hint {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.share-popover-foot {
+  margin: 12px 0 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.share-popover-foot strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
 /* --- Main Area --- */
 .app-main {
   flex: 1;
