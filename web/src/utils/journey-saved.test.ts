@@ -6,6 +6,10 @@ import {
   deleteSavedJourney,
   renameSavedJourney,
   clearSavedJourneys,
+  listPartyNames,
+  journeysForParty,
+  sanitizePartyName,
+  DEFAULT_PARTY_NAME,
   type SavedJourney,
 } from './journey-saved'
 import { DEFAULT_PARTY } from './journey-graph'
@@ -47,6 +51,7 @@ function makeJourney(overrides: Partial<SavedJourney> = {}): SavedJourney {
     seasonalWarnings: [],
     party: DEFAULT_PARTY,
     supply: DEFAULT_SUPPLY,
+    partyName: DEFAULT_PARTY_NAME,
     ...overrides,
   }
 }
@@ -256,6 +261,65 @@ describe('journey-saved', () => {
       const result = clearSavedJourneys()
       expect(result).toEqual([])
       expect(loadSavedJourneys()).toEqual([])
+    })
+  })
+
+  describe('multi-party (Tier 2c)', () => {
+    it('sanitizePartyName trims, caps length, and defaults blanks to "Main party"', () => {
+      expect(sanitizePartyName(undefined)).toBe(DEFAULT_PARTY_NAME)
+      expect(sanitizePartyName('')).toBe(DEFAULT_PARTY_NAME)
+      expect(sanitizePartyName('   ')).toBe(DEFAULT_PARTY_NAME)
+      expect(sanitizePartyName(42)).toBe(DEFAULT_PARTY_NAME)
+      expect(sanitizePartyName('  Scouts  ')).toBe('Scouts')
+      expect(sanitizePartyName('x'.repeat(80))).toHaveLength(60)
+    })
+
+    it('backfills partyName to "Main party" for entries written before the field existed', () => {
+      const legacy = makeJourney({ id: 'old' })
+      delete (legacy as Partial<SavedJourney>).partyName
+      localStorage.setItem('veydria.journeys.v1', JSON.stringify([legacy]))
+      expect(loadSavedJourneys()[0].partyName).toBe(DEFAULT_PARTY_NAME)
+    })
+
+    it('persists an explicit partyName through a save/load round-trip', () => {
+      addSavedJourney(makeJourney({ id: 'a', partyName: 'Scouts' }))
+      expect(loadSavedJourneys()[0].partyName).toBe('Scouts')
+    })
+
+    it('treats the same route under two party names as distinct entries', () => {
+      addSavedJourney(makeJourney({ id: 'a', partyName: 'Main party' }))
+      const after = addSavedJourney(makeJourney({ id: 'b', partyName: 'Scouts' }))
+      expect(after).toHaveLength(2)
+    })
+
+    it('still de-dupes the same route under the same party name', () => {
+      addSavedJourney(makeJourney({ id: 'a', partyName: 'Scouts' }))
+      const after = addSavedJourney(makeJourney({ id: 'b', partyName: 'Scouts' }))
+      expect(after).toHaveLength(1)
+    })
+
+    it('listPartyNames returns distinct names ordered by most-recent save', () => {
+      const journeys = [
+        makeJourney({ id: 'a', partyName: 'Scouts', savedAt: 3000, nodeIds: ['a', 'b'] }),
+        makeJourney({ id: 'b', partyName: 'Baggage', savedAt: 1000, nodeIds: ['c', 'd'] }),
+        makeJourney({ id: 'c', partyName: 'Scouts', savedAt: 2000, nodeIds: ['e', 'f'] }),
+      ]
+      expect(listPartyNames(journeys)).toEqual(['Scouts', 'Baggage'])
+    })
+
+    it('listPartyNames folds untagged entries into "Main party"', () => {
+      const j = makeJourney({ id: 'a' })
+      delete (j as Partial<SavedJourney>).partyName
+      expect(listPartyNames([j])).toEqual([DEFAULT_PARTY_NAME])
+    })
+
+    it('journeysForParty filters by name, coalescing the default', () => {
+      const tagged = makeJourney({ id: 'a', partyName: 'Scouts', nodeIds: ['a', 'b'] })
+      const untagged = makeJourney({ id: 'b', nodeIds: ['c', 'd'] })
+      delete (untagged as Partial<SavedJourney>).partyName
+      const all = [tagged, untagged]
+      expect(journeysForParty(all, 'Scouts').map(j => j.id)).toEqual(['a'])
+      expect(journeysForParty(all, DEFAULT_PARTY_NAME).map(j => j.id)).toEqual(['b'])
     })
   })
 })

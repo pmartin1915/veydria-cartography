@@ -130,7 +130,7 @@ These are the features that make the tool feel *essential* rather than nice-to-h
 
 **Size:** ~1 session. Mostly auditing and adding tests.
 
-### 2c. Multi-party tracking
+### 2c. Multi-party tracking — ✅ SHIPPED 2026-05-31
 
 **Why:** "We split the party" is a GM headache. Letting the tool track multiple parties on different routes (or stationary) makes session prep for split-group play tractable.
 
@@ -154,7 +154,18 @@ These are the features that make the tool feel *essential* rather than nice-to-h
 
 Pay this down *before* a big feature add, not as a standalone exercise. Invisible to the user but pays dividends every future cycle.
 
-### 3a. Split `JourneyPlanner.tsx` (1526 lines)
+### 3a. Split `JourneyPlanner.tsx` — ✅ pragmatic finish SHIPPED 2026-05-31
+
+Container went 1448 → ~890 lines. Extracted into `journey-planner/`: `SavedJourneysPanel`,
+`JourneyControls` (season/mode/Find-Clear/options drawer), `JourneyResults` (stats/difficulty/
+comparison cards), `JourneyRouteTab`, `JourneyEncountersTab`, plus a shared `NodeIcon`
+(joining the already-extracted PartyConfig/SupplyConfig/JourneyDaysTab). **Deliberately left
+inline** (per the "don't try for the full 8-file split" note below): the stateful container
+itself, the ref-entangled From/Swap/To/waypoint dropdowns, and a `useJourneyState` hook — the
+last two are high-churn for low payoff. Export surface (`<JourneyPlanner>`) unchanged; all
+tests pass without modification.
+
+#### Original plan — `JourneyPlanner.tsx` (1526 lines)
 
 The component now owns: season, mode, party, waypoints, comparison, departure date, saved journeys, annotations panel, 3 tabs, 4 export formats, 2 collapsible sub-panels. It's the spine of the app and also its biggest file.
 

@@ -229,4 +229,30 @@ describe('url-hash', () => {
       expect(parsed.fog).toBeUndefined()
     })
   })
+
+  describe('active party (Tier 2c)', () => {
+    it('round-trips a non-default party name', () => {
+      const hash = buildHash({ party: 'Scouts' })
+      expect(hash).toContain('party=Scouts')
+      expect(parseHash(hash).party).toBe('Scouts')
+    })
+
+    it('omits the default "Main party"', () => {
+      expect(buildHash({ party: 'Main party' })).not.toContain('party=')
+    })
+
+    it('omits empty / whitespace-only names', () => {
+      expect(buildHash({ party: '' })).not.toContain('party=')
+      expect(buildHash({ party: '   ' })).not.toContain('party=')
+    })
+
+    it('trims and length-caps on both build and parse', () => {
+      expect(parseHash('#party=%20%20Baggage%20train%20%20').party).toBe('Baggage train')
+      expect(parseHash(`#party=${'x'.repeat(80)}`).party).toHaveLength(60)
+    })
+
+    it('parseHash without party leaves it undefined', () => {
+      expect(parseHash('#share=1').party).toBeUndefined()
+    })
+  })
 })
