@@ -92,9 +92,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [season, setSeason] = useState<Season | undefined>(defaultSeason)
   const [mode, setMode] = useState<RouteMode>(defaultMode ?? 'direct')
   const [party, setParty] = useState<PartyConfig>(defaultParty ?? DEFAULT_PARTY)
-  const [partyOpen, setPartyOpen] = useState(false)
+  // Party/Supply live inside the collapsed "Party, supply & options" drawer
+  // (see optionsOpen below). Their inner toggles default OPEN so opening the
+  // drawer reveals their controls immediately; the toggles remain as
+  // height-management affordances within the drawer.
+  const [partyOpen, setPartyOpen] = useState(true)
   const [supply, setSupply] = useState<SupplyConfig>(defaultSupply ?? DEFAULT_SUPPLY)
-  const [supplyOpen, setSupplyOpen] = useState(false)
+  const [supplyOpen, setSupplyOpen] = useState(true)
   const [waypoints, setWaypoints] = useState<string[]>([])
   const [wpSearch, setWpSearch] = useState('')
   const [wpOpenIdx, setWpOpenIdx] = useState<number | null>(null)
@@ -112,6 +116,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
   const [highlightCrisisEvents, setHighlightCrisisEvents] = useState(false)
+  // "Party, supply & options" drawer — closed by default so the primary route
+  // inputs (From/To/season/mode/Find) and the route tabs surface without
+  // scrolling past the bulky config sections.
+  const [optionsOpen, setOptionsOpen] = useState(false)
   // Reset impromptu rolls and segment selection whenever the route identity
   // changes — they're mid-session state bound to a specific trip.
   const routeSig = route ? route.nodes.map(n => n.id).join('|') : ''
@@ -627,142 +635,6 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       )}
 
       <div className="journey-planner-body">
-        {/* Season selector */}
-        <div className="journey-seasons">
-          <span className="journey-seasons-label">Season</span>
-          <div className="journey-seasons-row">
-            <button
-              className={`journey-season-btn ${season === undefined ? 'active' : ''}`}
-              onClick={() => handleSeasonChange(undefined)}
-              title="All seasons"
-            >
-              <IconCalendar /> Any
-            </button>
-            {SEASONS.map(s => (
-              <button
-                key={s.key}
-                className={`journey-season-btn ${season === s.key ? 'active' : ''}`}
-                onClick={() => handleSeasonChange(s.key)}
-                title={s.label}
-              >
-                {s.icon} {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Route mode selector — recommends `safest` (badge on the recommended
-            button) when Mode Risk or Encounter Density predicates fire. GM-only;
-            shareMode users see the bare selector. */}
-        {(() => {
-          const recEncounters = (!shareMode && route)
-            ? generateEncounters(route, season, mode, edgeBiomes)
-            : []
-          const rec = !shareMode ? computeRecommendedMode(mode, supply, recEncounters) : null
-          return (
-            <div className="journey-modes">
-              <span className="journey-modes-label">Route priority</span>
-              <div className="journey-modes-row">
-                {MODES.map(m => {
-                  const isRecommended = rec !== null && rec.mode === m.key && rec.mode !== mode
-                  return (
-                    <button
-                      key={m.key}
-                      className={`journey-mode-btn ${mode === m.key ? 'active' : ''} ${isRecommended ? 'recommended' : ''}`}
-                      onClick={() => handleModeChange(m.key)}
-                      title={isRecommended ? `Recommended: ${rec!.reason}` : m.desc}
-                    >
-                      {m.label}
-                      {isRecommended && <span className="journey-mode-rec-badge">Recommended</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
-
-        <PartyConfigBlock
-          party={party}
-          open={partyOpen}
-          onToggleOpen={() => setPartyOpen(o => !o)}
-          onChange={handlePartyChange}
-        />
-
-        <SupplyConfigBlock
-          supply={supply}
-          open={supplyOpen}
-          onToggleOpen={() => setSupplyOpen(o => !o)}
-          onChange={handleSupplyChange}
-        />
-
-        {/* Compare routes toggle */}
-        {!shareMode && waypoints.length === 0 && (
-          <div className="journey-compare-toggle">
-            <button
-              className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
-              onClick={() => setCompareMode(prev => !prev)}
-              title="Overlay Direct, Safest, and Cheapest routes on the map"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 20V10M12 20V4M6 20v-6" />
-              </svg>
-              <span>Compare routes</span>
-            </button>
-          </div>
-        )}
-
-        {/* Departure day-of-year */}
-        {!shareMode && (
-          <div className="journey-departure">
-            <label className="journey-departure-label">Departure</label>
-            <div className="journey-departure-row">
-              <input
-                type="range"
-                min={1}
-                max={365}
-                value={departureDayOfYear ?? 1}
-                onChange={(e) => setDepartureDayOfYear(Number(e.target.value))}
-                className="journey-departure-slider"
-                disabled={departureDayOfYear === undefined}
-              />
-              <button
-                className={`journey-departure-toggle ${departureDayOfYear !== undefined ? 'active' : ''}`}
-                onClick={() => setDepartureDayOfYear(prev => prev === undefined ? 120 : undefined)}
-                title={departureDayOfYear !== undefined ? 'Clear departure date' : 'Set departure date for calendar events'}
-              >
-                {departureDayOfYear !== undefined ? formatDayOfYear(departureDayOfYear) : 'Any'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Calendar event legend */}
-        {departureDayOfYear !== undefined && (
-          <div className="journey-calendar-legend">
-            <div className="journey-calendar-legend-header">
-              <span className="journey-calendar-legend-label">Event key</span>
-              <button
-                type="button"
-                className={`journey-calendar-legend-toggle ${highlightCrisisEvents ? 'active' : ''}`}
-                onClick={() => setHighlightCrisisEvents(v => !v)}
-                title="Highlight events that are crisis leverage windows"
-              >
-                ⚡ Crisis
-              </button>
-            </div>
-            <div className="journey-calendar-legend-grid">
-              {(Object.keys(CALENDAR_EVENT_COLORS) as CalendarEventType[]).map(type => (
-                <div key={type} className="journey-calendar-legend-item" title={type}>
-                  <span className="journey-calendar-legend-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[type] }} />
-                  <span className="journey-calendar-legend-icon">{CALENDAR_EVENT_ICONS[type]}</span>
-                  <span className="journey-calendar-legend-name">{type}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Start selector */}
         <div className="journey-field" ref={startRef}>
           <label className="journey-field-label">From</label>
@@ -958,6 +830,61 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           + Add waypoint
         </button>
 
+        {/* Season selector */}
+        <div className="journey-seasons">
+          <span className="journey-seasons-label">Season</span>
+          <div className="journey-seasons-row">
+            <button
+              className={`journey-season-btn ${season === undefined ? 'active' : ''}`}
+              onClick={() => handleSeasonChange(undefined)}
+              title="All seasons"
+            >
+              <IconCalendar /> Any
+            </button>
+            {SEASONS.map(s => (
+              <button
+                key={s.key}
+                className={`journey-season-btn ${season === s.key ? 'active' : ''}`}
+                onClick={() => handleSeasonChange(s.key)}
+                title={s.label}
+              >
+                {s.icon} {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Route mode selector — recommends `safest` (badge on the recommended
+            button) when Mode Risk or Encounter Density predicates fire. GM-only;
+            shareMode users see the bare selector. */}
+        {(() => {
+          const recEncounters = (!shareMode && route)
+            ? generateEncounters(route, season, mode, edgeBiomes)
+            : []
+          const rec = !shareMode ? computeRecommendedMode(mode, supply, recEncounters) : null
+          return (
+            <div className="journey-modes">
+              <span className="journey-modes-label">Route priority</span>
+              <div className="journey-modes-row">
+                {MODES.map(m => {
+                  const isRecommended = rec !== null && rec.mode === m.key && rec.mode !== mode
+                  return (
+                    <button
+                      key={m.key}
+                      className={`journey-mode-btn ${mode === m.key ? 'active' : ''} ${isRecommended ? 'recommended' : ''}`}
+                      onClick={() => handleModeChange(m.key)}
+                      title={isRecommended ? `Recommended: ${rec!.reason}` : m.desc}
+                    >
+                      {m.label}
+                      {isRecommended && <span className="journey-mode-rec-badge">Recommended</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Actions */}
         <div className="journey-actions">
           <button
@@ -974,6 +901,106 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           >
             Clear
           </button>
+        </div>
+
+        {/* Party, supply & options — bulky config folded into a collapsed
+            drawer so the primary route inputs + Route/Days/Encounters tabs
+            surface without scrolling. Each inner section keeps its existing
+            shareMode / departure gating unchanged. */}
+        <div className="journey-options-drawer">
+          <button
+            type="button"
+            className={`journey-options-header ${optionsOpen ? 'open' : ''}`}
+            onClick={() => setOptionsOpen(o => !o)}
+            aria-expanded={optionsOpen}
+          >
+            <span className={`journey-options-chevron ${optionsOpen ? '' : 'collapsed'}`}>▾</span>
+            <span className="journey-options-title">Party, supply &amp; options</span>
+          </button>
+          {optionsOpen && (
+            <div className="journey-options-body">
+              <PartyConfigBlock
+                party={party}
+                open={partyOpen}
+                onToggleOpen={() => setPartyOpen(o => !o)}
+                onChange={handlePartyChange}
+              />
+
+              <SupplyConfigBlock
+                supply={supply}
+                open={supplyOpen}
+                onToggleOpen={() => setSupplyOpen(o => !o)}
+                onChange={handleSupplyChange}
+              />
+
+              {/* Compare routes toggle */}
+              {!shareMode && waypoints.length === 0 && (
+                <div className="journey-compare-toggle">
+                  <button
+                    className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
+                    onClick={() => setCompareMode(prev => !prev)}
+                    title="Overlay Direct, Safest, and Cheapest routes on the map"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                    <span>Compare routes</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Departure day-of-year */}
+              {!shareMode && (
+                <div className="journey-departure">
+                  <label className="journey-departure-label">Departure</label>
+                  <div className="journey-departure-row">
+                    <input
+                      type="range"
+                      min={1}
+                      max={365}
+                      value={departureDayOfYear ?? 1}
+                      onChange={(e) => setDepartureDayOfYear(Number(e.target.value))}
+                      className="journey-departure-slider"
+                      disabled={departureDayOfYear === undefined}
+                    />
+                    <button
+                      className={`journey-departure-toggle ${departureDayOfYear !== undefined ? 'active' : ''}`}
+                      onClick={() => setDepartureDayOfYear(prev => prev === undefined ? 120 : undefined)}
+                      title={departureDayOfYear !== undefined ? 'Clear departure date' : 'Set departure date for calendar events'}
+                    >
+                      {departureDayOfYear !== undefined ? formatDayOfYear(departureDayOfYear) : 'Any'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar event legend */}
+              {departureDayOfYear !== undefined && (
+                <div className="journey-calendar-legend">
+                  <div className="journey-calendar-legend-header">
+                    <span className="journey-calendar-legend-label">Event key</span>
+                    <button
+                      type="button"
+                      className={`journey-calendar-legend-toggle ${highlightCrisisEvents ? 'active' : ''}`}
+                      onClick={() => setHighlightCrisisEvents(v => !v)}
+                      title="Highlight events that are crisis leverage windows"
+                    >
+                      ⚡ Crisis
+                    </button>
+                  </div>
+                  <div className="journey-calendar-legend-grid">
+                    {(Object.keys(CALENDAR_EVENT_COLORS) as CalendarEventType[]).map(type => (
+                      <div key={type} className="journey-calendar-legend-item" title={type}>
+                        <span className="journey-calendar-legend-dot" style={{ backgroundColor: CALENDAR_EVENT_COLORS[type] }} />
+                        <span className="journey-calendar-legend-icon">{CALENDAR_EVENT_ICONS[type]}</span>
+                        <span className="journey-calendar-legend-name">{type}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Route results */}

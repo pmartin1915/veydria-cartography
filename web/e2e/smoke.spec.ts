@@ -99,11 +99,27 @@ test('mounting the party reduces estimated travel days', async ({ page }) => {
   const daysFoot = parseDays(await estDays.textContent())
   expect(daysFoot).toBeGreaterThan(0)
 
-  await page.locator('.journey-party-toggle').click()
+  // Party config now lives inside the collapsed "Party, supply & options"
+  // drawer; open it first. Its inner toggle defaults open, so the mount
+  // buttons are visible immediately once the drawer is expanded.
+  await page.getByRole('button', { name: 'Party, supply & options' }).click()
   await page.getByTestId('mount-mounted').click()
 
   // Route recomputes on party change; poll until the estimate drops.
   await expect.poll(async () => parseDays(await estDays.textContent())).toBeLessThan(daysFoot)
+})
+
+test('config drawer is collapsed on load and opens on click', async ({ page }) => {
+  await page.goto('/')
+  await openPlanner(page)
+
+  // The bulky config (party/supply/options) is folded away by default, so the
+  // primary route inputs and tabs surface first. Party controls aren't rendered
+  // until the drawer is opened.
+  await expect(page.getByTestId('mount-foot')).toBeHidden()
+
+  await page.getByRole('button', { name: 'Party, supply & options' }).click()
+  await expect(page.getByTestId('mount-foot')).toBeVisible()
 })
 
 test('saving a journey persists across reload', async ({ page }) => {
