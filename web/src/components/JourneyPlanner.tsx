@@ -385,11 +385,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     }
   }
 
-  async function handleCopyMarkdown() {
+  // playerSafe strips GM-only content (encounters, mode-risk/density warnings,
+  // GM notes) — exactly what the share-mode UI hides. The "Markdown" button
+  // tracks shareMode (GM gets the full doc, a player on a share link gets the
+  // stripped one); the "Player MD" button forces playerSafe so a GM can copy a
+  // handout to give players without leaving GM mode.
+  async function copyRouteMarkdown(playerSafe: boolean) {
     if (!route) return
-    // playerSafe mirrors the share-mode UI: when a player opens a share link and
-    // exports, GM-only content (encounters, mode-risk/density warnings, GM notes)
-    // is stripped. The GM's own export (shareMode === false) stays full.
     const md = buildRouteMarkdown({
       route,
       season,
@@ -400,12 +402,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       departureDayOfYear,
       annotations,
       sourceUrl: window.location.href.split('#')[0],
-      playerSafe: shareMode,
+      playerSafe,
     })
 
     try {
       await navigator.clipboard.writeText(md)
-      showExportToast(shareMode ? 'Player markdown copied to clipboard' : 'Markdown copied to clipboard')
+      showExportToast(playerSafe ? 'Player handout copied to clipboard' : 'Markdown copied to clipboard')
     } catch {
       showExportToast('Failed to copy markdown')
     }
@@ -996,10 +998,20 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 Link
               </button>
-              <button className="journey-export-btn" onClick={handleCopyMarkdown} title="Copy as markdown">
+              <button className="journey-export-btn" onClick={() => copyRouteMarkdown(shareMode)} title="Copy as markdown">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 Markdown
               </button>
+              {!shareMode && (
+                <button
+                  className="journey-export-btn"
+                  onClick={() => copyRouteMarkdown(true)}
+                  title="Copy a player-safe handout of this route — no encounters, GM warnings, or GM notes. Paste it into Discord or a VTT."
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg>
+                  Player MD
+                </button>
+              )}
               <button className="journey-export-btn" onClick={handleCopyJSON} title="Copy route JSON">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                 JSON

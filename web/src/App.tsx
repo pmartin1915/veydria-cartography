@@ -208,6 +208,37 @@ function App() {
   const [prepDoneIds, setPrepDoneIds] = useState<string[]>(() => getPrepDoneIds())
   const [sessionActive, setSessionActive] = useState<boolean>(() => isSessionActive())
   const [compendiumOpen, setCompendiumOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  // The popover is position:fixed (anchored to the trigger's measured rect) so it
+  // escapes the toolbar's `overflow-x: auto` clipping; it stays a DOM child of
+  // .share-menu, so the click-outside check below still works.
+  const [sharePos, setSharePos] = useState<{ top: number; right: number } | null>(null)
+  const shareMenuRef = useRef<HTMLDivElement>(null)
+  const toggleShare = useCallback(() => {
+    setShareOpen(prev => {
+      if (!prev && shareMenuRef.current) {
+        const r = shareMenuRef.current.getBoundingClientRect()
+        setSharePos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) })
+      }
+      return !prev
+    })
+  }, [])
+  // Close the share popover on outside click or Escape.
+  useEffect(() => {
+    if (!shareOpen) return
+    function onDown(e: MouseEvent) {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) setShareOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShareOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shareOpen])
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -1285,19 +1316,52 @@ function App() {
             </button>
           )}
           {!shareMode && (
-            <button
-              className="search-trigger"
-              data-tour="share"
-              onClick={() => handleShare(true)}
-              title="Copy a player-facing link (hides annotations and encounters)"
-              id="player-share-trigger"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
-              </svg>
-              <span>Player Link</span>
-            </button>
+            <div className="share-menu" ref={shareMenuRef}>
+              <button
+                className={`search-trigger ${shareOpen ? 'active' : ''}`}
+                data-tour="share"
+                onClick={toggleShare}
+                title="Share a player-facing view of the map"
+                id="player-share-trigger"
+                aria-haspopup="dialog"
+                aria-expanded={shareOpen}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
+                </svg>
+                <span>Share</span>
+              </button>
+              {shareOpen && (
+                <div
+                  className="share-popover"
+                  role="dialog"
+                  aria-label="Share with players"
+                  style={sharePos ? { top: sharePos.top, right: sharePos.right } : undefined}
+                >
+                  <h3 className="share-popover-title">Share with players</h3>
+                  <p className="share-popover-desc">
+                    Players get a read-only map. Your pins, encounters, and GM notes stay hidden.
+                  </p>
+                  <button
+                    className="share-popover-action"
+                    onClick={() => { handleShare(true); setShareOpen(false) }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Copy player link</span>
+                      <span className="share-popover-action-hint">A live map they open in a browser</span>
+                    </span>
+                  </button>
+                  <p className="share-popover-foot">
+                    Want a text handout? Plan a route, then hit <strong>Player&nbsp;MD</strong> in the planner.
+                  </p>
+                </div>
+              )}
+            </div>
           )}
           {!shareMode && (
             <button

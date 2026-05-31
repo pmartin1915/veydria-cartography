@@ -137,3 +137,31 @@ test('share link round-trips and auto-computes the route', async ({ page }) => {
   await expect(page.locator('.journey-route')).toBeVisible()
   expect(parseDays(await page.getByTestId('est-days').textContent())).toBeGreaterThan(0)
 })
+
+test('Player MD copies a player-safe route handout', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  await page.getByRole('button', { name: 'Player MD', exact: true }).click()
+  const md = await page.evaluate(() => navigator.clipboard.readText())
+  // Player handout keeps the route facts...
+  expect(md).toContain('## Journey:')
+  expect(md).toContain('### Route')
+  // ...but never GM-only sections.
+  expect(md).not.toContain('### Encounters')
+  expect(md).not.toContain('### GM Notes')
+})
+
+test('Share popover opens and copies a player link', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('#player-share-trigger').click()
+
+  const popover = page.getByRole('dialog', { name: 'Share with players' })
+  await expect(popover).toBeVisible()
+
+  await popover.getByRole('button', { name: 'Copy player link' }).click()
+  const url = await page.evaluate(() => navigator.clipboard.readText())
+  expect(url).toContain('share=1')
+  // The popover closes once the link is copied.
+  await expect(popover).not.toBeVisible()
+})
