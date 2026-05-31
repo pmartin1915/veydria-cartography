@@ -16,6 +16,14 @@ export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = {
   night: 'Night',
 }
 
+/** Clean unicode glyphs (no emoji) for time-of-day badges — survive markdown copy-paste. */
+export const TIME_OF_DAY_GLYPH: Record<TimeOfDay, string> = {
+  day: '☼',
+  dawn: '◔',
+  dusk: '◑',
+  night: '☾',
+}
+
 const STORAGE_KEY = 'veydria.timeOfDay.v1'
 
 export function cycleTimeOfDay(current: TimeOfDay): TimeOfDay {

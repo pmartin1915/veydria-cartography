@@ -48,6 +48,21 @@ export function isDefaultParty(p: PartyConfig): boolean {
 }
 
 /**
+ * Human-readable party descriptor for markdown exports and tooltips, listing
+ * only the fields that differ from DEFAULT_PARTY (mount=foot, pace=normal,
+ * size=medium, no forced march). Returns '' for a fully-default party so a
+ * fast-pace-only party reads `fast pace`, not `foot · fast pace · medium party`.
+ */
+export function describeParty(p: PartyConfig): string {
+  const bits: string[] = []
+  if (p.mount !== DEFAULT_PARTY.mount) bits.push(p.mount)
+  if (p.pace !== DEFAULT_PARTY.pace) bits.push(`${p.pace} pace`)
+  if (p.size !== DEFAULT_PARTY.size) bits.push(`${p.size} party`)
+  if (p.forcedMarch) bits.push('forced march')
+  return bits.join(' · ')
+}
+
+/**
  * Multiplier applied to the base km/day speed of an edge given the party config.
  * Chokepoints are deliberately resistant to pace/mount so bottleneck warnings
  * remain meaningful — at most a 25% lift from forced march, then a small drag

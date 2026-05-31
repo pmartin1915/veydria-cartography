@@ -4308,6 +4308,34 @@ body {
   color: #7aba6e;
 }
 
+/* Time-of-day badge — only rendered for non-day encounters (dawn/dusk/night).
+   Mirrors the severity/biome chip idiom; tinted per time to read at a glance. */
+.journey-encounter-time {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(120, 140, 200, 0.14);
+  color: #aeb8e0;
+}
+
+.journey-encounter-time.dawn {
+  background: rgba(232, 180, 120, 0.14);
+  color: #e8c69a;
+}
+
+.journey-encounter-time.dusk {
+  background: rgba(196, 140, 96, 0.14);
+  color: #d8b08c;
+}
+
+.journey-encounter-time.night {
+  background: rgba(90, 110, 170, 0.18);
+  color: #9aa8d8;
+}
+
 /* Roll-button + impromptu-encounter styles. The button replaces the
    "Seeded by route signature" hint in the encounters tab header — the
    hint was decorative; the button is functional. */

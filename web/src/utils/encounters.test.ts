@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, filterNothingBeats } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, filterNothingBeats, pickEncounterTime, TIME_OF_DAY_BEATS, type Beat } from './encounters'
+import { TIME_OF_DAY_ORDER } from './time-of-day'
 import type { JourneyRoute } from './journey-graph'
 
 function fakeRoute(): JourneyRoute {
@@ -209,5 +210,60 @@ describe('encounters', () => {
     expect(result.every(b => !b.biome)).toBe(true)
     const genericTexts = NOTHING_BEATS.filter(b => !b.biome).map(b => b.text)
     expect(result.map(b => b.text)).toEqual(expect.arrayContaining(genericTexts))
+  })
+
+  /* ─── Time of day ─── */
+
+  it('every encounter carries a valid timeOfDay', () => {
+    const r = fakeRouteManyEdges(12, 'trade_route')
+    for (const season of ['spring', 'summer', 'autumn', 'winter'] as const) {
+      for (const enc of generateEncounters(r, season, 'direct')) {
+        expect(TIME_OF_DAY_ORDER).toContain(enc.timeOfDay)
+      }
+    }
+  })
+
+  it('timeOfDay is deterministic across calls (covered by the per-field equality)', () => {
+    const r = fakeRouteManyEdges(8, 'intra_civ')
+    const a = generateEncounters(r, 'autumn', 'safest').map(e => e.timeOfDay)
+    const b = generateEncounters(r, 'autumn', 'safest').map(e => e.timeOfDay)
+    expect(a).toEqual(b)
+  })
+
+  it('pickEncounterTime honours a prose-anchored beat regardless of rng', () => {
+    const anchored: Beat = { text: 'blue at dusk', type: 'environmental', severity: 'mild', timeOfDay: ['dusk'] }
+    // Any rng value must still yield the anchored time.
+    for (const v of [0, 0.25, 0.5, 0.75, 0.999]) {
+      expect(pickEncounterTime(anchored, () => v)).toBe('dusk')
+    }
+  })
+
+  it('pickEncounterTime weighted-rolls a valid time for an unanchored beat', () => {
+    const plain: Beat = { text: 'x', type: 'social', severity: 'mild' }
+    for (const v of [0, 0.4, 0.6, 0.75, 0.95]) {
+      expect(TIME_OF_DAY_ORDER).toContain(pickEncounterTime(plain, () => v))
+    }
+  })
+
+  it('time-flavored overlay never changes type/severity (sim-safety invariant)', () => {
+    // Any encounter whose beat text is a TIME_OF_DAY_BEATS overlay must keep a
+    // type that matches the overlay entry, and a non-day time that the entry
+    // covers — proving the overlay matched on (type, time) and left severity
+    // sourced from the base draw (which feeds supplyCost, hence the sim).
+    const overlayByText = new Map(TIME_OF_DAY_BEATS.map(b => [b.text, b]))
+    const r = fakeRouteManyEdges(20, 'trade_route')
+    let sawOverlay = false
+    for (const season of ['spring', 'summer', 'autumn', 'winter'] as const) {
+      for (const enc of generateEncounters(r, season, 'direct')) {
+        const ov = overlayByText.get(enc.beat)
+        if (!ov) continue
+        sawOverlay = true
+        expect(ov.type).toBe(enc.type)
+        expect(enc.timeOfDay).not.toBe('day')
+        expect(ov.times).toContain(enc.timeOfDay)
+        expect(enc.supplyCost).toEqual(severityCost(enc.severity))
+      }
+    }
+    expect(sawOverlay).toBe(true) // sanity: the overlay actually fired
   })
 })

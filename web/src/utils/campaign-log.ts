@@ -6,7 +6,7 @@
  */
 
 import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyEdge } from './journey-graph'
-import { getRouteDifficulty, isDefaultParty } from './journey-graph'
+import { getRouteDifficulty, isDefaultParty, describeParty } from './journey-graph'
 import { buildDailyBreakdown } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import type { SavedJourney } from './journey-saved'
@@ -16,6 +16,7 @@ import type { SupplyConfig } from './journey-supply'
 import {
   computeSupplyTimeline,
   isDefaultSupply,
+  describeSupply,
   summarizeSupplyPressure,
 } from './journey-supply'
 
@@ -38,24 +39,6 @@ export interface CampaignLogInput {
    * pressure, and the day-by-day breakdown remain.
    */
   playerSafe?: boolean
-}
-
-function formatPartyExport(p: PartyConfig): string {
-  const bits: string[] = []
-  bits.push(p.mount)
-  if (p.pace !== 'normal') bits.push(`${p.pace} pace`)
-  bits.push(`${p.size} party`)
-  if (p.forcedMarch) bits.push('forced march')
-  return bits.join(' · ')
-}
-
-function formatSupplyExport(s: SupplyConfig): string {
-  const bits: string[] = []
-  bits.push(`${s.rationsPerPerson}d rations`)
-  bits.push(`${s.waterPerPerson}d water`)
-  if (s.encumbrance !== 'normal') bits.push(`${s.encumbrance} load`)
-  if (s.packAnimals !== 'none') bits.push(`pack: ${s.packAnimals}`)
-  return bits.join(' · ')
 }
 
 function formatDays(days: number): string {
@@ -105,10 +88,10 @@ export function exportJourneyMarkdown(
   md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
   md += `**Mode:** ${mode}  \n`
   if (party && !isDefaultParty(party)) {
-    md += `**Party:** ${formatPartyExport(party)}  \n`
+    md += `**Party:** ${describeParty(party)}  \n`
   }
   if (supply && !isDefaultSupply(supply)) {
-    md += `**Supply:** ${formatSupplyExport(supply)}  \n`
+    md += `**Supply:** ${describeSupply(supply)}  \n`
   }
   md += `**Difficulty:** ${diff.label}  \n`
   if (season) md += `**Season:** ${season}  \n`
@@ -231,8 +214,8 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       md += `### ${i + 1}. ${sj.name || `${sj.fromName} → ${sj.toName}`}\n\n`
       md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
       if (sj.season) md += ` · **Season:** ${sj.season}`
-      if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${formatPartyExport(sj.party)}`
-      if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${formatSupplyExport(sj.supply)}`
+      if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${describeParty(sj.party)}`
+      if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${describeSupply(sj.supply)}`
       md += `\n`
       if (sj.waypoints.length > 0) {
         md += `- **Path:** ${sj.fromName} → ${sj.waypoints.join(' → ')} → ${sj.toName}\n`

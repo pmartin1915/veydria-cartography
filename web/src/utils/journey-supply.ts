@@ -41,6 +41,20 @@ export function isDefaultSupply(s: SupplyConfig): boolean {
   )
 }
 
+/**
+ * Human-readable supply descriptor for markdown exports, listing only the
+ * fields that differ from DEFAULT_SUPPLY. Returns '' for default supply.
+ * A pack-only change reads `pack: caravan`, not the full rations/water line.
+ */
+export function describeSupply(s: SupplyConfig): string {
+  const bits: string[] = []
+  if (s.rationsPerPerson !== DEFAULT_SUPPLY.rationsPerPerson) bits.push(`${s.rationsPerPerson}d rations`)
+  if (s.waterPerPerson !== DEFAULT_SUPPLY.waterPerPerson) bits.push(`${s.waterPerPerson}d water`)
+  if (s.encumbrance !== DEFAULT_SUPPLY.encumbrance) bits.push(`${s.encumbrance} load`)
+  if (s.packAnimals !== DEFAULT_SUPPLY.packAnimals) bits.push(`pack: ${s.packAnimals}`)
+  return bits.join(' · ')
+}
+
 export type SupplyWarning = 'rations-low' | 'water-low' | 'rations-out' | 'water-out'
 
 export interface SupplyDay {

@@ -8,6 +8,7 @@
  */
 
 import type { JourneyRoute, Season, RouteMode } from './journey-graph'
+import type { TimeOfDay } from './time-of-day'
 
 export interface Encounter {
   segmentIdx: number
@@ -19,6 +20,13 @@ export interface Encounter {
   biome?: string
   /** Supply cost debited end-of-day, before resupply restore. Pure function of severity (see severityCost). */
   supplyCost: { rations: number; water: number }
+  /**
+   * Time of day this encounter is set at. Assigned from a SEPARATE deterministic
+   * seed (see assignTimeOfDay) so it never perturbs the beat-selection RNG stream
+   * — severity/type/supplyCost are unchanged, keeping the sim baseline intact.
+   * Weighted toward 'day'; prose-anchored beats (Beat.timeOfDay) pin their own time.
+   */
+  timeOfDay: TimeOfDay
 }
 
 /** Deterministic severity → supply cost table. Mild stays cosmetic (0/0);
@@ -58,6 +66,13 @@ export interface Beat {
   excludeSeasons?: Season[]
   /** If set, this beat only surfaces when the hex's dominant biome matches. */
   biome?: string
+  /**
+   * Times of day this beat is appropriate for. When set, the encounter's
+   * time-of-day is chosen from this list (deterministically) instead of the
+   * default weighted roll — used to pin prose that names a time ("at dawn",
+   * "blue at dusk") so the displayed badge never contradicts the text.
+   */
+  timeOfDay?: TimeOfDay[]
 }
 
 export const TRADE_ROUTE_BEATS: Beat[] = [
@@ -66,7 +81,7 @@ export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate' },
   { text: 'Oravan wave-tithe collector boards the coastal leg; demands duty or a convincing story.', type: 'social', severity: 'moderate' },
   { text: 'Ndajdi foresters demand a "green toll" — payment in seed or labour, not metal.', type: 'social', severity: 'mild' },
-  { text: 'Caravan of Kheshkai wool-merchants overtakes you at dawn; their pace reveals a hidden watering hole.', type: 'opportunity', severity: 'mild' },
+  { text: 'Caravan of Kheshkai wool-merchants overtakes you at dawn; their pace reveals a hidden watering hole.', type: 'opportunity', severity: 'mild', timeOfDay: ['dawn'] },
   { text: 'Ngaru-Bon slate-porters refuse to share the trail; their loads are fragile and their tempers shorter.', type: 'social', severity: 'moderate' },
   { text: 'A broken axle on a southbound steel cart blocks the Copper for Steel Road; the smith\'s apprentice weeps openly.', type: 'environmental', severity: 'moderate' },
   { text: 'Spring floods have washed out the ford; an Irrah guide offers to swim the rope across for a salt-cube fee.', type: 'environmental', severity: 'moderate', seasons: ['spring'] },
@@ -74,10 +89,10 @@ export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Autumn mud on the Basin track swallows cart-wheels whole; a Qalībin crew will winch you out for a favour owed.', type: 'environmental', severity: 'moderate', seasons: ['autumn'] },
   { text: 'Winter ice sheaths the mountain road; a Khazadari patrol passes in silence, their yak-hair boots making no sound.', type: 'environmental', severity: 'mild', seasons: ['winter'] },
   { text: 'Banditry: masked riders fan out from a Ngaru-Bon scrub-line and demand the strongbox by the count of three. They know your cargo manifest by name.', type: 'combat', severity: 'severe' },
-  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe' },
+  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'] },
   { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe' },
   // Biome-specific trade-route beats
-  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert' },
+  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'] },
   { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha' },
   { text: 'Date-palm shade at the oasis well; a water-rights dispute between two Irrah clans boils over.', type: 'social', severity: 'moderate', biome: 'Oasis' },
   { text: 'Mangrove roots tangle the trail; crocodiles sun on mud-banks and the guide will not pole past them.', type: 'environmental', severity: 'moderate', biome: 'Mangrove swamp' },
@@ -94,10 +109,10 @@ export const CHOKEPOINT_BEATS: Beat[] = [
   { text: 'Rockfall blocks the trail; voices echo from above — survivors of yesterday\'s slide, or scavengers already picking?', type: 'environmental', severity: 'severe' },
   { text: 'Smith-pilgrim seeks an escort through the pass; carries ingots stamped with a dead khatt\'s seal. Trouble follows.', type: 'opportunity', severity: 'moderate' },
   { text: 'Maritime patrol from the Basin stops all traffic; searching for a smuggler of khatti letters of credit.', type: 'social', severity: 'severe' },
-  { text: 'Mountain fog rolls in at midday; the cairn-marks are wrong, or someone moved them. The guide is praying.', type: 'environmental', severity: 'severe' },
+  { text: 'Mountain fog rolls in at midday; the cairn-marks are wrong, or someone moved them. The guide is praying.', type: 'environmental', severity: 'severe', timeOfDay: ['day'] },
   { text: 'River-crossing ferryman claims the current is too strong; wants double. The guide-rope looks badly frayed.', type: 'environmental', severity: 'moderate' },
   { text: 'A corpse at the pass mouth, stripped of boots and water-skin; the birds haven\'t found it yet, but the flies have.', type: 'environmental', severity: 'mild' },
-  { text: 'Halkar Straits cyclone warning; vessels shelter in a cove where an old Oravan beacon still burns blue at dusk.', type: 'environmental', severity: 'severe', seasons: ['summer', 'autumn'] },
+  { text: 'Halkar Straits cyclone warning; vessels shelter in a cove where an old Oravan beacon still burns blue at dusk.', type: 'environmental', severity: 'severe', seasons: ['summer', 'autumn'], timeOfDay: ['dusk'] },
   { text: 'Bandit-sign scratched into the pass wall — three vertical lines, meaning "rich, armed, willing to talk".', type: 'social', severity: 'moderate' },
   { text: 'A Khazadari outpost offers hot tea and stale bread; the commander wants news from the southern road.', type: 'opportunity', severity: 'mild' },
   // Biome-specific chokepoint beats
@@ -110,14 +125,14 @@ export const CHOKEPOINT_BEATS: Beat[] = [
 export const INTRA_CIV_BEATS: Beat[] = [
   { text: 'Oasis hospitality: the headman insists on three cups of sweet tea before any business is discussed.', type: 'social', severity: 'mild' },
   { text: 'Qalībin path-finder negotiation: she won\'t guide without a blood-oath, but her rate is half the khatt standard.', type: 'social', severity: 'moderate' },
-  { text: 'Salt caravan crossing at dawn; the Irrah drivers sing a mourning hymn for the desert they left three weeks ago.', type: 'social', severity: 'mild' },
+  { text: 'Salt caravan crossing at dawn; the Irrah drivers sing a mourning hymn for the desert they left three weeks ago.', type: 'social', severity: 'mild', timeOfDay: ['dawn'] },
   { text: 'A tsetse-fly swarm rises from the Ndajdi canopy; the horses panic and the guide curses in three languages.', type: 'environmental', severity: 'moderate', seasons: ['spring', 'summer'] },
   { text: 'Local festival in the Kheshkai high pastures; every road is a dance floor and every merchant thinks they\'re a poet.', type: 'opportunity', severity: 'mild' },
   { text: 'Basin fever — two members of the party wake shivering. The Tavakh Qarat healer charges in letters of credit, not coin.', type: 'environmental', severity: 'severe', seasons: ['summer', 'autumn'] },
   { text: 'Ngaru-Bon slate-quarry overseer mistakes you for escaped labour; his guards are poorly paid and well-armed.', type: 'combat', severity: 'severe' },
   { text: 'A Khazadari scholar by the roadside, measuring shadows with a brass astrolabe; she\'ll pay for fresh observations.', type: 'opportunity', severity: 'mild' },
   { text: 'Oravan fisher-folk offer dried wave-cod and rumours of a drowned city off the cape, visible only at low tide.', type: 'opportunity', severity: 'mild' },
-  { text: 'Winter on the Copper for Steel Road: a frozen mule blocks the switchback, and wolf-tracks have been seen at dusk.', type: 'environmental', severity: 'moderate', seasons: ['winter'] },
+  { text: 'Winter on the Copper for Steel Road: a frozen mule blocks the switchback, and wolf-tracks have been seen at dusk.', type: 'environmental', severity: 'moderate', seasons: ['winter'], timeOfDay: ['dusk'] },
   // Biome-specific intra-civ beats
   { text: 'Irrah well-keepers charge by the sip; their grandfather\'s grandfather dug this hole and the debt is hereditary.', type: 'social', severity: 'mild', biome: 'Oasis' },
   { text: 'Ndajdi charcoal-burners work the mangrove edge; they know every crocodile by sight and every smuggler by name.', type: 'social', severity: 'moderate', biome: 'Mangrove swamp' },
@@ -148,13 +163,13 @@ export const NOTHING_BEATS: Beat[] = [
   { text: 'Tussock grass and stone. The air is thin and still, and the sky very close.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath' },
   // Biome + season specific nothing beats
   { text: 'The sand burns through boot-soles at noon. Even the flies have gone to ground.', type: 'environmental', severity: 'mild', biome: 'Desert', seasons: ['summer'] },
-  { text: 'Frost rimes the dune-shadows at dawn. The desert does not forgive the cold either.', type: 'environmental', severity: 'mild', biome: 'Desert', seasons: ['winter'] },
+  { text: 'Frost rimes the dune-shadows at dawn. The desert does not forgive the cold either.', type: 'environmental', severity: 'mild', biome: 'Desert', seasons: ['winter'], timeOfDay: ['dawn'] },
   { text: 'Snow has erased the horizon. The wind carries nothing but the memory of grass.', type: 'environmental', severity: 'mild', biome: 'Steppe', seasons: ['winter'] },
   { text: 'Dry thunder rumbles to the north. The grass is brown and brittle underfoot.', type: 'environmental', severity: 'mild', biome: 'Steppe', seasons: ['summer'] },
   { text: 'Snow settles into the tussocks. The world has narrowed to the next cairn and the next.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath', seasons: ['winter'] },
   { text: 'Alpine gentians star the meadow. The silence is different here — thinner, older.', type: 'environmental', severity: 'mild', biome: 'Afroalpine heath', seasons: ['summer'] },
   { text: 'Rain does not fall; it simply is. Every surface weeps and the trail is mud.', type: 'environmental', severity: 'mild', biome: 'Cloud forest', seasons: ['winter'] },
-  { text: 'Mist burns off by midday. For an hour the canopy is gold-green and loud with unseen birds.', type: 'environmental', severity: 'mild', biome: 'Cloud forest', seasons: ['summer'] },
+  { text: 'Mist burns off by midday. For an hour the canopy is gold-green and loud with unseen birds.', type: 'environmental', severity: 'mild', biome: 'Cloud forest', seasons: ['summer'], timeOfDay: ['day'] },
   { text: 'The paddies are lakes. Rain falls in sheets that blur the boundary between sky and water.', type: 'environmental', severity: 'mild', biome: 'Monsoon delta', seasons: ['summer'] },
   { text: 'Harvest stubble smokes on the bunds. The channels run low and the mud holds the heat.', type: 'environmental', severity: 'mild', biome: 'Monsoon delta', seasons: ['winter'] },
 ]
@@ -207,6 +222,90 @@ export function filterNothingBeats(biome?: string, season?: Season): Beat[] {
   return filterBySeason(matched.length > 0 ? matched : generic, season)
 }
 
+/* ─── Time of day ─── */
+
+/**
+ * Time-flavored prose that REPLACES an encounter's beat text when it rolls a
+ * non-day time. Matched by (type, time); the base beat's severity, type, and
+ * biome are preserved, so this only changes the displayed prose — never the
+ * sim's supply/danger aggregates. Kept severity-neutral so any base severity
+ * reads fine. Authored as a separate overlay, never mixed into the draw pools
+ * (mixing would change pool length and perturb the beat-selection RNG stream).
+ */
+export const TIME_OF_DAY_BEATS: Array<{ text: string; type: Encounter['type']; times: TimeOfDay[] }> = [
+  // combat
+  { text: 'They come at the edge of the firelight — the watch is roused a heartbeat before the first arrow.', type: 'combat', times: ['night'] },
+  { text: 'The ambush springs at last light, when the eye can no longer tell a friend from a standing stone.', type: 'combat', times: ['dusk'] },
+  { text: 'Grey dawn reveals the trap already laid — figures rise from the cold ground on every side.', type: 'combat', times: ['dawn'] },
+  // social
+  { text: 'A lantern bobs up the dark road; whoever carries it wants your fire, and a share of your news.', type: 'social', times: ['night'] },
+  { text: 'As camp is struck at dusk a stranger drifts in off the trail, asking to share the road come morning.', type: 'social', times: ['dusk'] },
+  { text: 'They are waiting at the dawn cookfire already, having walked through the night to reach you.', type: 'social', times: ['dawn'] },
+  // environmental
+  { text: 'The trail all but vanishes in the dark; every footfall is a wager against the drop on the left.', type: 'environmental', times: ['night'] },
+  { text: 'Failing light flattens the ground to a single grey plane — path and hazard become one.', type: 'environmental', times: ['dusk'] },
+  { text: 'First light shows what the dark hid: the way ahead is washed out, and the detour is on no map.', type: 'environmental', times: ['dawn'] },
+  // opportunity
+  { text: 'A cookfire smokes off the trail in the dark; whoever keeps it has what you lack, if you can deal.', type: 'opportunity', times: ['night'] },
+  { text: 'Dusk light catches something off the path — worth the short climb before the dark closes in.', type: 'opportunity', times: ['dusk'] },
+  { text: 'Dawn dew shows fresh tracks, broken not an hour past; someone moved in the night and left a trail.', type: 'opportunity', times: ['dawn'] },
+]
+
+/** Decorrelates the time-of-day seed from the beat-selection seed (golden ratio). */
+const TOD_SEED_OFFSET = 0x9e3779b9
+/** Chance a non-day, non-prose-anchored encounter gets time-flavored prose. */
+const TIME_OVERLAY_CHANCE = 0.6
+
+/** Weighted time-of-day roll: most travel is by day, so night reads as special. */
+function pickWeightedTime(rng: () => number): TimeOfDay {
+  const r = rng()
+  if (r < 0.50) return 'day'
+  if (r < 0.67) return 'dawn'
+  if (r < 0.84) return 'dusk'
+  return 'night'
+}
+
+/** Time-of-day for a beat: its prose-anchored time if set, else a weighted roll. */
+export function pickEncounterTime(beat: Beat, rng: () => number): TimeOfDay {
+  return beat.timeOfDay && beat.timeOfDay.length > 0
+    ? beat.timeOfDay[Math.floor(rng() * beat.timeOfDay.length)]
+    : pickWeightedTime(rng)
+}
+
+function timeOverlayFor(type: Encounter['type'], time: TimeOfDay, rng: () => number): string | undefined {
+  if (time === 'day') return undefined
+  const matches = TIME_OF_DAY_BEATS.filter(b => b.type === type && b.times.includes(time))
+  if (matches.length === 0) return undefined
+  return matches[Math.floor(rng() * matches.length)].text
+}
+
+/**
+ * Build an Encounter from a chosen Beat. Time-of-day (and any time-flavored
+ * prose overlay) are derived from `todSeed` — a SEPARATE mulberry32 instance —
+ * so the caller's beat-selection RNG stream, and therefore severity / type /
+ * supplyCost and the sim baseline, are never perturbed. `allowOverlay` is false
+ * for "nothing" filler beats (a quiet leg shouldn't morph into a night ambush).
+ */
+function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOverlay: boolean): Encounter {
+  const todRng = mulberry32(todSeed)
+  const time = pickEncounterTime(beat, todRng)
+  let text = beat.text
+  if (allowOverlay && !beat.timeOfDay && time !== 'day' && todRng() < TIME_OVERLAY_CHANCE) {
+    const overlay = timeOverlayFor(beat.type, time, todRng)
+    if (overlay) text = overlay
+  }
+  return {
+    segmentIdx,
+    beat: text,
+    type: beat.type,
+    severity: beat.severity,
+    narrative: text,
+    biome: beat.biome,
+    supplyCost: severityCost(beat.severity),
+    timeOfDay: time,
+  }
+}
+
 /* ─── Public API ─── */
 
 export function generateEncounters(
@@ -218,6 +317,7 @@ export function generateEncounters(
   const sig = route.nodes.map(n => n.id).join('|') + '#' + (season || 'any') + '#' + mode
   const seed = djb2Hash(sig)
   const rng = mulberry32(seed)
+  const todBase = seed ^ TOD_SEED_OFFSET
 
   const encounters: Encounter[] = []
 
@@ -230,28 +330,12 @@ export function generateEncounters(
     if (rng() < nothingChance) {
       const nothingPool = filterNothingBeats(edgeBiomes?.[i], season)
       const nothing = nothingPool[Math.floor(rng() * nothingPool.length)]
-      encounters.push({
-        segmentIdx: i,
-        beat: nothing.text,
-        type: nothing.type,
-        severity: nothing.severity,
-        narrative: nothing.text,
-        biome: nothing.biome,
-        supplyCost: severityCost(nothing.severity),
-      })
+      encounters.push(makeEncounter(nothing, i, todBase + i * 131, false))
       continue
     }
 
     const beat = pool[Math.floor(rng() * pool.length)]
-    encounters.push({
-      segmentIdx: i,
-      beat: beat.text,
-      type: beat.type,
-      severity: beat.severity,
-      narrative: beat.text,
-      biome: beat.biome,
-      supplyCost: severityCost(beat.severity),
-    })
+    encounters.push(makeEncounter(beat, i, todBase + i * 131 + 977, true))
 
     // Long legs get a second encounter
     if ((edge.segmentDays || 0) > 5) {
@@ -259,15 +343,7 @@ export function generateEncounters(
       if (secondRng() >= nothingChance) {
         const secondPool = filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i])
         const beat2 = secondPool[Math.floor(secondRng() * secondPool.length)]
-        encounters.push({
-          segmentIdx: i,
-          beat: beat2.text,
-          type: beat2.type,
-          severity: beat2.severity,
-          narrative: beat2.text,
-          biome: beat2.biome,
-          supplyCost: severityCost(beat2.severity),
-        })
+        encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true))
       }
     }
   }
