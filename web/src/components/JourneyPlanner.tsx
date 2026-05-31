@@ -4,8 +4,9 @@ import {
   NodeIcon as NodeIconSvg, IconScroll, IconMountain, IconArrow, IconCompass, IconCalendar,
   IconFlower, IconSun, IconLeafFall, IconSnowflake, IconWarning, IconCloudRain, IconPin,
 } from './icons'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, straitAnnotation, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, getRouteDifficulty, straitAnnotation, describeParty, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, type Encounter } from '../utils/encounters'
+import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from '../utils/time-of-day'
 import { rollOneOff } from '../utils/encounter-roller'
 import { formatDayOfYear, CALENDAR_EVENT_COLORS, CALENDAR_EVENT_ICONS, type CalendarEventType } from '../utils/calendar'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneys, type SavedJourney } from '../utils/journey-saved'
@@ -1089,7 +1090,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                           onModeChange?.(key as RouteMode)
                         }
                       }}
-                      title={cr ? `Click to switch to ${label} route` : 'No route found'}
+                      title={cr ? `Switch to ${label} route — ${describeParty(party) || 'default party (on foot)'}` : 'No route found'}
                     >
                       <div className="journey-comparison-card-header">
                         <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
@@ -1322,6 +1323,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                             <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                             <span className="journey-encounter-type">{enc.type}</span>
                             <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            {enc.timeOfDay !== 'day' && (
+                              <span className={`journey-encounter-time ${enc.timeOfDay}`}>{TIME_OF_DAY_GLYPH[enc.timeOfDay]} {TIME_OF_DAY_LABELS[enc.timeOfDay]}</span>
+                            )}
                             {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                             <span className="journey-encounter-segment journey-encounter-segment--impromptu">Impromptu</span>
                           </div>
@@ -1337,6 +1341,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                             <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                             <span className="journey-encounter-type">{enc.type}</span>
                             <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                            {enc.timeOfDay !== 'day' && (
+                              <span className={`journey-encounter-time ${enc.timeOfDay}`}>{TIME_OF_DAY_GLYPH[enc.timeOfDay]} {TIME_OF_DAY_LABELS[enc.timeOfDay]}</span>
+                            )}
                             {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                             {route.edges[enc.segmentIdx] && (
                               <span className="journey-encounter-segment">{route.edges[enc.segmentIdx].name}</span>

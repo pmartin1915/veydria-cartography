@@ -10,6 +10,7 @@
 import {
   getRouteDifficulty,
   isDefaultParty,
+  describeParty,
   straitAnnotation,
   type JourneyRoute,
   type Season,
@@ -21,6 +22,7 @@ import { buildDailyBreakdown } from './journey-days'
 import { formatDayOfYear } from './calendar'
 import {
   isDefaultSupply,
+  describeSupply,
   computeSupplyTimeline,
   summarizeSupplyPressure,
   type SupplyConfig,
@@ -28,6 +30,15 @@ import {
 import { computeModeRiskWarning } from './journey-mode-risk'
 import { computeEncounterDensityWarning } from './journey-encounter-density'
 import { exportRouteGmNotes, type MapAnnotation } from './annotations'
+import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from './time-of-day'
+import type { Encounter } from './encounters'
+
+/** ` · ☾ Night` tag for non-day encounters in markdown; '' for plain day. */
+function encounterTimeTag(enc: Encounter): string {
+  return enc.timeOfDay !== 'day'
+    ? ` · ${TIME_OF_DAY_GLYPH[enc.timeOfDay]} ${TIME_OF_DAY_LABELS[enc.timeOfDay]}`
+    : ''
+}
 
 export function formatDays(days: number): string {
   if (days < 0.5) {
@@ -88,20 +99,10 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
   md += `**Estimated Travel:** ${formatDays(route.estimatedDays)}  \n`
   md += `**Mode:** ${mode}  \n`
   if (!isDefaultParty(party)) {
-    const partyBits: string[] = [party.mount]
-    if (party.pace !== 'normal') partyBits.push(`${party.pace} pace`)
-    partyBits.push(`${party.size} party`)
-    if (party.forcedMarch) partyBits.push('forced march')
-    md += `**Party:** ${partyBits.join(' · ')}  \n`
+    md += `**Party:** ${describeParty(party)}  \n`
   }
   if (!isDefaultSupply(supply)) {
-    const supplyBits: string[] = [
-      `${supply.rationsPerPerson}d rations`,
-      `${supply.waterPerPerson}d water`,
-    ]
-    if (supply.encumbrance !== 'normal') supplyBits.push(`${supply.encumbrance} load`)
-    if (supply.packAnimals !== 'none') supplyBits.push(`pack: ${supply.packAnimals}`)
-    md += `**Supply:** ${supplyBits.join(' · ')}  \n`
+    md += `**Supply:** ${describeSupply(supply)}  \n`
   }
   md += `**Difficulty:** ${diff.label}  \n`
   if (season) md += `**Season:** ${season}  \n`
@@ -145,7 +146,7 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
     for (const enc of encounters) {
       const segName = route.edges[enc.segmentIdx]?.name || 'Unknown segment'
       const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
-      md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)}${biomeTag} · *${segName}*\n\n`
+      md += `**${encounterTypeIcon(enc.type)} ${enc.type}** · ${encounterSeverityLabel(enc.severity)}${biomeTag}${encounterTimeTag(enc)} · *${segName}*\n\n`
       md += `${enc.beat}\n\n`
     }
   }
@@ -186,7 +187,7 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
       if (!playerSafe && day.encounters.length > 0) {
         for (const enc of day.encounters) {
           const biomeTag = enc.biome ? ` · ${enc.biome}` : ''
-          md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}${biomeTag}): ${enc.beat}\n`
+          md += `- ${encounterTypeIcon(enc.type)} ${enc.type} (${encounterSeverityLabel(enc.severity)}${biomeTag}${encounterTimeTag(enc)}): ${enc.beat}\n`
         }
       }
       md += `- Camp: ${day.campLabel}\n\n`

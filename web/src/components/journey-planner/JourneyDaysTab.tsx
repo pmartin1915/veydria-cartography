@@ -2,6 +2,7 @@ import { buildDailyBreakdown } from '../../utils/journey-days'
 import { computeSupplyTimeline, type SupplyConfig, type SupplyDay } from '../../utils/journey-supply'
 import { formatDayOfYear, CALENDAR_EVENT_COLORS, hasCrisis, formatCrisisRef } from '../../utils/calendar'
 import { encounterTypeIcon, encounterSeverityLabel } from '../../utils/encounters'
+import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from '../../utils/time-of-day'
 import type { JourneyRoute, Season, RouteMode, PartyConfig } from '../../utils/journey-graph'
 import { IconCloudRain, IconPin } from '../icons'
 
@@ -112,6 +113,11 @@ export default function JourneyDaysTab({
                       <span className="journey-encounter-icon">{encounterTypeIcon(enc.type)}</span>
                       <span className="journey-encounter-type">{enc.type}</span>
                       <span className={`journey-encounter-severity ${enc.severity}`}>{encounterSeverityLabel(enc.severity)}</span>
+                      {enc.timeOfDay !== 'day' && (
+                        <span className={`journey-encounter-time ${enc.timeOfDay}`}>
+                          {TIME_OF_DAY_GLYPH[enc.timeOfDay]} {TIME_OF_DAY_LABELS[enc.timeOfDay]}
+                        </span>
+                      )}
                       {enc.biome && <span className="journey-encounter-biome">{enc.biome}</span>}
                     </div>
                     <div className="journey-encounter-beat">{enc.beat}</div>

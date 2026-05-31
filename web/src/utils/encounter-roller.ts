@@ -15,6 +15,7 @@ import {
   filterBySeason,
   filterByBiome,
   severityCost,
+  pickEncounterTime,
   type Beat,
   type Encounter,
 } from './encounters'
@@ -67,5 +68,6 @@ export function rollOneOff(opts: RollOneOffOpts): Encounter | null {
     narrative: beat.text,
     biome: beat.biome,
     supplyCost: severityCost(beat.severity),
+    timeOfDay: pickEncounterTime(beat, rng),
   }
 }

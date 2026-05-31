@@ -10,6 +10,7 @@ function enc(severity: Encounter['severity']): Encounter {
     severity,
     narrative: '',
     supplyCost: { rations: 0, water: 0 },
+    timeOfDay: 'day',
   }
 }
 
