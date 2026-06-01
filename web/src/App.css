@@ -529,10 +529,11 @@ body {
   border-radius: 8px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
   color: var(--text-primary) !important;
+  max-width: min(300px, calc(100vw - 24px)) !important;
 }
 
 .leaflet-popup-tip { background: var(--bg-card) !important; }
-.leaflet-popup-content { font-family: var(--font-body) !important; font-size: 12px !important; }
+.leaflet-popup-content { font-family: var(--font-body) !important; font-size: 12px !important; overflow-wrap: break-word !important; }
 
 .leaflet-tooltip {
   background: var(--bg-card) !important;
@@ -541,6 +542,9 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
   color: var(--text-primary) !important;
   padding: 6px 10px !important;
+  max-width: min(280px, calc(100vw - 24px)) !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
 }
 
 .leaflet-tooltip::before { display: none; }
@@ -3561,6 +3565,7 @@ body {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  max-width: min(320px, calc(100vw - 24px));
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: 6px;
@@ -4588,7 +4593,9 @@ body {
   font-family: var(--font-body);
   font-size: 11px;
   color: var(--text-primary);
-  white-space: nowrap;
+  white-space: normal;
+  max-width: min(280px, calc(100vw - 24px));
+  overflow-wrap: break-word;
   letter-spacing: 0.3px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
@@ -5313,6 +5320,7 @@ body {
   flex-direction: column;
   gap: 3px;
   min-width: 160px;
+  max-width: min(300px, calc(100vw - 24px));
 }
 
 .journey-seg-name {
@@ -5320,12 +5328,14 @@ body {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-accent);
+  overflow-wrap: break-word;
 }
 
 .journey-seg-meta {
   font-size: 10px;
   color: var(--text-secondary);
   letter-spacing: 0.3px;
+  overflow-wrap: break-word;
 }
 
 .journey-seg-bottleneck {
