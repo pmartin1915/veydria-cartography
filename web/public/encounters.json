@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "controlled_vocabularies": {
+    "type": [
+      "social",
+      "environmental",
+      "combat",
+      "opportunity"
+    ],
+    "severity": [
+      "mild",
+      "moderate",
+      "severe"
+    ],
+    "frequency": [
+      "common",
+      "uncommon",
+      "rare"
+    ],
+    "frequency_weight": {
+      "common": 3,
+      "uncommon": 2,
+      "rare": 1
+    },
+    "time": [
+      "dawn",
+      "day",
+      "dusk",
+      "night",
+      "any"
+    ],
+    "season": [
+      "spring",
+      "summer",
+      "autumn",
+      "winter",
+      "any"
+    ],
+    "biome": [
+      "Volcanic archipelago",
+      "Monsoon delta"
+    ]
+  },
+  "encounters": [
+    {
+      "key": "oravan.outrigger_village_wakeup",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Outrigger fishing village wakeup",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Hollow paddle-thump on bangka hulls, rooster answering rooster, coconut-husk smoke"
+    },
+    {
+      "key": "oravan.pole_star_kamal",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Nakhoda shooting the Pole Star with a kamal",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Knotted cord held to the teeth, Canopus low over the palm line"
+    },
+    {
+      "key": "oravan.squall_line",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Wet-monsoon squall line approach",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Cicadas fall silent first; metallic ozone smell; a grey wall walking on rain-legs"
+    },
+    {
+      "key": "oravan.pumice_raft",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Pumice raft scraping the hull",
+      "biome": "Volcanic archipelago",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "Sulfurous rotten-egg reek, porous grey stones clacking like bones along the waterline"
+    },
+    {
+      "key": "oravan.ash_fall",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Ash fall from a distant eruption",
+      "biome": "Volcanic archipelago",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "Grey sugar on deck plank, Pele's hair glinting in rigging, sun reddened to clove-bud"
+    },
+    {
+      "key": "oravan.saltwater_crocodile",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Saltwater crocodile on a mudbank",
+      "biome": "Monsoon delta",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "dusk",
+      "sensory_hook": "Wet-cloth slither into black water, mangrove roots ticking with retreating crabs"
+    },
+    {
+      "key": "oravan.flying_fox_flight",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Flying fox flight at sundown",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Leather-creak of wings overhead, sky stitched east-to-west toward clove groves"
+    },
+    {
+      "key": "oravan.reef_bommie",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Reef bommie nearly struck",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Jurumudi's shout, sudden jade-to-turquoise shallowing, triggerfish scattering"
+    },
+    {
+      "key": "oravan.phosphorescent_wake",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Phosphorescence in the wake",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "night",
+      "sensory_hook": "Paddle stirs cold green fire; every fish a comet beneath the hull"
+    },
+    {
+      "key": "oravan.harbor_duty_payment",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Harbor-duty payment at a datu's stair",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Lacquer tray of areca and betel, slaked-lime chalk on the tongue, brass weights clinking"
+    },
+    {
+      "key": "oravan.gamelan_pavilion",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Gamelan drifting from the datu's pavilion",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Slow bronze intervals over water, answered by muezzin-analog and junk's bell"
+    },
+    {
+      "key": "oravan.sea_snake",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Sea snake (Hydrophis spp.) on the surface",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Banded ribbon drifting past the outrigger, unhurried, indifferent"
+    },
+    {
+      "key": "oravan.pirate_prahu",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Pirate-prahu on the horizon",
+      "type": "combat",
+      "severity": "severe",
+      "frequency": "rare",
+      "time": "dawn",
+      "sensory_hook": "Low sail against the sunrise, the nakhoda quietly loosening the kris at his sash"
+    },
+    {
+      "key": "oravan.spice_grove_downwind",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Clove or nutmeg grove downwind of anchorage",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "Sweet-smoky Syzygium aromaticum over the water, mixed with wood fire and drying mace"
+    },
+    {
+      "key": "oravan.entrepot_landfall",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Landfall at a multi-quarter entrepot",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Three quarters visible: Muslim merchants, junk-masters, palm-thatch longhouses of the datu"
+    }
+  ]
+}

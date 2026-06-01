@@ -9,6 +9,7 @@
 
 import type { JourneyRoute, Season, RouteMode } from './journey-graph'
 import type { TimeOfDay } from './time-of-day'
+import { augmentPoolWithWeighted } from './external-encounters'
 
 export interface Encounter {
   segmentIdx: number
@@ -318,12 +319,17 @@ export function generateEncounters(
   const seed = djb2Hash(sig)
   const rng = mulberry32(seed)
   const todBase = seed ^ TOD_SEED_OFFSET
+  const civOf = new Map(route.nodes.map(n => [n.id, n.civ]))
 
   const encounters: Encounter[] = []
 
   for (let i = 0; i < route.edges.length; i++) {
     const edge = route.edges[i]
-    const pool = filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i])
+    const edgeCivs = [civOf.get(edge.from), civOf.get(edge.to)]
+    const pool = augmentPoolWithWeighted(
+      filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i]),
+      edgeCivs, edge.type, edgeBiomes?.[i],
+    )
 
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
@@ -341,7 +347,10 @@ export function generateEncounters(
     if ((edge.segmentDays || 0) > 5) {
       const secondRng = mulberry32(seed + i + 10007)
       if (secondRng() >= nothingChance) {
-        const secondPool = filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i])
+        const secondPool = augmentPoolWithWeighted(
+          filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i]),
+          edgeCivs, edge.type, edgeBiomes?.[i],
+        )
         const beat2 = secondPool[Math.floor(secondRng() * secondPool.length)]
         encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true))
       }

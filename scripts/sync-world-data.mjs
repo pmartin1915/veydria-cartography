@@ -8,8 +8,9 @@
  * Usage: node scripts/sync-world-data.mjs [--check]
  *   --check  Verify files are in sync without copying
  */
-import { cpSync, existsSync, statSync } from 'fs';
+import { cpSync, existsSync, statSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join, relative, resolve } from 'path';
+import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,7 +59,23 @@ const SYNC_MAP = [
     description: 'Compendium→map anchor mappings (20 entries)',
     optional: true,
   },
+  {
+    src: 'ecology/encounters/encounters.yaml',
+    dest: 'web/public/encounters.json',
+    description: 'Machine-readable encounter canon (ADR-0022); yaml→json for the journey-sim',
+    optional: true,
+    transform: 'yaml2json',
+  },
 ];
+
+// yaml→json conversion keeps the web app on its familiar fetch-JSON path (no
+// in-bundle YAML parser). `yaml` is resolved from web/node_modules.
+function yamlToJson(srcPath, destPath) {
+  const requireFromWeb = createRequire(resolve(CARTOGRAPHY_PATH, 'web', 'package.json'));
+  const YAML = requireFromWeb('yaml');
+  const data = YAML.parse(readFileSync(srcPath, 'utf8'));
+  writeFileSync(destPath, JSON.stringify(data, null, 2) + '\n');
+}
 
 const CHECK_MODE = process.argv.includes('--check');
 
@@ -85,7 +102,7 @@ let synced = 0;
 let stale = 0;
 let missing = 0;
 
-for (const { src, dest, description, optional } of SYNC_MAP) {
+for (const { src, dest, description, optional, transform } of SYNC_MAP) {
   const srcPath = join(WORLDBUILDER_PATH, src);
   const destPath = join(CARTOGRAPHY_PATH, dest);
   const relDest = relative(CARTOGRAPHY_PATH, destPath);
@@ -121,7 +138,11 @@ for (const { src, dest, description, optional } of SYNC_MAP) {
 
   // Copy mode
   if (!destMtime || srcMtime > destMtime) {
-    cpSync(srcPath, destPath);
+    if (transform === 'yaml2json') {
+      yamlToJson(srcPath, destPath);
+    } else {
+      cpSync(srcPath, destPath);
+    }
     console.log(`✅ Synced: ${src} → ${relDest}`);
     console.log(`   ${description}`);
     synced++;
