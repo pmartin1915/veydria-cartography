@@ -6,10 +6,11 @@
  * step — "switch to safest" — directly on the mode selector. This module owns
  * the predicate that decides which mode (if any) to badge as recommended.
  *
- * The rules deliberately mirror the two existing warning predicates 1:1, so a
- * recommendation appears exactly when one or both warnings do. Keeping `mode`
- * in the return shape future-proofs against later rules that might recommend
- * `cheapest` or `fastest` without restructuring callers.
+ * The rules mirror the two categorical warning predicates 1:1, plus a third
+ * supply-aware rule: the high-burn modes (`direct`/`fastest`) now consume more
+ * rations/day by construction (see modeBurnMultipliers), so when rations are
+ * scarce the planner nudges toward the low-burn `safest` mode. Keeping `mode`
+ * in the return shape future-proofs against later rules.
  *
  * Pure module — no DOM, no React, no I/O.
  */
@@ -18,6 +19,11 @@ import type { RouteMode } from './journey-graph'
 import type { SupplyConfig } from './journey-supply'
 import type { Encounter } from './encounters'
 import { ENCOUNTER_DENSITY_SEVERE_THRESHOLD } from './journey-encounter-density'
+
+/** Below this many rations/person, the per-mode daily-burn delta matters enough
+ *  that a high-burn mode (direct/fastest) is worth flagging. Half the default
+ *  supply (12) — well above the tight preset (3), below standard (12). */
+export const LOW_RATIONS_THRESHOLD = 6
 
 export interface ModeRecommendation {
   mode: RouteMode
@@ -37,6 +43,10 @@ export function computeRecommendedMode(
     if (severeCount >= ENCOUNTER_DENSITY_SEVERE_THRESHOLD) {
       return { mode: 'safest', reason: `${severeCount} severe encounters on this route` }
     }
+  }
+  if ((currentMode === 'direct' || currentMode === 'fastest') && supply.rationsPerPerson <= LOW_RATIONS_THRESHOLD) {
+    const label = currentMode === 'direct' ? 'Direct' : 'Fastest'
+    return { mode: 'safest', reason: `${label} mode burns extra rations/day — low supply favours safest` }
   }
   return null
 }

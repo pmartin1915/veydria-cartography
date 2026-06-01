@@ -40,7 +40,7 @@ export default function JourneyDaysTab({
   const biomeForEdge = edgeBiomes
     ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
     : undefined
-  const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+  const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
   const supplyByDay = new Map<number, SupplyDay>(supplyTimeline.map(s => [s.dayNum, s]))
 
   return (

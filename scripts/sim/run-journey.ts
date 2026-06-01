@@ -258,6 +258,7 @@ export function runJourney(inputs: JourneyInputs, graph: Graph): Trace {
       undefined,
       inputs.season,
       dayToTier.size > 0 ? (dayNum) => dayToTier.get(dayNum) ?? 'none' : undefined,
+      inputs.mode,
     )
   }
 

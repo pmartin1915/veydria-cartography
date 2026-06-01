@@ -138,7 +138,7 @@ export function exportJourneyMarkdown(
     const biomeForEdge = edgeBiomes
       ? (e: JourneyEdge) => edgeBiomes[route.edges.indexOf(e)]
       : undefined
-    const timeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+    const timeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
     const pressure = summarizeSupplyPressure(timeline)
     const lines: string[] = []
     if (pressure.rationsLowDay !== null) lines.push(`Rations critical on day ${pressure.rationsLowDay}.`)
