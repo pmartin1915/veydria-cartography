@@ -157,7 +157,7 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
     const biomeForEdge = edgeBiomes
       ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
       : undefined
-    const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season)
+    const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
     const pressure = summarizeSupplyPressure(supplyTimeline)
     const pressureLines: string[] = []
     if (pressure.rationsLowDay !== null) pressureLines.push(`Rations critical on day ${pressure.rationsLowDay}.`)

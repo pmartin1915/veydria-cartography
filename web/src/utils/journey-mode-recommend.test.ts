@@ -61,4 +61,26 @@ describe('computeRecommendedMode', () => {
   it('returns null when current mode equals safest and no risk predicate fires', () => {
     expect(computeRecommendedMode('safest', supplyWith('few'), [])).toBeNull()
   })
+
+  it('recommends safest for direct mode with low rations (burn-aware path)', () => {
+    const r = computeRecommendedMode('direct', { ...DEFAULT_SUPPLY, rationsPerPerson: 4 }, [])
+    expect(r).not.toBeNull()
+    expect(r!.mode).toBe('safest')
+    expect(r!.reason).toMatch(/burns extra rations/i)
+  })
+
+  it('recommends safest for fastest mode with low rations', () => {
+    const r = computeRecommendedMode('fastest', { ...DEFAULT_SUPPLY, rationsPerPerson: 5 }, [])
+    expect(r).not.toBeNull()
+    expect(r!.mode).toBe('safest')
+    expect(r!.reason).toMatch(/Fastest/)
+  })
+
+  it('does not fire the burn-aware path at default rations (12)', () => {
+    expect(computeRecommendedMode('direct', { ...DEFAULT_SUPPLY, packAnimals: 'few' }, [])).toBeNull()
+  })
+
+  it('does not fire the burn-aware path for cheapest (a low-burn mode)', () => {
+    expect(computeRecommendedMode('cheapest', { ...DEFAULT_SUPPLY, rationsPerPerson: 3 }, [])).toBeNull()
+  })
 })

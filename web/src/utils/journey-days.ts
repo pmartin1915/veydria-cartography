@@ -646,7 +646,7 @@ export function nextDay(state: JourneyState, action: Action): NextDayResult {
   const burn = applyDailyBurn(
     state.rationsLeft, state.waterLeft, state.supplyConstants,
     state.party, state.season, aridity, resupplyTier, burnModsForAction(action),
-    encounterCost,
+    encounterCost, state.mode,
   )
 
   /* Exhaustion. Floor at 0; rest never drops below 0. */

@@ -1,6 +1,16 @@
 import { getRouteDifficulty, describeParty, type JourneyRoute, type RouteMode, type ComparisonRoutes, type PartyConfig, type JourneyNode } from '../../utils/journey-graph'
 import { formatDistance } from '../../utils/measure'
 import { formatDays } from '../../utils/journey-export'
+import { modeBurnMultipliers } from '../../utils/journey-supply'
+
+/** Per-mode daily-ration burn delta vs the baseline (1×), as a signed percent
+ *  string for the comparison cards. The mechanical counterpart to "fewer days":
+ *  direct travels shortest but burns most per day; safest is the reverse. */
+function burnPctLabel(mode: RouteMode): string {
+  const pct = Math.round((modeBurnMultipliers(mode).rations - 1) * 100)
+  if (pct === 0) return 'baseline'
+  return `${pct > 0 ? '+' : '−'}${Math.abs(pct)}%`
+}
 
 interface JourneyResultsProps {
   route: JourneyRoute
@@ -63,6 +73,7 @@ export default function JourneyResults({
             const bestDistance = valid.length > 0 ? Math.min(...valid.map(e => e.route!.totalDistanceSvg)) : Infinity
             const bestDays = valid.length > 0 ? Math.min(...valid.map(e => e.route!.estimatedDays)) : Infinity
             const bestSegments = valid.length > 0 ? Math.min(...valid.map(e => e.route!.edges.length)) : Infinity
+            const bestBurn = Math.min(...entries.map(e => modeBurnMultipliers(e.key).rations))
             return entries.map(({ key, label, color, route: cr }) => (
               <div
                 key={key}
@@ -71,7 +82,7 @@ export default function JourneyResults({
                 onClick={() => {
                   if (cr && key !== mode) onSwitchMode(key as RouteMode)
                 }}
-                title={cr ? `Switch to ${label} route — ${describeParty(party) || 'default party (on foot)'}` : 'No route found'}
+                title={cr ? `Switch to ${label} route — ${describeParty(party) || 'default party (on foot)'} · burns ${burnPctLabel(key)} rations/day` : 'No route found'}
               >
                 <div className="journey-comparison-card-header">
                   <span className="journey-comparison-dot" style={{ backgroundColor: color }} />
@@ -104,6 +115,15 @@ export default function JourneyResults({
                         {cr.edges.length}
                         {cr.edges.length === bestSegments && (
                           <span className="journey-comparison-trophy" title="Fewest segments">★</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="journey-comparison-stat">
+                      <span className="journey-comparison-stat-label">Supply/day</span>
+                      <span className="journey-comparison-stat-value">
+                        {burnPctLabel(key)}
+                        {modeBurnMultipliers(key).rations === bestBurn && (
+                          <span className="journey-comparison-trophy" title="Lowest daily burn">★</span>
                         )}
                       </span>
                     </div>

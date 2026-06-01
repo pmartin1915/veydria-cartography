@@ -7,6 +7,7 @@ import {
   deriveSupplyConstants,
   DEFAULT_SUPPLY,
   isDefaultSupply,
+  modeBurnMultipliers,
   summarizeSupplyPressure,
   type SupplyConfig,
 } from './journey-supply'
@@ -374,5 +375,76 @@ describe('journey-supply: applyDailyBurn resupplyFired echo (Phase 4 dynamic pro
     const r = applyDailyBurn(1, 5, constants, DEFAULT_PARTY, undefined, 'none', 'rations')
     expect(r.resupplyFired).toBe('rations')
     expect(r.rationsLeft).toBe(constants.startingRations)
+  })
+})
+
+describe('journey-supply: per-mode burn multiplier', () => {
+  const constants = deriveSupplyConstants(DEFAULT_SUPPLY)
+
+  it('modeBurnMultipliers is neutral {1,1} for an absent mode (legacy byte-identity)', () => {
+    expect(modeBurnMultipliers(undefined)).toEqual({ rations: 1, water: 1 })
+  })
+
+  it('modeBurnMultipliers ranks burn safest < cheapest < fastest <= direct on rations', () => {
+    const safest = modeBurnMultipliers('safest').rations
+    const cheapest = modeBurnMultipliers('cheapest').rations
+    const fastest = modeBurnMultipliers('fastest').rations
+    const direct = modeBurnMultipliers('direct').rations
+    expect(safest).toBeLessThan(cheapest)
+    expect(cheapest).toBeLessThan(fastest)
+    expect(fastest).toBeLessThanOrEqual(direct)
+    // Water multipliers follow the same ordering.
+    expect(modeBurnMultipliers('safest').water).toBeLessThan(modeBurnMultipliers('direct').water)
+  })
+
+  it('applyDailyBurn with mode omitted is byte-identical to the legacy mode-blind burn', () => {
+    const legacy = applyDailyBurn(10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none')
+    const omitted = applyDailyBurn(
+      10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none',
+      undefined, undefined, undefined,
+    )
+    expect(omitted.rationsLeft).toBe(legacy.rationsLeft)
+    expect(omitted.waterLeft).toBe(legacy.waterLeft)
+    expect(omitted.rationsBurnedToday).toBe(legacy.rationsBurnedToday)
+    expect(omitted.waterBurnedToday).toBe(legacy.waterBurnedToday)
+  })
+
+  it("mode 'direct' scales the day's burn by its multiplier (1.15 rations / 1.10 water)", () => {
+    const r = applyDailyBurn(
+      10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none',
+      undefined, undefined, 'direct',
+    )
+    // Base burn is 1/1; direct multiplies to 1.15 / 1.10.
+    expect(r.rationsBurnedToday).toBeCloseTo(1.15, 5)
+    expect(r.waterBurnedToday).toBeCloseTo(1.10, 5)
+    expect(r.rationsLeft).toBeCloseTo(10 - 1.15, 5)
+    expect(r.waterLeft).toBeCloseTo(5 - 1.10, 5)
+  })
+
+  it("mode 'safest' burns strictly less than 'direct' for the same day", () => {
+    const safest = applyDailyBurn(10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none', undefined, undefined, 'safest')
+    const direct = applyDailyBurn(10, 5, constants, DEFAULT_PARTY, undefined, 'none', 'none', undefined, undefined, 'direct')
+    expect(safest.rationsBurnedToday).toBeLessThan(direct.rationsBurnedToday)
+    expect(safest.waterBurnedToday).toBeLessThan(direct.waterBurnedToday)
+  })
+
+  it('mode multiplier composes with action + season + forced-march (does not replace them)', () => {
+    // forced march (×2 rations) + winter (×1.25 rations) + direct (×1.15) on a base 1.
+    const forced: PartyConfig = { ...DEFAULT_PARTY, forcedMarch: true }
+    const r = applyDailyBurn(20, 10, constants, forced, 'winter', 'none', 'none', undefined, undefined, 'direct')
+    expect(r.rationsBurnedToday).toBeCloseTo(2 * 1.25 * 1.15, 5)
+  })
+
+  it('computeSupplyTimeline omitting mode is unchanged; safest leaves more supply than direct', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 100 })
+    const days = buildDailyBreakdown(route)
+    const neutral = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY)
+    const omitted = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, undefined, undefined)
+    expect(omitted[4].rationsLeft).toBe(neutral[4].rationsLeft)
+
+    const safest = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, undefined, 'safest')
+    const direct = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, undefined, 'direct')
+    expect(safest[4].rationsLeft).toBeGreaterThan(direct[4].rationsLeft)
+    expect(safest[4].waterLeft).toBeGreaterThan(direct[4].waterLeft)
   })
 })

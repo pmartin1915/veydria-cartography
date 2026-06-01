@@ -408,6 +408,7 @@ describe('journey-days: resupply day mapping parity with legacy name-based walk'
       a, DEFAULT_PARTY, DEFAULT_SUPPLY,
       undefined, 'spring',
       (d) => dayToTier.get(d) ?? 'none',
+      'direct', /* both paths must use the same mode so the per-mode burn multiplier matches */
     )
 
     let state = initJourneyState({

@@ -11,7 +11,7 @@
  */
 
 import type { JourneyDay } from './journey-days'
-import type { JourneyEdge, PartyConfig, Season } from './journey-graph'
+import type { JourneyEdge, PartyConfig, RouteMode, Season } from './journey-graph'
 
 export type Encumbrance = 'light' | 'normal' | 'heavy'
 export type PackAnimals = 'none' | 'few' | 'caravan'
@@ -97,6 +97,33 @@ export interface BurnModifiers {
 const DEFAULT_BURN_MODS: BurnModifiers = { rations: 1, water: 1 }
 
 /**
+ * Per-mode daily-burn multipliers — the mechanical identity of each travel mode.
+ *
+ * Until this, the four modes diverged ONLY in which route Dijkstra picked
+ * (`getEdgeWeight`); per-day burn was mode-blind, so "mode regret" was an
+ * emergent accident of routing rather than a deliberate tradeoff. These factors
+ * make mode choice a legible strategy decision: `direct`/`fastest` push pace
+ * through under-provisioned country (higher burn, fewer days); `cheapest`/`safest`
+ * favour frugal, watered, well-trodden routes (lower burn, more days).
+ *
+ * Composes multiplicatively with the encumbrance/season/forced-march/action
+ * multipliers in `applyDailyBurn`, exactly like `BurnModifiers`. Neutral {1,1}
+ * for an absent mode keeps the legacy (mode-blind) burn byte-identical.
+ *
+ * Exact values are calibrated against the sim harness (sim:batch + sim:fun-report);
+ * the spread is kept modest (±15%) so it perturbs — not re-breaks — the supply model.
+ */
+export function modeBurnMultipliers(mode?: RouteMode): BurnModifiers {
+  switch (mode) {
+    case 'direct':   return { rations: 1.15, water: 1.10 }
+    case 'fastest':  return { rations: 1.10, water: 1.05 }
+    case 'cheapest': return { rations: 0.95, water: 1.00 }
+    case 'safest':   return { rations: 0.90, water: 0.95 }
+    default:         return { rations: 1, water: 1 }
+  }
+}
+
+/**
  * Tier-1 supply constants derived once from a SupplyConfig. Held in JourneyState
  * so `applyDailyBurn` can restore to start+packBonus without re-deriving every day.
  */
@@ -172,15 +199,19 @@ export function applyDailyBurn(
    *  per-day burn but BEFORE resupply restore, so a civ-stop day still
    *  recovers fully even if an encounter ate the day's surplus. */
   encounterCost: { rations: number; water: number } = { rations: 0, water: 0 },
+  /** Travel mode — applies a per-mode burn multiplier (see modeBurnMultipliers).
+   *  Omitted → neutral {1,1}, so the legacy mode-blind burn stays byte-identical. */
+  mode?: RouteMode,
 ): BurnResult {
   const { encMult, startingRations, startingWater } = constants
   const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
   const forcedWaterMult = party.forcedMarch ? 1.5 : 1.0
   const seasonRationsMult = season === 'winter' ? 1.25 : season === 'summer' ? 0.95 : 1.0
   const biomeWaterMult = aridity === 'arid' ? 1.5 : aridity === 'semi-arid' ? 1.25 : 1.0
+  const modeMods = modeBurnMultipliers(mode)
 
-  const rationsBurned = encMult * forcedRationsMult * seasonRationsMult * actionMods.rations
-  const waterBurned = encMult * forcedWaterMult * biomeWaterMult * actionMods.water
+  const rationsBurned = encMult * forcedRationsMult * seasonRationsMult * actionMods.rations * modeMods.rations
+  const waterBurned = encMult * forcedWaterMult * biomeWaterMult * actionMods.water * modeMods.water
 
   let nextRations = rationsLeft - rationsBurned - encounterCost.rations
   let nextWater = waterLeft - waterBurned - encounterCost.water
@@ -243,6 +274,9 @@ export function computeSupplyTimeline(
   biomeForEdge?: (edge: JourneyEdge) => string | undefined,
   season?: Season,
   resupplyAtDay?: (dayNum: number) => ResupplyTier,
+  /** Travel mode — forwarded to applyDailyBurn for the per-mode burn multiplier.
+   *  Omitted → neutral, so an un-moded call is byte-identical to legacy. */
+  mode?: RouteMode,
 ): SupplyDay[] {
   if (days.length === 0) return []
 
@@ -255,7 +289,10 @@ export function computeSupplyTimeline(
   for (const day of days) {
     const aridity = classifyAridity(day.edgesTraversed, biomeForEdge)
     const tier = resupplyAtDay?.(day.dayNum) ?? 'none'
-    const result = applyDailyBurn(rationsLeft, waterLeft, constants, party, season, aridity, tier)
+    const result = applyDailyBurn(
+      rationsLeft, waterLeft, constants, party, season, aridity, tier,
+      { rations: 1, water: 1 }, { rations: 0, water: 0 }, mode,
+    )
     rationsLeft = result.rationsLeft
     waterLeft = result.waterLeft
     out.push({
