@@ -19,14 +19,31 @@
       <circle cx="5" cy="5" r="2.5" fill="#2d6b3f" opacity="0.15"/>
     </pattern>
 
+    <!-- Ocean: vertical depth gradient (lighter toward the top "shallows",
+         deepening toward the bottom) so the sea reads with depth instead of a
+         flat slab. Stays in the deep-water register so the time-of-day
+         brightness filters (down to 0.5 at night) keep it as water, not black. -->
+    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#27567e"/>
+      <stop offset="0.55" stop-color="#1d4368"/>
+      <stop offset="1" stop-color="#15314f"/>
+    </linearGradient>
+    <!-- Swell: a faint double-crest wave, tiled, for a "polished sea" texture
+         at the same restraint as the dunes/steppe land patterns. -->
+    <pattern id="swell" patternUnits="userSpaceOnUse" width="34" height="22">
+      <path d="M0 11 Q8.5 5 17 11 Q25.5 17 34 11" fill="none" stroke="#3a6e9c" stroke-width="0.6" opacity="0.30"/>
+      <path d="M0 18 Q8.5 12 17 18 Q25.5 24 34 18" fill="none" stroke="#2d5a82" stroke-width="0.5" opacity="0.22"/>
+    </pattern>
+
     <!-- Route markers -->
     <marker id="arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
       <path d="M0 0 L6 2 L0 4 Z" fill="#555"/>
     </marker>
   </defs>
 
-  <!-- Background: ocean -->
-  <rect width="1200" height="800" fill="#1a3a5c"/>
+  <!-- Background: ocean — depth gradient + faint swell texture -->
+  <rect width="1200" height="800" fill="url(#ocean)"/>
+  <rect width="1200" height="800" fill="url(#swell)"/>
 
   <!-- Open ocean label -->
   <text x="120" y="400" fill="#2a5a8c" font-family="Georgia, serif" font-size="18" font-style="italic" opacity="0.6" transform="rotate(-90 120 400)">O P E N &#160; O C E A N</text>

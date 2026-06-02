@@ -392,14 +392,67 @@ body {
 
 /* Leaflet overrides */
 .leaflet-container {
-  /* Deep desaturated ocean — visible outside the continental schematic
-     SVG bounds. Tuned to harmonize with the parchment hex layer without
-     competing with the Sea-biome (#6a8ca8) hex fills, and to leave
-     headroom for the time-of-day filters below (night drops brightness
-     to 0.5, so #2a4860 → ~#152430 still reads as deep water, not black). */
-  background: #2a4860 !important;
+  /* Open ocean visible outside the continental schematic SVG bounds. Mirrors
+     the schematic's own ocean gradient (#27567e → #15314f, see
+     veydria-schematic.svg #ocean) so the SVG edge no longer reads as a seam
+     against a flatter backdrop. Stays in the deep-water register so the
+     time-of-day filters below keep it as water, not black (night drops
+     brightness to 0.5). Harmonised with the Sea-biome (#6a8ca8) hex fills. */
+  background: linear-gradient(180deg, #27567e 0%, #1d4368 55%, #15314f 100%) !important;
   font-family: var(--font-body) !important;
   transition: filter 0.5s ease;
+}
+
+/* Living-water shimmer — a faint, slow diagonal sheen drifting over the sea.
+   mix-blend-mode: soft-light makes it read on the dark ocean and wash out over
+   the bright landmass, so it animates the water without muddying the continent.
+   Scoped to .leaflet-container (the map canvas) so the React side panels are
+   untouched; z-index sits above the schematic/terrain overlay pane (400) but
+   below markers (600) and controls, and pointer-events:none keeps the map fully
+   interactive. Inherits the time-of-day filter, so it dims at dusk/night too. */
+.leaflet-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 450;
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 22px,
+    rgba(150, 200, 235, 0.05) 22px 24px,
+    transparent 24px 54px
+  );
+  mix-blend-mode: soft-light;
+  will-change: background-position;
+  animation: ocean-shimmer 19s linear infinite;
+}
+
+@keyframes ocean-shimmer {
+  from { background-position: 0 0; }
+  to   { background-position: 270px -96px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaflet-container::after { animation: none; }
+}
+
+/* Feather the schematic's edges so its fixed rectangle dissolves into the
+   surrounding ocean instead of showing a hard "square around Veydria". The
+   image's baked gradient is in image-space and the container gradient is in
+   viewport-space, so they can't align across zoom/pan — softening the boundary
+   is the robust fix. The continent sits well inside the image with an ocean
+   margin on every side, so this only fades open water (and never the baked
+   country labels, which are interior). Two intersecting linear masks feather
+   all four edges; the inset is small (~3–3.5%) to stay clear of the landmass. */
+.leaflet-image-layer {
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 3.5%, #000 96.5%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 3.5%, #000 96.5%, transparent 100%);
+  mask-composite: intersect;
 }
 
 /* Time-of-day overlay filters */
