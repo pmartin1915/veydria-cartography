@@ -18,7 +18,7 @@
  */
 
 import type { JourneyState, Action } from '../../web/src/utils/journey-days'
-import { applyDailyBurn, classifyAridity } from '../../web/src/utils/journey-supply'
+import { applyDailyBurn, classifyAridity, modeBurnMultipliers } from '../../web/src/utils/journey-supply'
 import type { ResupplyTier } from '../../web/src/utils/journey-supply'
 
 export type PolicyName = 'naive' | 'greedy-speed' | 'risk-averse' | 'human-like' | 'adaptive'
@@ -63,14 +63,17 @@ function mulberry32(a: number) {
 }
 
 /* Days remaining at current burn rate (rough estimate, ignores biome /
- * resupply). Used by risk-averse and human-like to judge urgency. */
+ * resupply). Used by risk-averse and human-like to judge urgency. Includes
+ * the per-mode burn multiplier so the estimate matches the mode-aware engine
+ * (a `direct` run burns ~15% more rations/day than the mode-blind estimate). */
 function estimateDaysLeft(rationsLeft: number, waterLeft: number, state: JourneyState): { rations: number; water: number } {
   const forcedR = state.party.forcedMarch ? 2.0 : 1.0
   const forcedW = state.party.forcedMarch ? 1.5 : 1.0
   const seasonR = state.season === 'winter' ? 1.25 : state.season === 'summer' ? 0.95 : 1.0
   const enc = state.supplyConstants.encMult
-  const perDayR = enc * forcedR * seasonR
-  const perDayW = enc * forcedW
+  const modeMods = modeBurnMultipliers(state.mode)
+  const perDayR = enc * forcedR * seasonR * modeMods.rations
+  const perDayW = enc * forcedW * modeMods.water
   return {
     rations: perDayR > 0 ? rationsLeft / perDayR : Infinity,
     water: perDayW > 0 ? waterLeft / perDayW : Infinity,
@@ -100,7 +103,10 @@ function estimateShortfallDay(state: JourneyState): { rations: number | null; wa
     const edgesInDay = state.edgesByDay.get(d) ?? []
     const aridity = classifyAridity(edgesInDay, state.biomeForEdge)
     const tier: ResupplyTier = state.resupplyByDay.get(d) ?? 'none'
-    const burn = applyDailyBurn(r, w, state.supplyConstants, state.party, state.season, aridity, tier)
+    const burn = applyDailyBurn(
+      r, w, state.supplyConstants, state.party, state.season, aridity, tier,
+      undefined, undefined, state.mode,
+    )
     r = burn.rationsLeft
     w = burn.waterLeft
     if (firstR === null && r <= 0) firstR = d
