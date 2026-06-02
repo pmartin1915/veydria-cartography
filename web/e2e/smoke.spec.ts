@@ -20,14 +20,15 @@ const BENIGN_CONSOLE = [
 ]
 const isBenign = (text: string) => BENIGN_CONSOLE.some((re) => re.test(text))
 
-// Skip the first-run guided tour — its backdrop overlay intercepts clicks.
+// Skip BOTH guided tours — their backdrop overlays intercept clicks. The
+// journey tutorial auto-launches once the map tour is complete (which we mark
+// below), so it must be marked complete too or it fires when the planner opens.
 // addInitScript runs before app code on every navigation (incl. reload / share-link goto).
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem(
-      'veydria.tour.completed.v1',
-      JSON.stringify({ completed: true, skipped: true, timestamp: 0 }),
-    )
+    const done = JSON.stringify({ completed: true, skipped: true, timestamp: 0 })
+    localStorage.setItem('veydria.tour.completed.v1', done)
+    localStorage.setItem('veydria.journey.tutorial.completed.v1', done)
   })
 })
 
@@ -109,6 +110,44 @@ test('picking two civs computes a route with day-by-day breakdown', async ({ pag
   await page.getByRole('button', { name: 'Days', exact: true }).click()
   await expect(page.locator('.journey-day').first()).toBeVisible()
   expect(await page.locator('.journey-day').count()).toBeGreaterThan(0)
+})
+
+test('journey tutorial walks the planner and drives its state', async ({ page }) => {
+  await page.goto('/')
+  // Compute a real route first so the tab steps have populated content
+  // regardless of the welcome step's demo-route seed (which no-ops when a
+  // route already exists). Auto-launch is suppressed by the completed flag in
+  // beforeEach, so we launch deliberately via the header "?" button.
+  await computeRoute(page)
+  await page.locator('.journey-tutorial-btn').click()
+
+  const title = page.locator('.tour-card .tour-card-title')
+  await expect(title).toHaveText('Plan a journey')
+
+  // Advance with the arrow key (the overlay binds keydown on window → NEXT).
+  // Robust against the fixed card repositioning as onEnter callbacks open the
+  // drawer / switch tabs — clicking a moving, possibly off-screen card is racy.
+  const next = () => page.keyboard.press('ArrowRight')
+
+  // Steps: welcome(0) from(1) to(2) modes(3) find(4) options(5) days(6) encounters(7) export(8).
+  for (let i = 0; i < 5; i++) await next()
+  await expect(title).toHaveText('Party & supply = the fuel')
+  await expect(page.locator('.journey-options-body')).toBeVisible() // onEnter opened the drawer
+
+  await next()
+  await expect(title).toHaveText('The day-by-day march')
+  await expect(page.getByRole('button', { name: 'Days', exact: true })).toHaveClass(/active/) // onEnter switched tab
+
+  await next()
+  await expect(title).toHaveText('Encounters cost supply')
+  await expect(page.getByRole('button', { name: 'Encounters', exact: true })).toHaveClass(/active/)
+
+  await next()
+  await expect(title).toHaveText('Save it or share it')
+
+  // NEXT past the last step dismisses the tour.
+  await next()
+  await expect(page.locator('.tour-overlay')).toHaveCount(0)
 })
 
 test('mounting the party reduces estimated travel days', async ({ page }) => {

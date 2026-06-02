@@ -4,6 +4,8 @@ import {
   isTourCompleted,
   markTourCompleted,
   computeCardPosition,
+  MAIN_TOUR_KEY,
+  JOURNEY_TUTORIAL_KEY,
   type TourState,
 } from './tour'
 
@@ -88,6 +90,25 @@ describe('localStorage', () => {
     expect(parsed.completed).toBe(true)
     expect(parsed.skipped).toBe(true)
     expect(typeof parsed.timestamp).toBe('number')
+  })
+
+  it('default key is the main tour key', () => {
+    expect(MAIN_TOUR_KEY).toBe(STORAGE_KEY)
+    markTourCompleted()
+    expect(localStorage.getItem(MAIN_TOUR_KEY)).toBeTruthy()
+  })
+
+  it('the journey-tutorial key is tracked independently of the main tour', () => {
+    // Completing the journey tutorial must NOT mark the main tour done, and
+    // vice-versa — they share the engine but not the flag.
+    markTourCompleted(false, JOURNEY_TUTORIAL_KEY)
+    expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(true)
+    expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(false)
+
+    markTourCompleted(false, MAIN_TOUR_KEY)
+    expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(true)
+    // Journey flag still independently set.
+    expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(true)
   })
 })
 
