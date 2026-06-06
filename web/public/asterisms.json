@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "controlled_vocabularies": {
+    "kind": [
+      "asterism",
+      "cartouche"
+    ],
+    "placement": [
+      "sky",
+      "open_water"
+    ],
+    "civ": [
+      "oravan"
+    ]
+  },
+  "asterisms": [
+    {
+      "id": "religion.tradition.star_register.serakar",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Serakar — the Crown Star",
+      "gloss": "The fixed pole; holds latitude and heading, shot with the kamal. The star that does not move.",
+      "etymology": "sera (star, navigation mark) + kar (crown, peak)",
+      "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.vanasera",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Vanasera — the Landfall Star",
+      "gloss": "A bright southern star whose low altitude over the palm line marks approach to an island's latitude.",
+      "etymology": "vana (mouth, bay, inlet — landfall) + sera (star)",
+      "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.murasera",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Murasera — the Storm-Star",
+      "gloss": "Its dawn rising marks the monsoon shoulder — the season to haul the jong out and stop voyaging.",
+      "etymology": "mura (storm, destruction) + sera (star)",
+      "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.measera",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Measera — the Dawn-Star",
+      "gloss": "The bright morning star that opens the sailing day and times the change of watch on a night crossing.",
+      "etymology": "mea (red, sunrise) + sera (star)",
+      "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.serama",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Serama — the Star-River",
+      "gloss": "The luminous band of the night sky, steered along as a heading-line on moonless, star-clear nights.",
+      "etymology": "sera (star) + ma (great, vast)",
+      "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.seraili",
+      "civ": "oravan",
+      "kind": "asterism",
+      "placement": "sky",
+      "prose_label": "Seraili — the Remembered Stars",
+      "gloss": "Foreign fixed-points the Qollari name as ancestors; the nakhoda borrows their positions to time corridor access, not their genealogy.",
+      "etymology": "sera (star) + ili (memory, history)",
+      "illustration_ref": null
+    }
+  ]
+}
