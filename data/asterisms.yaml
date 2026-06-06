@@ -1,0 +1,91 @@
+# ============================================================
+# asterisms.yaml — the chart's navigational asterism register (art-layer extract)
+# ============================================================
+#
+# Machine-readable projection of the Oravan nakhoda star-register for the
+# cartography ocean-chart marginalia. Source of truth is worldbuilder canon:
+#   worldbuilder/religion/01_traditions/star-register.md  (status: canonical, 2026-06-06)
+# authored under ADR-0023 (ocean marginalia is an art layer over a names-only canon;
+# "astrology creatures" resolve to navigational asterisms, NOT a bestiary).
+#
+# This file is the CARTOGRAPHY-SIDE extract that ADR-0023 Q6/Q7 assign to this repo
+# ("authoring that YAML and its loader is a cartography-side follow-on"). It asserts
+# NO new attested fact — every id, label, gloss, and etymology is read straight from
+# the register; no new morphemes are minted (see the register's attestation rule).
+#
+# Source-of-truth direction is .md (worldbuilder) -> .yaml (here) -> .json (generated).
+# Build: `npm run build:asterisms` (web/) converts this to web/public/asterisms.json,
+# which the app fetches at runtime. The per-figure `id` is the stable identifier,
+# minted under the register's canonical id (religion.tradition.star_register) because
+# the register names the figures as sections, not as separate entities.
+#
+# Contract: worldbuilder/design/world-architecture/ADR-0023-cartographic-marginalia-and-asterism-register.md
+
+schema_version: 1
+
+controlled_vocabularies:
+  # An asterism (a named star-figure from the register) vs a cartouche (an abstract
+  # name-plate device, ADR-0023 restricted-C). This beat populates asterisms only.
+  kind: [asterism, cartouche]
+  # Where the marginalia sits on the chart: the sky/margin band, or in open water
+  # (the future real-fauna engraving layer, ADR-0023 layer B). All stars are `sky`.
+  placement: [sky, open_water]
+  # Governing register: all entries are Oravan nakhoda chart-speech (ADR-0023 Q5).
+  civ: [oravan]
+
+# The six named star-figures, in register order. illustration_ref is null until the
+# renderer beat authors the SVG art assets (the picture is non-canon, ADR-0023 Q2).
+asterisms:
+  - id: religion.tradition.star_register.serakar
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Serakar — the Crown Star"
+    gloss: "The fixed pole; holds latitude and heading, shot with the kamal. The star that does not move."
+    etymology: "sera (star, navigation mark) + kar (crown, peak)"
+    illustration_ref: null
+
+  - id: religion.tradition.star_register.vanasera
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Vanasera — the Landfall Star"
+    gloss: "A bright southern star whose low altitude over the palm line marks approach to an island's latitude."
+    etymology: "vana (mouth, bay, inlet — landfall) + sera (star)"
+    illustration_ref: null
+
+  - id: religion.tradition.star_register.murasera
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Murasera — the Storm-Star"
+    gloss: "Its dawn rising marks the monsoon shoulder — the season to haul the jong out and stop voyaging."
+    etymology: "mura (storm, destruction) + sera (star)"
+    illustration_ref: null
+
+  - id: religion.tradition.star_register.measera
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Measera — the Dawn-Star"
+    gloss: "The bright morning star that opens the sailing day and times the change of watch on a night crossing."
+    etymology: "mea (red, sunrise) + sera (star)"
+    illustration_ref: null
+
+  - id: religion.tradition.star_register.serama
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Serama — the Star-River"
+    gloss: "The luminous band of the night sky, steered along as a heading-line on moonless, star-clear nights."
+    etymology: "sera (star) + ma (great, vast)"
+    illustration_ref: null
+
+  - id: religion.tradition.star_register.seraili
+    civ: oravan
+    kind: asterism
+    placement: sky
+    prose_label: "Seraili — the Remembered Stars"
+    gloss: "Foreign fixed-points the Qollari name as ancestors; the nakhoda borrows their positions to time corridor access, not their genealogy."
+    etymology: "sera (star) + ili (memory, history)"
+    illustration_ref: null

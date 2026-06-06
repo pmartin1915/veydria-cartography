@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "sync:data": "node ../scripts/sync-world-data.mjs",
+    "build:asterisms": "node ../scripts/build-asterisms.mjs",
     "generate:calendar": "python ../generator/export/calendar_ts.py",
     "sim:journey": "vite-node ../scripts/sim/sim-journey.ts --",
     "sim:batch": "vite-node ../scripts/sim/sim-batch.ts --",
