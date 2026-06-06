@@ -12,13 +12,28 @@ interface TourOverlayProps {
   steps: TourStep[]
   state: TourState
   dispatch: React.Dispatch<TourAction>
+  /** localStorage key to mark completed on Skip/Done/Escape. Omitted → the
+   *  main-tour key (see markTourCompleted's default), so existing callers are
+   *  unchanged; the journey tutorial passes JOURNEY_TUTORIAL_KEY. */
+  storageKey?: string
 }
 
-export default function TourOverlay({ steps, state, dispatch }: TourOverlayProps) {
+export default function TourOverlay({ steps, state, dispatch, storageKey }: TourOverlayProps) {
   const step = steps[state.stepIndex]
   const [rect, setRect] = useState<DOMRect | null>(null)
   const [cardPos, setCardPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const cardRef = useRef<HTMLDivElement>(null)
+
+  // Bring the target into view on step change before measuring. Tour targets
+  // can live inside a scroll container (e.g. the journey planner's body), in
+  // which case they — and the card anchored to them — may sit outside the
+  // viewport. Instant (non-smooth) scroll so the 500ms re-measure below doesn't
+  // chase an animating element. A no-op when the target is already visible.
+  useEffect(() => {
+    if (!state.active || !step.targetSelector) return
+    const el = document.querySelector(step.targetSelector)
+    el?.scrollIntoView({ block: 'center', inline: 'nearest' })
+  }, [state.active, state.stepIndex, step])
 
   // Measure target and compute card position on mount / step change / resize
   useEffect(() => {
@@ -65,13 +80,13 @@ export default function TourOverlay({ steps, state, dispatch }: TourOverlayProps
       }
       if (e.key === 'Escape') {
         e.preventDefault()
-        markTourCompleted(true)
+        markTourCompleted(true, storageKey)
         dispatch({ type: 'SKIP' })
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [state.active, dispatch])
+  }, [state.active, dispatch, storageKey])
 
   const spotlightStyle = useMemo(() => {
     if (!rect) return { display: 'none' as const }
@@ -113,7 +128,7 @@ export default function TourOverlay({ steps, state, dispatch }: TourOverlayProps
             type="button"
             className="tour-card-skip"
             onClick={() => {
-              markTourCompleted(true)
+              markTourCompleted(true, storageKey)
               dispatch({ type: 'SKIP' })
             }}
             aria-label="Skip tour"
@@ -138,7 +153,7 @@ export default function TourOverlay({ steps, state, dispatch }: TourOverlayProps
               type="button"
               className="tour-btn tour-btn--primary"
               onClick={() => {
-                markTourCompleted(false)
+                markTourCompleted(false, storageKey)
                 dispatch({ type: 'COMPLETE' })
               }}
             >

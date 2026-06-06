@@ -1,6 +1,8 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useReducer, useCallback } from 'react'
 import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
+import TourOverlay from './TourOverlay'
+import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
 import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { type Encounter } from '../utils/encounters'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneysForParty, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
@@ -56,6 +58,10 @@ interface JourneyPlannerProps {
   onMarkRouteExplored?: (hexLabels: string[]) => void
   /** Initial active party name (Tier 2c; typically seeded from URL hash). */
   defaultPartyName?: string
+  /** True while the first-run map tour is running. The journey tutorial defers
+   *  its auto-launch until the map tour is done so the two overlays never race
+   *  (the map tour's "journey" step flips this planner open). */
+  mainTourActive?: boolean
 }
 
 // Picker label format: "<Civ> · <category>" when the node carries a civ tag,
@@ -69,7 +75,7 @@ function formatNodeCategory(n: JourneyNode): string {
   return `${civLabel} · ${cat}`
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -179,6 +185,112 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       if (exportToastTimeoutRef.current) clearTimeout(exportToastTimeoutRef.current)
     }
   }, [])
+
+  // ── Journey tutorial ─────────────────────────────────────────────────────
+  // A planner-scoped walkthrough reusing the map-tour engine (tour.ts +
+  // TourOverlay). Lives here, not in App, because its steps drive this
+  // component's own state (open the options drawer, switch tabs).
+
+  // Give the tab/export steps something to point at: if the planner is empty,
+  // pick two endpoints and let the debounced auto-recompute effect (below)
+  // build the route. Never clobber a selection the user already made.
+  const seedDemoRoute = useCallback(() => {
+    if (startId || endId) return
+    const valid = (id?: string) => !!id && nodes.some(n => n.id === id)
+    const a = valid(defaultStartId) ? defaultStartId! : nodes[0]?.id
+    const b = valid(defaultEndId) ? defaultEndId! : nodes.find(n => n.id !== a)?.id
+    if (!a || !b || a === b) return
+    setStartId(a)
+    setEndId(b)
+  }, [startId, endId, defaultStartId, defaultEndId, nodes])
+
+  const journeyTourSteps: TourStep[] = useMemo(() => [
+    {
+      id: 'welcome',
+      title: 'Plan a journey',
+      body: 'This planner simulates a trek day-by-day — spending rations and water across terrain, rolling encounters, and telling you whether the party makes it. Here’s the loop.',
+      onEnter: seedDemoRoute,
+    },
+    {
+      id: 'from',
+      targetSelector: '[data-tour="journey-from"]',
+      placement: 'bottom',
+      title: 'Where they set out',
+      body: 'Pick the party’s starting point. Every node is a real place on the map.',
+    },
+    {
+      id: 'to',
+      targetSelector: '[data-tour="journey-to"]',
+      placement: 'bottom',
+      title: 'Where they’re bound',
+      body: 'Pick the destination. The distance and terrain between the two endpoints drive everything that follows.',
+    },
+    {
+      id: 'modes',
+      targetSelector: '[data-tour="journey-modes"]',
+      placement: 'bottom',
+      title: 'Route priority is a tradeoff',
+      body: 'Modes aren’t just different paths — each burns supply differently. Safest spends the fewest rations per day; Direct burns ~15% more. Once a route exists, the comparison cards weigh completion odds against days on the road.',
+    },
+    {
+      id: 'find',
+      targetSelector: '[data-tour="journey-find"]',
+      placement: 'bottom',
+      title: 'Compute the route',
+      body: 'Find Route runs the simulation. (We’ve filled in a sample trip so you can see the rest.) Clear resets everything.',
+    },
+    {
+      id: 'options',
+      targetSelector: '[data-tour="journey-options"]',
+      placement: 'top',
+      title: 'Party & supply = the fuel',
+      body: 'Pace, mounts, party size, and your ration/water stores all feed the burn. A larger or forced-march party drains supplies faster — this is what the daily breakdown spends down.',
+      onEnter: () => setOptionsOpen(true),
+    },
+    {
+      id: 'days',
+      targetSelector: '[data-tour="journey-tab-days"]',
+      placement: 'bottom',
+      title: 'The day-by-day march',
+      body: 'Each leg debits rations and water; stopping at a settlement resupplies. Red shortfall days are where the party runs dry — finding and fixing those is the heart of the planning loop.',
+      onEnter: () => setRouteTab('days'),
+    },
+    {
+      id: 'encounters',
+      targetSelector: '[data-tour="journey-tab-encounters"]',
+      placement: 'bottom',
+      title: 'Encounters cost supply',
+      body: 'Encounters add story beats and eat into the buffer you just budgeted — a severe one can tip a comfortable trip into a shortfall. Roll them here per segment.',
+      onEnter: () => setRouteTab('encounters'),
+    },
+    {
+      id: 'export',
+      targetSelector: '[data-tour="journey-export"]',
+      placement: 'top',
+      title: 'Save it or share it',
+      body: 'Save the route to your party’s history, or hand players a stripped, player-safe version. That’s the loop: endpoints → priority → supply, then read the days. Replay this anytime from the “?” in the header.',
+      onEnter: () => setRouteTab('route'),
+    },
+  ], [seedDemoRoute])
+
+  const [tutState, tutDispatch] = useReducer(
+    (s: TourState, act: TourAction) => tourReducer(s, act, journeyTourSteps.length),
+    { active: false, stepIndex: 0 },
+  )
+
+  // Auto-launch on first planner open — but only after the map tour is done
+  // (and not running), never in share mode, and only on a wide enough viewport
+  // for the card. Fires once per mount; the localStorage flag stops re-fires.
+  const tutAutoFiredRef = useRef(false)
+  useEffect(() => {
+    if (!active || tutAutoFiredRef.current) return
+    if (shareMode || mainTourActive) return
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return
+    if (isTourCompleted(JOURNEY_TUTORIAL_KEY) || !isTourCompleted(MAIN_TOUR_KEY)) return
+    tutAutoFiredRef.current = true
+    const t = window.setTimeout(() => tutDispatch({ type: 'START' }), 600)
+    return () => window.clearTimeout(t)
+  }, [active, shareMode, mainTourActive])
 
   // Auto-compute route from URL defaults on first mount
   useEffect(() => {
@@ -584,6 +696,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             </svg>
             <span>{activePartyJourneys.length}</span>
           </button>
+          {!shareMode && (
+            <button
+              className="journey-tutorial-btn"
+              onClick={() => tutDispatch({ type: 'START' })}
+              title="Journey tutorial"
+              aria-label="Replay the journey tutorial"
+            >
+              ?
+            </button>
+          )}
           <button className="journey-planner-close" onClick={onClose} title="Close (Esc)">×</button>
         </div>
       </div>
@@ -612,7 +734,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         )}
 
         {/* Start selector */}
-        <div className="journey-field" ref={startRef}>
+        <div className="journey-field" ref={startRef} data-tour="journey-from">
           <label className="journey-field-label">From</label>
           <div className="journey-dropdown">
             <button
@@ -683,7 +805,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         </div>
 
         {/* End selector */}
-        <div className="journey-field" ref={endRef}>
+        <div className="journey-field" ref={endRef} data-tour="journey-to">
           <label className="journey-field-label">To</label>
           <div className="journey-dropdown">
             <button
@@ -840,7 +962,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         {/* Route results */}
         {route && (
           <div className="journey-route">
-            <div className="journey-route-actions">
+            <div className="journey-route-actions" data-tour="journey-export">
               <button className="journey-export-btn" onClick={handleSaveRoute} title="Save to history">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Save
@@ -901,6 +1023,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               <button
                 className={`journey-tab ${routeTab === 'days' ? 'active' : ''}`}
                 onClick={() => setRouteTab('days')}
+                data-tour="journey-tab-days"
               >
                 Days
               </button>
@@ -908,6 +1031,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 <button
                   className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
                   onClick={() => setRouteTab('encounters')}
+                  data-tour="journey-tab-encounters"
                 >
                   Encounters
                 </button>
@@ -1040,6 +1164,13 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         )}
       </div>
+
+      <TourOverlay
+        steps={journeyTourSteps}
+        state={tutState}
+        dispatch={tutDispatch}
+        storageKey={JOURNEY_TUTORIAL_KEY}
+      />
     </div>
   )
 }

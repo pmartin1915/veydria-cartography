@@ -30,13 +30,12 @@ async function hoverUntilVisible(page: Page, target: Locator): Promise<boolean> 
 }
 
 test.beforeEach(async ({ page }) => {
-  // The first-run guided tour's backdrop intercepts hovers/clicks; mark it completed
+  // Both guided tours' backdrops intercept hovers/clicks; mark them completed
   // before the app boots (addInitScript runs before app code). Mirrors smoke.spec.
   await page.addInitScript(() => {
-    localStorage.setItem(
-      'veydria.tour.completed.v1',
-      JSON.stringify({ completed: true, skipped: true, timestamp: 0 }),
-    )
+    const done = JSON.stringify({ completed: true, skipped: true, timestamp: 0 })
+    localStorage.setItem('veydria.tour.completed.v1', done)
+    localStorage.setItem('veydria.journey.tutorial.completed.v1', done)
   })
 })
 

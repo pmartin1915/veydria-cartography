@@ -1739,6 +1739,7 @@ function App() {
             })()}
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
             defaultPartyName={initialHashRef.current.party}
+            mainTourActive={tourState.active}
           />
           </Suspense>
         )}

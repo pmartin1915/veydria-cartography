@@ -50,11 +50,15 @@ export function tourReducer(state: TourState, action: TourAction, stepCount = 8)
   }
 }
 
-const STORAGE_KEY = 'veydria.tour.completed.v1'
+/** First-run map tour. */
+export const MAIN_TOUR_KEY = 'veydria.tour.completed.v1'
+/** Planner-scoped journey walkthrough — a separate flag so completing one
+ *  tour never marks the other done. Reuses the same engine + overlay. */
+export const JOURNEY_TUTORIAL_KEY = 'veydria.journey.tutorial.completed.v1'
 
-export function isTourCompleted(): boolean {
+export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) return false
     const parsed = JSON.parse(raw)
     return parsed?.completed === true
@@ -63,10 +67,10 @@ export function isTourCompleted(): boolean {
   }
 }
 
-export function markTourCompleted(skipped = false): void {
+export function markTourCompleted(skipped = false, key: string = MAIN_TOUR_KEY): void {
   try {
     localStorage.setItem(
-      STORAGE_KEY,
+      key,
       JSON.stringify({ completed: true, skipped, timestamp: Date.now() })
     )
   } catch {

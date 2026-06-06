@@ -108,7 +108,7 @@ export default function JourneyControls({
       {/* Route mode selector — recommends `safest` (badge on the recommended
           button) when Mode Risk or Encounter Density predicates fire. GM-only;
           shareMode users see the bare selector. */}
-      <div className="journey-modes">
+      <div className="journey-modes" data-tour="journey-modes">
         <span className="journey-modes-label">Route priority</span>
         <div className="journey-modes-row">
           {MODES.map(m => {
@@ -129,7 +129,7 @@ export default function JourneyControls({
       </div>
 
       {/* Actions */}
-      <div className="journey-actions">
+      <div className="journey-actions" data-tour="journey-find">
         <button
           className="journey-btn journey-btn--primary"
           onClick={onFindRoute}
@@ -156,6 +156,7 @@ export default function JourneyControls({
           className={`journey-options-header ${optionsOpen ? 'open' : ''}`}
           onClick={onToggleOptions}
           aria-expanded={optionsOpen}
+          data-tour="journey-options"
         >
           <span className={`journey-options-chevron ${optionsOpen ? '' : 'collapsed'}`}>▾</span>
           <span className="journey-options-title">Party, supply &amp; options</span>
