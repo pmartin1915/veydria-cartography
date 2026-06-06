@@ -15,13 +15,15 @@ import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
 import { applyLayerVisibility, type LayerEntry, type OverlayMock } from '../utils/layer-visibility'
 import type { HexCell } from '../utils/hex-grid'
-import { getRouteHexLabels, BIOME_COLORS } from '../utils/hex-grid'
+import { getRouteHexLabels } from '../utils/hex-grid'
 import { formatDistance, svgDistanceToKm } from '../utils/measure'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute, ComparisonRoutes } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
 import { createAnnotation, ANNOTATION_COLORS, findNearestFeature, createExploredAnnotation, getExploredHexLabels, isExplored } from '../utils/annotations'
 import { iconWarningHtml, iconBoxHtml, iconBoltHtml } from './icons'
+import { MARKER_SVGS, MARKER_CLASSES, CIV_COLORS, ELEVATION_STOPS } from '../utils/map-style'
+import MapKey from './MapKey'
 
 // Force the canvas renderer to repaint immediately. `setStyle()` only schedules a
 // deferred redraw (Leaflet batches per frame via requestAnimFrame) that often fails to
@@ -193,23 +195,6 @@ function getCentroid(coords: number[] | number[][] | number[][][], geomType: str
   return [600, 400]
 }
 
-// SVG marker icons per category
-const MARKER_SVGS: Record<string, string> = {
-  port: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 21V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M8 12l4-3 4 3"/></svg>`,
-  chokepoint: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M10 9.5a2 2 0 0 1 4 0V21"/></svg>`,
-  oasis: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2-2-4-5-4-8a4 4 0 0 1 8 0c0 3-2 6-4 8z"/><path d="M8 22h8"/></svg>`,
-  contested_site: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-  landmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12 12 2"/></svg>`,
-}
-
-const MARKER_CLASSES: Record<string, string> = {
-  port: 'marker-port',
-  chokepoint: 'marker-chokepoint',
-  oasis: 'marker-oasis',
-  contested_site: 'marker-contested',
-  landmark: 'marker-landmark',
-}
-
 const MARKER_SIZE = 22
 
 // Zoom thresholds: layers hidden below this zoom level
@@ -221,20 +206,7 @@ const ZOOM_THRESHOLDS: Partial<Record<keyof LayerVisibility, number>> = {
 
 function getElevationColor(elev: number): string {
   const norm = Math.max(0.25, Math.min(1.0, 0.25 + 0.75 * (elev + 500) / 3500))
-  if (norm < 0.4) return '#8ab87a' // ndjadi green
-  if (norm < 0.6) return '#c8d4a0' // kheshkai green-yellow
-  if (norm < 0.8) return '#e8d5a0' // irrah yellow-brown
-  if (norm < 0.9) return '#c9b896' // ngaru-bon plateau
-  return '#f5f5f5' // white peaks
-}
-
-const CIV_COLORS: Record<string, string> = {
-  ngaru_bon: '#9a8a7a',
-  irrah: '#b8a060',
-  kheshkai: '#8a9a5a',
-  ndjadi: '#5a9a6a',
-  qollari: '#4a8a7a',
-  oravan: '#4a7a9a',
+  return (ELEVATION_STOPS.find(s => norm < s.max) ?? ELEVATION_STOPS[ELEVATION_STOPS.length - 1]).color
 }
 
 function getTerrainCostColor(elev: number): string {
@@ -1587,41 +1559,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''} ${pinMode ? 'pin-mode' : ''}`} id="veydria-map" />
-        {/* Biome legend — only when hex grid + biome colors are on */}
-        {layers.hex_grid && layers.biome_colors && (
-          <div className="biome-legend">
-            <div className="biome-legend-title">Biomes</div>
-            {Object.entries(BIOME_COLORS)
-              .filter(([name]) =>
-                // Show primary biomes + a few distinctive secondaries;
-                // hide elevation fallback buckets to avoid clutter.
-                [
-                  'Cloud forest',
-                  'Highland savanna',
-                  'Desert',
-                  'Steppe',
-                  'Monsoon delta',
-                  'Volcanic archipelago',
-                  'Miombo woodland',
-                  'Afroalpine heath',
-                  'River gorge',
-                  'Sabkha',
-                  'Oasis',
-                  'Escarpment',
-                  'Mangrove swamp',
-                  'Floodplain',
-                  'Coral reef',
-                  'Geothermal vent',
-                ].includes(name)
-              )
-              .map(([name, color]) => (
-                <div key={name} className="biome-legend-item">
-                  <span className="biome-legend-swatch" style={{ backgroundColor: color }} />
-                  <span className="biome-legend-label">{name}</span>
-                </div>
-              ))}
-          </div>
-        )}
+        {/* On-map key — sections appear per active layer (supersedes the old biome legend) */}
+        <MapKey layers={layers} />
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.2">
