@@ -14,6 +14,7 @@ import JourneyControls from './journey-planner/JourneyControls'
 import JourneyResults from './journey-planner/JourneyResults'
 import JourneyRouteTab from './journey-planner/JourneyRouteTab'
 import JourneyEncountersTab from './journey-planner/JourneyEncountersTab'
+import TravelVignette from './journey-planner/TravelVignette'
 import NodeIcon from './journey-planner/NodeIcon'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
@@ -962,6 +963,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         {/* Route results */}
         {route && (
           <div className="journey-route">
+            {/* Travel vignette — region + attested travel mode of the selected leg */}
+            <TravelVignette
+              route={route}
+              edgeBiomes={edgeBiomes}
+              selectedSegmentIdx={selectedSegmentIdx}
+              season={season}
+            />
+
             <div className="journey-route-actions" data-tour="journey-export">
               <button className="journey-export-btn" onClick={handleSaveRoute} title="Save to history">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
