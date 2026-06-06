@@ -305,3 +305,17 @@ test('map key renders, documents active layers, and collapses', async ({ page })
   await page.getByTestId('map-key-toggle').click()
   await expect(page.getByTestId('map-key-body')).toBeVisible()
 })
+
+test('the travel vignette crowns a computed route and names a region + travel mode', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.leaflet-container')).toBeVisible()
+  await computeRoute(page)
+
+  // The vignette mounts at the top of the route panel once a route exists, with a
+  // foreground mode from the attested 6-mode enum and a non-empty region/mode caption.
+  const vig = page.getByTestId('travel-vignette')
+  await expect(vig).toBeVisible()
+  await expect(vig).toHaveAttribute('data-mode', /^(horse|camel|llama|porter|river-boat|sea-ship)$/)
+  await expect(page.getByTestId('travel-vignette-region')).not.toBeEmpty()
+  await expect(page.getByTestId('travel-vignette-mode')).not.toBeEmpty()
+})
