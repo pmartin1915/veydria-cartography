@@ -38,7 +38,14 @@
     ],
     "biome": [
       "Volcanic archipelago",
-      "Monsoon delta"
+      "Monsoon delta",
+      "Floodplain",
+      "Cloud forest",
+      "Steppe",
+      "Highland savanna",
+      "Miombo woodland",
+      "Desert",
+      "Oasis"
     ]
   },
   "encounters": [
@@ -209,6 +216,1095 @@
       "frequency": "uncommon",
       "time": "day",
       "sensory_hook": "Three quarters visible: Muslim merchants, junk-masters, palm-thatch longhouses of the datu"
+    },
+    {
+      "key": "ndjadi.fish_eagle_calling",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Fish eagle pair calling from a dead acacia",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Yelping whistle thrown between perches, carrying across still water"
+    },
+    {
+      "key": "ndjadi.pirogue_catfish_hawker",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Pirogue hawking smoked catfish to passing boats",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "Shout of \"Ndje! Ndje!\" and a whiff of palm-smoke and river-mud"
+    },
+    {
+      "key": "ndjadi.hippo_pod_channel",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Hippo pod blocking the channel",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Wet bellows-grunt, nostrils like twin cookpots breaking the surface"
+    },
+    {
+      "key": "ndjadi.nile_crocodile_washplace",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Nile crocodile basking at a wash-place",
+      "biome": "Monsoon delta",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "The boy who steps, wordless, between you and what looked just like a small boat"
+    },
+    {
+      "key": "ndjadi.papyrus_pounders",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Papyrus-pounders on the foreshore",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Slapping chorus of mallets; air smells of rye-bread and damp leather"
+    },
+    {
+      "key": "ndjadi.grain_pounding_women",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Women pounding grain in wooden mortars",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Double-beat thud rolling between compounds like a second heartbeat"
+    },
+    {
+      "key": "ndjadi.frog_chorus_first_rain",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Frog chorus at the first rain",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "season": [
+        "summer"
+      ],
+      "time": "dusk",
+      "sensory_hook": "A deafening pulse that drowns conversation within two paces"
+    },
+    {
+      "key": "ndjadi.mosquito_column",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Mosquito column at sunset over a side-channel",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "The air itself seems to hum and sting"
+    },
+    {
+      "key": "ndjadi.ferry_cotton_bales",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Ferry crossing choked with cotton bales",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Creak of reed bindings, paddle-splash, smell of raw indigo and sweat"
+    },
+    {
+      "key": "ndjadi.saddlebilled_stork",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Saddle-billed stork hunting a drying pool",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Absolute stillness, then a dagger-strike into silver water"
+    },
+    {
+      "key": "ndjadi.caravanserai_on_stilts",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Caravanserai-on-stilts at a river landing",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "Lamp-oil, mosquito smoke, drum-line announcing arrivals"
+    },
+    {
+      "key": "ndjadi.nile_monitor_fishrack",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Nile monitor raiding a fish-rack",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "dawn",
+      "sensory_hook": "Black tongue flick, scatter of racked fish, women's curses"
+    },
+    {
+      "key": "ndjadi.nile_perch_spawning_run",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Spawning run of Nile perch through flooded rice",
+      "biome": "Floodplain",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "season": [
+        "summer"
+      ],
+      "time": "any",
+      "sensory_hook": "Silver thrashing between rice-stems; children spearing by torchlight"
+    },
+    {
+      "key": "ndjadi.cattle_cracked_riverbed",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Cattle grazing the cracked riverbed",
+      "biome": "Floodplain",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "season": [
+        "winter"
+      ],
+      "time": "day",
+      "sensory_hook": "Dust-haze, lowing, the smell of hot clay and dried dung"
+    },
+    {
+      "key": "ndjadi.manatee_surfacing",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "West African manatee surfacing",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "dusk",
+      "sensory_hook": "A soft exhalation; boatmen fall silent and touch the gunwale for luck"
+    },
+    {
+      "key": "ndjadi.rock_python_levee",
+      "civ": "ndjadi",
+      "source_md": "ecology/encounters/ndjadi.md",
+      "prose_label": "Rock python digesting on the levee path",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "Coils thick as a man's thigh; the caravan detours without comment"
+    },
+    {
+      "key": "qollari.chasqui_runner",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Chasqui runner overtaking the caravan",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "White feather sunshade bobbing, blown conch pututu, gone before the dust settles"
+    },
+    {
+      "key": "qollari.quipucamayuq_tally",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Quipucamayuq tallying loads at a tambo",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Coloured knots running through calloused fingers by torchlight"
+    },
+    {
+      "key": "qollari.llama_train_steps",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Llama train grunting up stone steps",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "Humming nasal complaints, soft pad of split hooves on paving"
+    },
+    {
+      "key": "qollari.qiswa_chaka_bridge",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Q'iswa chaka grass bridge over gorge",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "The creak of ichu rope, the white thread of river far below"
+    },
+    {
+      "key": "qollari.vicuna_herd_puna",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Vicuna herd on the puna",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Fawn backs flickering against silver grass, then a whistle and they are gone"
+    },
+    {
+      "key": "qollari.andean_condor_pass",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Andean condor at the pass",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "The slow audible woof of wingbeat at arm's reach"
+    },
+    {
+      "key": "qollari.soroche_apacheta",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Soroche attack at the apacheta cairn",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Hammering skull, a porter squatting with a coca quid in his cheek"
+    },
+    {
+      "key": "qollari.puya_raimondii_bloom",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Puya raimondii in full bloom",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "A ten-metre spire of ivory flowers, bees audible from fifty paces"
+    },
+    {
+      "key": "qollari.spectacled_bear_sign",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Spectacled bear (Tremarctos ornatus) sign in yungas",
+      "biome": "Cloud forest",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "dawn",
+      "sensory_hook": "Claw-scored bark on a wax-palm, a smell like wet dog"
+    },
+    {
+      "key": "qollari.chuno_making_tambo",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Chuno-making at puna tambo",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "night",
+      "sensory_hook": "Small potatoes laid on ichu mats, rimed hard by morning, trampled at noon"
+    },
+    {
+      "key": "qollari.flamingos_salt_lake",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Flamingos at a salt lake",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Pink absurdity against blinding white crust, quiet clatter of bills"
+    },
+    {
+      "key": "qollari.quena_flute_fire",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Quena flute at the tambo fire",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "A single falling note held against the wind, nothing answering"
+    },
+    {
+      "key": "qollari.landslide_road",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Landslide across the paved road",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "season": [
+        "summer"
+      ],
+      "time": "any",
+      "sensory_hook": "Fresh red earth, a buried switchback, porters unloading to clamber"
+    },
+    {
+      "key": "qollari.quenua_grove",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Quenua grove at the tree-limit",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "Papery red bark peeling in curls, the highest wood in the world"
+    },
+    {
+      "key": "qollari.puma_sign_dawn",
+      "civ": "qollari",
+      "source_md": "ecology/encounters/qollari.md",
+      "prose_label": "Puma sign at dawn near camp",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "dawn",
+      "sensory_hook": "A pad-print in frost, claws sheathed, the arriero spitting once"
+    },
+    {
+      "key": "kheshkai.wind_feathergrass",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Wind in the feather-grass",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "A continuous silver hiss that becomes, by noon, the only sound in the world"
+    },
+    {
+      "key": "kheshkai.marmot_whistle_alarm",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Marmot whistle-alarm from a burrow-mound",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "A single sharp pipe from a mound rimmed with wormwood"
+    },
+    {
+      "key": "kheshkai.yam_post_station",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Yam post-station arrival",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Three hundred horses dozing in a dust-lot; a clerk checks your paiza by lamplight"
+    },
+    {
+      "key": "kheshkai.three_bowl_greeting",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Three-bowl kumis greeting in a felt tent",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "Sour-sweet mare's milk, flicked three times for sky, wind, and earth"
+    },
+    {
+      "key": "kheshkai.dust_plume_horizon",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Dust-plume on the horizon (herd, storm, or raiders?)",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Guide stands in his stirrups, silent a long minute, before naming it"
+    },
+    {
+      "key": "kheshkai.saker_falcon_cry",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Saker falcon cry out of an empty sky",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "A dry, tearing scream directly overhead"
+    },
+    {
+      "key": "kheshkai.biting_flies_withers",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Biting flies on horse withers",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "season": [
+        "summer"
+      ],
+      "time": "day",
+      "sensory_hook": "Red streaks below the mane; the horse shudders its whole hide in a wave"
+    },
+    {
+      "key": "kheshkai.wolf_howl_chorus",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Wolf-howl chorus at dusk",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "One note lifts; four answer from different compass points; the hobbled horses go still"
+    },
+    {
+      "key": "kheshkai.swollen_river_ford",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Swollen river ford (summer runoff)",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "season": [
+        "summer"
+      ],
+      "time": "day",
+      "sensory_hook": "Brown water to the saddle-skirt; the camel bawls once and finds its footing"
+    },
+    {
+      "key": "kheshkai.karakurt_in_bedding",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Karakurt spider in bedding",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "A bite you never felt; by second watch, cramping abdomen and sweat-sheen"
+    },
+    {
+      "key": "kheshkai.great_bustard_flush",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Great bustard flush from a hollow",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "A whump of heavy wings thirty paces ahead"
+    },
+    {
+      "key": "kheshkai.throat_singing_fire",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Throat-singing at the fire",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "A drone like a bowstring and a whistle above it, from one man's single throat"
+    },
+    {
+      "key": "kheshkai.dzeren_stampede",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Dzeren gazelle stampede",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "dawn",
+      "sensory_hook": "A tan river of animals pouring over a rise, gone in under a minute"
+    },
+    {
+      "key": "kheshkai.brigand_band_ridge",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Brigand band shadowing from a ridge",
+      "type": "combat",
+      "severity": "severe",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "Six horsemen at skyline for an afternoon; never closing; gone by moonrise"
+    },
+    {
+      "key": "kheshkai.zud_ground_blizzard",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Zud ground-blizzard under a blue sky",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "rare",
+      "season": [
+        "winter"
+      ],
+      "time": "any",
+      "sensory_hook": "Knee-high snow hissing sideways while overhead the sun is a hard clean disk"
+    },
+    {
+      "key": "kheshkai.golden_eagle_stoop",
+      "civ": "kheshkai",
+      "source_md": "ecology/encounters/kheshkai.md",
+      "prose_label": "Golden eagle stoop on corsac fox",
+      "biome": "Steppe",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "A black cross folds and falls; a fox screams once in the grass"
+    },
+    {
+      "key": "ngaru_bon.ground_hornbill_duet",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Ground hornbill dawn duet",
+      "biome": "Highland savanna",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Two-note bass boom rolling 4 km across wet grass, pair at different pitches"
+    },
+    {
+      "key": "ngaru_bon.smith_bloomery_relight",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Smith relighting bloomery at dzimbahwe",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Slow hammer-on-anvil against stone, charcoal reek, tuyere glowing cherry"
+    },
+    {
+      "key": "ngaru_bon.cattle_to_water",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Cattle driven from kraal to water",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Dust column, low lowing, a boy's short-long whistle, hooves on baked laterite"
+    },
+    {
+      "key": "ngaru_bon.cicada_wall",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Cicada wall-of-sound under umbrella-thorn",
+      "biome": "Miombo woodland",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "The air itself vibrates; shirt salt-stiff with sweat"
+    },
+    {
+      "key": "ngaru_bon.baobab_horizon",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Baobab on horizon",
+      "biome": "Highland savanna",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "A single fat silhouette like an up-ended root, visible a day's walk off"
+    },
+    {
+      "key": "ngaru_bon.tsetse_belt_detour",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Tsetse-belt detour",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "Lead porter turns uphill; murmur of \"no oxen beyond this line\""
+    },
+    {
+      "key": "ngaru_bon.hyena_whoop",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Hyena whoop",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "night",
+      "sensory_hook": "Rising woo-OOP from outside the firelight, then silence"
+    },
+    {
+      "key": "ngaru_bon.lion_roar_plains",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Lion roar carrying from the plains",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "night",
+      "sensory_hook": "Distant bass rolling through the ground; porters stop talking mid-sentence"
+    },
+    {
+      "key": "ngaru_bon.leopard_cough_kraal",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Leopard cough at the kraal wall",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "Dry saw-rasp no louder than a cough; a dog gone in the morning"
+    },
+    {
+      "key": "ngaru_bon.elephant_crop_raid",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Elephant crop-raid at village margin",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "Trampled millet, a torn granary stilt, sweet rotting smell of broken stalks at dawn"
+    },
+    {
+      "key": "ngaru_bon.cattle_raiders_kraal",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Cattle-raiders striking a waystation kraal",
+      "type": "combat",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "Whistle-signals from kopje watch, spears clattering from thatch"
+    },
+    {
+      "key": "ngaru_bon.grass_fire_horizon",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Grass fire on the dry-season horizon",
+      "biome": "Highland savanna",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "season": [
+        "winter"
+      ],
+      "time": "dusk",
+      "sensory_hook": "Brown smear of smoke, sable and zebra drifting ahead of the flame"
+    },
+    {
+      "key": "ngaru_bon.gold_panner_stream",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Gold-panner at a plateau stream",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Man squatting over a wooden dish, silt swirling, a quill-length of gold at his belt"
+    },
+    {
+      "key": "ngaru_bon.mamba_or_puffadder",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Black mamba or puff adder on path",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "A porter's shout, everyone frozen; the mamba flowing off like spilled oil"
+    },
+    {
+      "key": "ngaru_bon.gold_trade_arrival",
+      "civ": "ngaru_bon",
+      "source_md": "ecology/encounters/ngaru_bon.md",
+      "prose_label": "Arrival at gold-trade dzimbahwe",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "dusk",
+      "sensory_hook": "Mortarless granite catching low light; scent of cattle, millet-beer, Arab incense"
+    },
+    {
+      "key": "irrah.qeturin_wind_reader",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Qeturin wind-reader testing grain-drift",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Gravel sifting through fingers, a sniff for qibli metal-smell"
+    },
+    {
+      "key": "irrah.salt_slab_loading",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Loading of salt-slabs to rahab flanks",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Palm-rope creak, dull chalk-clack of slab on slab"
+    },
+    {
+      "key": "irrah.oasis_adhan_call",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Oasis adhan-analog call drifting over date palms",
+      "biome": "Oasis",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "A single human voice threading the silence"
+    },
+    {
+      "key": "irrah.mirage_lake_hammada",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Mirage lake on hammada horizon",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Silver that recedes at the pace you walk"
+    },
+    {
+      "key": "irrah.black_reg_eats_shoes",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Black reg \"that eats shoes\"",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Stones ticking as they heat, sole-leather scored to ribbon"
+    },
+    {
+      "key": "irrah.dune_sastrugi_wind",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Dune sastrugi under a hissing wind",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "The erg's one sound — sand over sand, no birds"
+    },
+    {
+      "key": "irrah.fennec_call_fire",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Fennec call beyond the dung-fire",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "night",
+      "sensory_hook": "A thin yip, answered once, then the stars"
+    },
+    {
+      "key": "irrah.scorpion_in_boot",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Scorpion in an upturned boot",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Tap, shake, the dry scuttle onto sand"
+    },
+    {
+      "key": "irrah.horned_viper_bedroll",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Horned viper buried beside a bedroll",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "time": "dawn",
+      "sensory_hook": "Two eye-dots and a horn-tip level with the grain"
+    },
+    {
+      "key": "irrah.libyco_berber_peckings",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Libyco-Berber peckings at a foggara outlet",
+      "biome": "Oasis",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "Cold stone, ochre lichen, clan-marks older than the elder"
+    },
+    {
+      "key": "irrah.impact_silica_glass",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Shards of impact silica glass in the erg",
+      "biome": "Desert",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Pale green, warm, too smooth — picked up, pocketed, uneasy"
+    },
+    {
+      "key": "irrah.haboob_dust_wall",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Haboob / dust wall on the southern horizon",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "season": [
+        "summer"
+      ],
+      "time": "day",
+      "sensory_hook": "Ozone taste, a drop of ten degrees, hands on the lead-line"
+    },
+    {
+      "key": "irrah.addax_dorcas_track",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Addax or dorcas gazelle track crossing",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "Cloven prints already softening at the edges"
+    },
+    {
+      "key": "irrah.striped_hyena_camp",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Striped hyena circling the camp",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "rare",
+      "time": "night",
+      "sensory_hook": "A cough-laugh from beyond the firelight's throw"
+    },
+    {
+      "key": "irrah.ostrich_far_south",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "North African ostrich sighted far south",
+      "biome": "Desert",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "Two black commas moving against heat-shimmer"
+    },
+    {
+      "key": "irrah.caravan_hand_lost",
+      "civ": "irrah",
+      "source_md": "ecology/encounters/irrah.md",
+      "prose_label": "Caravan-hand lost from the line in blowing sand",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "rare",
+      "time": "any",
+      "sensory_hook": "The moment the rope goes slack — and he is already dead"
+    },
+    {
+      "key": "aethelian.dogana_customs_inspector",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Customs inspector at the dogana weigh-beam",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Cold clank of the bronze weigh-pan, consul's dragoman palming his cut"
+    },
+    {
+      "key": "aethelian.muezzin_fondaco_bell",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Muezzin-analog call answered by fondaco bell across the water",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Two faiths' hours overlapping on the same limestone quay"
+    },
+    {
+      "key": "aethelian.mattanza_tuna_haul",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Mattanza-style tuna haul landing at the fish market",
+      "type": "opportunity",
+      "severity": "mild",
+      "frequency": "common",
+      "season": [
+        "spring"
+      ],
+      "time": "dawn",
+      "sensory_hook": "Bluefin still twitching on bloody stone, gulls screaming"
+    },
+    {
+      "key": "aethelian.polyglot_wineshop_argument",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Polyglot wine-shop argument in six tongues",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Arabic-analog, Turkic-analog, Malay pidgin, clicks and ejectives, one jar of resinated wine"
+    },
+    {
+      "key": "aethelian.caravanserai_six_nations",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Caravanserai: desert train and steppe train in same courtyard",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dusk",
+      "sensory_hook": "Camel-groan, fountain-plash, hammam steam, three prayer-bells at once"
+    },
+    {
+      "key": "aethelian.corsair_raid_dead_calm",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Corsair raid on a dead calm",
+      "type": "combat",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "The peculiar quiet of sailless ships; oar-creak where no oar should be"
+    },
+    {
+      "key": "aethelian.autumn_gale_lee_shore",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Autumn gale driving ships onto a lee shore",
+      "type": "environmental",
+      "severity": "severe",
+      "frequency": "uncommon",
+      "season": [
+        "autumn"
+      ],
+      "time": "any",
+      "sensory_hook": "Pilot's stare at a blackening horizon"
+    },
+    {
+      "key": "aethelian.pressgang_tavern",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Press-gang trawling the tavern district",
+      "type": "combat",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "time": "night",
+      "sensory_hook": "A sudden hush in the song, boots on wet cobble"
+    },
+    {
+      "key": "aethelian.money_changer_account",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Money-changer settling a fifteen-way account",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "day",
+      "sensory_hook": "Tick-tick of the touchstone; comparative tables made audible"
+    },
+    {
+      "key": "aethelian.dolphins_bow_wave",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Bottlenose dolphins riding the bow-wave",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "any",
+      "sensory_hook": "Wet exhale at the gunwale; sailors take it as good omen"
+    },
+    {
+      "key": "aethelian.flamingo_salt_pan",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Flamingo flock on a coastal salt-pan",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "common",
+      "time": "dawn",
+      "sensory_hook": "Pink wading line against white salt"
+    },
+    {
+      "key": "aethelian.fever_quarter_summer",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Fever-quarter sluggish reach in summer",
+      "type": "environmental",
+      "severity": "moderate",
+      "frequency": "uncommon",
+      "season": [
+        "summer"
+      ],
+      "time": "night",
+      "sensory_hook": "Rot-smell at a dead tide, rent doubled on the uphill side"
+    },
+    {
+      "key": "aethelian.galley_caulking_mare_clausum",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Hauled-out galley being caulked for mare clausum",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "common",
+      "season": [
+        "winter"
+      ],
+      "time": "day",
+      "sensory_hook": "Tar-pot bubbling, caulkers' mallets in syncopation"
+    },
+    {
+      "key": "aethelian.pilgrim_galley_disembark",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Pilgrim galley disembarking in confusion",
+      "type": "social",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "dawn",
+      "sensory_hook": "Vermin, vomit, dragoman's stick"
+    },
+    {
+      "key": "aethelian.monk_seal_stack",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Monk seal hauled out on an uninhabited stack",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "The pilot lowers his voice; sailors call it lucky and do not point"
     }
   ]
 }
