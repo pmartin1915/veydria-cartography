@@ -283,3 +283,25 @@ test('switching party tags the share link with party=', async ({ page }) => {
   const scoutsUrl = await page.evaluate(() => navigator.clipboard.readText())
   expect(scoutsUrl).toContain('party=Scouts')
 })
+
+test('map key renders, documents active layers, and collapses', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.leaflet-container')).toBeVisible()
+
+  // The key auto-shows because default layers (port/landmark/civilization/terrain)
+  // are on, and is open by default at desktop width.
+  const key = page.getByTestId('map-key')
+  await expect(key).toBeVisible()
+  await expect(page.getByTestId('map-key-body')).toBeVisible()
+
+  // Sections reflect what's drawn: point features + civ + elevation are on by default.
+  await expect(key.getByText('Port')).toBeVisible()
+  await expect(key.getByText('Civilizations')).toBeVisible()
+  await expect(key.getByText('Elevation')).toBeVisible()
+
+  // Toggle collapses the body, leaving just the pill; toggling again restores it.
+  await page.getByTestId('map-key-toggle').click()
+  await expect(page.getByTestId('map-key-body')).toHaveCount(0)
+  await page.getByTestId('map-key-toggle').click()
+  await expect(page.getByTestId('map-key-body')).toBeVisible()
+})
