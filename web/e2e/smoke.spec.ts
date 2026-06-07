@@ -311,14 +311,21 @@ test('ocean marginalia shows the corner cartouche + key row, and toggles off', a
   await expect(page.locator('.leaflet-container')).toBeVisible()
 
   // Marginalia is ON by default: the always-visible corner cartouche shows, the
-  // margin star-figures attach to the overlay pane, and the key documents them.
+  // margin star-figures + ocean-fauna engravings attach to the overlay pane, and
+  // the key documents them.
   await expect(page.getByTestId('marginalia-cartouche')).toBeVisible()
   await expect(page.locator('.marginalia-group')).toBeAttached()
+  // Fauna engravings (layer B) sit in their home waters — the basin ones read at
+  // the default frame, so at least one is attached without zooming.
+  await expect(page.locator('.marginalia-fauna').first()).toBeAttached()
   await expect(page.getByTestId('map-key').getByText('Marginalia')).toBeVisible()
+  await expect(page.getByTestId('map-key').getByText('Ocean-fauna engravings')).toBeVisible()
 
-  // Toggling the layer off removes the corner cartouche and the key section.
+  // Toggling the layer off removes the corner cartouche + key section and hides the
+  // overlay group (display:none) — the fauna stay in the DOM but go invisible.
   await page.getByTitle('Toggle Marginalia').click()
   await expect(page.getByTestId('marginalia-cartouche')).toHaveCount(0)
+  await expect(page.locator('.marginalia-fauna').first()).not.toBeVisible()
   await expect(page.getByTestId('map-key').getByText('Marginalia')).toHaveCount(0)
 })
 

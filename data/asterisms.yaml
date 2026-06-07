@@ -24,17 +24,23 @@
 schema_version: 1
 
 controlled_vocabularies:
-  # An asterism (a named star-figure from the register) vs a cartouche (an abstract
-  # name-plate device, ADR-0023 restricted-C). This beat populates asterisms only.
-  kind: [asterism, cartouche]
+  # A star-figure from the register (asterism), an abstract name-plate device
+  # (cartouche, ADR-0023 restricted-C), or a real ocean-fauna "here be…" engraving
+  # (fauna, ADR-0023 layer B). All three are art over a names-only canon.
+  kind: [asterism, cartouche, fauna]
   # Where the marginalia sits on the chart: the sky/margin band, or in open water
-  # (the future real-fauna engraving layer, ADR-0023 layer B). All stars are `sky`.
+  # (the real-fauna engraving layer, ADR-0023 layer B). Stars are `sky`; fauna are
+  # `open_water`.
   placement: [sky, open_water]
-  # Governing register: all entries are Oravan nakhoda chart-speech (ADR-0023 Q5).
-  civ: [oravan]
+  # For stars/cartouche this is the governing register (Oravan nakhoda chart-speech,
+  # ADR-0023 Q5). For fauna it doubles as the HOME-REGION key (the culture whose
+  # attested ecology names the creature) → drives region-aware placement. Both are
+  # attested cultures (worldbuilder ecology/{regions,encounters}/<civ>.md).
+  civ: [oravan, aethelian]
 
-# The six named star-figures, in register order. illustration_ref is null until the
-# renderer beat authors the SVG art assets (the picture is non-canon, ADR-0023 Q2).
+# Entries: the six named star-figures (in register order), one abstract cartouche
+# device, then the layer-B ocean-fauna engravings. illustration_ref is null on every
+# row — the art is inline SVG authored in TS (the picture is non-canon, ADR-0023 Q2).
 asterisms:
   - id: religion.tradition.star_register.serakar
     civ: oravan
@@ -101,4 +107,76 @@ asterisms:
     prose_label: "By the star that watches"
     gloss: "Nakhoda chart-oath sworn on Serakar, the star that does not move; a name-plate device, not a figure."
     etymology: "pidgin oath attested in the sky-mandate; bound to sera + kar (the Crown Star)"
+    illustration_ref: null
+
+  # ── Layer B: real ocean-fauna "here be…" engravings (ADR-0023, attested-only) ──
+  # Antique sea-chart creatures drawn in open water near their home region. The
+  # "no invented creatures" rail holds: every species is real and already attested
+  # in worldbuilder ecology (regions/encounters tables) and/or the synced
+  # encounters.json. The picture is non-canon art (ADR-0023 Q2); ids are minted
+  # under ecology.fauna.<civ>.<slug> and assert NO new fact. Un-named species carry
+  # a descriptive label (no minted canon name); canon-named species use that name.
+  # civ = the home region whose waters these are (drives region-aware placement).
+
+  - id: ecology.fauna.oravan.sea_snake
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "the sea-serpent"
+    gloss: "Hydrophis spp. — banded sea snakes of the archipelago shoals."
+    etymology: "real-world species; attested ecology/encounters/oravan.md (oravan.sea_snake)."
+    illustration_ref: null
+
+  - id: ecology.fauna.oravan.saltwater_crocodile
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "the storm-crocodile"
+    gloss: "Crocodylus porosus — the saltwater crocodile of the monsoon deltas and coasts."
+    etymology: "real-world species; attested ecology/encounters/oravan.md (oravan.saltwater_crocodile)."
+    illustration_ref: null
+
+  - id: ecology.fauna.oravan.reef_grouper
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "Kaheri, the reef-king"
+    gloss: "Epinephelus spp. — reef grouper, the archipelago's primary reef protein (canon name Kaheri)."
+    etymology: "real-world species; attested ecology/regions/oravan.md fauna table (Kaheri)."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.bluefin_tuna
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "Aetharion, the great tuna"
+    gloss: "Thunnus thynnus — Atlantic bluefin tuna of the basin strait-runs (canon name Aetharion)."
+    etymology: "real-world species; attested ecology/regions/aethelian.md (Aetharion), encounters aethelian.mattanza_tuna_haul."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.bottlenose_dolphin
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "dolphins at the bow"
+    gloss: "Tursiops truncatus — bottlenose dolphins that ride the bow-wave of basin shipping."
+    etymology: "real-world species; attested ecology/encounters/aethelian.md (aethelian.dolphins_bow_wave)."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.monk_seal
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "Halistra, the cave-seal"
+    gloss: "Monachus monachus — Mediterranean monk seal of the basin's coastal caves (canon name Halistra)."
+    etymology: "real-world species; attested ecology/regions/aethelian.md (Halistra), encounters aethelian.monk_seal_stack."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.loggerhead_turtle
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "the wandering turtle"
+    gloss: "Caretta caretta — loggerhead sea turtle nesting on the basin's beaches."
+    etymology: "real-world species; attested ecology/regions/aethelian.md fauna table."
     illustration_ref: null

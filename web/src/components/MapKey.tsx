@@ -148,6 +148,15 @@ export default function MapKey({ layers }: { layers: LayerVisibility }) {
                 </span>
                 <span className="map-key-label">Nakhoda star-figures</span>
               </div>
+              <div className="map-key-item">
+                <span className="map-key-marker" style={{ color: 'var(--text-accent)' }}>
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                    <path d="M2 8 C4 4.5 10 4.5 12 8 C10 11.5 4 11.5 2 8 Z" fillOpacity="0.55" />
+                    <path d="M12 8 L15 5.5 L15 10.5 Z" fillOpacity="0.55" />
+                  </svg>
+                </span>
+                <span className="map-key-label">Ocean-fauna engravings</span>
+              </div>
             </section>
           )}
         </div>

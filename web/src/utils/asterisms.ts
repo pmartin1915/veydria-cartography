@@ -15,7 +15,7 @@
  * Contract: worldbuilder/design/world-architecture/ADR-0023-cartographic-marginalia-and-asterism-register.md
  */
 
-export type AsterismKind = 'asterism' | 'cartouche'
+export type AsterismKind = 'asterism' | 'cartouche' | 'fauna'
 export type AsterismPlacement = 'sky' | 'open_water'
 
 /** One entry of the asterisms.json extract (ADR-0023 Q6 schema). */
@@ -43,7 +43,7 @@ export interface AsterismsFile {
   asterisms: Asterism[]
 }
 
-const KINDS = new Set<AsterismKind>(['asterism', 'cartouche'])
+const KINDS = new Set<AsterismKind>(['asterism', 'cartouche', 'fauna'])
 const PLACEMENTS = new Set<AsterismPlacement>(['sky', 'open_water'])
 
 function isAsterism(row: unknown): row is Asterism {
