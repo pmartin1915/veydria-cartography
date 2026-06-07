@@ -67,14 +67,34 @@ describe('asterisms.json (the generated extract)', () => {
   // figures, so it must never leak into the figures count / register-order pins.
   const figures = entries.filter((e) => e.kind === 'asterism')
   const cartouches = entries.filter((e) => e.kind === 'cartouche')
+  const fauna = entries.filter((e) => e.kind === 'fauna')
 
-  it('holds exactly the seven extract rows (six figures + one cartouche)', () => {
-    expect(entries).toHaveLength(7)
+  it('holds exactly the fourteen extract rows (six figures + one cartouche + seven fauna)', () => {
+    expect(entries).toHaveLength(14)
     expect(figures).toHaveLength(6)
     expect(cartouches).toHaveLength(1)
-    expect(entries.every((e) => e.civ === 'oravan')).toBe(true)
-    expect(entries.every((e) => e.placement === 'sky')).toBe(true)
+    expect(fauna).toHaveLength(7)
+    // Stars + cartouche are Oravan sky-marginalia; the picture is always app art.
+    expect(figures.concat(cartouches).every((e) => e.civ === 'oravan')).toBe(true)
+    expect(figures.concat(cartouches).every((e) => e.placement === 'sky')).toBe(true)
     expect(entries.every((e) => e.illustration_ref === null)).toBe(true)
+  })
+
+  it('holds the seven attested ocean-fauna engravings (layer B, open water)', () => {
+    expect(fauna).toHaveLength(7)
+    expect(fauna.every((e) => e.kind === 'fauna')).toBe(true)
+    expect(fauna.every((e) => e.placement === 'open_water')).toBe(true)
+    // Region-aware: each fauna's civ is the home region whose waters it lives in.
+    expect(fauna.every((e) => e.civ === 'oravan' || e.civ === 'aethelian')).toBe(true)
+    expect(fauna.map((e) => e.id)).toEqual([
+      'ecology.fauna.oravan.sea_snake',
+      'ecology.fauna.oravan.saltwater_crocodile',
+      'ecology.fauna.oravan.reef_grouper',
+      'ecology.fauna.aethelian.bluefin_tuna',
+      'ecology.fauna.aethelian.bottlenose_dolphin',
+      'ecology.fauna.aethelian.monk_seal',
+      'ecology.fauna.aethelian.loggerhead_turtle',
+    ])
   })
 
   it('holds the six ratified Oravan star-figures', () => {

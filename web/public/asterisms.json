@@ -3,14 +3,16 @@
   "controlled_vocabularies": {
     "kind": [
       "asterism",
-      "cartouche"
+      "cartouche",
+      "fauna"
     ],
     "placement": [
       "sky",
       "open_water"
     ],
     "civ": [
-      "oravan"
+      "oravan",
+      "aethelian"
     ]
   },
   "asterisms": [
@@ -82,6 +84,76 @@
       "prose_label": "By the star that watches",
       "gloss": "Nakhoda chart-oath sworn on Serakar, the star that does not move; a name-plate device, not a figure.",
       "etymology": "pidgin oath attested in the sky-mandate; bound to sera + kar (the Crown Star)",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.oravan.sea_snake",
+      "civ": "oravan",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "the sea-serpent",
+      "gloss": "Hydrophis spp. — banded sea snakes of the archipelago shoals.",
+      "etymology": "real-world species; attested ecology/encounters/oravan.md (oravan.sea_snake).",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.oravan.saltwater_crocodile",
+      "civ": "oravan",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "the storm-crocodile",
+      "gloss": "Crocodylus porosus — the saltwater crocodile of the monsoon deltas and coasts.",
+      "etymology": "real-world species; attested ecology/encounters/oravan.md (oravan.saltwater_crocodile).",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.oravan.reef_grouper",
+      "civ": "oravan",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "Kaheri, the reef-king",
+      "gloss": "Epinephelus spp. — reef grouper, the archipelago's primary reef protein (canon name Kaheri).",
+      "etymology": "real-world species; attested ecology/regions/oravan.md fauna table (Kaheri).",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.aethelian.bluefin_tuna",
+      "civ": "aethelian",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "Aetharion, the great tuna",
+      "gloss": "Thunnus thynnus — Atlantic bluefin tuna of the basin strait-runs (canon name Aetharion).",
+      "etymology": "real-world species; attested ecology/regions/aethelian.md (Aetharion), encounters aethelian.mattanza_tuna_haul.",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.aethelian.bottlenose_dolphin",
+      "civ": "aethelian",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "dolphins at the bow",
+      "gloss": "Tursiops truncatus — bottlenose dolphins that ride the bow-wave of basin shipping.",
+      "etymology": "real-world species; attested ecology/encounters/aethelian.md (aethelian.dolphins_bow_wave).",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.aethelian.monk_seal",
+      "civ": "aethelian",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "Halistra, the cave-seal",
+      "gloss": "Monachus monachus — Mediterranean monk seal of the basin's coastal caves (canon name Halistra).",
+      "etymology": "real-world species; attested ecology/regions/aethelian.md (Halistra), encounters aethelian.monk_seal_stack.",
+      "illustration_ref": null
+    },
+    {
+      "id": "ecology.fauna.aethelian.loggerhead_turtle",
+      "civ": "aethelian",
+      "kind": "fauna",
+      "placement": "open_water",
+      "prose_label": "the wandering turtle",
+      "gloss": "Caretta caretta — loggerhead sea turtle nesting on the basin's beaches.",
+      "etymology": "real-world species; attested ecology/regions/aethelian.md fauna table.",
       "illustration_ref": null
     }
   ]
