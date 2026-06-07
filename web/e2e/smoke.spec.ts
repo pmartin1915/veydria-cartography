@@ -306,6 +306,22 @@ test('map key renders, documents active layers, and collapses', async ({ page })
   await expect(page.getByTestId('map-key-body')).toBeVisible()
 })
 
+test('ocean marginalia shows the corner cartouche + key row, and toggles off', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.leaflet-container')).toBeVisible()
+
+  // Marginalia is ON by default: the always-visible corner cartouche shows, the
+  // margin star-figures attach to the overlay pane, and the key documents them.
+  await expect(page.getByTestId('marginalia-cartouche')).toBeVisible()
+  await expect(page.locator('.marginalia-group')).toBeAttached()
+  await expect(page.getByTestId('map-key').getByText('Marginalia')).toBeVisible()
+
+  // Toggling the layer off removes the corner cartouche and the key section.
+  await page.getByTitle('Toggle Marginalia').click()
+  await expect(page.getByTestId('marginalia-cartouche')).toHaveCount(0)
+  await expect(page.getByTestId('map-key').getByText('Marginalia')).toHaveCount(0)
+})
+
 test('the travel vignette crowns a computed route and names a region + travel mode', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('.leaflet-container')).toBeVisible()

@@ -35,6 +35,7 @@ import {
 } from './utils/session-prep'
 import { loadSavedJourneys } from './utils/journey-saved'
 import { DEFAULT_SUPPLY } from './utils/journey-supply'
+import { loadAsterisms, type Asterism } from './utils/asterisms'
 import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
 import { downloadRenderConfig } from './utils/render-config'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
@@ -77,6 +78,7 @@ export interface LayerVisibility {
   terrain_cost: boolean
   biome_colors: boolean
   explored: boolean
+  marginalia: boolean
 }
 
 export interface LayerOpacity {
@@ -95,6 +97,7 @@ export interface LayerOpacity {
   terrain_cost: number
   biome_colors: number
   explored: number
+  marginalia: number
 }
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -113,6 +116,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   terrain_cost: false,
   biome_colors: false,
   explored: false,
+  marginalia: true,
 }
 
 const DEFAULT_OPACITY: LayerOpacity = {
@@ -131,11 +135,15 @@ const DEFAULT_OPACITY: LayerOpacity = {
   terrain_cost: 0.75,
   biome_colors: 1,
   explored: 1,
+  marginalia: 1,
 }
 
 function App() {
   const [geojson, setGeojson] = useState<GeoJSONCollection | null>(null)
   const [loreIndex, setLoreIndex] = useState<LoreIndex>({})
+  // Ocean-marginalia register (ADR-0023). Loaded once; cache is hot from the
+  // main.tsx preload, so this resolves immediately and never throws.
+  const [asterisms, setAsterisms] = useState<Asterism[]>([])
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -368,6 +376,9 @@ function App() {
   const shareMode = !!initialHashRef.current.share
   const isMobile = useMediaQuery('(max-width: 768px)')
   const mobilePlayerMode = shareMode && isMobile
+
+  // Load the ocean-marginalia register (cache hot from the main.tsx preload).
+  useEffect(() => { loadAsterisms().then(setAsterisms) }, [])
 
   // Cleanup all timeouts on unmount
   useEffect(() => {
@@ -1565,6 +1576,7 @@ function App() {
             geojson={geojson}
             layers={layers}
             opacities={opacities}
+            asterisms={asterisms}
             onFeatureClick={handleFeatureClick}
             selectedFeatureId={selectedFeature?.properties?.id as string | undefined}
             isEditMode={isEditMode}

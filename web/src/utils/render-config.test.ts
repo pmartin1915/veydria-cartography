@@ -20,6 +20,7 @@ describe('buildRenderConfig', () => {
       terrain_cost: true,
       biome_colors: true,
       explored: false,
+      marginalia: true,
     }
     const config = buildRenderConfig(layers)
     expect(config.version).toBe(1)

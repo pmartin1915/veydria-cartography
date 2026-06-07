@@ -13,6 +13,9 @@ interface GeoJSONFeature {
 
 import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
+import { initMarginaliaOverlay, type MarginaliaOverlay } from '../utils/marginalia-overlay'
+import { type Asterism } from '../utils/asterisms'
+import MarginaliaCartouche from './MarginaliaCartouche'
 import { applyLayerVisibility, type LayerEntry, type OverlayMock } from '../utils/layer-visibility'
 import type { HexCell } from '../utils/hex-grid'
 import { getRouteHexLabels } from '../utils/hex-grid'
@@ -65,11 +68,13 @@ interface LayerVisibility {
   terrain_cost: boolean
   biome_colors: boolean
   explored: boolean
+  marginalia: boolean
 }
 
 export interface MapViewerProps {
   geojson: GeoJSONCollection
   layers: LayerVisibility
+  asterisms?: Asterism[]
   onFeatureClick: (feature: GeoJSONFeature) => void
   onFeatureSelect?: (feature: GeoJSONFeature | null) => void
   selectedFeatureId?: string
@@ -223,7 +228,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
+  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, LayerEntry>>(new Map())
@@ -237,8 +242,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const annotationLayerRef = useRef<L.LayerGroup | null>(null)
     const hexOverlayRef = useRef<HexOverlay | null>(null)
     const hexTooltipRef = useRef<HTMLDivElement | null>(null)
+    const marginaliaOverlayRef = useRef<MarginaliaOverlay | null>(null)
     const geojsonRef = useRef(geojson)
     useEffect(() => { geojsonRef.current = geojson }, [geojson])
+    const asterismsRef = useRef(asterisms)
+    useEffect(() => { asterismsRef.current = asterisms }, [asterisms])
 
     const measureModeRef = useRef(measureMode)
     const pinModeRef = useRef(pinMode)
@@ -787,6 +795,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // biome_colors is driven by its own useEffect (see "Biome colors:" below)
       // — no entry in layerGroupsRef so the toggle dispatcher doesn't double-fire.
 
+      // Ocean marginalia (ADR-0023 Beat 2): the star-figures in the open-water
+      // margin. Driven by its own visibility/opacity effects (like biome_colors),
+      // so it's NOT registered in layerGroupsRef. Built with whatever asterisms
+      // exist at init ([] if the async load hasn't resolved); the [asterisms]
+      // effect below rebuilds it when the register arrives.
+      const marginaliaOverlay = initMarginaliaOverlay(map, asterismsRef.current)
+      marginaliaOverlay.setOpacity(opacities?.marginalia ?? 1)
+      marginaliaOverlay.setVisibility(layers.marginalia)
+      marginaliaOverlayRef.current = marginaliaOverlay
+
       // Re-apply current `layers` state synchronously, so a re-init (e.g. from
       // initialViewport identity changing on a parent re-render) doesn't leave
       // overlays hidden until the next [layers, zoomLevel] change fires the
@@ -872,6 +890,10 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           hexOverlayRef.current.destroy()
           hexOverlayRef.current = null
         }
+        if (marginaliaOverlayRef.current) {
+          marginaliaOverlayRef.current.destroy()
+          marginaliaOverlayRef.current = null
+        }
         if (tip.parentNode) tip.parentNode.removeChild(tip)
         hexTooltipRef.current = null
         map.remove()
@@ -941,6 +963,25 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (!hexOverlayRef.current) return
       hexOverlayRef.current.setBiomeColorsEnabled(layers.biome_colors)
     }, [layers.biome_colors])
+
+    // Ocean marginalia (ADR-0023 Beat 2): toggle, opacity, and late-arriving
+    // data. The register loads async after map init, so rebuild the overlay's
+    // figures when it arrives (mirrors hex's rebuild-on-setHexSize idiom).
+    useEffect(() => {
+      marginaliaOverlayRef.current?.setVisibility(layers.marginalia)
+    }, [layers.marginalia])
+    useEffect(() => {
+      marginaliaOverlayRef.current?.setOpacity(opacities?.marginalia ?? 1)
+    }, [opacities])
+    useEffect(() => {
+      if (!marginaliaOverlayRef.current || !mapRef.current) return
+      marginaliaOverlayRef.current.destroy()
+      const overlay = initMarginaliaOverlay(mapRef.current, asterisms)
+      overlay.setOpacity(opacities?.marginalia ?? 1)
+      overlay.setVisibility(layersRef.current.marginalia)
+      marginaliaOverlayRef.current = overlay
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [asterisms])
 
     // Fog of war: dim unexplored hexes when the layer is on. The explored
     // set is derived from explored-kind annotations, so any add/delete
@@ -1561,6 +1602,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         <div ref={containerRef} className={`map-container ${measureMode ? 'measure-mode' : ''} ${pinMode ? 'pin-mode' : ''}`} id="veydria-map" />
         {/* On-map key — sections appear per active layer (supersedes the old biome legend) */}
         <MapKey layers={layers} />
+        {/* Always-visible ocean-chart cartouche (ADR-0023 Beat 2) — carries the
+            marginalia's discoverability at the default frame where the margin is thin. */}
+        <MarginaliaCartouche
+          cartouche={asterisms.find((a) => a.kind === 'cartouche') ?? null}
+          visible={layers.marginalia}
+        />
         {/* Compass Rose Overlay */}
         <div className="compass-rose" title="North">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.2">

@@ -455,6 +455,57 @@ body {
   mask-composite: intersect;
 }
 
+/* --- Ocean marginalia (ADR-0023 Beat 2) --- */
+
+/* Margin star-figures: drawn in the overlay pane, OUTSIDE the continent rect.
+   Antique amber line-art; `currentColor` drives every stroke/fill in the overlay. */
+.marginalia-group {
+  color: rgba(212, 168, 84, 0.6);
+  pointer-events: none;
+}
+
+/* Always-visible chart cartouche — bottom-CENTER, the one clear gap: the layer
+   panel owns bottom-left (grows full-height), map-key (997)/compass (998) own
+   bottom-right, the planner is top-left. Sits above the ocean shimmer (z-450). */
+.marginalia-cartouche {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-accent);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.marginalia-cartouche:hover { opacity: 0.95; }
+.marginalia-cartouche-frame {
+  width: 84px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+.marginalia-cartouche-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Extension point: if a twinkle animation is added to .marginalia-group. */
+  .marginalia-group * { animation: none !important; }
+}
+
+@media (max-width: 768px) {
+  /* Hidden on phones — the bottom edge is owned by the layer launcher and the
+     mobile bottom-sheet; the margin star-figures (layer toggle) still apply. */
+  .marginalia-cartouche { display: none; }
+}
+
 /* Time-of-day overlay filters */
 .app-main.time-of-day-dawn .leaflet-container {
   filter: brightness(0.9) sepia(0.2) hue-rotate(-15deg) saturate(1.05);

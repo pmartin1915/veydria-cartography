@@ -73,6 +73,16 @@
       "gloss": "Foreign fixed-points the Qollari name as ancestors; the nakhoda borrows their positions to time corridor access, not their genealogy.",
       "etymology": "sera (star) + ili (memory, history)",
       "illustration_ref": null
+    },
+    {
+      "id": "religion.tradition.star_register.serakar_oath",
+      "civ": "oravan",
+      "kind": "cartouche",
+      "placement": "sky",
+      "prose_label": "By the star that watches",
+      "gloss": "Nakhoda chart-oath sworn on Serakar, the star that does not move; a name-plate device, not a figure.",
+      "etymology": "pidgin oath attested in the sky-mandate; bound to sera + kar (the Crown Star)",
+      "illustration_ref": null
     }
   ]
 }
