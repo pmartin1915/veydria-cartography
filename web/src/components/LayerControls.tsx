@@ -72,6 +72,12 @@ const LAYER_GROUPS: LayerGroup[] = [
       { key: 'explored', label: 'Explored hexes', color: '#c4a86b', icon: <IconFootsteps /> },
     ],
   },
+  {
+    title: 'Chart',
+    layers: [
+      { key: 'marginalia', label: 'Marginalia', color: '#d4a854', icon: <IconStar />, opacityControl: true },
+    ],
+  },
 ]
 
 function ToggleSwitch({ active, color }: { active: boolean; color: string }) {

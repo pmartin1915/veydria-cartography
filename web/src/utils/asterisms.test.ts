@@ -62,17 +62,29 @@ describe('asterisms.json (the generated extract)', () => {
     readFileSync(new URL('../../public/asterisms.json', import.meta.url), 'utf8'),
   )
   const entries = parseAsterisms(file)
+  // The six register star-figures and the abstract cartouche device are pinned
+  // separately: the cartouche (kind: cartouche) is NOT one of the six ratified
+  // figures, so it must never leak into the figures count / register-order pins.
+  const figures = entries.filter((e) => e.kind === 'asterism')
+  const cartouches = entries.filter((e) => e.kind === 'cartouche')
 
-  it('holds the six ratified Oravan star-figures', () => {
-    expect(entries).toHaveLength(6)
+  it('holds exactly the seven extract rows (six figures + one cartouche)', () => {
+    expect(entries).toHaveLength(7)
+    expect(figures).toHaveLength(6)
+    expect(cartouches).toHaveLength(1)
     expect(entries.every((e) => e.civ === 'oravan')).toBe(true)
-    expect(entries.every((e) => e.kind === 'asterism')).toBe(true)
     expect(entries.every((e) => e.placement === 'sky')).toBe(true)
     expect(entries.every((e) => e.illustration_ref === null)).toBe(true)
   })
 
-  it('carries the expected ids and prose labels in register order', () => {
-    expect(entries.map((e) => e.id)).toEqual([
+  it('holds the six ratified Oravan star-figures', () => {
+    expect(figures).toHaveLength(6)
+    expect(figures.every((e) => e.kind === 'asterism')).toBe(true)
+    expect(figures.every((e) => e.placement === 'sky')).toBe(true)
+  })
+
+  it('carries the expected figure ids and prose labels in register order', () => {
+    expect(figures.map((e) => e.id)).toEqual([
       'religion.tradition.star_register.serakar',
       'religion.tradition.star_register.vanasera',
       'religion.tradition.star_register.murasera',
@@ -80,7 +92,7 @@ describe('asterisms.json (the generated extract)', () => {
       'religion.tradition.star_register.serama',
       'religion.tradition.star_register.seraili',
     ])
-    expect(entries.map((e) => e.prose_label)).toEqual([
+    expect(figures.map((e) => e.prose_label)).toEqual([
       'Serakar — the Crown Star',
       'Vanasera — the Landfall Star',
       'Murasera — the Storm-Star',
@@ -88,5 +100,14 @@ describe('asterisms.json (the generated extract)', () => {
       'Serama — the Star-River',
       'Seraili — the Remembered Stars',
     ])
+  })
+
+  it('carries exactly one abstract cartouche device (the Serakar oath)', () => {
+    expect(cartouches).toHaveLength(1)
+    const c = cartouches[0]
+    expect(c.id).toBe('religion.tradition.star_register.serakar_oath')
+    expect(c.kind).toBe('cartouche')
+    expect(c.prose_label).toBe('By the star that watches')
+    expect(c.illustration_ref).toBeNull()
   })
 })

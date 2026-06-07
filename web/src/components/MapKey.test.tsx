@@ -24,6 +24,7 @@ const NONE: LayerVisibility = {
   terrain_cost: false,
   biome_colors: false,
   explored: false,
+  marginalia: false,
 }
 const layers = (o: Partial<LayerVisibility>): LayerVisibility => ({ ...NONE, ...o })
 

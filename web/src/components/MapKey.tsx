@@ -52,8 +52,9 @@ export default function MapKey({ layers }: { layers: LayerVisibility }) {
   const showElevation = layers.terrain_cell || layers.terrain_cost
   const showBiomes = layers.hex_grid && layers.biome_colors
   const showFog = layers.explored
+  const showMarginalia = layers.marginalia
 
-  if (!showPoints && !showCivs && !showElevation && !showBiomes && !showFog) return null
+  if (!showPoints && !showCivs && !showElevation && !showBiomes && !showFog && !showMarginalia) return null
 
   return (
     <div className="map-key" data-testid="map-key">
@@ -132,6 +133,20 @@ export default function MapKey({ layers }: { layers: LayerVisibility }) {
               <div className="map-key-item">
                 <span className="map-key-swatch map-key-swatch-fog" />
                 <span className="map-key-label">Dimmed = unexplored</span>
+              </div>
+            </section>
+          )}
+
+          {showMarginalia && (
+            <section className="map-key-section">
+              <div className="map-key-section-title">Marginalia</div>
+              <div className="map-key-item">
+                <span className="map-key-marker" style={{ color: 'var(--text-accent)' }}>
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                    <path d="M8 1.5 L9.4 6.2 L14 6.6 L10.3 9.4 L11.6 14 L8 11.2 L4.4 14 L5.7 9.4 L2 6.6 L6.6 6.2 Z" />
+                  </svg>
+                </span>
+                <span className="map-key-label">Nakhoda star-figures</span>
               </div>
             </section>
           )}

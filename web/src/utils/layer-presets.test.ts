@@ -21,6 +21,7 @@ const CURRENT_LAYERS: LayerVisibility = {
   terrain_cost: false,
   biome_colors: false,
   explored: false,
+  marginalia: true,
 }
 
 const CURRENT_OPACITIES: LayerOpacity = {
@@ -39,6 +40,7 @@ const CURRENT_OPACITIES: LayerOpacity = {
   terrain_cost: 0.75,
   biome_colors: 1,
   explored: 1,
+  marginalia: 1,
 }
 
 // Mirrors App.tsx onApplyPreset: { ...prev, ...preset.layers }
