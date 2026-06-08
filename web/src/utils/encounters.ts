@@ -182,6 +182,22 @@ export const NOTHING_BEATS: Beat[] = [
   { text: 'Harvest stubble smokes on the bunds. The channels run low and the mud holds the heat.', type: 'environmental', severity: 'mild', biome: 'Monsoon delta', seasons: ['winter'] },
 ]
 
+/**
+ * Quiet-leg beats for SEA legs (Oravan straits / Aethelian Basin crossings). The
+ * land NOTHING_BEATS speak of roads and footsteps, which read wrong on open water;
+ * a sea leg draws from these instead. Em-dash-free, grounded house voice.
+ */
+export const SEA_NOTHING_BEATS: Beat[] = [
+  { text: 'A steady beam wind. The hull works quietly and the wake runs straight behind you.', type: 'environmental', severity: 'mild' },
+  { text: 'Flat calm. The sail hangs slack and the sea lies like beaten pewter to every horizon.', type: 'environmental', severity: 'mild' },
+  { text: 'The watch changes without a word. Only the creak of cordage and the slow lift of the swell.', type: 'environmental', severity: 'mild' },
+  { text: 'A green thread of phosphorescence trails off the rudder. Nothing else stirs the dark water.', type: 'environmental', severity: 'mild', timeOfDay: ['night'] },
+  { text: 'A far sail holds the same bearing all afternoon and never closes the distance.', type: 'environmental', severity: 'mild', timeOfDay: ['day'] },
+  { text: 'Open water, an even swell. The leadsman finds no bottom and the nakhoda is content.', type: 'environmental', severity: 'mild' },
+  { text: 'The trade wind holds fair and dry. You log good distance and the casks stay full.', type: 'environmental', severity: 'mild', seasons: ['summer'] },
+  { text: 'A cold grey sea and a reefed sail. The crossing is slow, but the straits stay open.', type: 'environmental', severity: 'mild', seasons: ['winter'] },
+]
+
 export function poolForEdgeType(type: string): Beat[] {
   switch (type) {
     case 'trade_route': return TRADE_ROUTE_BEATS
@@ -223,7 +239,9 @@ export function filterByBiome(pool: Beat[], biome?: string): Beat[] {
  * return only those. Otherwise return the generic (untagged) beats.
  * If no biome is provided, only generic beats are returned.
  */
-export function filterNothingBeats(biome?: string, season?: Season): Beat[] {
+export function filterNothingBeats(biome?: string, season?: Season, sea = false): Beat[] {
+  // A quiet sea crossing reads as open water, not a quiet road.
+  if (sea) return filterBySeason(SEA_NOTHING_BEATS, season)
   const generic = NOTHING_BEATS.filter(b => !b.biome)
   if (!biome) return filterBySeason(generic, season)
   const matched = NOTHING_BEATS.filter(b => b.biome === biome)
@@ -377,7 +395,7 @@ export function generateEncounters(
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
     if (rng() < nothingChance) {
-      const nothingPool = filterNothingBeats(edgeBiomes?.[i], season)
+      const nothingPool = filterNothingBeats(edgeBiomes?.[i], season, sea)
       const nothing = nothingPool[Math.floor(rng() * nothingPool.length)]
       encounters.push(makeEncounter(nothing, i, todBase + i * 131, false))
       continue

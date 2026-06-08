@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, filterNothingBeats, pickEncounterTime, TIME_OF_DAY_BEATS, type Beat } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, SEA_NOTHING_BEATS, filterNothingBeats, pickEncounterTime, TIME_OF_DAY_BEATS, type Beat } from './encounters'
 import { TIME_OF_DAY_ORDER } from './time-of-day'
 import type { JourneyRoute } from './journey-graph'
 
@@ -265,5 +265,37 @@ describe('encounters', () => {
       }
     }
     expect(sawOverlay).toBe(true) // sanity: the overlay actually fired
+  })
+})
+
+describe('sea-leg nothing beats', () => {
+  it('filterNothingBeats(sea=true) returns only sea beats; land call is unaffected', () => {
+    const seaTexts = new Set(SEA_NOTHING_BEATS.map(b => b.text))
+    const sea = filterNothingBeats(undefined, undefined, true)
+    expect(sea.length).toBeGreaterThan(0)
+    expect(sea.every(b => seaTexts.has(b.text))).toBe(true)
+    // Default (land) call: no sea beats leak in.
+    const land = filterNothingBeats(undefined, 'summer')
+    expect(land.some(b => seaTexts.has(b.text))).toBe(false)
+  })
+
+  it('every sea nothing beat is em-dash-free (VOICE-SPEC Option B)', () => {
+    for (const b of SEA_NOTHING_BEATS) expect(b.text).not.toContain('—')
+  })
+
+  it('a quiet sea leg draws sea prose, never the land road/footsteps beats', () => {
+    const seaTexts = new Set(SEA_NOTHING_BEATS.map(b => b.text))
+    const landGeneric = new Set(NOTHING_BEATS.filter(b => !b.biome).map(b => b.text))
+    // An all-Oravan multi-edge route: every leg is a sea leg (no external data armed).
+    const nodes = Array.from({ length: 13 }, (_, i) => ({ id: `or${i}`, name: `Or${i}`, category: 'civilization' as const, x: i * 100, y: 0, civ: 'oravan' }))
+    const edges = nodes.slice(1).map((n, i) => ({ from: nodes[i].id, to: n.id, distanceSvg: 100, type: 'intra_civ' as const, name: `leg${i}`, segmentDays: 2 }))
+    const route: JourneyRoute = { nodes, edges, totalDistanceSvg: 1200, totalKm: 1200, estimatedDays: 24, bottlenecks: [], seasonalWarnings: [] }
+    const encs = generateEncounters(route, 'spring', 'direct')
+    const nothings = encs.filter(e => seaTexts.has(e.beat) || landGeneric.has(e.beat))
+    expect(nothings.length).toBeGreaterThan(0) // some legs roll "nothing"
+    for (const e of nothings) {
+      expect(landGeneric.has(e.beat)).toBe(false)
+      expect(seaTexts.has(e.beat)).toBe(true)
+    }
   })
 })
