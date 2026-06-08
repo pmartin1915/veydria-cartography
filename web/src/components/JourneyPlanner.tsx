@@ -3,8 +3,9 @@ import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
 import TourOverlay from './TourOverlay'
 import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
-import { type Encounter } from '../utils/encounters'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, isSeaLeg, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
+import { generateEncounters, type Encounter } from '../utils/encounters'
+import { resolveSighting } from '../utils/sea-sightings'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneysForParty, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
 import { DEFAULT_SUPPLY, type SupplyConfig } from '../utils/journey-supply'
 import JourneyDaysTab from './journey-planner/JourneyDaysTab'
@@ -147,6 +148,27 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       return getBiomeAtPoint(mx, my, geojson.features) || undefined
     })
   }, [route, geojson])
+
+  // Generated once here (deterministic) and shared with the Encounters tab so the
+  // vignette can surface the selected leg's at-sea sighting without recomputing.
+  const encounters = useMemo(
+    () => (route ? generateEncounters(route, season, mode, edgeBiomes) : []),
+    [route, season, mode, edgeBiomes],
+  )
+
+  // The selected leg's sighting (sea legs only) + whether it's a sea leg, for the
+  // travel vignette overlay.
+  const selectedLeg = useMemo(() => {
+    if (!route || route.edges.length === 0) return { sighting: null as ReturnType<typeof resolveSighting>, isSea: false }
+    const idx = Math.max(0, Math.min(selectedSegmentIdx, route.edges.length - 1))
+    const edge = route.edges[idx]
+    const fromNode = route.nodes.find(n => n.id === edge.from)
+    const toNode = route.nodes.find(n => n.id === edge.to)
+    const sea = isSeaLeg(fromNode, toNode)
+    if (!sea) return { sighting: null, isSea: false }
+    const enc = encounters.find(e => e.segmentIdx === idx && resolveSighting(e))
+    return { sighting: enc ? resolveSighting(enc) : null, isSea: true }
+  }, [route, selectedSegmentIdx, encounters])
 
   // Party dropdown options: most-recent-first from saved journeys, always
   // including the default and the current active name so you can never get
@@ -969,6 +991,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               edgeBiomes={edgeBiomes}
               selectedSegmentIdx={selectedSegmentIdx}
               season={season}
+              sighting={selectedLeg.sighting}
+              isSea={selectedLeg.isSea}
             />
 
             <div className="journey-route-actions" data-tour="journey-export">
@@ -1077,6 +1101,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             {!shareMode && routeTab === 'encounters' && (
               <JourneyEncountersTab
                 route={route}
+                encounters={encounters}
                 season={season}
                 mode={mode}
                 edgeBiomes={edgeBiomes}

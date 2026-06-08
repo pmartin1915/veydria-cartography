@@ -69,3 +69,38 @@ describe('TravelVignette', () => {
     expect(screen.getByTestId('travel-vignette').getAttribute('data-season')).toBe('none')
   })
 })
+
+describe('TravelVignette — sea sighting overlay', () => {
+  const oravanLeg = () => route([node('a', 'oravan'), node('b', 'oravan')], [edge('a', 'b')])
+  const sighting = { faunaId: 'ecology.fauna.oravan.sperm_whale', name: 'Mohala, the deep-diver' }
+
+  it('renders the silhouette + caption when a sea leg has a sighting', () => {
+    const { container } = render(
+      <TravelVignette route={oravanLeg()} edgeBiomes={[undefined]} selectedSegmentIdx={0} season={undefined} sighting={sighting} isSea />,
+    )
+    expect(screen.getByTestId('travel-vignette-sighting').textContent).toBe('Sighting: Mohala, the deep-diver')
+    expect(container.querySelector('.tv-sighting')).not.toBeNull()
+  })
+
+  it('renders no overlay when there is no sighting', () => {
+    const { container } = render(
+      <TravelVignette route={oravanLeg()} edgeBiomes={[undefined]} selectedSegmentIdx={0} season={undefined} sighting={null} isSea />,
+    )
+    expect(screen.queryByTestId('travel-vignette-sighting')).toBeNull()
+    expect(container.querySelector('.tv-sighting')).toBeNull()
+  })
+
+  it('keeps the caption em-dash-free (VOICE-SPEC Option B)', () => {
+    render(
+      <TravelVignette route={oravanLeg()} edgeBiomes={[undefined]} selectedSegmentIdx={0} season={undefined} sighting={sighting} isSea />,
+    )
+    expect(screen.getByTestId('travel-vignette-sighting').textContent).not.toContain('—')
+  })
+
+  it('coerces a non-boat scene to the sea scene on a sea leg (basin↔inland)', () => {
+    const r = route([node('a', 'aethelian_basin'), node('b', 'irrah')], [edge('a', 'b')])
+    render(<TravelVignette route={r} edgeBiomes={[undefined]} selectedSegmentIdx={0} season={undefined} isSea />)
+    expect(screen.getByTestId('travel-vignette').getAttribute('data-mode')).toBe('sea-ship')
+    expect(screen.getByTestId('travel-vignette').getAttribute('data-backdrop')).toBe('volcanic-reef')
+  })
+})

@@ -7,9 +7,10 @@
  * The beats are hand-authored lore seeds, not finished prose. The GM dresses them.
  */
 
-import type { JourneyRoute, Season, RouteMode } from './journey-graph'
+import type { JourneyRoute, JourneyEdge, Season, RouteMode } from './journey-graph'
+import { isSeaLeg } from './journey-graph'
 import type { TimeOfDay } from './time-of-day'
-import { augmentPoolWithWeighted } from './external-encounters'
+import { augmentPoolWithWeighted, externalBeatsFor } from './external-encounters'
 
 export interface Encounter {
   segmentIdx: number
@@ -19,6 +20,10 @@ export interface Encounter {
   narrative: string
   /** If this encounter was drawn from a biome-specific beat, the biome name. */
   biome?: string
+  /** Source encounter-canon key (e.g. `oravan.sperm_whale_deep_strait`) when drawn
+   *  from worldbuilder's external pool; undefined for hand-authored beats. Lets the
+   *  UI resolve an at-sea sighting back to its marginalia silhouette + canon name. */
+  key?: string
   /** Supply cost debited end-of-day, before resupply restore. Pure function of severity (see severityCost). */
   supplyCost: { rations: number; water: number }
   /**
@@ -67,6 +72,8 @@ export interface Beat {
   excludeSeasons?: Season[]
   /** If set, this beat only surfaces when the hex's dominant biome matches. */
   biome?: string
+  /** Source encounter-canon key, propagated from the external pool (see Encounter.key). */
+  key?: string
   /**
    * Times of day this beat is appropriate for. When set, the encounter's
    * time-of-day is chosen from this list (deterministically) instead of the
@@ -302,12 +309,45 @@ function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOve
     severity: beat.severity,
     narrative: text,
     biome: beat.biome,
+    key: beat.key,
     supplyCost: severityCost(beat.severity),
     timeOfDay: time,
   }
 }
 
 /* ─── Public API ─── */
+
+/** The basin node carries civ === its id; alias it to the canon sea-civ so the
+ *  Aethelian at-sea sightings (civ: 'aethelian') can match a basin-touching leg. */
+const CIV_ALIAS_FOR_EXTERNAL: Record<string, string> = { aethelian_basin: 'aethelian' }
+
+/**
+ * The beat pool for one leg. On a SEA leg the land caravan/bandit beats are wrong,
+ * so we draw from the water-civ's external sea beats instead (megafauna sightings,
+ * island/outrigger beats). Falls back to the normal land pool when external data is
+ * OFF (the Node sim never loads it) so the sim baseline stays byte-identical; on a
+ * non-sea leg this is exactly the prior augmentPoolWithWeighted behaviour.
+ *
+ * Determinism: this only changes WHICH array the single seeded pick indexes into —
+ * no rng() call is added or removed.
+ */
+function poolForLeg(
+  edge: JourneyEdge,
+  edgeCivs: (string | undefined)[],
+  biome: string | undefined,
+  season: Season | undefined,
+  sea: boolean,
+): Beat[] {
+  const opts = sea ? { seaChokepoint: true } : undefined
+  if (sea) {
+    const seaBeats = externalBeatsFor(edgeCivs, edge.type, biome, opts)
+    if (seaBeats.length) return seaBeats
+  }
+  return augmentPoolWithWeighted(
+    filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), biome),
+    edgeCivs, edge.type, biome, opts,
+  )
+}
 
 export function generateEncounters(
   route: JourneyRoute,
@@ -319,17 +359,20 @@ export function generateEncounters(
   const seed = djb2Hash(sig)
   const rng = mulberry32(seed)
   const todBase = seed ^ TOD_SEED_OFFSET
-  const civOf = new Map(route.nodes.map(n => [n.id, n.civ]))
+  const nodeOf = new Map(route.nodes.map(n => [n.id, n]))
 
   const encounters: Encounter[] = []
 
   for (let i = 0; i < route.edges.length; i++) {
     const edge = route.edges[i]
-    const edgeCivs = [civOf.get(edge.from), civOf.get(edge.to)]
-    const pool = augmentPoolWithWeighted(
-      filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i]),
-      edgeCivs, edge.type, edgeBiomes?.[i],
-    )
+    const fromNode = nodeOf.get(edge.from)
+    const toNode = nodeOf.get(edge.to)
+    const sea = isSeaLeg(fromNode, toNode)
+    // The basin is ingested as a node whose civ is its id (`aethelian_basin`), so
+    // the Aethelian sea-fauna rows (civ: 'aethelian') would never match. Alias it
+    // for external matching only — a no-op on every non-basin leg.
+    const edgeCivs = [fromNode?.civ, toNode?.civ].map(c => (c && CIV_ALIAS_FOR_EXTERNAL[c]) || c)
+    const pool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
 
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
@@ -347,10 +390,7 @@ export function generateEncounters(
     if ((edge.segmentDays || 0) > 5) {
       const secondRng = mulberry32(seed + i + 10007)
       if (secondRng() >= nothingChance) {
-        const secondPool = augmentPoolWithWeighted(
-          filterByBiome(filterBySeason(poolForEdgeType(edge.type), season), edgeBiomes?.[i]),
-          edgeCivs, edge.type, edgeBiomes?.[i],
-        )
+        const secondPool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
         const beat2 = secondPool[Math.floor(secondRng() * secondPool.length)]
         encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true))
       }

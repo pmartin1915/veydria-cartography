@@ -79,8 +79,20 @@ function toBeat(e: ExternalEncounter): Beat {
     type: e.type,
     severity: e.severity,
     biome: e.biome,
+    key: e.key,
     ...(timeOfDay ? { timeOfDay } : {}),
   }
+}
+
+/** Per-call augmentation options. */
+export interface AugmentOpts {
+  /**
+   * Opt-in: allow external beats on a `chokepoint` edge when it is a SEA leg
+   * (a maritime strait such as Halkar). Land chokepoints (mountain passes, river
+   * crossings) stay sim-authored — they never set this and never carry a matching
+   * sea-civ row, so the gate is double-safe. See ADR-0022 D5.
+   */
+  seaChokepoint?: boolean
 }
 
 /**
@@ -94,8 +106,11 @@ export function externalBeatsFor(
   civs: (string | undefined)[],
   edgeType: string,
   biome?: string,
+  opts?: AugmentOpts,
 ): Beat[] {
-  if (!externalFile || !AUGMENTABLE_EDGE_TYPES.has(edgeType)) return []
+  const augmentable = AUGMENTABLE_EDGE_TYPES.has(edgeType)
+    || (edgeType === 'chokepoint' && opts?.seaChokepoint === true)
+  if (!externalFile || !augmentable) return []
   const civSet = new Set(civs.filter(Boolean) as string[])
   if (civSet.size === 0) return []
 
@@ -121,8 +136,9 @@ export function augmentPoolWithWeighted(
   civs: (string | undefined)[],
   edgeType: string,
   biome?: string,
+  opts?: AugmentOpts,
 ): Beat[] {
-  const extra = externalBeatsFor(civs, edgeType, biome)
+  const extra = externalBeatsFor(civs, edgeType, biome, opts)
   return extra.length === 0 ? pool : [...pool, ...extra]
 }
 

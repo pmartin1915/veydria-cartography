@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import type { JourneyRoute, Season } from '../../utils/journey-graph'
-import { selectVignette, type VignetteBackdrop, type VignetteMode } from '../../utils/vignette'
+import { selectVignette, type VignetteBackdrop, type VignetteMode, type VignetteScene } from '../../utils/vignette'
+import { FAUNA_SHAPES } from '../../utils/fauna-shapes'
+import type { Sighting } from '../../utils/sea-sightings'
 
 // TravelVignette — an Oregon-Trail-style "window" crowning the route panel. It
 // shows the region the SELECTED segment travels through (backdrop) and that
@@ -171,11 +173,17 @@ export default function TravelVignette({
   edgeBiomes,
   selectedSegmentIdx,
   season,
+  sighting,
+  isSea,
 }: {
   route: JourneyRoute | null
   edgeBiomes: (string | undefined)[] | undefined
   selectedSegmentIdx: number
   season: Season | undefined
+  /** The at-sea megafauna sighting on the selected leg, if any (sea legs only). */
+  sighting?: Sighting | null
+  /** Whether the selected leg travels over open water (see isSeaLeg). */
+  isSea?: boolean
 }) {
   if (!route || route.edges.length === 0) return null
 
@@ -183,7 +191,15 @@ export default function TravelVignette({
   const edge = route.edges[i]
   const fromCiv = route.nodes.find(n => n.id === edge.from)?.civ
   const toCiv = route.nodes.find(n => n.id === edge.to)?.civ
-  const scene = selectVignette({ fromCiv, toCiv, biome: edgeBiomes?.[i] })
+  let scene: VignetteScene = selectVignette({ fromCiv, toCiv, biome: edgeBiomes?.[i] })
+  // A sea leg whose endpoints don't resolve to a boat scene (e.g. a basin↔inland
+  // crossing whose midpoint biome isn't water) must still read as open water — never
+  // a caravan on the ocean. Coerce to the sea scene so the water band (and any
+  // sighting silhouette) render.
+  if (isSea && scene.mode !== 'sea-ship') {
+    scene = { backdrop: 'volcanic-reef', mode: 'sea-ship', regionLabel: 'Open water', modeLabel: 'Sea ship' }
+  }
+  const sightingShape = sighting ? FAUNA_SHAPES[sighting.faunaId] : undefined
 
   const segmentLabel = route.edges.length > 1 ? `Leg ${i + 1} of ${route.edges.length}` : 'The journey'
 
@@ -199,12 +215,30 @@ export default function TravelVignette({
       <svg className="travel-vignette-svg" viewBox="0 0 320 88" preserveAspectRatio="xMidYMid slice" role="img" aria-label={`${scene.regionLabel}: ${scene.modeLabel}`}>
         <rect className="tv-sky" x="0" y="0" width="320" height="88" />
         {BACKDROPS[scene.backdrop]}
+        {sightingShape && scene.backdrop === 'volcanic-reef' && (
+          <g className="tv-sighting tv-drift" transform="translate(150 74) scale(0.5)" aria-hidden="true">
+            <path
+              d={sightingShape.d}
+              fill={sightingShape.stroke ? 'none' : '#10141c'}
+              fillOpacity={sightingShape.stroke ? 1 : 0.5}
+              stroke="#10141c"
+              strokeWidth={sightingShape.stroke ? 1.4 : 1}
+            />
+            {sightingShape.detail && (
+              <path d={sightingShape.detail} fill="none" stroke="#10141c" strokeWidth={0.8} strokeOpacity={0.7} />
+            )}
+            {sightingShape.eye && <circle cx={sightingShape.eye.x} cy={sightingShape.eye.y} r={1} fill="#10141c" />}
+          </g>
+        )}
         <g className="tv-figure">{FIGURES[scene.mode]}</g>
       </svg>
       <div className="travel-vignette-caption">
         <span className="travel-vignette-region" data-testid="travel-vignette-region">{scene.regionLabel}</span>
         <span className="travel-vignette-leg">{segmentLabel}</span>
         <span className="travel-vignette-mode" data-testid="travel-vignette-mode">{scene.modeLabel}</span>
+        {sighting && (
+          <span className="travel-vignette-sighting" data-testid="travel-vignette-sighting">{`Sighting: ${sighting.name}`}</span>
+        )}
       </div>
     </div>
   )

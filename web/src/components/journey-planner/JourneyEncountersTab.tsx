@@ -1,6 +1,5 @@
 import { IconScroll, IconMountain, IconArrow } from '../icons'
 import {
-  generateEncounters,
   encounterTypeIcon,
   encounterSeverityLabel,
   type Encounter,
@@ -11,6 +10,9 @@ import type { JourneyRoute, Season, RouteMode } from '../../utils/journey-graph'
 
 interface JourneyEncountersTabProps {
   route: JourneyRoute
+  /** Generated once in the container (shared with the vignette) so the tab and the
+   *  vignette agree on the same deterministic draw. */
+  encounters: Encounter[]
   season: Season | undefined
   mode: RouteMode
   edgeBiomes: (string | undefined)[] | undefined
@@ -29,6 +31,7 @@ interface JourneyEncountersTabProps {
  */
 export default function JourneyEncountersTab({
   route,
+  encounters,
   season,
   mode,
   edgeBiomes,
@@ -38,7 +41,6 @@ export default function JourneyEncountersTab({
   oneOffRolls,
   onRollOneOff,
 }: JourneyEncountersTabProps) {
-  const encounters = generateEncounters(route, season, mode, edgeBiomes)
   const activeEdge = route.edges[selectedSegmentIdx] ?? route.edges[0]
 
   const handleRoll = () => {
