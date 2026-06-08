@@ -180,3 +180,56 @@ asterisms:
     gloss: "Caretta caretta — loggerhead sea turtle nesting on the basin's beaches."
     etymology: "real-world species; attested ecology/regions/aethelian.md fauna table."
     illustration_ref: null
+
+  # ── Beat 4: iconic ocean megafauna (ADR-0023, ratified 2026-06-07 / worldbuilder #65) ──
+  # The deep-water leviathans — sighted, never hunted. All five are real species, attested
+  # in worldbuilder ecology/regions + ecology/encounters and vetted in _species-allowlist.json;
+  # the coined names are minted in the nakhoda (Oravan) and Basin (Aethelian) registers. The
+  # picture remains non-canon art (Q2); these rows assert NO new fact, only that cartography
+  # may draw the canon's leviathans. The chart engraving pairs with each one's at-sea sighting
+  # encounter (synced into encounters.json).
+
+  - id: ecology.fauna.oravan.sperm_whale
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "Mohala, the deep-diver"
+    gloss: "Physeter macrocephalus — sperm whale of the deep straits, the archipelago's greatest leviathan (canon name Mohala; mo 'deep' + hala 'sea')."
+    etymology: "real-world species; attested ecology/regions/oravan.md (Mohala), _species-allowlist.json, encounters oravan.sperm_whale_deep_strait."
+    illustration_ref: null
+
+  - id: ecology.fauna.oravan.whale_shark
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "Nalara, the star-spotted"
+    gloss: "Rhincodon typus — whale shark, largest fish, a harmless plankton-feeder over the reef channels (canon name Nalara; nala 'calm' + lara 'reef')."
+    etymology: "real-world species; attested ecology/regions/oravan.md (Nalara), _species-allowlist.json, encounters oravan.whale_shark_baitfish."
+    illustration_ref: null
+
+  - id: ecology.fauna.oravan.giant_manta
+    civ: oravan
+    kind: fauna
+    placement: open_water
+    prose_label: "Velara, the cloak-shadow"
+    gloss: "Mobula birostris — giant manta that glides the reef passes like a thrown cloak (canon name Velara; vele 'unseen, spirit' + lara 'reef')."
+    etymology: "real-world species; attested ecology/regions/oravan.md (Velara), _species-allowlist.json, encounters oravan.giant_manta_reef_pass."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.great_white
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "Kharistra, the grey weight"
+    gloss: "Carcharodon carcharias — great white shark, apex pelagic predator that shadows the tuna traps (canon name Kharistra; khar- 'jagged-toothed' + -stra agentive)."
+    etymology: "real-world species; attested ecology/regions/aethelian.md (Kharistra), _species-allowlist.json, encounters aethelian.great_white_rudder."
+    illustration_ref: null
+
+  - id: ecology.fauna.aethelian.fin_whale
+    civ: aethelian
+    kind: fauna
+    placement: open_water
+    prose_label: "Ketarion, the far spout"
+    gloss: "Balaenoptera physalus — fin whale, the largest animal of the basin, sighted on open crossings (canon name Ketarion; Greek ketos 'sea-beast' + -arion, as in Aetharion)."
+    etymology: "real-world species; attested ecology/regions/aethelian.md (Ketarion), _species-allowlist.json, encounters aethelian.fin_whale_open_crossing."
+    illustration_ref: null

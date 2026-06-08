@@ -218,6 +218,39 @@
       "sensory_hook": "Three quarters visible: Muslim merchants, junk-masters, palm-thatch longhouses of the datu"
     },
     {
+      "key": "oravan.sperm_whale_deep_strait",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Sperm whale blowing in a deep strait",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "Twin spout against the bearing-line, the long slick where it sounded"
+    },
+    {
+      "key": "oravan.giant_manta_reef_pass",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Giant manta banking under the hull",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "A thrown-cloak shadow over the reef pass, white-shouldered, soundless"
+    },
+    {
+      "key": "oravan.whale_shark_baitfish",
+      "civ": "oravan",
+      "source_md": "ecology/encounters/oravan.md",
+      "prose_label": "Whale shark idling through baitfish",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "day",
+      "sensory_hook": "Broad as a hatch-cover, star-spotted hide, the nakhoda calling it harmless"
+    },
+    {
       "key": "ndjadi.fish_eagle_calling",
       "civ": "ndjadi",
       "source_md": "ecology/encounters/ndjadi.md",
@@ -1305,6 +1338,28 @@
       "frequency": "rare",
       "time": "day",
       "sensory_hook": "The pilot lowers his voice; sailors call it lucky and do not point"
+    },
+    {
+      "key": "aethelian.fin_whale_open_crossing",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Fin whale blowing on the open crossing",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "uncommon",
+      "time": "any",
+      "sensory_hook": "A single tall spout far out on the swell, then nothing"
+    },
+    {
+      "key": "aethelian.great_white_rudder",
+      "civ": "aethelian",
+      "source_md": "ecology/encounters/aethelian.md",
+      "prose_label": "Great white shouldering past the rudder",
+      "type": "environmental",
+      "severity": "mild",
+      "frequency": "rare",
+      "time": "day",
+      "sensory_hook": "A grey weight in the wake, gone before the shout; the helm says nothing till landfall"
     }
   ]
 }
