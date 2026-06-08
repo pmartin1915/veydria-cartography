@@ -282,15 +282,23 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
           .attr('vector-effect', 'non-scaling-stroke')
       }
 
-      // Constellation dots.
-      for (const dot of shape.dots) {
-        figG.append('circle')
+      // Constellation dots. The lesser stars get a faint, staggered twinkle (CSS
+      // class marginalia-twinkle + per-dot animation-delay); the bright anchor star
+      // is the register's "fixed pole" and is left steady. The reduced-motion guard
+      // in App.css stills the whole group.
+      shape.dots.forEach((dot, i) => {
+        const circle = figG.append('circle')
           .attr('cx', shape.x + dot.dx)
           .attr('cy', svgY(shape.y - dot.dy))
           .attr('r', dot.bright ? 2.6 : 1.7)
           .attr('fill', 'currentColor')
           .attr('fill-opacity', dot.bright ? 0.85 : 0.6)
-      }
+        if (!dot.bright) {
+          circle
+            .classed('marginalia-twinkle', true)
+            .style('animation-delay', `${(i % 4) * 1.1}s`)
+        }
+      })
 
       // Prose label, below the motif (30px south of the anchor).
       figG.append('text')
