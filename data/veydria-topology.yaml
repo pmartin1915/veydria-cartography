@@ -3,13 +3,17 @@
 # AUTHOR: Claude Opus 4.6 (laptop) on 2026-04-21
 # SOURCE: Synthesized from region files, religion layer (58 files),
 #   ecology flow_table.md, and economy deep research
-# STATUS: draft — Perry review needed before economy layer builds on this
+# STATUS: canonical — ratified by Perry 2026-06-08; economy layer may build on this
 # ============================================================
 # This file encodes WHERE things are relative to each other.
 # It does NOT duplicate content from region files (terrain detail),
 # religion files (institutional function), or ecology files (biome data).
 # Cross-reference those layers for depth.
 # ============================================================
+
+# Machine-readable copy of the STATUS comment above, so generated docs can
+# surface the real status instead of hardcoding it in prose.
+status: "canonical — ratified 2026-06-08; spatial source of truth, intentionally excluded from canon.json (ADR-0019 D4)"
 
 continental_shape:
   model: "C-shaped horseshoe landmass wrapping north→east→south around a semi-enclosed sea (the Aethelian Basin), opening westward to open ocean"
@@ -128,7 +132,7 @@ aethelian_basin:
       function: "The north-shore port and the oldest commercial quarter. Inside the pale-gold limestone arcades the Khazadari Inner Circle sets the cross-rate cycle twice a year; the soda-ash glassworks at the periphery kill their senior masters before the fourth cohort can be trained. The Junior Clerks' Association now writes fifteen percent of the port's underwriting at rates the Inner Circle has been silent on for eleven cycles."
     halani_tamu:
       in_world_name: "Halani-Tamu"
-      etymology: "Oravan: hala 'reef, harbor' + ni (genitive particle) + tamu (Basin pidgin 'sweetwater'). The Sweetwater Harbor"
+      etymology: "Oravan: hala 'reef, harbor' + ni (genitive) + tamu 'sweetwater'. The Sweetwater Harbor"
       real_world_parallel: "Hormuz analog"
       location: "East shore"
       function: "The east-shore port and the monsoon switching point, where the Oravan sea-lanes hand off to the Irrah overland routes. The Coral Docks collect the Harbor Covenant's wave-tithe; the Qalībin Lodges certify the desert-interior escorts; the Bazaar of the Split between them is neutral ground neither core institution claims. The Tin-Aghīz-Lam-Chen partnership absorbs the uncertified gold-work the Inner Council of Ancestor-Smiths chooses not to see."
@@ -229,6 +233,5 @@ biomes:
     primary: "Volcanic archipelago"
     secondary: ["Coral reef", "Geothermal vent", "Strait"]
 
-relationships:
-  ngaru_bon:
-    hostile: ["kheshkai"]
+# Inter-civ relationships are owned by the factions layer, not duplicated here.
+# See factions/cross_civ_relationships/*.md (complete 21-pair canonical matrix).
