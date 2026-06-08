@@ -318,6 +318,9 @@ test('ocean marginalia shows the corner cartouche + key row, and toggles off', a
   // Fauna engravings (layer B) sit in their home waters — the basin ones read at
   // the default frame, so at least one is attached without zooming.
   await expect(page.locator('.marginalia-fauna').first()).toBeAttached()
+  // The fauna silhouettes sit in an inner wrapper that carries the swim drift
+  // (stilled under reduced-motion); the outer group keeps the positioning translate.
+  await expect(page.locator('.marginalia-fauna-body').first()).toBeAttached()
   // The lesser star-dots carry the faint twinkle class (stilled under reduced-motion).
   await expect(page.locator('.marginalia-twinkle').first()).toBeAttached()
   await expect(page.getByTestId('map-key').getByText('Marginalia')).toBeVisible()

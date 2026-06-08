@@ -506,8 +506,21 @@ body {
 }
 .marginalia-twinkle { animation: marginaliaTwinkle 4.5s ease-in-out infinite; }
 
+/* Faint "swim" drift on the ocean-fauna engravings (ADR-0023 Beat 3 polish).
+   Animates an INNER `<g class="marginalia-fauna-body">` so the outer group's
+   positioning translate(ax, ay) is preserved (a transform animation on the outer
+   group would clobber it and snap the creature off its home water). Amplitude is
+   tiny and in local SVG units, so it scales gently with the chart. Per-creature
+   stagger is a negative inline animation-delay set in marginalia-overlay.ts.
+   Stilled by the reduced-motion guard below. */
+@keyframes marginaliaFaunaDrift {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(3px, -1.5px); }
+}
+.marginalia-fauna-body { animation: marginaliaFaunaDrift 20s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  /* Twinkle (above) — and any future drift on .marginalia-group — are stilled here. */
+  /* Twinkle + fauna drift on .marginalia-group are stilled here. */
   .marginalia-group * { animation: none !important; }
 }
 

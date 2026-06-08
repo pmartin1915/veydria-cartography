@@ -318,18 +318,27 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
     // is authored in local screen space (y DOWN) and translated to the region
     // anchor, so it scales with the chart on zoom (the "drawn-on-the-chart" feel);
     // strokes stay hairline via non-scaling-stroke.
-    for (const fauna of selectFaunaEngravings(asterisms)) {
+    selectFaunaEngravings(asterisms).forEach((fauna, i) => {
       const shape = FAUNA_SHAPES[fauna.id]
       const zone = REGION_ZONES[shape.civ]
-      if (!zone) continue
+      if (!zone) return
       const ax = zone.x + shape.ox
       const ay = svgY(zone.y + shape.oy)
+      // Outer group: positioning only. Its translate(ax, ay) anchors the creature in
+      // its home water and must NOT be animated — a CSS transform here would clobber it.
       const faunaG = group.append('g')
         .attr('class', 'marginalia-fauna')
         .attr('data-id', fauna.id)
         .attr('transform', `translate(${ax}, ${ay})`)
 
-      faunaG.append('path')
+      // Inner wrapper: carries the faint "swim" drift (CSS class marginalia-fauna-body
+      // in App.css). Negative per-creature stagger so each is already mid-swim at load,
+      // out of unison. The reduced-motion guard in App.css stills it.
+      const faunaBody = faunaG.append('g')
+        .attr('class', 'marginalia-fauna-body')
+        .style('animation-delay', `${-(i * 2.6)}s`)
+
+      faunaBody.append('path')
         .attr('d', shape.d)
         .attr('fill', shape.stroke ? 'none' : 'currentColor')
         .attr('fill-opacity', shape.stroke ? 0 : 0.42)
@@ -341,7 +350,7 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
         .attr('vector-effect', 'non-scaling-stroke')
 
       if (shape.detail) {
-        faunaG.append('path')
+        faunaBody.append('path')
           .attr('d', shape.detail)
           .attr('fill', 'none')
           .attr('stroke', 'currentColor')
@@ -353,7 +362,7 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
       }
 
       if (shape.eye) {
-        faunaG.append('circle')
+        faunaBody.append('circle')
           .attr('cx', shape.eye.x)
           .attr('cy', shape.eye.y)
           .attr('r', 1)
@@ -361,6 +370,8 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
           .attr('fill-opacity', 0.85)
       }
 
+      // Prose label stays on the steady outer group — the caption holds while the
+      // creature drifts beneath it (mirrors the twinkle's steady "fixed pole" star).
       faunaG.append('text')
         .attr('x', shape.lx ?? 0)
         .attr('y', shape.ly ?? 22)
@@ -372,7 +383,7 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
         .attr('font-style', 'italic')
         .attr('pointer-events', 'none')
         .text(fauna.prose_label)
-    }
+    })
   }
 
   draw()
