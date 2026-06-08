@@ -66,9 +66,9 @@ function faunaRow(over: Partial<Asterism> = {}): Asterism {
 }
 
 describe('selectFaunaEngravings', () => {
-  it('draws the seven attested fauna engravings from the canon extract', () => {
+  it('draws the twelve attested fauna engravings from the canon extract', () => {
     const drawn = selectFaunaEngravings(parseAsterisms(canonFile))
-    expect(drawn).toHaveLength(7)
+    expect(drawn).toHaveLength(12)
     expect(drawn.every((a) => a.kind === 'fauna')).toBe(true)
     expect(drawn.every((a) => a.placement === 'open_water')).toBe(true)
   })

@@ -226,6 +226,51 @@ const FAUNA_SHAPES: Record<string, FaunaShape> = {
     detail: 'M 15 1 l 9 -3 l -1 6 Z M -11 2 l -8 4 l 3 3 Z M -4 3 l -3 8 l 4 -1 Z M 5 3 l 3 8 l -4 -1 Z M 12 2 l 8 4 l -3 3 Z',
     ly: 18,
   },
+
+  // ── Beat 4: iconic megafauna — drawn clearly larger than the reef fauna above ──
+  // Same antique-engraving idiom, bigger spans (the leviathans the canon prose calls
+  // "the largest thing anyone aboard will see all year"). Offsets keep them in open
+  // water, clear of the smaller fauna and every land/basin polygon.
+
+  // Mohala, the sperm whale — blunt squared head (facing right), low jaw, broad flukes.
+  'ecology.fauna.oravan.sperm_whale': {
+    civ: 'oravan', ox: 27, oy: -78, anchor: 'middle',
+    d: 'M -32 0 C -25 -10 0 -11 19 -9 C 27 -8 31 -5 33 -2 C 34 0 34 3 32 6 C 28 9 6 10 -32 2 Z',
+    detail: 'M -32 1 l -10 -7 l 2 7 l -2 7 Z M 6 7 L 31 4 M -23 -5 l 2 4',
+    eye: { x: 22, y: -3 },
+    ly: 18,
+  },
+  // Nalara, the whale shark — broad flat head, star-spotted hide, wide tail.
+  'ecology.fauna.oravan.whale_shark': {
+    civ: 'oravan', ox: 107, oy: -44, anchor: 'middle',
+    d: 'M -28 0 C -23 -10 6 -12 24 -8 L 30 -6 C 32 -3 32 3 30 6 L 24 8 C 6 12 -23 10 -28 0 Z',
+    detail: 'M -28 0 l -12 -10 l 3 10 l -3 10 Z M 3 -10 l 6 -7 l 3 6 Z M 10 8 l 4 7 l 6 -5 Z M -12 -3 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0 M -2 3 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0 M 7 -2 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0 M 16 2 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0',
+    eye: { x: 24, y: -3 },
+    ly: 18,
+  },
+  // Velara, the giant manta — top-down banking ray: swept wings, cephalic horns, whip tail.
+  'ecology.fauna.oravan.giant_manta': {
+    civ: 'oravan', ox: 92, oy: -110, anchor: 'middle',
+    d: 'M 26 0 C 18 -4 13 -7 10 -9 C -3 -26 -20 -27 -23 -23 C -16 -12 -10 -6 -2 -2 C -11 -3 -19 -2 -24 0 C -19 2 -11 3 -2 2 C -10 6 -16 12 -23 23 C -20 27 -3 26 10 9 C 13 7 18 4 26 0 Z',
+    detail: 'M 23 -2 l 7 -5 l -2 5 Z M 23 2 l 7 5 l -2 -5 Z M -24 0 l -13 0',
+    ly: 34,
+  },
+  // Kharistra, the great white — pointed snout (right), tall dorsal, lunate tail (left).
+  'ecology.fauna.aethelian.great_white': {
+    civ: 'aethelian', ox: -53, oy: -18, anchor: 'middle',
+    d: 'M -34 0 C -28 -10 0 -11 20 -7 C 30 -5 38 -2 42 0 C 38 2 30 5 20 7 C 0 11 -28 10 -34 0 Z',
+    detail: 'M -34 0 l -12 -12 l 4 12 l -4 12 Z M -2 -9 l 5 -14 l 8 11 Z M 6 8 l 4 11 l 10 -5 Z M 28 -5 l -2 10 M 31 -4 l -2 8 M 34 -3 l -2 7',
+    eye: { x: 32, y: -3 },
+    ly: 18,
+  },
+  // Ketarion, the fin whale — long slender body (right-facing), small far-back dorsal, flukes.
+  'ecology.fauna.aethelian.fin_whale': {
+    civ: 'aethelian', ox: 44, oy: 2, anchor: 'middle',
+    d: 'M -42 0 C -33 -7 0 -8 27 -6 C 38 -5 44 -2 46 -1 C 47 0 47 0 46 1 C 44 3 38 5 27 6 C 0 8 -33 7 -42 0 Z',
+    detail: 'M -42 0 l -11 -6 l 3 6 l -3 6 Z M -13 -6 l 4 -6 l 3 5 Z M 15 6 l 5 7 l 5 -4 Z M 16 5 L 44 3',
+    eye: { x: 32, y: -3 },
+    ly: 18,
+  },
 }
 
 /**
