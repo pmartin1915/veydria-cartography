@@ -495,8 +495,19 @@ body {
   white-space: nowrap;
 }
 
+/* Faint celestial twinkle on the lesser margin star-dots (ADR-0023 Beat 2 polish).
+   Animates `opacity` only, so each dot's `fill-opacity` attribute is preserved and the
+   effect stays faint; the per-dot stagger is an inline animation-delay set in
+   marginalia-overlay.ts. The bright anchor stars (the "fixed pole") are left steady.
+   Neutralised by the reduced-motion guard below. */
+@keyframes marginaliaTwinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.marginalia-twinkle { animation: marginaliaTwinkle 4.5s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  /* Extension point: if a twinkle animation is added to .marginalia-group. */
+  /* Twinkle (above) — and any future drift on .marginalia-group — are stilled here. */
   .marginalia-group * { animation: none !important; }
 }
 
