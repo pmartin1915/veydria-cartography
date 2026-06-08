@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, straitAnnotation, DEFAULT_PARTY, type PartyConfig, type JourneyNode } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, straitAnnotation, isSeaLeg, DEFAULT_PARTY, type PartyConfig, type JourneyNode } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -391,5 +391,34 @@ describe('journey-graph: strait annotation (F5 follow-up)', () => {
   it('returns null when an endpoint is missing', () => {
     expect(straitAnnotation(undefined, node('isle', 'oravan'))).toBeNull()
     expect(straitAnnotation(node('isle', 'oravan'), undefined)).toBeNull()
+  })
+})
+
+describe('isSeaLeg', () => {
+  const node = (id: string, civ?: string, category = 'port'): JourneyNode => ({ id, name: id, category, x: 0, y: 0, civ })
+
+  it('is true when either endpoint is the Aethelian Basin (category: water)', () => {
+    const basin = node('aethelian_basin', 'aethelian_basin', 'water')
+    expect(isSeaLeg(basin, node('halani', 'irrah'))).toBe(true)
+    expect(isSeaLeg(node('halani', 'irrah'), basin)).toBe(true)
+  })
+
+  it('is true when either endpoint is the Oravan archipelago', () => {
+    expect(isSeaLeg(node('isle', 'oravan'), node('coast', 'kheshkai'))).toBe(true)
+    expect(isSeaLeg(node('coast', 'kheshkai'), node('isle', 'oravan'))).toBe(true)
+  })
+
+  it('is true for an Oravan endpoint paired with an untagged contested node', () => {
+    expect(isSeaLeg(node('isle', 'oravan'), node('tavakh-rubat', undefined))).toBe(true)
+  })
+
+  it('is false for a land leg (neither water nor Oravan)', () => {
+    expect(isSeaLeg(node('a', 'kheshkai'), node('b', 'ndjadi'))).toBe(false)
+    expect(isSeaLeg(node('pass', undefined), node('vale', undefined))).toBe(false)
+  })
+
+  it('is false when an endpoint is missing', () => {
+    expect(isSeaLeg(undefined, node('isle', 'oravan'))).toBe(false)
+    expect(isSeaLeg(node('isle', 'oravan'), undefined)).toBe(false)
   })
 })

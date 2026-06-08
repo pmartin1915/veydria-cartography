@@ -4073,6 +4073,7 @@ body {
   right: 0;
   bottom: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
@@ -4087,6 +4088,19 @@ body {
 .travel-vignette-region { color: var(--text-accent); }
 .travel-vignette-leg { color: var(--text-muted); font-size: 9px; letter-spacing: 0.04em; }
 .travel-vignette-mode { color: var(--text-secondary); }
+/* A sea-leg sighting: its own line below the region/leg/mode row. text-transform is
+   reset so the canon name (e.g. "Mohala, the deep-diver") keeps its casing. */
+.travel-vignette-sighting {
+  flex: 1 0 100%;
+  margin-top: 1px;
+  color: var(--text-accent);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  text-align: center;
+}
+/* Sighting silhouette inks against the volcanic-reef water band. */
+.tv-sighting { color: #10141c; }
 @keyframes tvDrift {
   from { transform: translateX(0); }
   to { transform: translateX(14px); }

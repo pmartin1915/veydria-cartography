@@ -814,3 +814,15 @@ export function straitAnnotation(from: JourneyNode | undefined, to: JourneyNode 
   if (fromOravan === toOravan) return null
   return 'Halkar Straits'
 }
+
+// A leg travels over open water when either endpoint is the Oravan archipelago
+// (its only attested travel mode is sea-ship) or the Aethelian Basin (the central
+// sea, ingested as a `category: 'water'` node — see buildGraph). Robust to a
+// civ-less contested endpoint (e.g. the mid-strait sandbar) because it keys on the
+// known sea endpoints, not on both ends being tagged. Used to (a) draw sea-fauna
+// from a sea-appropriate pool and (b) surface a sighting in the travel vignette.
+export function isSeaLeg(from: JourneyNode | undefined, to: JourneyNode | undefined): boolean {
+  if (!from || !to) return false
+  return from.category === 'water' || to.category === 'water'
+      || from.civ === 'oravan' || to.civ === 'oravan'
+}

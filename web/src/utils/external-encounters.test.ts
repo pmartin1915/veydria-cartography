@@ -121,6 +121,70 @@ describe('external-encounters — generateEncounters integration', () => {
   })
 })
 
+describe('external-encounters — sea chokepoint opt-in', () => {
+  beforeEach(() => setExternalEncounters(FIXTURE))
+
+  it('augments a chokepoint ONLY when seaChokepoint is set (land chokepoints stay sim-authored)', () => {
+    expect(augmentPoolWithWeighted(BASE_POOL, ['oravan'], 'chokepoint')).toBe(BASE_POOL)
+    const out = augmentPoolWithWeighted(BASE_POOL, ['oravan'], 'chokepoint', undefined, { seaChokepoint: true })
+    expect(out.length).toBe(BASE_POOL.length + 6)
+  })
+
+  it('externalBeatsFor honours the seaChokepoint flag', () => {
+    expect(externalBeatsFor(['oravan'], 'chokepoint').length).toBe(0)
+    expect(externalBeatsFor(['oravan'], 'chokepoint', undefined, { seaChokepoint: true }).length).toBe(6)
+  })
+})
+
+// The Aethelian at-sea sightings (civ: 'aethelian') were dead data before the basin
+// civ alias: no map node carries civ 'aethelian' (the central sea is the
+// `aethelian_basin` water node whose civ is its id). These guard the activation.
+const AETHELIAN_FIXTURE: ExternalEncounterFile = {
+  schema_version: 1,
+  controlled_vocabularies: { frequency_weight: { common: 3, uncommon: 2, rare: 1 } },
+  encounters: [
+    { key: 'aethelian.great_white_rudder', civ: 'aethelian', prose_label: 'GW', type: 'environmental', severity: 'mild', frequency: 'common' },
+  ],
+}
+
+function basinRoute(): JourneyRoute {
+  return {
+    nodes: [
+      { id: 'aethelian_basin', name: 'Aethelian Basin', category: 'water', x: 0, y: 0, civ: 'aethelian_basin' },
+      { id: 'isle', name: 'Isle', category: 'civilization', x: 100, y: 0, civ: 'oravan' },
+    ],
+    edges: [{ from: 'aethelian_basin', to: 'isle', distanceSvg: 100, type: 'chokepoint', name: 'Halkar Straits', segmentDays: 3 }],
+    totalDistanceSvg: 100, totalKm: 100, estimatedDays: 3, bottlenecks: [], seasonalWarnings: [],
+  }
+}
+
+describe('external-encounters — Aethelian fauna reachable on a basin sea leg', () => {
+  beforeEach(() => setExternalEncounters(AETHELIAN_FIXTURE))
+
+  it('matches the canon civ but NOT the raw basin node civ (proves the alias is needed)', () => {
+    // Raw node civ → no match (the latent bug).
+    expect(externalBeatsFor(['aethelian_basin', 'oravan'], 'chokepoint', undefined, { seaChokepoint: true }).length).toBe(0)
+    // Aliased canon civ → matches (common weight 3).
+    expect(externalBeatsFor(['aethelian'], 'chokepoint', undefined, { seaChokepoint: true }).length).toBe(3)
+  })
+
+  it('fires the sighting through generateEncounters on a Halkar chokepoint', () => {
+    // Season varies the route signature (and thus the nothing-roll seed); across the
+    // sweep the deterministic draw surfaces the sighting on at least one seed.
+    const seasons = [undefined, 'spring', 'summer', 'autumn', 'winter'] as const
+    const fired = seasons.some(s =>
+      generateEncounters(basinRoute(), s, 'direct').some(e => e.key === 'aethelian.great_white_rudder'),
+    )
+    expect(fired).toBe(true)
+  })
+
+  it('never leaks a non-sighting keyed beat onto the sea leg', () => {
+    // The sea pool is the aethelian sighting only; any keyed beat must be it.
+    const encs = generateEncounters(basinRoute(), 'spring', 'direct')
+    for (const e of encs) if (e.key) expect(e.key).toBe('aethelian.great_white_rudder')
+  })
+})
+
 describe('external-encounters — loader', () => {
   afterEach(() => vi.unstubAllGlobals())
 
