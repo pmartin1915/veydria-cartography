@@ -5,6 +5,7 @@ import SearchBar from './components/SearchBar'
 import LayerControls from './components/LayerControls'
 import KeyboardHelp from './components/KeyboardHelp'
 import FactionGraph from './components/FactionGraph'
+import type { CanonCrossCivEntity } from './utils/faction-graph'
 // Lazy-loaded: the planner (+ its journey-planner/ subtree) is the largest
 // non-route module and only mounts when the user opens journey mode. Splitting
 // it out keeps it off the first-paint critical path. See Suspense boundary below.
@@ -141,6 +142,9 @@ const DEFAULT_OPACITY: LayerOpacity = {
 function App() {
   const [geojson, setGeojson] = useState<GeoJSONCollection | null>(null)
   const [loreIndex, setLoreIndex] = useState<LoreIndex>({})
+  // Cross-civ relationships from canon.json (the factions layer is canonical per
+  // worldbuilder ADR-0019 D4). Feeds FactionGraph; degrades to nodes-only if absent.
+  const [crossCivRelationships, setCrossCivRelationships] = useState<CanonCrossCivEntity[]>([])
   // Ocean-marginalia register (ADR-0023). Loaded once; cache is hot from the
   // main.tsx preload, so this resolves immediately and never throws.
   const [asterisms, setAsterisms] = useState<Asterism[]>([])
@@ -409,6 +413,20 @@ function App() {
         if (data?.features) setLoreIndex(data.features as LoreIndex)
       })
       .catch(() => { /* lore index is optional */ })
+
+    // Canonical cross-civ relationships (factions layer, ADR-0019 D4). Synced to
+    // web/public/canon.json by `npm run sync:data`. FactionGraph reads these.
+    fetch(`${import.meta.env.BASE_URL}canon.json`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        const entities = Array.isArray(data?.entities) ? data.entities : []
+        setCrossCivRelationships(
+          entities.filter(
+            (e: { entity_type?: string }) => e?.entity_type === 'cross_civ_relationship_matrix'
+          ) as CanonCrossCivEntity[]
+        )
+      })
+      .catch(() => { /* canon is optional; FactionGraph degrades to nodes-only */ })
 
     fetch(`${import.meta.env.BASE_URL}veydria-spatial.geojson`)
       .then(async (res) => {
@@ -1929,7 +1947,10 @@ function App() {
         <FactionGraph
           open={graphOpen}
           geojson={geojson}
-          relationships={geojson?.metadata?.relationships}
+          // Relationships come from canon.json (factions layer, ADR-0019 D4), NOT
+          // geojson.metadata.relationships — that embed is dead (topology's
+          // relationships stub was removed). Follow-up: strip it from generator/export/geojson.py.
+          crossCivEntities={crossCivRelationships}
           onClose={() => setGraphOpen(false)}
           onSelectFaction={(civId) => {
             const feature = geojson?.features.find(f =>
