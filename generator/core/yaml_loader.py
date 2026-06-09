@@ -42,7 +42,6 @@ class TopologyData:
         self.elevation_profile = raw.get("elevation_profile", {})
         self.biological_barriers = raw.get("biological_barriers", {})
         self.biomes = raw.get("biomes", {})
-        self.relationships = raw.get("relationships", {})
 
     @property
     def civ_names(self) -> list[str]:

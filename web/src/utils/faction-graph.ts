@@ -1,17 +1,18 @@
 /**
  * faction-graph.ts — Data extraction layer for the Faction Relationship Graph view.
  *
- * Builds a typed graph of civilizations (nodes) and their relationships (edges)
- * from the spatial GeoJSON plus an optional parsed YAML topology object.
+ * Builds a graph of civilizations (nodes) and their cross-civ relationships
+ * (edges) from the spatial GeoJSON plus the canonical
+ * `cross_civ_relationship_matrix` entities loaded from canon.json.
  *
- * Render-side concerns (d3-force, layout, click handlers) live elsewhere; this
+ * Relationships are TYPELESS and UNDIRECTED, weighted by canon `density`. The
+ * factions layer (worldbuilder ADR-0019 D4) owns relationships as prose, not
+ * categorical stance — so there is deliberately no hostile/allied/trade
+ * colouring here. Each edge carries the canon `name`/`summary`/`lede` for the
+ * on-click prose panel.
+ *
+ * Render-side concerns (layout, click handlers) live in FactionGraph.tsx; this
  * module is pure data and is fully unit-tested with hand-crafted fixtures.
- *
- * Directionality choice: hostile / allied / trade / shared_chokepoint edges are
- * treated as UNDIRECTED. We canonicalize (source, target) so a topology that
- * declares "civA hostile to civB" AND "civB hostile to civA" collapses to a
- * single edge. Vassal edges are DIRECTED (source = liege, target = vassal) and
- * therefore are NOT collapsed across reversed pairs.
  */
 
 import type { GeoJSONCollection, GeoJSONFeature } from '../App'
@@ -21,27 +22,29 @@ import type { GeoJSONCollection, GeoJSONFeature } from '../App'
 export interface FactionNode {
   id: string
   name: string
-  /** Coarse cardinal placement string from topology (e.g. "North", "Southwest"). */
+  /** True for place-as-actor nodes (e.g. the Aethelian Basin) that are not civs. */
+  isPlace?: boolean
+  /** Coarse cardinal placement string (e.g. "North"), when the feature carries it. */
   cardinal?: string
-  /** Free-text terrain label — useful as a quick biome proxy on the graph view. */
+  /** Free-text terrain label — a quick biome proxy on the graph view. */
   biome?: string
   /** Free-text elevation band. */
   elevation?: string
 }
 
-export type FactionEdgeType =
-  | 'trade'
-  | 'hostile'
-  | 'vassal'
-  | 'allied'
-  | 'shared_chokepoint'
-
 export interface FactionEdge {
   source: string
   target: string
-  type: FactionEdgeType
-  label?: string
-  weight?: number
+  /** Canon relationship density (cross-reference count); drives stroke width. */
+  weight: number
+  /** Canon display name, e.g. "Basin ↔ Irrah". */
+  name?: string
+  /** Short canon summary. */
+  summary?: string
+  /** Full canon lede prose (shown in the on-click panel). */
+  lede?: string
+  /** Canon entity id, e.g. "factions.cross_civ.basin_irrah". */
+  canonId?: string
 }
 
 export interface FactionGraph {
@@ -50,53 +53,49 @@ export interface FactionGraph {
 }
 
 /**
- * Shape we accept for a parsed YAML topology. Intentionally permissive — any
- * field may be missing. The builder degrades gracefully when topology is
- * undefined or malformed: it returns nodes-only.
+ * A canon.json `cross_civ_relationship_matrix` entity (only the fields we
+ * consume). `civ_pair` is the authoritative pair of civ slugs; the entity `id`
+ * string is NOT a reliable source of slugs (it is internally inconsistent).
  */
-export interface ParsedTopology {
-  civilization_positions?: Record<string, unknown>
-  /**
-   * Optional explicit relationship block. The canonical YAML doesn't ship this
-   * yet (see integration note), but the builder will read it if present.
-   * Accepted shapes:
-   *   relationships:
-   *     - { from: "civA", to: "civB", type: "hostile", label?: string }
-   *     - { source: "civA", target: "civB", type: "trade" }
-   *   OR keyed by civ:
-   *     relationships:
-   *       civA:
-   *         hostile: ["civB"]
-   *         allied:  ["civC"]
-   *         vassal:  ["civD"]
-   */
-  relationships?: unknown
+export interface CanonCrossCivEntity {
+  id?: string
+  entity_type?: string
+  civ_pair: [string, string]
+  density?: number
+  name?: string
+  summary?: string
+  lede?: string
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Place-as-actor handling ──────────────────────────────────────────────────
 
 /**
- * Map a free-text relationship string from topology onto our edge-type union.
- * Exposed so callers (and tests) can validate normalisation behaviour without
- * round-tripping through the full builder.
+ * Ids that appear in canon relationships but are NOT civilizations (no
+ * civilization feature in the geojson). We synthesise a node for these so their
+ * edges still render. Keyed by the NORMALISED id → display name.
  */
-export function classifyEdge(
-  rawType: string,
-  _ctx?: unknown
-): FactionEdgeType {
-  const t = (rawType ?? '').toString().trim().toLowerCase()
-  if (t === 'trade' || t === 'trade_route' || t.includes('trade')) return 'trade'
-  if (t === 'allied' || t === 'ally' || t === 'alliance') return 'allied'
-  if (t === 'vassal' || t === 'tributary' || t === 'suzerain') return 'vassal'
-  if (
-    t === 'shared_chokepoint' ||
-    t === 'chokepoint' ||
-    t === 'shared chokepoint'
-  ) {
-    return 'shared_chokepoint'
-  }
-  // Default: anything else (hostile, hostility, war, rival, ...) → hostile.
-  return 'hostile'
+const PLACE_NODES: Record<string, string> = {
+  basin: 'Aethelian Basin',
+}
+
+/**
+ * For a place node, the geojson feature whose geometry supplies its position.
+ * Keyed by the NORMALISED place id → geojson feature id. Consumed by the
+ * renderer (FactionGraph.tsx) to place a centroid for the synthetic node.
+ */
+export const PLACE_NODE_SOURCE_FEATURE: Record<string, string> = {
+  basin: 'aethelian_basin',
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Normalise a canon civ slug to the geojson feature-id convention. Canon's
+ * `civ_pair` uses hyphens ("ngaru-bon"); geojson civilization feature ids use
+ * underscores ("ngaru_bon"). The other five civ ids match in both repos.
+ */
+export function normalizeCivId(slug: string): string {
+  return (slug ?? '').toString().trim().toLowerCase().replace(/-/g, '_')
 }
 
 /** Civilization features: spec uses `type`, real GeoJSON uses `category`. Accept either. */
@@ -112,15 +111,9 @@ function getId(f: GeoJSONFeature): string | undefined {
   return typeof inner === 'string' && inner ? inner : undefined
 }
 
-/** Canonical key for de-duping. Undirected types sort their endpoints; vassal preserves order. */
-function edgeKey(e: FactionEdge): string {
-  if (e.type === 'vassal') return `${e.type}|${e.source}->${e.target}`
-  const [a, b] = [e.source, e.target].sort()
-  return `${e.type}|${a}--${b}`
-}
-
-function sameCiv(a: string, b: string): boolean {
-  return !!a && !!b && a === b
+/** Canonical undirected key for de-duping a civ pair regardless of order. */
+function edgeKey(source: string, target: string): string {
+  return [source, target].sort().join('--')
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────
@@ -129,161 +122,72 @@ function sameCiv(a: string, b: string): boolean {
  * Build a faction-relationship graph.
  *
  *   nodes  ← geojson civilization features (geojson is the source of truth for
- *            what civs exist; topology supplements with metadata)
- *   edges  ← topology.relationships (if present)
- *          + geojson trade_route features (one trade edge per endpoint pair)
- *          + geojson chokepoint features (one shared_chokepoint edge per pair
- *            of civs that border the same chokepoint)
+ *            what civs exist) + synthesised place nodes referenced by edges
+ *   edges  ← canon cross_civ_relationship_matrix entities (typeless, weighted
+ *            by `density`, carrying name/summary/lede for the prose panel)
  *
- * Edges are deduped on (sortedEndpoints, type) for undirected types. A pair
- * with both a `trade` AND a `hostile` edge keeps both — different types are
- * never collapsed.
+ * Degrades gracefully: with no entities (undefined / empty / junk) it returns
+ * the civ nodes and no edges.
  */
 export function buildFactionGraph(
   geojson: GeoJSONCollection,
-  topology?: ParsedTopology
+  crossCivEntities?: CanonCrossCivEntity[]
 ): FactionGraph {
-  // 1. Nodes from geojson. Topology metadata layered on if a matching id exists.
-  const civPositions = (topology?.civilization_positions ?? {}) as Record<
-    string,
-    Record<string, unknown> | undefined
-  >
-
+  // 1. Nodes from geojson civilization features.
   const nodes: FactionNode[] = []
-  const knownCivIds = new Set<string>()
+  const nodeIndex = new Map<string, FactionNode>()
 
   for (const f of geojson.features ?? []) {
     if (!isCivilization(f)) continue
     const id = getId(f)
-    if (!id || knownCivIds.has(id)) continue
-    knownCivIds.add(id)
-
-    const meta = civPositions[id] ?? undefined
+    if (!id || nodeIndex.has(id)) continue
     const props = f.properties ?? {}
-    const name =
-      (typeof props.name === 'string' && props.name) ||
-      (meta && typeof meta.name === 'string' && (meta.name as string)) ||
-      id
-    const cardinal =
-      (meta && typeof meta.cardinal === 'string' && (meta.cardinal as string)) ||
-      (typeof props.cardinal === 'string' ? (props.cardinal as string) : undefined)
-    const biome =
-      (meta && typeof meta.terrain === 'string' && (meta.terrain as string)) ||
-      (typeof props.terrain === 'string' ? (props.terrain as string) : undefined)
-    const elevation =
-      (meta && typeof meta.elevation === 'string' && (meta.elevation as string)) ||
-      (typeof props.elevation === 'string'
-        ? (props.elevation as string)
-        : undefined)
-
-    nodes.push({ id, name, cardinal, biome, elevation })
+    const node: FactionNode = {
+      id,
+      name: (typeof props.name === 'string' && props.name) || id,
+      cardinal: typeof props.cardinal === 'string' ? props.cardinal : undefined,
+      biome: typeof props.terrain === 'string' ? props.terrain : undefined,
+      elevation: typeof props.elevation === 'string' ? props.elevation : undefined,
+    }
+    nodes.push(node)
+    nodeIndex.set(id, node)
   }
 
-  // 2. Edges. We collect into a Map keyed by edgeKey for dedup; later wins on
-  //    label/weight only if the existing entry has none (we keep first-seen
-  //    label otherwise).
+  // Synthesise a place-as-actor node (e.g. basin) on first reference.
+  const ensureNode = (normId: string): boolean => {
+    if (nodeIndex.has(normId)) return true
+    const placeName = PLACE_NODES[normId]
+    if (!placeName) return false
+    const placeNode: FactionNode = { id: normId, name: placeName, isPlace: true }
+    nodes.push(placeNode)
+    nodeIndex.set(normId, placeNode)
+    return true
+  }
+
+  // 2. Edges from canon entities. Typeless, weighted by density, deduped by pair.
   const edges = new Map<string, FactionEdge>()
-  const pushEdge = (e: FactionEdge): void => {
-    if (!knownCivIds.has(e.source) || !knownCivIds.has(e.target)) return
-    if (sameCiv(e.source, e.target)) return
-    const key = edgeKey(e)
-    const existing = edges.get(key)
-    if (!existing) {
-      edges.set(key, e)
-      return
-    }
-    if (existing.label === undefined && e.label !== undefined) {
-      existing.label = e.label
-    }
-    if (existing.weight === undefined && e.weight !== undefined) {
-      existing.weight = e.weight
-    }
-  }
 
-  // 2a. Topology relationships (if any). Degrade silently on bad shapes.
-  if (topology?.relationships) {
-    const rels = topology.relationships
-    if (Array.isArray(rels)) {
-      for (const r of rels) {
-        if (!r || typeof r !== 'object') continue
-        const rec = r as Record<string, unknown>
-        const source =
-          (typeof rec.source === 'string' && rec.source) ||
-          (typeof rec.from === 'string' && rec.from) ||
-          ''
-        const target =
-          (typeof rec.target === 'string' && rec.target) ||
-          (typeof rec.to === 'string' && rec.to) ||
-          ''
-        const rawType = typeof rec.type === 'string' ? rec.type : ''
-        if (!source || !target || !rawType) continue
-        const label = typeof rec.label === 'string' ? rec.label : undefined
-        pushEdge({ source, target, type: classifyEdge(rawType), label })
-      }
-    } else if (typeof rels === 'object') {
-      const obj = rels as Record<string, unknown>
-      for (const [civId, payload] of Object.entries(obj)) {
-        if (!payload || typeof payload !== 'object') continue
-        const buckets = payload as Record<string, unknown>
-        for (const [rawType, list] of Object.entries(buckets)) {
-          if (!Array.isArray(list)) continue
-          const type = classifyEdge(rawType)
-          for (const other of list) {
-            if (typeof other !== 'string' || !other) continue
-            pushEdge({ source: civId, target: other, type })
-          }
-        }
-      }
-    }
-  }
-
-  // 2b. Trade-route features → trade edges between each consecutive endpoint pair.
-  for (const f of geojson.features ?? []) {
-    const p = f.properties ?? {}
-    if (p.type !== 'trade_route' && p.category !== 'trade_route') continue
-    const endpoints = p.endpoints
-    if (!Array.isArray(endpoints)) continue
-    const civEndpoints = endpoints.filter(
-      (id): id is string => typeof id === 'string' && knownCivIds.has(id)
-    )
-    if (civEndpoints.length < 2) continue
-    const label = typeof p.name === 'string' ? p.name : undefined
-    for (let i = 0; i < civEndpoints.length; i++) {
-      for (let j = i + 1; j < civEndpoints.length; j++) {
-        pushEdge({
-          source: civEndpoints[i],
-          target: civEndpoints[j],
-          type: 'trade',
-          label,
-        })
-      }
-    }
-  }
-
-  // 2c. Chokepoint features → shared_chokepoint edges between every pair of
-  //     civs in `properties.borders` (or `connects`, the field the real data uses).
-  for (const f of geojson.features ?? []) {
-    const p = f.properties ?? {}
-    if (p.type !== 'chokepoint' && p.category !== 'chokepoint') continue
-    const raw =
-      (Array.isArray(p.borders) && p.borders) ||
-      (Array.isArray(p.connects) && p.connects) ||
-      []
-    const civBorders = (raw as unknown[]).filter(
-      (id): id is string => typeof id === 'string' && knownCivIds.has(id)
-    )
-    if (civBorders.length < 2) continue
-    const label = typeof p.name === 'string' ? p.name : undefined
-    for (let i = 0; i < civBorders.length; i++) {
-      for (let j = i + 1; j < civBorders.length; j++) {
-        pushEdge({
-          source: civBorders[i],
-          target: civBorders[j],
-          type: 'shared_chokepoint',
-          label,
-        })
-      }
-    }
+  for (const ent of Array.isArray(crossCivEntities) ? crossCivEntities : []) {
+    if (!ent || typeof ent !== 'object') continue
+    // Defensive: App pre-filters, but accept fixtures that omit entity_type.
+    if (ent.entity_type && ent.entity_type !== 'cross_civ_relationship_matrix') continue
+    const pair = ent.civ_pair
+    if (!Array.isArray(pair) || pair.length < 2) continue
+    const source = normalizeCivId(pair[0])
+    const target = normalizeCivId(pair[1])
+    if (!source || !target || source === target) continue
+    if (!ensureNode(source) || !ensureNode(target)) continue
+    const key = edgeKey(source, target)
+    if (edges.has(key)) continue
+    edges.set(key, {
+      source,
+      target,
+      weight: typeof ent.density === 'number' ? ent.density : 1,
+      name: typeof ent.name === 'string' ? ent.name : undefined,
+      summary: typeof ent.summary === 'string' ? ent.summary : undefined,
+      lede: typeof ent.lede === 'string' ? ent.lede : undefined,
+      canonId: typeof ent.id === 'string' ? ent.id : undefined,
+    })
   }
 
   return { nodes, edges: Array.from(edges.values()) }

@@ -4,14 +4,7 @@
     "source": "veydria-topology.yaml + coordinate-manifest.yaml",
     "generator": "veydria-cartography/generator/export/geojson.py",
     "coordinate_system": "SVG viewBox (1200x800) — use CRS.Simple in Leaflet with Y-inversion",
-    "description": "Spatial data for the continent of Veydria. Coordinates from coordinate-manifest.yaml; topology from veydria-topology.yaml.",
-    "relationships": {
-      "ngaru_bon": {
-        "hostile": [
-          "kheshkai"
-        ]
-      }
-    }
+    "description": "Spatial data for the continent of Veydria. Coordinates from coordinate-manifest.yaml; topology from veydria-topology.yaml."
   },
   "features": [
     {
@@ -152861,7 +152854,7 @@
         "id": "halani_tamu",
         "name": "Halani-Tamu",
         "category": "port",
-        "etymology": "Oravan: hala 'reef, harbor' + ni (genitive particle) + tamu (Basin pidgin 'sweetwater'). The Sweetwater Harbor",
+        "etymology": "Oravan: hala 'reef, harbor' + ni (genitive) + tamu 'sweetwater'. The Sweetwater Harbor",
         "real_world_parallel": "Hormuz analog",
         "location": "East shore",
         "function": "The east-shore port and the monsoon switching point, where the Oravan sea-lanes hand off to the Irrah overland routes. The Coral Docks collect the Harbor Covenant's wave-tithe; the Qalībin Lodges certify the desert-interior escorts; the Bazaar of the Split between them is neutral ground neither core institution claims. The Tin-Aghīz-Lam-Chen partnership absorbs the uncertified gold-work the Inner Council of Ancestor-Smiths chooses not to see.",
