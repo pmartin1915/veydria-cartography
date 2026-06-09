@@ -1947,9 +1947,7 @@ function App() {
         <FactionGraph
           open={graphOpen}
           geojson={geojson}
-          // Relationships come from canon.json (factions layer, ADR-0019 D4), NOT
-          // geojson.metadata.relationships — that embed is dead (topology's
-          // relationships stub was removed). Follow-up: strip it from generator/export/geojson.py.
+          // Relationships come from canon.json (factions layer, ADR-0019 D4).
           crossCivEntities={crossCivRelationships}
           onClose={() => setGraphOpen(false)}
           onSelectFaction={(civId) => {
