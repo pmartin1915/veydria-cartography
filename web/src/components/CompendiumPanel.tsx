@@ -330,6 +330,18 @@ function LensesView({ entities, lens, onSelectLens, onSelectEntity }: {
       case 'figures':
         filtered = entities.filter((e) => e.entity_type === 'deity_figure');
         break;
+      case 'characters':
+        filtered = entities.filter((e) => e.entity_type === 'character');
+        break;
+      case 'record-keeping':
+        filtered = entities.filter((e) => e.entity_type === 'record_medium');
+        break;
+      case 'underclass':
+        filtered = entities.filter((e) => e.entity_type === 'underclass_life');
+        break;
+      case 'funerary':
+        filtered = entities.filter((e) => e.entity_type === 'funerary_practice');
+        break;
     }
     return (
       <div className="compendium-lens-page">
