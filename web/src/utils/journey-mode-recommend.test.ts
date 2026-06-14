@@ -76,7 +76,7 @@ describe('computeRecommendedMode', () => {
     expect(r!.reason).toMatch(/Fastest/)
   })
 
-  it('does not fire the burn-aware path at default rations (12)', () => {
+  it('does not fire the burn-aware path at default rations (6)', () => {
     expect(computeRecommendedMode('direct', { ...DEFAULT_SUPPLY, packAnimals: 'few' }, [])).toBeNull()
   })
 

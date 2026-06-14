@@ -26,7 +26,12 @@ export interface SupplyConfig {
 }
 
 export const DEFAULT_SUPPLY: SupplyConfig = {
-  rationsPerPerson: 12,
+  // 6/6 two-resource economy (2026-06-13 retune): at canon-scale durations both
+  // rations and water bite on long routes (water on dry/sea legs, food on long
+  // inland hauls); short trips stay mostly safe. The old 12/6 was calibrated for
+  // the pre-#43 inflated durations and left rations purely decorative under the
+  // new Fastest default. See journey-supply-retune memory + PR.
+  rationsPerPerson: 6,
   waterPerPerson: 6,
   encumbrance: 'normal',
   packAnimals: 'none',

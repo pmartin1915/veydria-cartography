@@ -57,8 +57,8 @@ describe('journey-supply: baseline consumption', () => {
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY)
 
     expect(timeline.length).toBe(5)
-    // Rations start at 12, burn 1/day → end at 7
-    expect(timeline[4].rationsLeft).toBeCloseTo(7, 5)
+    // Rations start at 6, burn 1/day → end at 1
+    expect(timeline[4].rationsLeft).toBeCloseTo(1, 5)
     // Water starts at 6, burn 1/day → day 3 = 3, day 5 = 1
     expect(timeline[2].waterLeft).toBeCloseTo(3, 5)
     expect(timeline[4].waterLeft).toBeCloseTo(1, 5)
@@ -74,9 +74,10 @@ describe('journey-supply: baseline consumption', () => {
     // Default water = 6. Day 4: 2 left (low). Day 6: 0 (out).
     expect(pressure.waterLowDay).toBe(4)
     expect(pressure.waterOutDay).toBe(6)
-    // Default rations = 12. On a 7-day baseline, end at 5 — never crosses low (≤2).
-    expect(pressure.rationsLowDay).toBeNull()
-    expect(pressure.rationsOutDay).toBeNull()
+    // Default rations = 6 too (the 6/6 two-resource economy): same 1/day burn,
+    // so rations cross low/out on the same days as water.
+    expect(pressure.rationsLowDay).toBe(4)
+    expect(pressure.rationsOutDay).toBe(6)
   })
 })
 
@@ -87,8 +88,8 @@ describe('journey-supply: forced march', () => {
     const forcedParty: PartyConfig = { ...DEFAULT_PARTY, forcedMarch: true }
     const timeline = computeSupplyTimeline(days, forcedParty, DEFAULT_SUPPLY)
 
-    // Rations: 12 - (2 * 3) = 6
-    expect(timeline[2].rationsLeft).toBeCloseTo(6, 5)
+    // Rations: 6 - (2 * 3) = 0
+    expect(timeline[2].rationsLeft).toBeCloseTo(0, 5)
     // Water: 6 - (1.5 * 3) = 1.5
     expect(timeline[2].waterLeft).toBeCloseTo(1.5, 5)
     // Per-day burn rates
@@ -124,8 +125,8 @@ describe('journey-supply: winter season', () => {
     const days = buildDailyBreakdown(route, 'winter', 'direct')
     const timeline = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, 'winter')
 
-    // Rations burn = 1.25/day. 12 - 4*1.25 = 7
-    expect(timeline[3].rationsLeft).toBeCloseTo(7.0, 5)
+    // Rations burn = 1.25/day. 6 - 4*1.25 = 1
+    expect(timeline[3].rationsLeft).toBeCloseTo(1.0, 5)
     expect(timeline[0].rationsBurnedToday).toBeCloseTo(1.25, 5)
   })
 })
@@ -185,14 +186,14 @@ describe('journey-supply: resupplyAtDay', () => {
       (d) => (d === 3 ? 'full' : 'none'),
     )
 
-    // Pre-restore on day 3: rations = 12 - 3 = 9, water = 6 - 3 = 3
-    // Post-restore: both back to DEFAULT_SUPPLY (rations 12, water 6, no packBonus)
-    expect(timeline[2].rationsLeft).toBeCloseTo(12, 5)
+    // Pre-restore on day 3: rations = 6 - 3 = 3, water = 6 - 3 = 3
+    // Post-restore: both back to DEFAULT_SUPPLY (rations 6, water 6, no packBonus)
+    expect(timeline[2].rationsLeft).toBeCloseTo(6, 5)
     expect(timeline[2].waterLeft).toBeCloseTo(6, 5)
     // And no water-out warning, since restore happens before warning check
     expect(timeline[2].warning).toBeUndefined()
     // Day 4 continues normal burn from the restored state
-    expect(timeline[3].rationsLeft).toBeCloseTo(11, 5)
+    expect(timeline[3].rationsLeft).toBeCloseTo(5, 5)
     expect(timeline[3].waterLeft).toBeCloseTo(5, 5)
   })
 
@@ -208,11 +209,11 @@ describe('journey-supply: resupplyAtDay', () => {
       (d) => (d === 3 ? 'water' : 'none'),
     )
 
-    // Day 3: rations 12 - 3 = 9 (unchanged by restore), water back to 6
-    expect(timeline[2].rationsLeft).toBeCloseTo(9, 5)
+    // Day 3: rations 6 - 3 = 3 (unchanged by restore), water back to 6
+    expect(timeline[2].rationsLeft).toBeCloseTo(3, 5)
     expect(timeline[2].waterLeft).toBeCloseTo(6, 5)
-    // Day 5: rations 9 - 2 = 7, water 6 - 2 = 4 — neither below the ≤2 low threshold.
-    expect(timeline[4].rationsLeft).toBeCloseTo(7, 5)
+    // Day 5: rations 3 - 2 = 1 (now below the ≤2 low threshold), water 6 - 2 = 4
+    expect(timeline[4].rationsLeft).toBeCloseTo(1, 5)
     expect(timeline[4].waterLeft).toBeCloseTo(4, 5)
   })
 
@@ -328,7 +329,7 @@ describe('journey-supply: applyDailyBurn encounter cost', () => {
       undefined, { rations: 2, water: 2 },
     )
     // Even though 3 - 1 - 2 = 0 and 2 - 1 - 2 = -1, the 'full' restore
-    // overwrites both to start+packBonus (default supply = 12 / 6).
+    // overwrites both to start+packBonus (default supply = 6 / 6).
     expect(r.rationsLeft).toBe(constants.startingRations)
     expect(r.waterLeft).toBe(constants.startingWater)
     // But the "burned today" reflects the realized loss before restore.

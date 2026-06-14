@@ -360,7 +360,7 @@ function App() {
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [journeySeason, setJourneySeason] = useState<Season | undefined>(initialHashRef.current.season)
-  const [journeyModeState, setJourneyModeState] = useState<RouteMode>(initialHashRef.current.mode ?? 'direct')
+  const [journeyModeState, setJourneyModeState] = useState<RouteMode>(initialHashRef.current.mode ?? 'fastest')
   const [pinMode, setPinMode] = useState(false)
   const [annotations, setAnnotations] = useState<MapAnnotation[]>(loadAnnotations)
 
@@ -771,7 +771,7 @@ function App() {
     setJourneyRoute(null)
     setComparisonRoutes({ direct: null, safest: null, cheapest: null })
     setJourneySeason(undefined)
-    setJourneyModeState('direct')
+    setJourneyModeState('fastest')
     mapRef.current?.clearJourneyRoute()
     setPanelOpen(false)
     setSelectedFeature(null)
@@ -902,7 +902,7 @@ function App() {
     setJourneyRoute(route)
     if (!route) {
       setJourneySeason(undefined)
-      setJourneyModeState('direct')
+      setJourneyModeState('fastest')
       mapRef.current?.clearJourneyRoute()
       viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
     } else {
@@ -929,7 +929,7 @@ function App() {
     setJourneyRoute(null)
     setComparisonRoutes({ direct: null, safest: null, cheapest: null })
     setJourneySeason(undefined)
-    setJourneyModeState('direct')
+    setJourneyModeState('fastest')
     mapRef.current?.clearJourneyRoute()
     viewportRef.current = { ...viewportRef.current, journeyFrom: undefined, journeyTo: undefined }
     if (hashUpdateTimeoutRef.current) clearTimeout(hashUpdateTimeoutRef.current)
