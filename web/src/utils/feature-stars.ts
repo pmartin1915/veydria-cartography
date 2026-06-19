@@ -1,16 +1,19 @@
 /**
  * feature-stars.ts — Persistent starred/bookmarked features for GM session prep.
  *
- * Starred feature IDs are stored in localStorage under `veydria.stars.v1`.
- * The array is kept small (max 50) to prevent unbounded growth.
+ * Starred feature IDs are stored under `veydria.stars.v1` via the persistence
+ * facade (kvStore), which routes to localStorage on web and to on-disk files in
+ * the desktop build. The array is kept small (max 50) to prevent unbounded growth.
  */
+
+import { kvStore } from '../persistence/kv-store'
 
 const STORAGE_KEY = 'veydria.stars.v1'
 const MAX_STARS = 50
 
 function readStars(): string[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed) && parsed.every((s) => typeof s === 'string')) {
@@ -23,7 +26,7 @@ function readStars(): string[] {
 }
 
 function writeStars(ids: string[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
+  kvStore.setString(STORAGE_KEY, JSON.stringify(ids))
 }
 
 export function getStarredIds(): string[] {
@@ -61,7 +64,7 @@ export function removeStarred(featureId: string): void {
 }
 
 export function clearStarred(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  kvStore.remove(STORAGE_KEY)
 }
 
 export interface StarredFeature {
