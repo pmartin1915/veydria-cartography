@@ -42,6 +42,7 @@ import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename
 import { downloadRenderConfig } from './utils/render-config'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
+import { loadHexSize, saveHexSize } from './utils/hex-size'
 import { useMediaQuery } from './utils/media-query'
 import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
@@ -370,13 +371,9 @@ function App() {
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
-  const [hexSize, setHexSize] = useState<number>(() => {
-    const stored = kvStore.getString('veydria.hexSize')
-    const n = stored ? Number.parseInt(stored, 10) : NaN
-    return [30, 50, 70].includes(n) ? n : 50
-  })
+  const [hexSize, setHexSize] = useState<number>(() => loadHexSize())
   useEffect(() => {
-    try { kvStore.setString('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
+    try { saveHexSize(hexSize) } catch { /* quota / private mode */ }
   }, [hexSize])
   const shareMode = !!initialHashRef.current.share
   const isMobile = useMediaQuery('(max-width: 768px)')

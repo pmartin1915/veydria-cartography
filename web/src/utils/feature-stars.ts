@@ -33,6 +33,22 @@ export function getStarredIds(): string[] {
   return readStars()
 }
 
+/**
+ * Replace the starred list while preserving invariants: strings only,
+ * dedupe keeping first occurrence (most-recent-first order), cap at MAX_STARS.
+ */
+export function setStarredIds(ids: string[]): void {
+  const seen = new Set<string>()
+  const filtered: string[] = []
+  for (const id of ids) {
+    if (typeof id !== 'string' || seen.has(id)) continue
+    seen.add(id)
+    filtered.push(id)
+    if (filtered.length >= MAX_STARS) break
+  }
+  writeStars(filtered)
+}
+
 export function isStarred(featureId: string): boolean {
   return readStars().includes(featureId)
 }

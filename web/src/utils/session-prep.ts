@@ -69,6 +69,21 @@ export function getPrepDoneIds(): string[] {
   return readDone()
 }
 
+/**
+ * Replace the done-state list while preserving invariants: strings only,
+ * dedupe keeping first occurrence (order preserved). No cap by design.
+ */
+export function setPrepDoneIds(ids: string[]): void {
+  const seen = new Set<string>()
+  const filtered: string[] = []
+  for (const id of ids) {
+    if (typeof id !== 'string' || seen.has(id)) continue
+    seen.add(id)
+    filtered.push(id)
+  }
+  writeDone(filtered)
+}
+
 export function togglePrepDone(featureId: string): boolean {
   const ids = readDone()
   const idx = ids.indexOf(featureId)
