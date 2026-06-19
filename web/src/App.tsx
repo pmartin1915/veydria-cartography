@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
+import { kvStore } from './persistence/kv-store'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -370,12 +371,12 @@ function App() {
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
   const [hexSize, setHexSize] = useState<number>(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
+    const stored = kvStore.getString('veydria.hexSize')
     const n = stored ? Number.parseInt(stored, 10) : NaN
     return [30, 50, 70].includes(n) ? n : 50
   })
   useEffect(() => {
-    try { window.localStorage.setItem('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
+    try { kvStore.setString('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
   }, [hexSize])
   const shareMode = !!initialHashRef.current.share
   const isMobile = useMediaQuery('(max-width: 768px)')

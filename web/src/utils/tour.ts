@@ -6,6 +6,8 @@
  * CSS classes doesn't break the tour.
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 export interface TourStep {
   id: string
   targetSelector?: string
@@ -58,7 +60,7 @@ export const JOURNEY_TUTORIAL_KEY = 'veydria.journey.tutorial.completed.v1'
 
 export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
   try {
-    const raw = localStorage.getItem(key)
+    const raw = kvStore.getString(key)
     if (!raw) return false
     const parsed = JSON.parse(raw)
     return parsed?.completed === true
@@ -69,7 +71,7 @@ export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
 
 export function markTourCompleted(skipped = false, key: string = MAIN_TOUR_KEY): void {
   try {
-    localStorage.setItem(
+    kvStore.setString(
       key,
       JSON.stringify({ completed: true, skipped, timestamp: Date.now() })
     )

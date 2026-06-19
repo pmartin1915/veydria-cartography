@@ -10,6 +10,7 @@
  * Storage: localStorage `veydria.hooks.v1` — Record<featureId, string[]>
  */
 
+import { kvStore } from '../persistence/kv-store'
 import { djb2Hash, mulberry32 } from './encounters'
 
 export interface FeatureHook {
@@ -208,7 +209,7 @@ const STORAGE_KEY = 'veydria.hooks.v1'
 
 export function loadFeatureHooks(): Record<string, FeatureHook[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as Record<string, unknown>
     const out: Record<string, FeatureHook[]> = {}
@@ -225,7 +226,7 @@ export function loadFeatureHooks(): Record<string, FeatureHook[]> {
 
 export function saveFeatureHooks(all: Record<string, FeatureHook[]>): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(all))
   } catch {
     // storage full or private mode — silently drop
   }
@@ -244,7 +245,7 @@ export function storeHooks(featureId: string, hooks: FeatureHook[]): void {
 
 export function clearAllFeatureHooks(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    kvStore.remove(STORAGE_KEY)
   } catch {
     // ignore
   }
