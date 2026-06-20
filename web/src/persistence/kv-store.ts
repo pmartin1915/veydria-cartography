@@ -27,6 +27,8 @@ export interface SyncBackend {
   setString(key: string, value: string): void
   remove(key: string): void
   keys(): string[]
+  /** Drain buffered writes to durable storage; rejects if a write failed. */
+  flush(): Promise<void>
 }
 
 /** Default backend: synchronous, zero-setup, backed by localStorage. */
@@ -69,6 +71,9 @@ export class LocalStorageBackend implements SyncBackend {
     }
     return out
   }
+
+  /** localStorage is synchronous and already durable — nothing to drain. */
+  async flush(): Promise<void> {}
 }
 
 /**
@@ -110,6 +115,11 @@ export class CachedAsyncBackend implements SyncBackend {
   keys(): string[] {
     return [...this.cache.keys()].filter(isVeydriaKey)
   }
+
+  /** Drain the provider's buffered writes (no-op if it persists synchronously). */
+  async flush(): Promise<void> {
+    await this.provider.flush?.()
+  }
 }
 
 /** Singleton facade the feature utils import. */
@@ -145,6 +155,15 @@ class KvStore {
 
   keys(): string[] {
     return this.backend.keys()
+  }
+
+  /**
+   * Drain buffered writes to durable storage. The desktop close handler awaits
+   * this before destroying the window so pending disk writes are not lost.
+   * Rejects if a buffered write could not be persisted.
+   */
+  flush(): Promise<void> {
+    return this.backend.flush()
   }
 }
 

@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { exportCampaign } from '../persistence/campaign-export'
 import { importCampaign } from '../persistence/campaign-import'
+import { getCampaignIO } from '../persistence/campaign-io'
+import { reportSaveFailure } from '../persistence/save-status'
+import { kvStore } from '../persistence/kv-store'
 
 interface CampaignMenuProps {
   onToast?: (msg: string) => void
@@ -20,8 +23,6 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const pendingModeRef = useRef<PendingMode>('open')
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const modalWasOpenRef = useRef(false)
 
@@ -54,48 +55,34 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
     }
   }, [open])
 
-  const handleSave = useCallback(() => {
-    const data = JSON.stringify(exportCampaign(), null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const date = new Date().toISOString().slice(0, 10)
-    a.download = `veydria-campaign-${date}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    onToast?.('Campaign saved')
+  const handleSave = useCallback(async () => {
     setOpen(false)
-    // Phase 6: reroute through Tauri save dialog.
+    const data = JSON.stringify(exportCampaign(), null, 2)
+    const date = new Date().toISOString().slice(0, 10)
+    const io = await getCampaignIO()
+    const result = await io.save(`veydria-campaign-${date}.json`, data)
+    if (result.error) {
+      // A write that the user asked for failed — surface it where WebView2 can't
+      // swallow it (the success toast is silent on desktop, the failure must not be).
+      reportSaveFailure(result.error)
+    } else if (result.saved) {
+      onToast?.('Campaign saved')
+    }
   }, [onToast])
 
-  const triggerFilePick = useCallback((mode: PendingMode) => {
-    pendingModeRef.current = mode
+  const handleOpenOrImport = useCallback(async (mode: PendingMode) => {
     setOpen(false)
-    // Defer click so the dropdown has rendered its close before the OS dialog opens.
-    queueMicrotask(() => {
-      fileInputRef.current?.click()
-    })
-  }, [])
-
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-
-    const mode = pendingModeRef.current
-    const filename = file.name
+    const io = await getCampaignIO()
+    const picked = await io.open()
+    if (!picked) return // user cancelled
     let parsed: unknown
     try {
-      const text = await file.text()
-      parsed = JSON.parse(text)
+      parsed = JSON.parse(picked.json)
     } catch (err) {
-      setConfirm({ mode, filename, error: err instanceof Error ? err.message : String(err) })
+      setConfirm({ mode, filename: picked.name, error: err instanceof Error ? err.message : String(err) })
       return
     }
-    setConfirm({ mode, filename, parsed })
+    setConfirm({ mode, filename: picked.name, parsed })
   }, [])
 
   // Modal focus management + Escape close. On open: focus the safe default (Cancel).
@@ -117,12 +104,18 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
     }
   }, [confirm])
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback(async () => {
     if (!confirm || confirm.error) return
     try {
       importCampaign(confirm.parsed, confirm.mode === 'open' ? 'replace' : 'merge')
+      // Desktop: importCampaign wrote into the debounced disk cache. Drain it to disk
+      // BEFORE reload tears down the JS realm — otherwise boot re-hydrates the stale
+      // store file and the import silently vanishes. No-op on web (sync localStorage).
+      await kvStore.flush()
       window.location.reload()
     } catch (e) {
+      // flush rejected (disk full / USB ejected): reloading now would re-hydrate stale
+      // disk and lose the in-memory import. Keep the session and surface the error.
       setConfirm(prev => (prev ? { ...prev, error: e instanceof Error ? e.message : String(e) } : prev))
     }
   }, [confirm])
@@ -167,7 +160,7 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
                 <span className="share-popover-action-hint">Download a backup JSON file</span>
               </span>
             </button>
-            <button className="share-popover-action" onClick={() => triggerFilePick('open')}>
+            <button className="share-popover-action" onClick={() => handleOpenOrImport('open')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
@@ -177,7 +170,7 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
                 <span className="share-popover-action-hint">Replace current data from a file</span>
               </span>
             </button>
-            <button className="share-popover-action" onClick={() => triggerFilePick('import')}>
+            <button className="share-popover-action" onClick={() => handleOpenOrImport('import')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 <line x1="12" y1="8" x2="12" y2="16" />
@@ -191,15 +184,6 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
           </div>
         )}
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        multiple={false}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
 
       {confirm && (
         <div

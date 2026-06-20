@@ -31,4 +31,11 @@ export interface StorageProvider {
   list(): Promise<string[]>
   /** Remove every veydria-namespaced key. */
   clear(): Promise<void>
+  /**
+   * Drain any pending/buffered writes to durable storage. Optional: providers
+   * that persist synchronously (localStorage) need not implement it. A disk-backed
+   * provider that debounces writes MUST, so the shell can await it on quit.
+   * Rejects if a buffered write could not be persisted.
+   */
+  flush?(): Promise<void>
 }

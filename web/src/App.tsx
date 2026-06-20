@@ -51,6 +51,7 @@ import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
 import CompendiumPanel from './components/CompendiumPanel'
 import { CampaignMenu } from './components/CampaignMenu'
+import { SaveStatusIndicator } from './components/SaveStatusIndicator'
 
 import type { GeoJSONFeature, GeoJSONCollection } from './types/geojson'
 export type { GeoJSONFeature, GeoJSONCollection }
@@ -2036,6 +2037,7 @@ function App() {
             <span>{logToast}</span>
           </div>
         )}
+        <SaveStatusIndicator />
       </main>
     </div>
   )

@@ -138,3 +138,49 @@ describe('feature-stars over CachedAsyncBackend (provider swap)', () => {
     expect(await provider.get(STARS_KEY)).toBeNull()
   })
 })
+
+/** Provider that records flush() calls, for the close-handler drain path. */
+class FlushSpyProvider implements StorageProvider {
+  store = new Map<string, string>()
+  flushed = 0
+  async get(key: string) {
+    return this.store.get(key) ?? null
+  }
+  async set(key: string, value: string) {
+    this.store.set(key, value)
+  }
+  async remove(key: string) {
+    this.store.delete(key)
+  }
+  async list() {
+    return [...this.store.keys()].filter((k) => k.startsWith('veydria'))
+  }
+  async clear() {
+    this.store.clear()
+  }
+  async flush() {
+    this.flushed++
+  }
+}
+
+describe('flush() delegation', () => {
+  it('LocalStorageBackend.flush resolves (synchronous storage, nothing to drain)', async () => {
+    kvStore.setBackend(new LocalStorageBackend())
+    await expect(kvStore.flush()).resolves.toBeUndefined()
+  })
+
+  it('CachedAsyncBackend.flush drains the underlying provider', async () => {
+    const provider = new FlushSpyProvider()
+    const backend = new CachedAsyncBackend(provider)
+    await backend.hydrate()
+    kvStore.setBackend(backend)
+    await kvStore.flush()
+    expect(provider.flushed).toBe(1)
+  })
+
+  it('CachedAsyncBackend.flush is a no-op when the provider has no flush()', async () => {
+    const backend = new CachedAsyncBackend(new MemoryProvider())
+    await backend.hydrate()
+    await expect(backend.flush()).resolves.toBeUndefined()
+  })
+})
