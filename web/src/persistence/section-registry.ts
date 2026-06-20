@@ -28,22 +28,40 @@ export interface CampaignSection<T = unknown> {
   write(value: T, mode: ImportMode): void
 }
 
-function requireReplace(mode: ImportMode): void {
-  if (mode !== 'replace') {
-    throw new Error('merge not implemented (Phase 5)')
-  }
+function asArray<T>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : []
+}
+function asRecord(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
 }
 
-// Generic collection setter for JSON-array stores.
+function dedupeFirst(ids: string[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const id of ids) {
+    if (typeof id !== 'string' || seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+  }
+  return out
+}
+
+// Merge arrays of identified records: existing order preserved, incoming wins on id collision,
+// new incoming records appended. Items without a string id are skipped (tolerant of corrupt input).
+function mergeById<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
+  const map = new Map<string, T>()
+  for (const item of existing) if (item && typeof (item as { id?: unknown }).id === 'string') map.set(item.id, item)
+  for (const item of incoming) if (item && typeof (item as { id?: unknown }).id === 'string') map.set(item.id, item)
+  return [...map.values()]
+}
+
 function stringArraySetter(
-  key: string,
+  getter: () => string[],
   setter: (ids: string[]) => void,
 ): CampaignSection<string[]>['write'] {
   return (value, mode) => {
-    if (mode !== 'replace') {
-      throw new Error('merge not implemented (Phase 5)')
-    }
-    setter(value as string[])
+    const incoming = asArray<string>(value)
+    setter(mode === 'merge' ? dedupeFirst([...getter(), ...incoming]) : dedupeFirst(incoming))
   }
 }
 
@@ -57,8 +75,8 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       return loadAnnotations()
     },
     write(value, mode) {
-      requireReplace(mode)
-      saveAnnotations(value as ReturnType<typeof loadAnnotations>)
+      const incoming = asArray(value) as ReturnType<typeof loadAnnotations>
+      saveAnnotations(mode === 'merge' ? mergeById(loadAnnotations(), incoming) : incoming)
     },
   },
   {
@@ -70,8 +88,8 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       return loadSavedJourneys()
     },
     write(value, mode) {
-      requireReplace(mode)
-      saveJourneys(value as ReturnType<typeof loadSavedJourneys>)
+      const incoming = asArray(value) as ReturnType<typeof loadSavedJourneys>
+      saveJourneys(mode === 'merge' ? mergeById(loadSavedJourneys(), incoming) : incoming)
     },
   },
   {
@@ -83,8 +101,8 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       return loadFeatureNotes()
     },
     write(value, mode) {
-      requireReplace(mode)
-      saveFeatureNotes(value as ReturnType<typeof loadFeatureNotes>)
+      const incoming = asRecord(value) as ReturnType<typeof loadFeatureNotes>
+      saveFeatureNotes(mode === 'merge' ? { ...loadFeatureNotes(), ...incoming } : incoming)
     },
   },
   {
@@ -95,7 +113,7 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       if (kvStore.getString(this.storageKey) === null) return undefined
       return getStarredIds()
     },
-    write: stringArraySetter('veydria.stars.v1', setStarredIds),
+    write: stringArraySetter(getStarredIds, setStarredIds),
   },
   {
     id: 'prepOrder',
@@ -105,7 +123,7 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       if (kvStore.getString(this.storageKey) === null) return undefined
       return getPrepOrder()
     },
-    write: stringArraySetter('veydria.prepOrder.v1', setPrepOrder),
+    write: stringArraySetter(getPrepOrder, setPrepOrder),
   },
   {
     id: 'prepDone',
@@ -115,7 +133,7 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       if (kvStore.getString(this.storageKey) === null) return undefined
       return getPrepDoneIds()
     },
-    write: stringArraySetter('veydria.prepDone.v1', setPrepDoneIds),
+    write: stringArraySetter(getPrepDoneIds, setPrepDoneIds),
   },
   {
     id: 'featureHooks',
@@ -126,8 +144,8 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       return loadFeatureHooks()
     },
     write(value, mode) {
-      requireReplace(mode)
-      saveFeatureHooks(value as ReturnType<typeof loadFeatureHooks>)
+      const incoming = asRecord(value) as ReturnType<typeof loadFeatureHooks>
+      saveFeatureHooks(mode === 'merge' ? { ...loadFeatureHooks(), ...incoming } : incoming)
     },
   },
   {
@@ -139,8 +157,8 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       return loadCustomPresets()
     },
     write(value, mode) {
-      requireReplace(mode)
-      saveCustomPresets(value as ReturnType<typeof loadCustomPresets>)
+      const incoming = asArray(value) as ReturnType<typeof loadCustomPresets>
+      saveCustomPresets(mode === 'merge' ? mergeById(loadCustomPresets(), incoming) : incoming)
     },
   },
   {
@@ -151,10 +169,7 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       if (kvStore.getString(this.storageKey) === null) return undefined
       return loadTimeOfDay()
     },
-    write(value, mode) {
-      requireReplace(mode)
-      saveTimeOfDay(value as ReturnType<typeof loadTimeOfDay>)
-    },
+    write(value) { saveTimeOfDay(value as ReturnType<typeof loadTimeOfDay>) },
   },
   {
     id: 'hexSize',
@@ -164,10 +179,7 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       if (kvStore.getString(this.storageKey) === null) return undefined
       return loadHexSize()
     },
-    write(value, mode) {
-      requireReplace(mode)
-      saveHexSize(value as ReturnType<typeof loadHexSize>)
-    },
+    write(value) { saveHexSize(value as ReturnType<typeof loadHexSize>) },
   },
   {
     id: 'aiLoreSettings',
@@ -178,10 +190,9 @@ export const CAMPAIGN_SECTIONS: CampaignSection[] = [
       const { apiKey: _apiKey, ...rest } = loadAiLoreSettings()
       return rest
     },
-    write(value, mode) {
-      requireReplace(mode)
-      // Phase 5 note: export omits apiKey, so replace must preserve the existing local key.
-      saveAiLoreSettings(value as AiLoreSettings)
+    write(value) {
+      const incoming = value as AiLoreSettings
+      saveAiLoreSettings({ ...incoming, apiKey: loadAiLoreSettings().apiKey })
     },
   },
 ]

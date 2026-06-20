@@ -50,6 +50,7 @@ import SettingsModal from './components/SettingsModal'
 import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
 import CompendiumPanel from './components/CompendiumPanel'
+import { CampaignMenu } from './components/CampaignMenu'
 
 import type { GeoJSONFeature, GeoJSONCollection } from './types/geojson'
 export type { GeoJSONFeature, GeoJSONCollection }
@@ -1327,6 +1328,9 @@ function App() {
             </svg>
             <span>Snapshot</span>
           </button>
+          {!shareMode && (
+            <CampaignMenu onToast={showLogToast} />
+          )}
           {!shareMode && (
             <button
               className="search-trigger"
