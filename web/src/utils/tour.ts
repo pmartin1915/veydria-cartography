@@ -57,6 +57,9 @@ export const MAIN_TOUR_KEY = 'veydria.tour.completed.v1'
 /** Planner-scoped journey walkthrough — a separate flag so completing one
  *  tour never marks the other done. Reuses the same engine + overlay. */
 export const JOURNEY_TUTORIAL_KEY = 'veydria.journey.tutorial.completed.v1'
+/** First-run atmospheric cold-open shown once before the map tour.
+ *  Persisted with the same shape via isTourCompleted/markTourCompleted. */
+export const WELCOME_KEY = 'veydria.welcome.seen.v1'
 
 export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
   try {

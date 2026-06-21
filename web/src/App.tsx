@@ -41,7 +41,8 @@ import { loadAsterisms, type Asterism } from './utils/asterisms'
 import { captureMapPng, copyPngToClipboard, suggestSnapshotFilename } from './utils/map-snapshot'
 import { downloadRenderConfig } from './utils/render-config'
 import { saveTextFile, savePngDataUrl } from './persistence/file-export'
-import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
+import { tourReducer, isTourCompleted, markTourCompleted, WELCOME_KEY, type TourStep } from './utils/tour'
+import WelcomeCurtain from './components/WelcomeCurtain'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
 import { loadHexSize, saveHexSize } from './utils/hex-size'
 import { useMediaQuery } from './utils/media-query'
@@ -218,6 +219,9 @@ function App() {
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
+  // First-run cold-open. Shown once before the map tour (see the gate in the
+  // geojson-load effect); onBegin hands off to the tour.
+  const [showWelcome, setShowWelcome] = useState(false)
   const [sessionPrepOpen, setSessionPrepOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
   const [starredIds, setStarredIds] = useState<string[]>(() => getStarredIds())
@@ -380,6 +384,17 @@ function App() {
       tourReducer(state, action as import('./utils/tour').TourAction, tourSteps.length),
     { active: false, stepIndex: 0 }
   )
+
+  // Dismiss the cold-open: mark it seen, then hand off to the map tour for
+  // a brand-new visitor (a returning visitor whose tour is already done sees
+  // neither). The short delay lets the curtain finish unmounting first.
+  const handleWelcomeBegin = useCallback(() => {
+    markTourCompleted(false, WELCOME_KEY)
+    setShowWelcome(false)
+    if (!isTourCompleted() && window.innerWidth >= 768) {
+      window.setTimeout(() => tourDispatch({ type: 'START' }), 400)
+    }
+  }, [])
 
   const cleanupTour = useCallback(() => {
     closeSearch()
@@ -555,7 +570,12 @@ function App() {
         // exploring organically), we're not in share mode, and the viewport
         // is wide enough for the tour card to be readable.
         const hasDeepLink = !!(featureId || hexLabel || hashState.hexA || hashState.hexB || journeyFrom || journeyTo)
-        if (!hasDeepLink && !hashState.share && !isTourCompleted() && window.innerWidth >= 768) {
+        const eligible = !hasDeepLink && !hashState.share && window.innerWidth >= 768
+        if (eligible && !isTourCompleted(WELCOME_KEY)) {
+          // Brand-new visitor: show the cold-open first. It hands off to the
+          // tour itself (onBegin), so we don't auto-start the tour here.
+          setShowWelcome(true)
+        } else if (eligible && !isTourCompleted()) {
           window.setTimeout(() => {
             tourDispatch({ type: 'START' })
           }, 1200)
@@ -1228,6 +1248,7 @@ function App() {
 
   return (
     <div className={`app ${shareMode ? 'share-mode' : ''} ${mobilePlayerMode ? 'mobile-player-mode' : ''}`}>
+      {showWelcome && <WelcomeCurtain onBegin={handleWelcomeBegin} />}
       {shareMode && !mobilePlayerMode && (
         <div className="player-view-banner" role="status" aria-live="polite">
           Player view — annotations and encounter notes are hidden
