@@ -6,6 +6,7 @@
  * can save their own working sets.
  */
 
+import { kvStore } from '../persistence/kv-store'
 import type { LayerVisibility, LayerOpacity } from '../App'
 
 export interface LayerPreset {
@@ -184,7 +185,7 @@ const STORAGE_KEY = 'veydria.layer.presets.v1'
 
 export function loadCustomPresets(): LayerPreset[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as LayerPreset[]
     if (!Array.isArray(parsed)) return []
@@ -196,7 +197,7 @@ export function loadCustomPresets(): LayerPreset[] {
 
 export function saveCustomPresets(presets: LayerPreset[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets.filter(p => !p.builtIn)))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(presets.filter(p => !p.builtIn)))
   } catch {
     // ignore storage errors (quota, private mode)
   }

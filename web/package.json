@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:tauri": "tsc -b && vite build --mode tauri",
+    "tauri": "tauri",
     "preview": "vite preview",
     "sync:data": "node ../scripts/sync-world-data.mjs",
     "build:asterisms": "node ../scripts/build-asterisms.mjs",
@@ -23,7 +25,9 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "combo": "file:../../combo",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
     "d3": "^7.9.0",
     "html-to-image": "^1.11.13",
     "leaflet": "^1.9.4",
@@ -34,6 +38,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@tauri-apps/cli": "^2",
     "@testing-library/react": "^16.3.2",
     "@types/d3": "^7.4.3",
     "@types/leaflet": "^1.9.8",

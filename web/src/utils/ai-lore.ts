@@ -9,6 +9,7 @@
  * Settings (API key, endpoint, model) are also persisted.
  */
 
+import { kvStore } from '../persistence/kv-store'
 import { djb2Hash, mulberry32 } from './encounters'
 import type { GeoJSONFeature } from '../App'
 
@@ -41,7 +42,7 @@ const DEFAULT_SETTINGS: AiLoreSettings = {
 
 export function loadAiLoreSettings(): AiLoreSettings {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
+    const raw = kvStore.getString(SETTINGS_KEY)
     if (!raw) return { ...DEFAULT_SETTINGS }
     const parsed = JSON.parse(raw) as Partial<AiLoreSettings>
     return {
@@ -57,7 +58,7 @@ export function loadAiLoreSettings(): AiLoreSettings {
 
 export function saveAiLoreSettings(settings: AiLoreSettings): void {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+    kvStore.setString(SETTINGS_KEY, JSON.stringify(settings))
   } catch { /* quota / private mode */ }
 }
 
@@ -78,7 +79,7 @@ interface CacheStore {
 
 function loadCache(): CacheStore {
   try {
-    const raw = localStorage.getItem(CACHE_KEY)
+    const raw = kvStore.getString(CACHE_KEY)
     if (!raw) return { version: CACHE_VERSION, entries: {} }
     const parsed = JSON.parse(raw) as Partial<CacheStore>
     if (parsed.version !== CACHE_VERSION) return { version: CACHE_VERSION, entries: {} }
@@ -90,7 +91,7 @@ function loadCache(): CacheStore {
 
 function saveCache(cache: CacheStore): void {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
+    kvStore.setString(CACHE_KEY, JSON.stringify(cache))
   } catch { /* quota / private mode */ }
 }
 
@@ -117,7 +118,7 @@ export function setCachedLore(featureId: string, type: AiLoreType, content: stri
 
 export function clearAiLoreCache(): void {
   try {
-    localStorage.removeItem(CACHE_KEY)
+    kvStore.remove(CACHE_KEY)
   } catch { /* ignore */ }
 }
 

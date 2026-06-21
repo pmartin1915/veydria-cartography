@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
+import { kvStore } from './persistence/kv-store'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -41,6 +42,7 @@ import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename
 import { downloadRenderConfig } from './utils/render-config'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
+import { loadHexSize, saveHexSize } from './utils/hex-size'
 import { useMediaQuery } from './utils/media-query'
 import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
@@ -48,6 +50,8 @@ import SettingsModal from './components/SettingsModal'
 import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
 import CompendiumPanel from './components/CompendiumPanel'
+import { CampaignMenu } from './components/CampaignMenu'
+import { SaveStatusIndicator } from './components/SaveStatusIndicator'
 
 import type { GeoJSONFeature, GeoJSONCollection } from './types/geojson'
 export type { GeoJSONFeature, GeoJSONCollection }
@@ -369,13 +373,9 @@ function App() {
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
-  const [hexSize, setHexSize] = useState<number>(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
-    const n = stored ? Number.parseInt(stored, 10) : NaN
-    return [30, 50, 70].includes(n) ? n : 50
-  })
+  const [hexSize, setHexSize] = useState<number>(() => loadHexSize())
   useEffect(() => {
-    try { window.localStorage.setItem('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
+    try { saveHexSize(hexSize) } catch { /* quota / private mode */ }
   }, [hexSize])
   const shareMode = !!initialHashRef.current.share
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -1330,6 +1330,9 @@ function App() {
             <span>Snapshot</span>
           </button>
           {!shareMode && (
+            <CampaignMenu onToast={showLogToast} />
+          )}
+          {!shareMode && (
             <button
               className="search-trigger"
               onClick={() => downloadRenderConfig(layers)}
@@ -2034,6 +2037,7 @@ function App() {
             <span>{logToast}</span>
           </div>
         )}
+        <SaveStatusIndicator />
       </main>
     </div>
   )

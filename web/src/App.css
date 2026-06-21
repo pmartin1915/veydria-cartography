@@ -2801,6 +2801,31 @@ body {
   animation: toastOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
+/* Persistent "last save failed" badge. Deliberately NO entrance animation: the
+   WebView2 toast bug (enter-animation stuck at opacity:0) must not be able to hide
+   the one signal that warns the user their work may not be on disk. */
+.save-status-failed {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--color-ruin, #c06040);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  z-index: 3000;
+}
+
+.save-status-failed svg {
+  color: var(--color-ruin, #c06040);
+  flex-shrink: 0;
+}
+
 /* ============================================================
    Journey Planner — base (desktop) rule
    Declared above the mobile @media block so the bottom-sheet

@@ -5,13 +5,15 @@
  * Done-state IDs are stored under `veydria.prepDone.v1`.
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 const ORDER_KEY = 'veydria.prepOrder.v1'
 const DONE_KEY = 'veydria.prepDone.v1'
 const ACTIVE_KEY = 'veydria.sessionActive.v1'
 
 function readOrder(): string[] {
   try {
-    const raw = localStorage.getItem(ORDER_KEY)
+    const raw = kvStore.getString(ORDER_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed) && parsed.every((s) => typeof s === 'string')) {
@@ -24,12 +26,12 @@ function readOrder(): string[] {
 }
 
 function writeOrder(ids: string[]): void {
-  localStorage.setItem(ORDER_KEY, JSON.stringify(ids))
+  kvStore.setString(ORDER_KEY, JSON.stringify(ids))
 }
 
 function readDone(): string[] {
   try {
-    const raw = localStorage.getItem(DONE_KEY)
+    const raw = kvStore.getString(DONE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed) && parsed.every((s) => typeof s === 'string')) {
@@ -42,7 +44,7 @@ function readDone(): string[] {
 }
 
 function writeDone(ids: string[]): void {
-  localStorage.setItem(DONE_KEY, JSON.stringify(ids))
+  kvStore.setString(DONE_KEY, JSON.stringify(ids))
 }
 
 export function getPrepOrder(): string[] {
@@ -67,6 +69,21 @@ export function getPrepDoneIds(): string[] {
   return readDone()
 }
 
+/**
+ * Replace the done-state list while preserving invariants: strings only,
+ * dedupe keeping first occurrence (order preserved). No cap by design.
+ */
+export function setPrepDoneIds(ids: string[]): void {
+  const seen = new Set<string>()
+  const filtered: string[] = []
+  for (const id of ids) {
+    if (typeof id !== 'string' || seen.has(id)) continue
+    seen.add(id)
+    filtered.push(id)
+  }
+  writeDone(filtered)
+}
+
 export function togglePrepDone(featureId: string): boolean {
   const ids = readDone()
   const idx = ids.indexOf(featureId)
@@ -81,7 +98,7 @@ export function togglePrepDone(featureId: string): boolean {
 }
 
 export function clearPrepDone(): void {
-  localStorage.removeItem(DONE_KEY)
+  kvStore.remove(DONE_KEY)
 }
 
 /**
@@ -189,7 +206,7 @@ export function exportPrepMarkdown(items: PrepItem[], hexItems: HexPrepItem[] = 
  */
 export function isSessionActive(): boolean {
   try {
-    return localStorage.getItem(ACTIVE_KEY) === '1'
+    return kvStore.getString(ACTIVE_KEY) === '1'
   } catch {
     return false
   }
@@ -198,9 +215,9 @@ export function isSessionActive(): boolean {
 export function setSessionActive(active: boolean): void {
   try {
     if (active) {
-      localStorage.setItem(ACTIVE_KEY, '1')
+      kvStore.setString(ACTIVE_KEY, '1')
     } else {
-      localStorage.removeItem(ACTIVE_KEY)
+      kvStore.remove(ACTIVE_KEY)
     }
   } catch {
     // ignore
