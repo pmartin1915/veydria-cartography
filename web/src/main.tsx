@@ -27,6 +27,9 @@ void loadAsterisms(import.meta.env.BASE_URL)
  */
 async function boot(): Promise<void> {
   if (isTauri) {
+    // Tag the document so desktop-only CSS can opt out of entrance animations that
+    // WebView2 swallows (the success-toast bug). Web keeps its animated toasts.
+    document.body.classList.add('app-desktop')
     try {
       const { createTauriFsProvider } = await import('./persistence/tauri-fs-ops')
       await kvStore.hydrate(await createTauriFsProvider())
