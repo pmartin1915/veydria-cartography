@@ -2801,6 +2801,23 @@ body {
   animation: toastOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
+/* WebView2 swallows CSS entrance animations — the toast stays at the from-keyframe's
+   opacity:0 and never appears (success-toast bug). On desktop, take the same
+   no-animation path that SaveStatusIndicator (below) uses to render reliably; the web
+   build keeps its animated toasts untouched. The body.app-desktop class is added at
+   boot in main.tsx when isTauri. Covers both toast systems (.toast-notification and
+   the JourneyPlanner .journey-export-toast). */
+body.app-desktop .toast-notification,
+body.app-desktop .journey-export-toast {
+  animation: none;
+  opacity: 1;
+}
+
+body.app-desktop .toast-notification.exiting {
+  animation: none;
+  opacity: 1; /* no fade-out; the element simply unmounts after the leaving window */
+}
+
 /* Persistent "last save failed" badge. Deliberately NO entrance animation: the
    WebView2 toast bug (enter-animation stuck at opacity:0) must not be able to hide
    the one signal that warns the user their work may not be on disk. */
