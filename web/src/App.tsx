@@ -257,6 +257,36 @@ function App() {
     }
   }, [shareOpen])
 
+  // "More ▾" overflow menu — collects the one-shot export/utility actions so the
+  // toolbar isn't a wall of buttons. Mirrors the share-menu fixed-popover idiom.
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [morePos, setMorePos] = useState<{ top: number; right: number } | null>(null)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const toggleMore = useCallback(() => {
+    setMoreOpen(prev => {
+      if (!prev && moreMenuRef.current) {
+        const r = moreMenuRef.current.getBoundingClientRect()
+        setMorePos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) })
+      }
+      return !prev
+    })
+  }, [])
+  useEffect(() => {
+    if (!moreOpen) return
+    function onDown(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setMoreOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
+
   const tourSteps: TourStep[] = useMemo(() => [
     {
       id: 'welcome',
@@ -1315,48 +1345,39 @@ function App() {
               <span>{hexMeasureMode ? 'Pick hexes...' : 'Hex'}</span>
             </button>
           )}
-          <button
-            className="search-trigger"
-            onClick={() => handleShare(false)}
-            title="Copy shareable link"
-            id="share-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-            <span>Share</span>
-          </button>
-          <button
-            className="search-trigger"
-            onClick={handleSnapshot}
-            title="Capture the current map view as PNG  ·  Shift+click for player view (no pins)"
-            id="snapshot-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            <span>Snapshot</span>
-          </button>
-          {!shareMode && (
-            <CampaignMenu onToast={showLogToast} />
-          )}
-          {!shareMode && (
+          {/* Player view keeps Share + Snapshot at top level; in GM mode they
+              live in the "More ▾" menu below to keep the toolbar uncluttered. */}
+          {shareMode && (
             <button
               className="search-trigger"
-              onClick={() => { void downloadRenderConfig(layers) }}
-              title="Download render config for high-DPI parchment export (run: python pipeline.py render-map --config ...)"
-              id="parchment-trigger"
+              onClick={() => handleShare(false)}
+              title="Copy shareable link"
+              id="share-trigger"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
-              <span>Parchment</span>
+              <span>Share</span>
             </button>
+          )}
+          {shareMode && (
+            <button
+              className="search-trigger"
+              onClick={handleSnapshot}
+              title="Capture the current map view as PNG  ·  Shift+click for player view (no pins)"
+              id="snapshot-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span>Snapshot</span>
+            </button>
+          )}
+          {!shareMode && (
+            <CampaignMenu onToast={showLogToast} />
           )}
           {!shareMode && (
             <div className="share-menu" ref={shareMenuRef}>
@@ -1408,40 +1429,6 @@ function App() {
           )}
           {!shareMode && (
             <button
-              className="search-trigger"
-              onClick={() => setGraphOpen(true)}
-              title="Open the faction relationship graph"
-              id="graph-trigger"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="6" cy="6" r="2.5" />
-                <circle cx="18" cy="6" r="2.5" />
-                <circle cx="12" cy="18" r="2.5" />
-                <line x1="6" y1="6" x2="18" y2="6" />
-                <line x1="6" y1="6" x2="12" y2="18" />
-                <line x1="18" y1="6" x2="12" y2="18" />
-              </svg>
-              <span>Graph</span>
-            </button>
-          )}
-          {!shareMode && (
-            <button
-              className="search-trigger"
-              onClick={handleDownloadCampaignLog}
-              title="Download campaign log as markdown"
-              id="log-trigger"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              <span>Log</span>
-            </button>
-          )}
-          {!shareMode && (
-            <button
               className={`search-trigger ${sessionPrepOpen ? 'active' : ''}`}
               onClick={() => setSessionPrepOpen(prev => !prev)}
               title="Session prep (S)"
@@ -1467,6 +1454,93 @@ function App() {
               </svg>
               <span>Compendium</span>
             </button>
+          )}
+          {!shareMode && (
+            <div className="share-menu" ref={moreMenuRef}>
+              <button
+                className={`search-trigger ${moreOpen ? 'active' : ''}`}
+                onClick={toggleMore}
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                title="More — snapshot, links, exports"
+                id="more-menu-trigger"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="5" cy="12" r="1.4" />
+                  <circle cx="12" cy="12" r="1.4" />
+                  <circle cx="19" cy="12" r="1.4" />
+                </svg>
+                <span>More&nbsp;▾</span>
+              </button>
+              {moreOpen && (
+                <div
+                  className="share-popover"
+                  role="menu"
+                  aria-label="More tools"
+                  style={morePos ? { top: morePos.top, right: morePos.right } : undefined}
+                >
+                  <h3 className="share-popover-title">Snapshot &amp; exports</h3>
+                  <button className="share-popover-action" role="menuitem" onClick={(e) => { void handleSnapshot(e); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Snapshot</span>
+                      <span className="share-popover-action-hint">PNG of the map · Shift+click hides pins</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void handleShare(false); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Copy link</span>
+                      <span className="share-popover-action-hint">A link that restores this exact view</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void downloadRenderConfig(layers); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Parchment config</span>
+                      <span className="share-popover-action-hint">JSON for the high-DPI map render</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { setGraphOpen(true); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="6" cy="6" r="2.5" />
+                      <circle cx="18" cy="6" r="2.5" />
+                      <circle cx="12" cy="18" r="2.5" />
+                      <line x1="6" y1="6" x2="18" y2="6" />
+                      <line x1="6" y1="6" x2="12" y2="18" />
+                      <line x1="18" y1="6" x2="12" y2="18" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Faction graph</span>
+                      <span className="share-popover-action-hint">Relationships between the six powers</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void handleDownloadCampaignLog(); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Campaign log</span>
+                      <span className="share-popover-action-hint">Markdown of pins, journeys &amp; notes</span>
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <button
             className="search-trigger time-of-day-btn"

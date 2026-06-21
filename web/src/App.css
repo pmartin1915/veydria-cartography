@@ -244,6 +244,15 @@ body {
   letter-spacing: 2px;
   color: var(--text-muted);
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Below this width the toolbar needs the room — drop the subtitle rather than
+   let it wrap to multiple lines inside the fixed-height header. */
+@media (max-width: 1100px) {
+  .app-subtitle {
+    display: none;
+  }
 }
 
 .feature-count {
