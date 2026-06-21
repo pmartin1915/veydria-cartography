@@ -6,6 +6,7 @@
  */
 
 import type { LayerVisibility } from '../App'
+import { saveTextFile, type FileExportResult } from '../persistence/file-export'
 
 export interface RenderConfig {
   version: number
@@ -47,18 +48,16 @@ export function buildRenderConfig(layers: LayerVisibility): RenderConfig {
 }
 
 /**
- * Trigger a browser download of the render config JSON.
+ * Save the render config JSON — browser download on web, native save dialog on
+ * desktop (WebView2's `<a download>` is inert). See `file-export.ts`.
  */
-export function downloadRenderConfig(layers: LayerVisibility): void {
+export function downloadRenderConfig(layers: LayerVisibility): Promise<FileExportResult> {
   const config = buildRenderConfig(layers)
-  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
   const date = new Date().toISOString().slice(0, 10)
-  a.download = `veydria-render-config-${date}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  return saveTextFile(
+    `veydria-render-config-${date}.json`,
+    JSON.stringify(config, null, 2),
+    'application/json',
+    { name: 'JSON', extensions: ['json'] },
+  )
 }

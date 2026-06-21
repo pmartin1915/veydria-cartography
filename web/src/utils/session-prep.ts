@@ -6,6 +6,7 @@
  */
 
 import { kvStore } from '../persistence/kv-store'
+import { saveTextFile, type FileExportResult } from '../persistence/file-export'
 
 const ORDER_KEY = 'veydria.prepOrder.v1'
 const DONE_KEY = 'veydria.prepDone.v1'
@@ -224,17 +225,15 @@ export function setSessionActive(active: boolean): void {
   }
 }
 
-export function downloadPrepList(items: PrepItem[], hexItems: HexPrepItem[] = []): void {
+export function downloadPrepList(
+  items: PrepItem[],
+  hexItems: HexPrepItem[] = [],
+): Promise<FileExportResult> | void {
   const md = exportPrepMarkdown(items, hexItems)
   if (!md) return
-  const blob = new Blob([md], { type: 'text/markdown' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
   const date = new Date().toISOString().slice(0, 10)
-  a.download = `veydria-session-prep-${date}.md`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  return saveTextFile(`veydria-session-prep-${date}.md`, md, 'text/markdown', {
+    name: 'Markdown',
+    extensions: ['md'],
+  })
 }
