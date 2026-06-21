@@ -1244,7 +1244,18 @@ function App() {
       )}
       {!mobilePlayerMode && <header className="app-header">
         <div className="header-left">
-          <h1 className="app-title">VEYDRIA</h1>
+          <span className="app-brand">
+            <svg className="app-mark" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <circle cx="32" cy="32" r="26" strokeOpacity="0.35" />
+              <path d="M32 11 L37 28 L32 32 L27 28 Z" fill="var(--text-accent)" stroke="none" />
+              <path d="M32 53 L37 36 L32 32 L27 36 Z" fill="var(--text-muted)" stroke="none" />
+              <line x1="32" y1="5" x2="32" y2="11" strokeOpacity="0.6" />
+              <line x1="32" y1="53" x2="32" y2="59" strokeOpacity="0.6" />
+              <line x1="5" y1="32" x2="11" y2="32" strokeOpacity="0.6" />
+              <line x1="53" y1="32" x2="59" y2="32" strokeOpacity="0.6" />
+            </svg>
+            <h1 className="app-title">VEYDRIA</h1>
+          </span>
           <span className="app-subtitle">Continental Reference Map</span>
         </div>
         <div className="header-right">

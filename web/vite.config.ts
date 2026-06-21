@@ -1,7 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { createRequire } from 'node:module'
+
+const pkg = createRequire(import.meta.url)('./package.json') as { version: string }
 
 export default defineConfig(({ command, mode }) => ({
+  // Build-time constant so the app can show its version without a runtime fetch.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   // GitHub Pages serves from a sub-path; Tauri and dev serve from root. The
   // `tauri` mode (npm run build:tauri) forces root so bundled asset/data URLs
   // resolve under Tauri's custom protocol. All runtime fetches go through

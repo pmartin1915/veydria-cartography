@@ -62,6 +62,9 @@ export default function KeyboardHelp({ open, onClose, onReplayTour }: KeyboardHe
 
         <div className="search-footer">
           <span><kbd>Esc</kbd> Close</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+            Veydria Cartography · v{__APP_VERSION__}
+          </span>
           {onReplayTour && (
             <button type="button" className="keyboard-help-replay" onClick={onReplayTour}>
               Replay tour
