@@ -38,8 +38,9 @@ import {
 import { loadSavedJourneys } from './utils/journey-saved'
 import { DEFAULT_SUPPLY } from './utils/journey-supply'
 import { loadAsterisms, type Asterism } from './utils/asterisms'
-import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
+import { captureMapPng, copyPngToClipboard, suggestSnapshotFilename } from './utils/map-snapshot'
 import { downloadRenderConfig } from './utils/render-config'
+import { saveTextFile, savePngDataUrl } from './persistence/file-export'
 import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
 import { loadHexSize, saveHexSize } from './utils/hex-size'
@@ -634,15 +635,12 @@ function App() {
 
     const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n`
 
-    const blob = new Blob([yaml], { type: 'text/yaml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    void saveTextFile(
+      `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`,
+      yaml,
+      'text/yaml',
+      { name: 'YAML', extensions: ['yaml', 'yml'] },
+    )
   }, [coordinateUpdates])
 
   const handleApplyPatch = useCallback(async (file: File) => {
@@ -968,7 +966,7 @@ function App() {
     // calendar data cluster. Loading it on-demand (this is a deliberate export
     // action) keeps that ~44 kB off the first-paint critical path.
     const { downloadCampaignLog } = await import('./utils/campaign-log')
-    downloadCampaignLog({
+    const result = await downloadCampaignLog({
       activeJourney: journeyRoute
         ? { route: journeyRoute, season: journeySeason, mode: journeyModeState }
         : undefined,
@@ -979,7 +977,8 @@ function App() {
       // flag so the export is player-safe even if invoked from a share context.
       playerSafe: shareMode,
     })
-    showLogToast('Campaign log downloaded')
+    if (result.saved) showLogToast('Campaign log saved')
+    else if (result.error) showLogToast('Campaign log save failed')
   }, [journeyRoute, journeySeason, journeyModeState, annotations, shareMode])
 
   // Share button: copy current URL to clipboard. If `playerView` is true,
@@ -1026,8 +1025,9 @@ function App() {
       if (copied) {
         showShareToast(`${label} copied to clipboard`)
       } else {
-        downloadPng(dataUrl, suggestSnapshotFilename())
-        showShareToast(`${label} downloaded`)
+        const result = await savePngDataUrl(suggestSnapshotFilename(), dataUrl)
+        if (result.saved) showShareToast(`${label} saved`)
+        else if (result.error) showShareToast(`${label} save failed`)
       }
     } catch {
       showShareToast('Snapshot failed')
@@ -1335,7 +1335,7 @@ function App() {
           {!shareMode && (
             <button
               className="search-trigger"
-              onClick={() => downloadRenderConfig(layers)}
+              onClick={() => { void downloadRenderConfig(layers) }}
               title="Download render config for high-DPI parchment export (run: python pipeline.py render-map --config ...)"
               id="parchment-trigger"
             >

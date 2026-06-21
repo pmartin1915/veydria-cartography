@@ -19,6 +19,7 @@ import {
   describeSupply,
   summarizeSupplyPressure,
 } from './journey-supply'
+import { saveTextFile, type FileExportResult } from '../persistence/file-export'
 
 export interface CampaignLogInput {
   activeJourney?: {
@@ -292,18 +293,14 @@ export function generateCampaignLog(input: CampaignLogInput): string {
 }
 
 /**
- * Generate the campaign log and trigger a browser download.
+ * Generate the campaign log and save it — browser download on web, native save
+ * dialog on desktop (WebView2's `<a download>` is inert). See `file-export.ts`.
  */
-export function downloadCampaignLog(input: CampaignLogInput): void {
+export async function downloadCampaignLog(input: CampaignLogInput): Promise<FileExportResult> {
   const md = generateCampaignLog(input)
-  const blob = new Blob([md], { type: 'text/markdown' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
   const date = new Date().toISOString().slice(0, 10)
-  a.download = `veydria-campaign-log-${date}.md`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  return saveTextFile(`veydria-campaign-log-${date}.md`, md, 'text/markdown', {
+    name: 'Markdown',
+    extensions: ['md'],
+  })
 }
