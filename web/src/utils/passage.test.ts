@@ -7,6 +7,7 @@ import {
   passageAct,
   passageChoose,
   zeroSignatureCosts,
+  currentNodeIndex,
   SIGNATURE_CHOICES,
   PERISH_WATER_FLOOR,
   type PassageState,
@@ -190,6 +191,20 @@ describe('passage: signature encounters + choices', () => {
     expect(wait.journey.waterLeft).toBeLessThan(waterBefore)
     expect(lastWait).toMatchObject({ kind: 'wait' })
     void rationsBefore
+  })
+})
+
+describe('passage: current position', () => {
+  it('starts at the origin and advances toward the destination node', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let s = initPassage({ route, season: 'spring', mode: 'direct' })
+    expect(currentNodeIndex(s)).toBe(0)
+    s = passageAct(s, { kind: 'continue' })
+    const afterDay1 = currentNodeIndex(s)
+    expect(afterDay1).toBeGreaterThanOrEqual(1)
+    let guard = 10
+    while (s.outcome === 'in-progress' && guard-- > 0) s = passageAct(s, { kind: 'continue' })
+    expect(currentNodeIndex(s)).toBe(route.nodes.length - 1) // destination
   })
 })
 

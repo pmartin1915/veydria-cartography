@@ -225,6 +225,29 @@ function currentDay(state: PassageState): number {
   return state.journey.dayNum + state.extraDays
 }
 
+/**
+ * Index of the route node the party has most recently reached, for the
+ * current-position map marker. Snaps to the nearer endpoint of the leg in
+ * progress (mirrors the engine's camp-label snap). Lives here, not in the UI,
+ * so the marker only reads a number and never reimplements the day→position
+ * walk. v1 has no reroute, so dayOffset is always 0.
+ */
+export function currentNodeIndex(state: PassageState): number {
+  const { route, dayNum, dayOffset } = state.journey
+  const localDay = dayNum - dayOffset
+  if (localDay <= 0) return 0
+  let acc = 0
+  for (let i = 0; i < route.edges.length; i++) {
+    const ed = route.edges[i].segmentDays || 0
+    if (acc + ed >= localDay) {
+      const frac = ed > 0 ? (localDay - acc) / ed : 1
+      return frac >= 0.5 ? i + 1 : i
+    }
+    acc += ed
+  }
+  return route.nodes.length - 1
+}
+
 /** The first signature encounter bucketed on engine day `d`, if any. */
 function signatureForDay(journey: JourneyState, d: number): PendingEncounter | null {
   const encs = journey.encountersByDay.get(d)
