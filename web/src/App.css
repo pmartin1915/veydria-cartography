@@ -565,6 +565,39 @@ body {
   filter: brightness(0.5) contrast(1.05) hue-rotate(5deg) saturate(0.75);
 }
 
+/* Passage mode dims the map so the journal panel reads as the active surface.
+   Defined after the time-of-day rules so it wins when both classes are present. */
+.app-main.passage-mode .leaflet-container {
+  filter: saturate(0.55) brightness(0.8);
+}
+
+/* Recede the map chrome while Passage mode is active. */
+.app-main.passage-mode .layer-controls,
+.app-main.passage-mode .compass-rose,
+.app-main.passage-mode .marginalia-cartouche,
+.app-main.passage-mode .hex-coord-chip {
+  opacity: 0.45;
+  transition: opacity 0.5s ease;
+}
+
+.app-main.passage-mode .layer-controls:hover,
+.app-main.passage-mode .compass-rose:hover {
+  opacity: 1;
+}
+
+.passage-position-marker {
+  animation: passage-marker-pulse 2s ease-in-out infinite;
+}
+
+@keyframes passage-marker-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.25); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passage-position-marker { animation: none; }
+}
+
 .leaflet-control-zoom {
   border: 1px solid var(--border-subtle) !important;
   border-radius: 6px !important;
@@ -4338,7 +4371,29 @@ body {
 .journey-difficulty {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   margin-top: -6px;
+}
+
+.journey-set-out-btn {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  background: rgba(196, 168, 98, 0.12);
+  border: 1px solid rgba(196, 168, 98, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.journey-set-out-btn:hover {
+  background: rgba(196, 168, 98, 0.22);
+  border-color: rgba(196, 168, 98, 0.6);
+  color: #f4dca0;
 }
 
 .journey-difficulty-badge {
@@ -7818,4 +7873,343 @@ select:focus-visible {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ============================================================
+   Passage Mode: day-by-day journal takeover
+   ============================================================ */
+
+.passage-mode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.passage-heading {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-accent);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.passage-heading:focus-visible {
+  outline: none;
+}
+
+/* Supply ledger pinned above the scrolling journal */
+.passage-ledger {
+  position: sticky;
+  top: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  z-index: 1;
+}
+
+.passage-ledger-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.passage-ledger-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.passage-ledger-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.passage-ledger-value.passage-debt {
+  color: #e06040;
+}
+
+.passage-debt-tag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #e06040;
+  background: rgba(224, 96, 64, 0.12);
+  border: 1px solid rgba(224, 96, 64, 0.35);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.passage-journal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.passage-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* Day blocks reuse .journey-day; these classes add Passage-specific accents. */
+.passage-day {
+  border-left-color: var(--color-route);
+}
+
+.passage-wait {
+  border-left-color: var(--text-muted);
+  opacity: 0.95;
+}
+
+.passage-wait-narrative {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.passage-choice {
+  border-left-color: var(--color-route);
+}
+
+.passage-choice.risk-minor {
+  border-left-color: #e8a030;
+}
+
+.passage-choice.risk-grave {
+  border-left-color: #c06040;
+}
+
+.passage-choice-taken {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.passage-choice-risk {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.passage-choice-risk.none {
+  background: rgba(100, 180, 120, 0.12);
+  color: #a8d8b8;
+}
+
+.passage-choice-risk.minor {
+  background: rgba(232, 160, 48, 0.12);
+  color: #e8c860;
+}
+
+.passage-choice-risk.grave {
+  background: rgba(192, 96, 64, 0.12);
+  color: #d4a08c;
+}
+
+.passage-ending {
+  border-left-color: var(--text-accent);
+}
+
+.passage-ending.outcome-arrived {
+  border-left-color: var(--color-oasis);
+}
+
+.passage-ending.outcome-aborted {
+  border-left-color: var(--text-muted);
+}
+
+.passage-ending.outcome-perished {
+  border-left-color: #c06040;
+}
+
+.passage-ending-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(196, 168, 98, 0.12);
+  color: var(--text-accent);
+  border: 1px solid rgba(196, 168, 98, 0.35);
+}
+
+.passage-ending-badge:has(.outcome-arrived) {
+  background: rgba(74, 154, 58, 0.12);
+  color: #a8d8b8;
+  border-color: rgba(74, 154, 58, 0.35);
+}
+
+.passage-ending-badge:has(.outcome-perished) {
+  background: rgba(192, 96, 64, 0.12);
+  color: #d4a08c;
+  border-color: rgba(192, 96, 64, 0.35);
+}
+
+/* Controls area at the bottom of the panel */
+.passage-controls {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.passage-action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.passage-btn {
+  padding: 7px 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.passage-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.passage-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.passage-btn--primary {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.35);
+  color: var(--text-accent);
+}
+
+.passage-btn--primary:hover:not(:disabled) {
+  background: rgba(196, 168, 98, 0.2);
+  border-color: rgba(196, 168, 98, 0.5);
+}
+
+/* Choice cards replace the action bar during a signature encounter */
+.passage-choice-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.passage-choice-prompt {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  background: rgba(13, 15, 20, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.passage-choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--color-route);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.passage-choice-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+}
+
+.passage-choice-card.risk-minor {
+  border-left-color: #e8a030;
+}
+
+.passage-choice-card.risk-grave {
+  border-left-color: #c06040;
+}
+
+.passage-choice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.passage-choice-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.passage-choice-outcome {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Ending panel */
+.passage-ending-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.passage-ending-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
+  letter-spacing: 0.04em;
+}
+
+.passage-ending-body {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* Mobile: keep the action bar usable at narrow widths */
+@media (max-width: 360px) {
+  .passage-action-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

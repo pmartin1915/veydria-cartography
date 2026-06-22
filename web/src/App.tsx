@@ -420,6 +420,8 @@ function App() {
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
   const [hexSize, setHexSize] = useState<number>(() => loadHexSize())
+  const [passageActive, setPassageActive] = useState(false)
+  const [passageNodeIndex, setPassageNodeIndex] = useState<number | null>(null)
   useEffect(() => {
     try { saveHexSize(hexSize) } catch { /* quota / private mode */ }
   }, [hexSize])
@@ -1696,7 +1698,7 @@ function App() {
           onClose={() => setCompendiumOpen(false)}
         />
       )}
-      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay} ${compendiumOpen ? 'compendium-active' : ''}`}>
+      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay} ${compendiumOpen ? 'compendium-active' : ''} ${passageActive ? 'passage-mode' : ''}`}>
         {geojson && (
           <MapViewer
             ref={mapRef}
@@ -1719,6 +1721,7 @@ function App() {
             onMeasureUpdate={handleMeasureUpdate}
             route={journeyRoute}
             comparisonRoutes={comparisonRoutes}
+            passageMarkerNode={passageActive && passageNodeIndex != null && journeyRoute?.nodes[passageNodeIndex] ? journeyRoute.nodes[passageNodeIndex] : null}
             onHoverHex={setHoverHex}
             onSelectHex={(hit) => {
               if (hexMeasureMode) {
@@ -1879,6 +1882,8 @@ function App() {
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
             defaultPartyName={initialHashRef.current.party}
             mainTourActive={tourState.active}
+            onPassageActiveChange={setPassageActive}
+            onPassagePositionChange={setPassageNodeIndex}
           />
           </Suspense>
         )}

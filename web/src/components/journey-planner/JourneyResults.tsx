@@ -21,6 +21,7 @@ interface JourneyResultsProps {
   onSwitchMode: (mode: RouteMode) => void
   routeHexLabels: string[]
   autoPivots: JourneyNode[]
+  onSetOut?: () => void
 }
 
 /**
@@ -37,6 +38,7 @@ export default function JourneyResults({
   onSwitchMode,
   routeHexLabels,
   autoPivots,
+  onSetOut,
 }: JourneyResultsProps) {
   const diff = getRouteDifficulty(route)
 
@@ -58,6 +60,16 @@ export default function JourneyResults({
       </div>
       <div className="journey-difficulty">
         <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
+        {onSetOut && (
+          <button
+            className="journey-set-out-btn"
+            onClick={onSetOut}
+            title="Begin the day-by-day passage"
+            data-testid="set-out-btn"
+          >
+            Set out
+          </button>
+        )}
       </div>
 
       {/* Comparison stats: side-by-side Direct / Safest / Cheapest */}

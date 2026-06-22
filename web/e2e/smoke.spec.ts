@@ -348,3 +348,52 @@ test('the travel vignette crowns a computed route and names a region + travel mo
   await expect(page.getByTestId('travel-vignette-region')).not.toBeEmpty()
   await expect(page.getByTestId('travel-vignette-mode')).not.toBeEmpty()
 })
+
+
+test('Passage mode walks a route to an ending and returns to Atlas', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  await page.getByTestId('set-out-btn').click()
+
+  // The ledger and action bar mount immediately.
+  await expect(page.locator('.passage-ledger')).toBeVisible()
+  await expect(page.locator('.passage-action-bar')).toBeVisible()
+
+  // The map dims and a position marker appears.
+  await expect(page.locator('.app-main.passage-mode')).toBeAttached()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+
+  // Walk: Continue, resolving the first choice whenever cards appear.
+  let ended = false
+  for (let i = 0; i < 40; i++) {
+    const choiceCards = page.locator('.passage-choice-card')
+    if (await choiceCards.count() > 0) {
+      await choiceCards.first().click()
+    }
+
+    const endingPanel = page.locator('.passage-ending-panel')
+    if (await endingPanel.isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+
+    const continueBtn = page.locator('.passage-action-bar .passage-btn--primary')
+    if (await continueBtn.isVisible().catch(() => false)) {
+      await continueBtn.click()
+    } else {
+      // If neither choices nor continue nor ending are visible, something is wrong.
+      break
+    }
+  }
+
+  expect(ended, 'Passage mode should reach an ending within the bounded walk').toBe(true)
+  await expect(page.locator('.passage-ending-panel')).toBeVisible()
+  await expect(page.locator('.passage-ending-panel .passage-btn--primary')).toBeVisible()
+
+  // Exit returns to the planner and removes the map marker.
+  await page.locator('.passage-ending-panel .passage-btn--primary').click()
+  await expect(page.locator('.journey-route')).toBeVisible()
+  await expect(page.locator('.app-main.passage-mode')).toHaveCount(0)
+  await expect(page.locator('.passage-position-marker')).toHaveCount(0)
+})
