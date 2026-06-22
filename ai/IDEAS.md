@@ -31,3 +31,21 @@ The Passage playtester (`scripts/sim/sim-passage-report.ts`, run `npm run sim:pa
 - **90% of dramatic beats are non-interactive.** 86 interactive (signature) vs 874 non-interactive moderate+severe beats across the full grid. The juiciest written encounters are flavor-only. Top promotion candidates by frequency: **Basin customs raid** (seize the scribe), **plague-quarantine** (fortnight's wait / forged seal / bribe), **sabkha sinkhole**, **Qalībin dry-wadi shortcut** (trust her? cut two days), **sand-wraith**. *Where it applies:* add `key` + a `SIGNATURE_CHOICES` entry in `web/src/utils/passage.ts` + `encounters.ts` for the promoted beats.
 
 - **Repeated signature encounters are word-for-word identical.** When a key fires ≥2× in one crossing (bandits did in 2/480; e.g. Kheshkai→Irrah winter), the second presents the same options AND the same outcome prose ("the bandit-chief knows your manifest" twice). Also: under slack supply with end-of-route resupply, the bandits choices are *inert* (differentiation 0, impact 0 — all branches converge to identical arrival). *Where it applies:* vary prose/options per instance index in `passage.ts` `SIGNATURE_CHOICES` (e.g. an array of variant prose per key), and/or make at least one branch leave a lasting mark that resupply can't erase.
+
+### Passage v1.1 — after slice 1 (promoted dry-wadi, customs-raid, plague-quarantine, sabkha-sinkhole, 2026-06-22)
+
+- **Teeth slice (engine, the "both" second half).** Promoted choices are mechanically
+  inert under slack supply because `risk` is cosmetic (`passageChoose` only logs it, never
+  touches supply) and rations/water reset to full at every resupply node. customs-raid's
+  "Give up the scribe" branch is the
+  canonical case (pure narrative loss, 0/0/0). To make choices change outcomes under slack
+  too: add a persistent "scar"/lasting-cost field to the engine that resupply can't erase,
+  OR make grave-risk a real death chance. *Where:* `EncounterChoice.outcome` + the burn/
+  resupply path in `journey-supply.ts` / `passage.ts`. Architecture — stays on Opus.
+- **Death-march reachability (#1).** Naive players perish before any choice in ~76–80% of
+  standard-supply crossings; lever is no-resupply corridors, not starting supply. Add
+  resupply midpoints to corridor route data, or a pre-Passage "this route is a death march
+  on your supply" warning. *Where:* route/graph data + JourneyPlanner.
+- **sand-wraith** promotion (next batch of beats to signature choices).
+- **Per-instance prose variation** for repeated keys (bandits fires 2x word-for-word in
+  2/480 crossings). Vary prose/options by instance index in `SIGNATURE_CHOICES`.

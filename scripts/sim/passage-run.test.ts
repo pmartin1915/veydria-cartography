@@ -33,6 +33,7 @@ import {
 } from './passage-policies'
 import type { BranchOutcome, PassageState } from './passage-run'
 import type { Season, RouteMode } from '../../web/src/utils/journey-graph'
+import { TRADE_ROUTE_BEATS, CHOKEPOINT_BEATS, INTRA_CIV_BEATS } from '../../web/src/utils/encounters'
 
 const graph = loadGraph()
 
@@ -136,7 +137,7 @@ describe('metric helpers on synthetic branches', () => {
 /* ─── Known-finding regression ─── */
 
 describe('known-finding regression', () => {
-  it('Kheshkai → Irrah, winter, direct buckets bandits ≥2× and lists customs raid + plague quarantine as non-interactive severe beats', () => {
+  it('Kheshkai → Irrah, winter, direct buckets bandits ≥2× and now presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
     const opts = makePassageOpts(graph, 'kheshkai', 'irrah', 'winter', 'direct', STANDARD_SUPPLY, PASSAGE_PARTY)
     expect(opts).not.toBeNull()
     const state0 = initPassage(opts!)
@@ -144,12 +145,18 @@ describe('known-finding regression', () => {
     expect((fires.get('bandits') ?? 0)).toBeGreaterThanOrEqual(2)
 
     const signatureKeys = new Set(Object.keys(SIGNATURE_CHOICES))
-    const nonInteractiveSevere = allInitialEncounters(state0).filter(
-      e => (e.severity === 'moderate' || e.severity === 'severe') && !(e.key && signatureKeys.has(e.key)),
+    const encs = allInitialEncounters(state0)
+    // customs-raid + plague-quarantine were promoted to signature choices in v1.1.
+    expect(encs.some(e => e.key === 'customs-raid')).toBe(true)
+    expect(encs.some(e => e.key === 'plague-quarantine')).toBe(true)
+    // ...and some moderate/severe beats remain non-interactive (not everything promoted).
+    // Note: on this crossing every moderate/severe beat happens to be a promoted signature,
+    // so we verify the pool still contains unpromoted moderate/severe beats.
+    const allBeats = [...TRADE_ROUTE_BEATS, ...CHOKEPOINT_BEATS, ...INTRA_CIV_BEATS]
+    const hasNonSigModerateSevere = allBeats.some(
+      b => (b.severity === 'moderate' || b.severity === 'severe') && !b.key,
     )
-    const narratives = nonInteractiveSevere.map(e => e.narrative)
-    expect(narratives.some(n => n.includes('Basin customs raid'))).toBe(true)
-    expect(narratives.some(n => n.includes('Plague-quarantine'))).toBe(true)
+    expect(hasNonSigModerateSevere).toBe(true)
   })
 
   it('Kheshkai → Qollari, spring, direct, standard supply dies/aborts with zero signature choices', () => {

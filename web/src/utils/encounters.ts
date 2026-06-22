@@ -86,7 +86,7 @@ export interface Beat {
 export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Copper merchant from the Irrah salt-flats offers passage in exchange for a letter of introduction.', type: 'social', severity: 'mild' },
   { text: 'Khazadari money-changer sets up a folding table at the crossroads; rates favour khatti credit over coin.', type: 'social', severity: 'mild' },
-  { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate' },
+  { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate', key: 'dry-wadi' },
   { text: 'Oravan wave-tithe collector boards the coastal leg; demands duty or a convincing story.', type: 'social', severity: 'moderate' },
   { text: 'Ndajdi foresters demand a "green toll" — payment in seed or labour, not metal.', type: 'social', severity: 'mild' },
   { text: 'Caravan of Kheshkai wool-merchants overtakes you at dawn; their pace reveals a hidden watering hole.', type: 'opportunity', severity: 'mild', timeOfDay: ['dawn'] },
@@ -97,11 +97,11 @@ export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Autumn mud on the Basin track swallows cart-wheels whole; a Qalībin crew will winch you out for a favour owed.', type: 'environmental', severity: 'moderate', seasons: ['autumn'] },
   { text: 'Winter ice sheaths the mountain road; a Khazadari patrol passes in silence, their yak-hair boots making no sound.', type: 'environmental', severity: 'mild', seasons: ['winter'] },
   { text: 'Banditry: masked riders fan out from a Ngaru-Bon scrub-line and demand the strongbox by the count of three. They know your cargo manifest by name.', type: 'combat', severity: 'severe', key: 'bandits' },
-  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'] },
-  { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe' },
+  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'], key: 'customs-raid' },
+  { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe', key: 'plague-quarantine' },
   // Biome-specific trade-route beats
   { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'] },
-  { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha' },
+  { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha', key: 'sabkha-sinkhole' },
   { text: 'Date-palm shade at the oasis well; a water-rights dispute between two Irrah clans boils over.', type: 'social', severity: 'moderate', biome: 'Oasis' },
   { text: 'Mangrove roots tangle the trail; crocodiles sun on mud-banks and the guide will not pole past them.', type: 'environmental', severity: 'moderate', biome: 'Mangrove swamp' },
   { text: 'The Ndajdi floodplain is a maze of seasonal channels; a stranded fisher-family waves from a mud island.', type: 'opportunity', severity: 'mild', biome: 'Floodplain' },
@@ -316,7 +316,9 @@ function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOve
   const todRng = mulberry32(todSeed)
   const time = pickEncounterTime(beat, todRng)
   let text = beat.text
-  if (allowOverlay && !beat.timeOfDay && time !== 'day' && todRng() < TIME_OVERLAY_CHANCE) {
+  // Signature beats (key in SIGNATURE_CHOICES) drive a choice prompt, so their prose
+  // must stay coherent with the options — never swap it for a generic time overlay.
+  if (allowOverlay && !beat.timeOfDay && !beat.key && time !== 'day' && todRng() < TIME_OVERLAY_CHANCE) {
     const overlay = timeOverlayFor(beat.type, time, todRng)
     if (overlay) text = overlay
   }
