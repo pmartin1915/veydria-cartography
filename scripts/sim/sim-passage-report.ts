@@ -31,11 +31,12 @@ import {
   loadGraph,
 } from './passage-run'
 import {
-  survive,
   cautious,
+  getBasePolicy,
   DOWNSTREAM_BASE,
   DOWNSTREAM_CHOICE,
 } from './passage-policies'
+import type { BasePolicy } from './passage-run'
 import type { Season, RouteMode } from '../../web/src/utils/journey-graph'
 import type { Encounter } from '../../web/src/utils/encounters'
 
@@ -46,6 +47,8 @@ interface CliArgs {
   seasons: Season[]
   modes: RouteMode[]
   outPath: string
+  baseName: string
+  base: BasePolicy
 }
 
 function parseListArg(raw: string | undefined): string[] | undefined {
@@ -73,6 +76,8 @@ function parseArgs(argv: string[]): CliArgs {
       ['direct', 'cheapest', 'fastest', 'safest'].includes(m as string),
     ),
     outPath: resolveRepoRel(get('out') ?? 'output/sim/passage-report.md'),
+    baseName: get('base') ?? 'survive',
+    base: getBasePolicy(get('base') ?? 'survive'),
   }
 }
 
@@ -130,7 +135,7 @@ interface CrossingResult {
   initialEncounters: Encounter[]
 }
 
-function runCrossing(cell: GridCell, graph: ReturnType<typeof loadGraph>): CrossingResult {
+function runCrossing(cell: GridCell, graph: ReturnType<typeof loadGraph>, base: BasePolicy): CrossingResult {
   const supply = SUPPLY_PRESETS[cell.supplyPreset]
   const opts = makePassageOpts(
     graph,
@@ -153,7 +158,7 @@ function runCrossing(cell: GridCell, graph: ReturnType<typeof loadGraph>): Cross
   const state0 = initPassage(opts)
   const { finalState, instances } = walkWithForks(
     state0,
-    survive,
+    base,
     cautious,
     DOWNSTREAM_BASE,
     DOWNSTREAM_CHOICE,
@@ -399,7 +404,7 @@ function sectionSevereBeatCoverage(results: CrossingResult[]): string {
   ].join('\n')
 }
 
-function sectionDeathMarch(results: CrossingResult[]): string {
+function sectionDeathMarch(results: CrossingResult[], baseName: string): string {
   const groupKeys = new Set<string>()
   for (const r of results) {
     if (!r.routeFound) continue
@@ -413,16 +418,29 @@ function sectionDeathMarch(results: CrossingResult[]): string {
       r => r.routeFound && r.cell.supplyPreset === supplyPreset && r.cell.mode === mode,
     )
     const denominator = group.length
-    const numerator = group.filter(
-      r => (r.outcome === 'perished' || r.outcome === 'aborted') && r.instances.length === 0,
-    ).length
-    rows.push([supplyPreset, mode, String(denominator), String(numerator), pct(numerator, denominator)])
+    const noChoice = group.filter(r => r.instances.length === 0)
+    const perished = noChoice.filter(r => r.outcome === 'perished').length
+    const aborted = noChoice.filter(r => r.outcome === 'aborted').length
+    const total = perished + aborted
+    rows.push([
+      supplyPreset, mode, String(denominator),
+      `${perished} (${pct(perished, denominator)})`,
+      `${aborted} (${pct(aborted, denominator)})`,
+      pct(total, denominator),
+    ])
   }
   return [
-    '## Death-march rate\n',
-    'Per (supply preset × mode): fraction of crossings that terminated perished/aborted ' +
-      'without ever presenting a signature choice. Denominator = crossings that produced a route.\n',
-    table(['supply', 'mode', 'crossings', 'death-marches', 'rate'], rows),
+    '## Death-march rate (choices never reached)\n',
+    'Per (supply preset × mode): crossings that terminated WITHOUT ever presenting a signature ' +
+      'choice, split by cause. Denominator = crossings that produced a route.\n',
+    '> **Read with care — this is policy-dependent.** It is measured under a single base player ' +
+      `(\`${baseName}\`), which is deliberately simple (rations only at supply ≤2; never force-marches ` +
+      'or forecasts). **perished** = the game killed the party (the balance signal). **aborted** = the ' +
+      'player chose to turn back before a choice (skilled play, not unfairness) — do NOT read these as ' +
+      '"the game is too hard". For calibration, the engine 5-policy `sim-fun-report` shows standard/' +
+      'cheapest *completes* ~42.8%, so the choice layer is reachable far more often with better play ' +
+      'than the `survive` figure alone implies. Bound it by re-running with `--base headlong`.\n',
+    table(['supply', 'mode', 'crossings', 'perished (no choice)', 'aborted (no choice)', 'combined rate'], rows),
   ].join('\n')
 }
 
@@ -442,7 +460,7 @@ function main(): void {
 
   const results: CrossingResult[] = []
   for (const cell of toRun) {
-    results.push(runCrossing(cell, graph))
+    results.push(runCrossing(cell, graph, args.base))
   }
 
   const allInstances: Instance[] = []
@@ -453,7 +471,7 @@ function main(): void {
   sections.push(`Generated: ${new Date().toISOString()}`)
   sections.push(`Grid: ${toRun.length} crossings run ` +
     `(supply presets: ${Object.keys(SUPPLY_PRESETS).join(', ')}; modes: ${args.modes.join(', ')}; seasons: ${args.seasons.join(', ')})`)
-  sections.push(`Baseline policy: base=survive, choice=cautious. ` +
+  sections.push(`Baseline policy: base=${args.baseName}, choice=cautious. ` +
     `Fork downstream policy: base=survive, choice=cautious. ` +
     `This measures choice quality **under that policy**, not under all policies.\n`)
   sections.push(sectionPerKeyTables(allInstances))
@@ -462,7 +480,7 @@ function main(): void {
   sections.push(sectionDifferentiation(allInstances))
   sections.push(sectionRepetition(results))
   sections.push(sectionSevereBeatCoverage(results))
-  sections.push(sectionDeathMarch(results))
+  sections.push(sectionDeathMarch(results, args.baseName))
 
   const md = sections.join('\n\n') + '\n'
   const outPathAbs = resolveRepoRel(args.outPath)
