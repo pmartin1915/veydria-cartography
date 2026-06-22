@@ -20,6 +20,8 @@ import {
   makePassageOpts,
   initPassage,
   playPassage,
+  passageAct,
+  passageChoose,
   signatureKeysInState,
   loadGraph,
 } from './passage-run'
@@ -186,11 +188,14 @@ function printJournal(state0: PassageState, meta: { from: string; to: string; se
         if (o.daysDelta) cost.push(`+${o.daysDelta}d`)
         L.push(`       [${i}] ${choices[i].label} (${cost.join(', ') || 'no cost'}) [${o.risk ?? 'none'}]`)
       }
-      state = playPassage(state, survive, cautious).state
+      const idx = cautious(state.pending, state.journey)
+      state = passageChoose(state, idx)
       emitNewEntries()
       continue
     }
-    state = playPassage(state, survive, cautious).state
+    const before = state
+    state = passageAct(state, survive(state))
+    if (state === before) break
     emitNewEntries()
   }
   flushPlain()
