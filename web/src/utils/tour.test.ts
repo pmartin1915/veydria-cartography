@@ -6,6 +6,7 @@ import {
   computeCardPosition,
   MAIN_TOUR_KEY,
   JOURNEY_TUTORIAL_KEY,
+  WELCOME_KEY,
   type TourState,
 } from './tour'
 
@@ -109,6 +110,15 @@ describe('localStorage', () => {
     expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(true)
     // Journey flag still independently set.
     expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(true)
+  })
+
+  it('the welcome key is tracked independently of the tours', () => {
+    // Seeing the cold-open must not mark either tour done, and completing the
+    // main tour must not mark the cold-open seen.
+    markTourCompleted(false, WELCOME_KEY)
+    expect(isTourCompleted(WELCOME_KEY)).toBe(true)
+    expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(false)
+    expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(false)
   })
 })
 

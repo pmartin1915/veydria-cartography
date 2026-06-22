@@ -29,6 +29,7 @@ test.beforeEach(async ({ page }) => {
     const done = JSON.stringify({ completed: true, skipped: true, timestamp: 0 })
     localStorage.setItem('veydria.tour.completed.v1', done)
     localStorage.setItem('veydria.journey.tutorial.completed.v1', done)
+    localStorage.setItem('veydria.welcome.seen.v1', done)
   })
 })
 
