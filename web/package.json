@@ -16,6 +16,8 @@
     "sim:batch": "vite-node ../scripts/sim/sim-batch.ts --",
     "sim:policy-report": "vite-node ../scripts/sim/sim-policy-report.ts --",
     "sim:fun-report": "vite-node ../scripts/sim/sim-fun-report.ts --",
+    "sim:passage": "vite-node ../scripts/sim/sim-passage-report.ts --",
+    "sim:passage-play": "vite-node ../scripts/sim/passage-playthrough.ts --",
     "sim:regret-model": "vite-node ../scripts/sim/sim-regret-model.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
