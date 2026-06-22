@@ -17,6 +17,7 @@ import JourneyRouteTab from './journey-planner/JourneyRouteTab'
 import JourneyEncountersTab from './journey-planner/JourneyEncountersTab'
 import TravelVignette from './journey-planner/TravelVignette'
 import NodeIcon from './journey-planner/NodeIcon'
+import PassageMode from './journey-planner/PassageMode'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
 import { getRouteHexLabels, getBiomeAtPoint } from '../utils/hex-grid'
@@ -64,6 +65,10 @@ interface JourneyPlannerProps {
    *  its auto-launch until the map tour is done so the two overlays never race
    *  (the map tour's "journey" step flips this planner open). */
   mainTourActive?: boolean
+  /** Fired when Passage mode is entered or exited. */
+  onPassageActiveChange?: (active: boolean) => void
+  /** Fired with the current route-node index while Passage mode is active; null when inactive. */
+  onPassagePositionChange?: (nodeIndex: number | null) => void
 }
 
 // Picker label format: "<Civ> · <category>" when the node carries a civ tag,
@@ -77,7 +82,7 @@ function formatNodeCategory(n: JourneyNode): string {
   return `${civLabel} · ${cat}`
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false, onPassageActiveChange, onPassagePositionChange }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -116,6 +121,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
   const [highlightCrisisEvents, setHighlightCrisisEvents] = useState(false)
+  const [passageActive, setPassageActive] = useState(false)
   // "Party, supply & options" drawer — closed by default so the primary route
   // inputs (From/To/season/mode/Find) and the route tabs surface without
   // scrolling past the bulky config sections.
@@ -385,8 +391,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setPartyOpen(false)
       setExportToast(null)
       setDepartureDayOfYear(undefined)
+      setPassageActive(false)
+      onPassageActiveChange?.(false)
+      onPassagePositionChange?.(null)
     }
-  }, [active, onRouteComputed])
+  }, [active, onRouteComputed, onPassageActiveChange, onPassagePositionChange])
 
   const filteredStart = useMemo(() => {
     const q = startSearch.toLowerCase()
@@ -744,6 +753,21 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         />
       )}
 
+      {passageActive && route ? (
+        <div className="journey-planner-body passage-mode-body">
+          <PassageMode
+            route={route}
+            season={season}
+            mode={mode}
+            party={party}
+            supply={supply}
+            edgeBiomes={edgeBiomes}
+            departureDayOfYear={departureDayOfYear}
+            onExit={() => { setPassageActive(false); onPassageActiveChange?.(false) }}
+            onPositionChange={onPassagePositionChange}
+          />
+        </div>
+      ) : (
       <div className="journey-planner-body">
         {/* Active party — split-party tracking (Tier 2c). GM-only: a share-link
             recipient sees one party's view, not the switcher. */}
@@ -1043,6 +1067,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               onSwitchMode={handleSwitchMode}
               routeHexLabels={routeHexLabels}
               autoPivots={autoPivots}
+              onSetOut={() => { setPassageActive(true); onPassageActiveChange?.(true) }}
             />
 
             {/* Tabs */}
@@ -1198,6 +1223,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         )}
       </div>
+      )}
 
       <TourOverlay
         steps={journeyTourSteps}

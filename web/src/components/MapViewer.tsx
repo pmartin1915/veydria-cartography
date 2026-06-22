@@ -92,6 +92,7 @@ export interface MapViewerProps {
   opacities?: LayerOpacity
   route?: JourneyRoute | null
   comparisonRoutes?: ComparisonRoutes
+  passageMarkerNode?: { x: number; y: number; name?: string } | null
   onHoverHex?: (hex: { hex: HexCell; descriptors: string[] } | null) => void
   onSelectHex?: (hex: { hex: HexCell; descriptors: string[] }) => void
   hexSize?: number
@@ -228,7 +229,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
+  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, passageMarkerNode, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, LayerEntry>>(new Map())
@@ -238,6 +239,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
     const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
+    const passageMarkerLayerRef = useRef<L.LayerGroup | null>(null)
     const comparisonRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const annotationLayerRef = useRef<L.LayerGroup | null>(null)
     const hexOverlayRef = useRef<HexOverlay | null>(null)
@@ -1362,6 +1364,51 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         }
       }
     }, [route])
+
+    // Render Passage-mode current-position marker on top of the route.
+    // Uses the same svgToLatLng projection as the route polyline so it
+    // reprojects with the map on zoom and resize.
+    useEffect(() => {
+      if (!mapRef.current) return
+      if (passageMarkerLayerRef.current) {
+        mapRef.current.removeLayer(passageMarkerLayerRef.current)
+        passageMarkerLayerRef.current = null
+      }
+      if (!passageMarkerNode) return
+
+      const group = L.layerGroup()
+      const latlng = svgToLatLng(passageMarkerNode.x, passageMarkerNode.y)
+
+      L.circleMarker(latlng as L.LatLngExpression, {
+        radius: 10,
+        fillColor: '#e8c840',
+        color: '#fff',
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.55,
+        className: 'passage-position-marker',
+      }).addTo(group)
+
+      L.circleMarker(latlng as L.LatLngExpression, {
+        radius: 4,
+        fillColor: '#fff',
+        color: '#e8c840',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 1,
+        className: 'passage-position-marker-core',
+      }).addTo(group)
+
+      group.addTo(mapRef.current)
+      passageMarkerLayerRef.current = group
+
+      return () => {
+        if (passageMarkerLayerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(passageMarkerLayerRef.current)
+          passageMarkerLayerRef.current = null
+        }
+      }
+    }, [passageMarkerNode])
 
     // Render comparison route overlays (Direct vs Safest vs Cheapest)
     useEffect(() => {
