@@ -83,9 +83,10 @@ export interface EncounterChoice {
  * `key` appears here are "signature" (interrupt travel with a choice + have
  * their engine supplyCost zeroed). Everything else resolves via base actions.
  *
- * Prose honours the worldbuilder VOICE-SPEC (Option B): no em-dashes, clipped
- * sentences, only attested morphemes (Irrah, Ngaru-Bon, Tavakh Qarat, salt-cube,
- * letters of credit — all already present in the source beats).
+ * Prose is worldbuilder VOICE-SPEC Register D (dramatized scene), in second person
+ * (the party is the POV): tension carried by a named count (rations/water/days),
+ * em-dash-free (Option B), only attested morphemes (Irrah, Ngaru-Bon, Tavakh Qarat,
+ * salt-cube, letters of credit), all already present in the source beats.
  */
 export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
   ford: [
