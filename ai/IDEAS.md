@@ -127,3 +127,62 @@ Two structural notes discovered while building this:
 
 The **headcount lever** (above) is still the natural next mechanic — it bites via daily *consumption*,
 not the resupply ceiling, so it doesn't depend on which resource is slack.
+**[RETRACTED 2026-06-23 — see below: not buildable in a per-capita supply model.]**
+
+---
+
+### 2026-06-23 — headcount lever is NOT buildable as imagined; pre-merge retune pass (no numeric change)
+
+**Headcount lever — retracted.** Verified from source: `party.size` is cosmetic (read only in
+`describeParty()`, `journey-days.ts:159`) and the whole supply model is **per-capita** — supply is
+tracked per-person (`rationsPerPerson`/`waterPerPerson`) and burn is per-person-per-day
+(`applyDailyBurn`, no headcount term). Runway = supply ÷ burn-rate; both scale linearly with N, so
+losing a person leaves runway **unchanged** (their share leaves with them) or **improves** it (their
+share stays in the pool — the scar inverts to a *boon*). There is no per-capita variant where losing
+a person *costs* supply-days. The premise above ("bites via daily consumption") is false. The only
+coherent realization is a **burn-rate scar** (bump `encMult` → multiplies both resources → bites
+whichever binds) — but that is **unbounded** (compounds with route length), re-introducing the
+death-gamble dynamic slices 2–3 fought to escape. Per-session decision (2026-06-23): **not building
+it.** The capacity-scar is already proven on a binding axis (water) and shown inconsequential on a
+slack one (rations); that's a complete mechanic.
+
+**Pre-merge retune pass — verdict: balance-clean on dominance/lethality, NO numeric change warranted;
+but "merge-ready" is qualified.** Re-measured the full grid (480 crossings) on **both** policies —
+`--base survive` and `--base headlong` (the over-fit trap is policy-sensitivity). Findings:
+
+- **switchback — leave as-is, now data-backed.** headlong: 50/50 completion, Double-team 59%
+  dominance (*inside* the ≤60% target), perish 17/17 dead-even. survive: 73% (the cautious policy
+  correctly preferring the safe slow climb). No flag, no death-gamble. Every candidate tweak fails the
+  "don't help one policy while hurting the other" test: anything that pulls survive's 73% down flips
+  headlong's already-good 59% (lower `scarWater` → Stave becomes near-free speed → dominates; +days on
+  Double-team → over-fits survive, flips headlong). The prior "tuning over-fits" call is **confirmed**,
+  not just asserted.
+- **sabkha — no flag, but the *weaker* scoped beat (honest).** The scar option (Cut) is the *safer,
+  higher-completion* choice; Haul is the risky "keep your stuff if you survive" play. Coherent
+  risk/reward — BUT Haul perishes 86% vs Cut 64% (headlong), which is **not** the close perish-band the
+  death-gamble guard names. "No dominance flag" ≠ "balanced coin-flip." Left un-tuned (a tweak here is
+  the same over-fit trap), characterized honestly.
+- **plague-quarantine — watch-item.** "Hold at the cordon" (`daysDelta 12`) is 0% completion / 100%
+  perish on both policies; dead-freq 73% (survive), just under the 80% flag. Thematically a doomed
+  option behind a real 2-live-choice structure (Buy seal vs Salt-track), so not tripping the gate — but
+  it's the closest beat to a flag.
+- **ford — n=1 artifact.** Trips DOM+DEAD under survive, but only on **1 instance** (fires 4×/480, the
+  rarest beat); clean under headlong (n=2). A small-sample reporting artifact, not a tunable imbalance.
+
+**Bigger latent issue surfaced (separate axis, out of this pass's scope): three beats are
+UNDIFFERENTIATED** — the choice doesn't change the outcome (outcome-impact 0%, water/rations range 0):
+- **fever** — three options with genuinely different deltas (−2 rations / −3 water / +2 days), but it
+  fires in **slack-supply** contexts (all branches end at the 13/19 caps), so nothing bites. Same
+  lesson as the scar: a cost only matters on a *binding* resource at a *binding* time.
+- **dry-wadi** — −2 water (faster) vs +2 days (keeps water) are calibrated to wash out (both branches
+  47/47% survive, identical final supply).
+- **bandits** — 0/0 differentiation likewise.
+
+This is a **choice-quality** defect, orthogonal to the dominance/lethality balance, and it's the exact
+pathology the scar mechanic exists to fix ("the choice has to bite"). **Fixing it is a redesign** (give
+these beats scar-like teeth, or gate them to binding conditions) the user did NOT scope here — deferred.
+It bears on the held merge decision: slices 1–3 are *balance*-clean but the v1.1 choice set still has
+fake choices (fever/dry-wadi) that pre-date the scar work.
+
+Verification: 950 tests pass, `tsc --noEmit` clean. Reports at `output/sim/passage-{survive,headlong}.md`
+(gitignored). No code change this pass — `feat/passage-teeth` stays local, unpushed, unmerged.
