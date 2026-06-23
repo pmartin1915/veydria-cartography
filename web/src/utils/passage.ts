@@ -83,9 +83,10 @@ export interface EncounterChoice {
  * `key` appears here are "signature" (interrupt travel with a choice + have
  * their engine supplyCost zeroed). Everything else resolves via base actions.
  *
- * Prose honours the worldbuilder VOICE-SPEC (Option B): no em-dashes, clipped
- * sentences, only attested morphemes (Irrah, Ngaru-Bon, Tavakh Qarat, salt-cube,
- * letters of credit — all already present in the source beats).
+ * Prose is worldbuilder VOICE-SPEC Register D (dramatized scene), in second person
+ * (the party is the POV): tension carried by a named count (rations/water/days),
+ * em-dash-free (Option B), only attested morphemes (Irrah, Ngaru-Bon, Tavakh Qarat,
+ * salt-cube, letters of credit), all already present in the source beats.
  */
 export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
   ford: [
@@ -174,6 +175,107 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
         risk: 'minor',
         narrative:
           'You halt and let the fever break in its own time. Two days are lost to the cots. The party rises gaunt but whole.',
+      },
+    },
+  ],
+  'dry-wadi': [
+    {
+      label: 'Trust her, take the wadi',
+      outcome: {
+        waterDelta: -2,
+        risk: 'minor',
+        narrative:
+          'You follow the Qalībin path-finder down into the dry wadi. She reads the salt-cracks like a ledger and the floor runs true between the hills. It spares two days and there is not a drop of water in any of them.',
+      },
+    },
+    {
+      label: 'Stay on the mapped trail',
+      outcome: {
+        daysDelta: 2,
+        risk: 'none',
+        narrative:
+          'You thank the path-finder and keep to the road you know. The mapped trail holds water at every marked well. It also holds every mile the wadi would have spared you.',
+      },
+    },
+  ],
+  'customs-raid': [
+    {
+      label: 'Pay the audit fee',
+      outcome: {
+        rationsDelta: -3,
+        risk: 'none',
+        narrative:
+          'You pay the audit before it becomes a trial. Coin and letters of credit both, counted out on a Basin officer\'s folding table. The manifest comes back stamped and a third lighter.',
+      },
+    },
+    {
+      label: 'Give up the scribe',
+      outcome: {
+        risk: 'none',
+        narrative:
+          'You let them take the senior scribe back to the Tavakh Qarat under guard. The caravan rolls on at dawn, one ledger-hand short and quieter for it. He knew the manifest better than any of you.',
+      },
+    },
+    {
+      label: 'Refuse, force the issue',
+      outcome: {
+        daysDelta: 2,
+        waterDelta: -1,
+        risk: 'grave',
+        narrative:
+          'You refuse, and the standoff holds the road two days. The Basin officers send for a magistrate; the magistrate sends for his lunch. The seals break in the end, and you are poorer in days and patience both.',
+      },
+    },
+  ],
+  'plague-quarantine': [
+    {
+      label: 'Hold at the cordon',
+      outcome: {
+        daysDelta: 12,
+        risk: 'none',
+        narrative:
+          'You pitch camp below the red banner and wait the cordon out. The Irrah outrider counts the days on a knotted cord and will not be hurried. The fortnight passes. So do the stores.',
+      },
+    },
+    {
+      label: 'Buy a forged seal',
+      outcome: {
+        rationsDelta: -4,
+        risk: 'grave',
+        narrative:
+          'A Khazadari scribe sells you a seal of clean passage, the ink still wet. The outrider studies it a long moment, then waves you through. You ride hard until the cordon is a rumour behind you.',
+      },
+    },
+    {
+      label: 'Take the salt-track around',
+      outcome: {
+        daysDelta: 3,
+        waterDelta: -2,
+        risk: 'minor',
+        narrative:
+          'You leave the road for the old salt-track the Irrah drovers use. It costs three days and the flats give up no water. But no banner flies out here, and no one counts your dead.',
+      },
+    },
+  ],
+  'sabkha-sinkhole': [
+    {
+      label: 'Cut the cart loose',
+      outcome: {
+        rationsDelta: -4,
+        waterDelta: -1,
+        risk: 'none',
+        narrative:
+          'You cut the traces and let the salt take the cart whole. The stores in it are gone, swallowed with the axles. The party walks lighter and hungrier from here.',
+      },
+    },
+    {
+      label: 'Haul it out by rope',
+      outcome: {
+        daysDelta: 1,
+        waterDelta: -2,
+        risk: 'minor',
+        narrative:
+          'You rig ropes to the cart and the whole party hauls against the salt. It comes free by dusk, sucking and reluctant. A day is gone and the water-skins paid for it.',
       },
     },
   ],
