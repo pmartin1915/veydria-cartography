@@ -137,12 +137,18 @@ describe('metric helpers on synthetic branches', () => {
 /* ─── Known-finding regression ─── */
 
 describe('known-finding regression', () => {
-  it('Kheshkai → Irrah, winter, direct buckets bandits ≥2× and now presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
+  it('Kheshkai → Irrah, winter, direct buckets a repeated signature beat and presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
     const opts = makePassageOpts(graph, 'kheshkai', 'irrah', 'winter', 'direct', STANDARD_SUPPLY, PASSAGE_PARTY)
     expect(opts).not.toBeNull()
     const state0 = initPassage(opts!)
     const fires = countSignatureFiresPerCrossing(state0)
-    expect((fires.get('bandits') ?? 0)).toBeGreaterThanOrEqual(2)
+    // The known finding is that this crossing REPEATS a signature beat (deterministic).
+    // We assert the repetition generically rather than pinning a specific key/count: the
+    // exact key is an arbitrary RNG outcome that shifts whenever a beat is added to the
+    // shared trade-route pool (it has moved between bandits and plague-quarantine as the
+    // signature roster grew). The intent — multiple interactive choices, including a repeat —
+    // is what this guards.
+    expect(Math.max(0, ...fires.values())).toBeGreaterThanOrEqual(2)
 
     const signatureKeys = new Set(Object.keys(SIGNATURE_CHOICES))
     const encs = allInitialEncounters(state0)

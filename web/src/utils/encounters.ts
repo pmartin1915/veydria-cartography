@@ -102,6 +102,7 @@ export const TRADE_ROUTE_BEATS: Beat[] = [
   // Biome-specific trade-route beats
   { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'] },
   { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha', key: 'sabkha-sinkhole' },
+  { text: 'The Lam-Chen switchback climbs in tight loops up the escarpment; the carts are too heavy to take the grade as they stand.', type: 'environmental', severity: 'severe', biome: 'Escarpment', key: 'switchback' },
   { text: 'Date-palm shade at the oasis well; a water-rights dispute between two Irrah clans boils over.', type: 'social', severity: 'moderate', biome: 'Oasis' },
   { text: 'Mangrove roots tangle the trail; crocodiles sun on mud-banks and the guide will not pole past them.', type: 'environmental', severity: 'moderate', biome: 'Mangrove swamp' },
   { text: 'The Ndajdi floodplain is a maze of seasonal channels; a stranded fisher-family waves from a mud island.', type: 'opportunity', severity: 'mild', biome: 'Floodplain' },

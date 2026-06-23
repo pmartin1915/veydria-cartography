@@ -296,4 +296,24 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
     expect(haulOut.journey.scarRations).toBe(0)
     expect(cutLoose.journey.rationsLeft).toBeLessThan(haulOut.journey.rationsLeft)
   })
+
+  it('switchback "Stave the water-casks" lowers the water ceiling by 2; "Double-team" takes no scar', () => {
+    const base = passageWithSignature('switchback')
+    const pending = passageAct(base, { kind: 'continue' })
+    expect(pending.pending).not.toBeNull()
+    expect(pending.pending!.choices).toHaveLength(2)
+
+    const startingWater = base.journey.supplyConstants.startingWater
+    const stave = passageChoose(pending, 0)      // scarWater: 2
+    const doubleTeam = passageChoose(pending, 1)  // daysDelta: 2, no scar
+
+    // Stave accumulates a permanent water-ceiling reduction of 2 and clamps current
+    // stores down to that lowered ceiling immediately (the party starts the day full),
+    // before the encounter-day burn — so waterLeft ends at or below startingWater - 2.
+    expect(stave.journey.scarWater).toBe(2)
+    expect(stave.journey.waterLeft).toBeLessThanOrEqual(startingWater - 2)
+    // Double-team trades time, not capacity: no permanent scar on either resource.
+    expect(doubleTeam.journey.scarWater ?? 0).toBe(0)
+    expect(doubleTeam.journey.scarRations ?? 0).toBe(0)
+  })
 })

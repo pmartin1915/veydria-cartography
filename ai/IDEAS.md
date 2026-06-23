@@ -84,3 +84,46 @@ waterDelta -4, risk grave`. No dead/dominant flag; outcome-impact 4.3%→26.1%.
   only if the deterministic scar proves insufficient for drama.
 - **UI surfacing of a reduced ceiling — optional polish.** Label the supply ledger "max reduced"
   after a scar. Current numbers already drop visibly post-resupply, so low priority.
+
+### Passage v1.1 — slice 3 (scar-headline beat: "The Switchback", 2026-06-23) — RESOLVED
+
+Authored the beat the slice-2 note asked for ("permanent loss is the headline cost, alternative
+is not a death-gamble"): `switchback` — `Stave the water-casks` (scar) vs `Double-team the climb`
+(`daysDelta 2`, no scar). This **closes the "find/author that beat" action above** and proves the
+scar mechanic cleanly. Two findings worth keeping:
+
+- **The scar must hit the *binding* resource — this is the real lesson.** First attempt used
+  `scarRations 2`. It "registered" (rations-range 2.0) but was **inconsequential**: the sim economy
+  is 12 rations / 6 water per person (`passage-run.ts`), so rations are slack and water binds. With
+  scarRations the party finished with ~10 rations either way and the *days* on the other branch
+  carried the choice — sabkha redux, polarity flipped (Double-team became the death-gamble: 39%
+  completion, 61% perish). Pivoting the scar to **`scarWater 2`** put it on the resource that
+  actually binds. Result (full grid, headlong, all modes/seasons, 75 instances): water-range **2.0**,
+  outcome-impact **18.7%**, no dominance/dead flags, and perish rates *close* (Stave 40% / Double-team
+  51%) — drama from the scar, **not** a lethal alternative. Verify-the-logic check: zero the scar and
+  Stave becomes free speed → strictly dominates → flagged; the scar is the counterweight that makes
+  speed cost something.
+- **It's live-but-*leaning*, not 50/50 (don't oversell).** Double-team leads dominance 61% full-grid
+  / 75% summer (16-instance sample). Among two-branch beats that's harder than its peers (dry-wadi
+  23%, sabkha 48%); the 3-branch beats' leading branch also sits ~48%. So Stave is the **situational
+  speed-play / "mortgage your margin" shortcut**, taken when you're behind — not a coin-flip. No flag
+  trips, so it's a legitimate live choice; left un-retuned on purpose (tuning scarWater 1↔2 just
+  trades signal strength for balance and over-fits the headlong policy).
+
+Two structural notes discovered while building this:
+- **Signature beats must live in `TRADE_ROUTE_BEATS` (or `INTRA_CIV_BEATS`), NOT `CHOKEPOINT_BEATS`.**
+  A switchback first went in `CHOKEPOINT_BEATS` (thematically perfect — that pool is *for* mountain
+  passes). It generated 16× but was **reached as a live choice 0×**: chokepoint segments are never hit
+  in-progress by any base policy in this route graph (the other signature beats are all trade-route /
+  intra-civ). Moving it to `TRADE_ROUTE_BEATS` → 75 instances. *If a future signature beat shows
+  `N instances = 0` while Repetition > 0, this is why.*
+- **Theming wart (known, acceptable — not fixing):** `switchback` is biome-gated `Escarpment`, but
+  `filterByBiome`'s fallback returns the *full* pool on any segment whose biome has no trade-route
+  beat, so it leaks onto other biomes (fires 108×/960, not Escarpment-rarity). Mostly high terrain
+  (Mountain/Highland/Gorge/Afroalpine) where a switchback still fits; occasionally Plains/undefined
+  where it reads slightly off. Same mechanism as *every* biome-tagged trade beat (sabkha, oasis, …) —
+  a pre-existing pattern, not new debt. Fixing would require a stricter biome filter for signature
+  beats; deferred.
+
+The **headcount lever** (above) is still the natural next mechanic — it bites via daily *consumption*,
+not the resupply ceiling, so it doesn't depend on which resource is slack.

@@ -287,6 +287,26 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
       },
     },
   ],
+  switchback: [
+    {
+      label: 'Stave the water-casks',
+      outcome: {
+        scarWater: 2,
+        risk: 'none',
+        narrative:
+          'You stave in the big water-casks and roll them off the switchback\'s edge; the carts take the grade light and the party crests by dusk. The water they held is gone into the rock, and from here every leg runs on a thinner skin.',
+      },
+    },
+    {
+      label: 'Double-team the climb',
+      outcome: {
+        daysDelta: 2,
+        risk: 'none',
+        narrative:
+          'You split the party and take the carts up one at a time, half hauling on the ropes while half set the chocks. Two days the escarpment costs you, loop by loop. No one falls and nothing is left behind. The party crests whole, and slower.',
+      },
+    },
+  ],
 }
 
 /* ─── Endings ─── */
