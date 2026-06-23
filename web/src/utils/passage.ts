@@ -281,7 +281,7 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
       outcome: {
         daysDelta: 2,
         waterDelta: -4,
-        risk: 'minor',
+        risk: 'grave',
         narrative:
           'You rig ropes to the cart and the whole party hauls against the salt. Two days it fights you before it comes free, sucking and reluctant. The water-skins paid for every hour of it.',
       },

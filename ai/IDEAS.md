@@ -54,15 +54,26 @@ The Passage playtester (`scripts/sim/sim-passage-report.ts`, run `npm run sim:pa
 
 Shipped the deterministic **capacity-scar** mechanic: `EncounterChoice.outcome.scarRations`
 /`scarWater` permanently lower the resupply ceiling (`JourneyState.scarRations`/`scarWater`,
-subtracted in `applyDailyBurn`'s restore). Retrofit to `sabkha-sinkhole` "Cut the cart loose"
-(`rationsDelta -2, scarRations 1`), rebalancing "Haul it out by rope" to `daysDelta 2,
-waterDelta -4` so the fork is live (no dead/dominant flag; outcome-impact 4.3%→26.1%).
+subtracted in `applyDailyBurn`'s restore). Mechanism is built, unit-tested, byte-neutral at
+scar=0, and reusable. Retrofit (weak demo) to `sabkha-sinkhole`: "Cut the cart loose"
+`rationsDelta -2, scarRations 1`; "Haul it out by rope" rebalanced to `daysDelta 2,
+waterDelta -4, risk grave`. No dead/dominant flag; outcome-impact 4.3%→26.1%.
 
-- **Design lesson (for future scar use):** a scarred branch paired against a *fully-transient*
-  cost branch tends to be **dominated** wherever resupply happens (the scar persists, the
-  transient cost recovers). To stay a live tradeoff, the *alternative* must carry real survival
-  risk (lethal time/water in the tight pre-resupply corridor) so the scarred branch's speed wins
-  on the arrival axis there. Tune via `sim:passage` dead/dominance flags, not blind values.
+- **Honest read of the sabkha demo (don't inherit "teeth works, choices bite under slack" as
+  settled — it mostly doesn't yet).** The scar barely moved "Cut": completion 65.2%→65.2%,
+  arrived 15→15, perished 8→8; it only dropped Cut's ending rations ~1. The liveness + the
+  impact jump came almost entirely from nerfing **Haul** into lethality (an arrival-axis
+  effect that needed no new mechanic). Under slack a 1-ration ceiling cut is still ~inert (it
+  can't bind where supply doesn't bind). The cautious baseline *always cuts*; Haul is the
+  high-variance road-not-taken (wins 16/23 if survived, perishes 14/23).
+- **The scar's real role (and where it'll actually shine).** On sabkha it's the slack-side
+  counterweight that keeps Cut from flagging dominant — load-bearing but not the headline. A
+  scarred branch paired against a *fully-transient* cost branch is **dominated** wherever
+  resupply happens (scar persists, transient recovers), so sabkha's geometry forced the
+  liveness to come from the alternative's lethality. The scar will be the **load-bearing
+  differentiator** on a beat where the *permanent loss is the natural headline cost AND the
+  alternative is not a death-gamble* — e.g. a "pay a permanent price to skip a delay" choice
+  with no perishing involved. Find/author that beat to truly prove the mechanic.
 - **Headcount scar (person-loss lever) — deferred.** For branches whose loss is a *person*, not
   stores: `customs-raid` "give up the scribe", `bandits` "stand and fight" ("two of yours do not
   rise"). A `partyDelta` reducing traveler count affects both capacity and per-day consumption
