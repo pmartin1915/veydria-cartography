@@ -248,6 +248,14 @@ export interface JourneyState {
   rationsLeft: number
   waterLeft: number
   exhaustionLevel: number
+  /** Permanent supply-ceiling reductions accumulated from choices (Passage scar).
+   *  Subtracted from startingRations/startingWater on every resupply restore.
+   *  Optional/absent = 0; read everywhere with `?? 0` so old states stay valid. */
+  scarRations?: number
+  /** Permanent supply-ceiling reductions accumulated from choices (Passage scar).
+   *  Subtracted from startingWater on every resupply restore.
+   *  Optional/absent = 0; read everywhere with `?? 0` so old states stay valid. */
+  scarWater?: number
   finished: boolean
   outcome: DayOutcome
 }
@@ -646,7 +654,7 @@ export function nextDay(state: JourneyState, action: Action): NextDayResult {
   const burn = applyDailyBurn(
     state.rationsLeft, state.waterLeft, state.supplyConstants,
     state.party, state.season, aridity, resupplyTier, burnModsForAction(action),
-    encounterCost, state.mode,
+    encounterCost, state.mode, state.scarRations ?? 0, state.scarWater ?? 0,
   )
 
   /* Exhaustion. Floor at 0; rest never drops below 0. */

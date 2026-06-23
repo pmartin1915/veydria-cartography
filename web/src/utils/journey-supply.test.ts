@@ -448,3 +448,61 @@ describe('journey-supply: per-mode burn multiplier', () => {
     expect(safest[4].waterLeft).toBeGreaterThan(direct[4].waterLeft)
   })
 })
+
+
+describe('journey-supply: capacity scar (Passage v1.1 Slice 2)', () => {
+  const constants = deriveSupplyConstants(DEFAULT_SUPPLY)
+
+  it("'full' resupply with scarRations restores to startingRations - scar", () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      /* scarRations */ 3,
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations - 3)
+    expect(r.waterLeft).toBe(constants.startingWater)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it("'full' resupply with scarWater restores to startingWater - scar", () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      0, /* scarWater */ 2,
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater - 2)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it("'water' tier with scarWater restores water ceiling and leaves rations on burn path", () => {
+    const r = applyDailyBurn(
+      10, 1, constants, DEFAULT_PARTY, undefined, 'none', 'water',
+      undefined, undefined, undefined,
+      0, /* scarWater */ 2,
+    )
+    // Water restored to scarred ceiling.
+    expect(r.waterLeft).toBe(constants.startingWater - 2)
+    expect(r.resupplyFired).toBe('water')
+    // Rations not restored: 10 - 1 burn = 9.
+    expect(r.rationsLeft).toBeCloseTo(9, 5)
+  })
+
+  it('default scar args (0) restore to full starting capacity', () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it('scar cannot drive the ceiling below zero', () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      /* scarRations */ 100,
+    )
+    expect(r.rationsLeft).toBe(0)
+  })
+})

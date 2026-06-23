@@ -202,6 +202,12 @@ export function applyDailyBurn(
   /** Travel mode — applies a per-mode burn multiplier (see modeBurnMultipliers).
    *  Omitted → neutral {1,1}, so the legacy mode-blind burn stays byte-identical. */
   mode?: RouteMode,
+  /** Permanent reduction to the resupply ceiling (Passage scar). Subtracted from
+   *  startingRations on every restore. Default 0 keeps existing call sites neutral. */
+  scarRations: number = 0,
+  /** Permanent reduction to the resupply ceiling (Passage scar). Subtracted from
+   *  startingWater on every restore. Default 0 keeps existing call sites neutral. */
+  scarWater: number = 0,
 ): BurnResult {
   const { encMult, startingRations, startingWater } = constants
   const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
@@ -216,16 +222,19 @@ export function applyDailyBurn(
   let nextRations = rationsLeft - rationsBurned - encounterCost.rations
   let nextWater = waterLeft - waterBurned - encounterCost.water
 
+  const ceilRations = Math.max(0, startingRations - scarRations)
+  const ceilWater = Math.max(0, startingWater - scarWater)
+
   let resupplyFired: 'water' | 'rations' | 'full' | undefined
   if (resupplyTier === 'full') {
-    nextRations = startingRations
-    nextWater = startingWater
+    nextRations = ceilRations
+    nextWater = ceilWater
     resupplyFired = 'full'
   } else if (resupplyTier === 'water') {
-    nextWater = startingWater
+    nextWater = ceilWater
     resupplyFired = 'water'
   } else if (resupplyTier === 'rations') {
-    nextRations = startingRations
+    nextRations = ceilRations
     resupplyFired = 'rations'
   }
 

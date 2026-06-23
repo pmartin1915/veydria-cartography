@@ -474,3 +474,73 @@ describe('journey-days: resupply day mapping parity with legacy name-based walk'
     expect(day1.supply!.resupplyFired).toBe('water')
   })
 })
+
+
+describe('journey-days: capacity scar persistence (Passage v1.1 Slice 2)', () => {
+  const tierFor = (cat: string): ResupplyTier => {
+    if (cat === 'civilization') return 'full'
+    if (cat === 'oasis' || cat === 'port') return 'water'
+    return 'none'
+  }
+
+  it('nextDay resupply respects scarRations and restores to the lowered ceiling', () => {
+    // 3-day route; make the first trailing node a civilization so day 1 camps at it
+    // and gets 'full'.
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    route.nodes[1].category = 'civilization'
+
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      resupplyTierFor: tierFor,
+    })
+    // Impose a Passage scar.
+    state = { ...state, scarRations: 3, scarWater: 2 }
+
+    const day1 = nextDay(state, { kind: 'continue' })
+    expect(day1.supply).not.toBeNull()
+    // Day 1 camps at Node 1 (civilization) → 'full' restore to scarred ceiling.
+    expect(day1.supply!.resupplyFired).toBe('full')
+    expect(day1.state.rationsLeft).toBe(state.supplyConstants.startingRations - 3)
+    expect(day1.state.waterLeft).toBe(state.supplyConstants.startingWater - 2)
+    expect(day1.state.scarRations).toBe(3)
+    expect(day1.state.scarWater).toBe(2)
+  })
+
+  it('scarRations and scarWater persist across a nextDay step', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct' })
+    state = { ...state, scarRations: 2, scarWater: 1 }
+
+    const step = nextDay(state, { kind: 'continue' })
+    expect(step.state.scarRations).toBe(2)
+    expect(step.state.scarWater).toBe(1)
+  })
+
+  it('scarRations and scarWater persist across a reroute', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const graph: import('./journey-graph').Graph = {
+      nodes: new Map(route.nodes.map(n => [n.id, n])),
+      adj: new Map(),
+    }
+    for (const e of route.edges) {
+      if (!graph.adj.has(e.from)) graph.adj.set(e.from, [])
+      graph.adj.get(e.from)!.push({ to: e.to, edge: e })
+    }
+
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      graph, endId: route.nodes[route.nodes.length - 1].id,
+      resupplyTierFor: tierFor,
+    })
+    state = { ...state, scarRations: 4, scarWater: 2 }
+
+    // Step one day, then reroute.
+    state = nextDay(state, { kind: 'continue' }).state
+    const rerouted = nextDay(state, { kind: 'reroute', mode: 'safest' })
+    expect(rerouted.advanced).toBe(true)
+    expect(rerouted.state.scarRations).toBe(4)
+    expect(rerouted.state.scarWater).toBe(2)
+  })
+})

@@ -228,3 +228,72 @@ describe('passage: determinism', () => {
     expect(a.log.length).toBe(b.log.length)
   })
 })
+
+
+describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
+  /** Build a pending state with a custom signature choice set. */
+  function passageWithCustomChoices(
+    choices: import('./passage').EncounterChoice[],
+  ): PassageState {
+    const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 125 })
+    const state = initPassage({ route, season: 'spring', mode: 'direct' })
+    const enc = signatureEncounter('test-scar')
+    state.journey.encountersByDay.set(1, [enc])
+    state.pending = { encounter: enc, choices }
+    return state
+  }
+
+  it('passageChoose accumulates scarRations/scarWater onto the journey', () => {
+    const state = passageWithCustomChoices([
+      {
+        label: 'Lose the cart',
+        outcome: {
+          rationsDelta: -1,
+          scarRations: 2,
+          scarWater: 1,
+          narrative: 'The cart is gone.',
+        },
+      },
+    ])
+    const chosen = passageChoose(state, 0)
+    expect(chosen.journey.scarRations).toBe(2)
+    expect(chosen.journey.scarWater).toBe(1)
+  })
+
+  it('passageChoose clamps current stores to the new scarred ceiling', () => {
+    const state = passageWithCustomChoices([
+      {
+        label: 'Lose the cart',
+        outcome: {
+          rationsDelta: 0,
+          scarRations: 5,
+          narrative: 'The cart is gone.',
+        },
+      },
+    ])
+    // Default starting rations = 12. Scar of 5 lowers ceiling to 7.
+    // Even with rationsDelta 0, current stores clamp down to 7 before the
+    // encounter day's burn (mode 'direct' => 1.15 ration burn).
+    const chosen = passageChoose(state, 0)
+    expect(chosen.journey.scarRations).toBe(5)
+    expect(chosen.journey.rationsLeft).toBeLessThanOrEqual(7)
+    expect(chosen.journey.rationsLeft).toBeCloseTo(7 - 1.15, 5)
+  })
+
+  it('a scarred branch ends with lower post-resupply supply than a non-scarred branch', () => {
+    const base = passageWithSignature('sabkha-sinkhole')
+    const pending = passageAct(base, { kind: 'continue' })
+    expect(pending.pending).not.toBeNull()
+
+    const cutLoose = passageChoose(pending, 0) // scarRations: 1
+    const haulOut = passageChoose(pending, 1)   // no scar
+
+    // The scarred branch accumulates a permanent ceiling reduction; the other
+    // branch does not (scar stays 0). Both resolve the same engine day, so the
+    // base day burn cancels and the immediate ration delta makes the scarred
+    // branch strictly lower.
+    expect(cutLoose.journey.scarRations).toBe(1)
+    expect(haulOut.journey.scarRations).toBe(0)
+    expect(cutLoose.journey.rationsLeft).toBeLessThan(haulOut.journey.rationsLeft)
+  })
+})

@@ -68,6 +68,14 @@ export interface EncounterChoice {
     rationsDelta?: number
     /** One-off, absolute water movement applied once at the choice (usually negative). */
     waterDelta?: number
+    /** Permanent reduction to the party's resupply CEILING (positive = lower max).
+     *  Unlike rationsDelta/waterDelta this is NOT erased by resupply — it lowers what
+     *  every future resupply restores to. Use for irreversible losses (a lost cart). */
+    scarRations?: number
+    /** Permanent reduction to the party's resupply CEILING (positive = lower max).
+     *  Unlike rationsDelta/waterDelta this is NOT erased by resupply — it lowers what
+     *  every future resupply restores to. */
+    scarWater?: number
     /** Days spent waiting/detouring. Realized as N synthetic wait entries, each
      *  burning a rest-day rate. NOT arithmetic on the engine's day counter. */
     daysDelta?: number
@@ -261,8 +269,8 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
     {
       label: 'Cut the cart loose',
       outcome: {
-        rationsDelta: -4,
-        waterDelta: -1,
+        rationsDelta: -2,
+        scarRations: 1,
         risk: 'none',
         narrative:
           'You cut the traces and let the salt take the cart whole. The stores in it are gone, swallowed with the axles. The party walks lighter and hungrier from here.',
@@ -271,11 +279,11 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
     {
       label: 'Haul it out by rope',
       outcome: {
-        daysDelta: 1,
-        waterDelta: -2,
+        daysDelta: 2,
+        waterDelta: -4,
         risk: 'minor',
         narrative:
-          'You rig ropes to the cart and the whole party hauls against the salt. It comes free by dusk, sucking and reluctant. A day is gone and the water-skins paid for it.',
+          'You rig ropes to the cart and the whole party hauls against the salt. Two days it fights you before it comes free, sucking and reluctant. The water-skins paid for every hour of it.',
       },
     },
   ],
@@ -516,11 +524,19 @@ export function passageChoose(state: PassageState, choiceIndex: number): Passage
     })
   }
 
-  // 2. One-off, absolute supply movement from the choice itself.
+  // 2. One-off supply movement + any permanent scar from the choice. The scar lowers
+  //    the resupply ceiling; current stores are clamped DOWN to that new ceiling (you
+  //    cannot carry above your reduced max), which also keeps later resupply a refill-up.
+  const newScarRations = (journey.scarRations ?? 0) + (choice.outcome.scarRations ?? 0)
+  const newScarWater = (journey.scarWater ?? 0) + (choice.outcome.scarWater ?? 0)
+  const ceilRations = Math.max(0, journey.supplyConstants.startingRations - newScarRations)
+  const ceilWater = Math.max(0, journey.supplyConstants.startingWater - newScarWater)
   journey = {
     ...journey,
-    rationsLeft: journey.rationsLeft + (choice.outcome.rationsDelta ?? 0),
-    waterLeft: journey.waterLeft + (choice.outcome.waterDelta ?? 0),
+    scarRations: newScarRations,
+    scarWater: newScarWater,
+    rationsLeft: Math.min(journey.rationsLeft + (choice.outcome.rationsDelta ?? 0), ceilRations),
+    waterLeft: Math.min(journey.waterLeft + (choice.outcome.waterDelta ?? 0), ceilWater),
   }
 
   // 3. Record the chosen branch.

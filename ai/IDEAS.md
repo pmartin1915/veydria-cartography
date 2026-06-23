@@ -49,3 +49,27 @@ The Passage playtester (`scripts/sim/sim-passage-report.ts`, run `npm run sim:pa
 - **sand-wraith** promotion (next batch of beats to signature choices).
 - **Per-instance prose variation** for repeated keys (bandits fires 2x word-for-word in
   2/480 crossings). Vary prose/options by instance index in `SIGNATURE_CHOICES`.
+
+### Passage v1.1 — after slice 2 (teeth: persistent capacity scar, 2026-06-23)
+
+Shipped the deterministic **capacity-scar** mechanic: `EncounterChoice.outcome.scarRations`
+/`scarWater` permanently lower the resupply ceiling (`JourneyState.scarRations`/`scarWater`,
+subtracted in `applyDailyBurn`'s restore). Retrofit to `sabkha-sinkhole` "Cut the cart loose"
+(`rationsDelta -2, scarRations 1`), rebalancing "Haul it out by rope" to `daysDelta 2,
+waterDelta -4` so the fork is live (no dead/dominant flag; outcome-impact 4.3%→26.1%).
+
+- **Design lesson (for future scar use):** a scarred branch paired against a *fully-transient*
+  cost branch tends to be **dominated** wherever resupply happens (the scar persists, the
+  transient cost recovers). To stay a live tradeoff, the *alternative* must carry real survival
+  risk (lethal time/water in the tight pre-resupply corridor) so the scarred branch's speed wins
+  on the arrival axis there. Tune via `sim:passage` dead/dominance flags, not blind values.
+- **Headcount scar (person-loss lever) — deferred.** For branches whose loss is a *person*, not
+  stores: `customs-raid` "give up the scribe", `bandits` "stand and fight" ("two of yours do not
+  rise"). A `partyDelta` reducing traveler count affects both capacity and per-day consumption
+  (a headcount cut perversely *helps* survival by removing a mouth, so it needs care). The
+  natural sibling to the capacity scar; would make give-up-scribe finally bite.
+- **Probabilistic grave-risk — deferred.** A real death roll on `risk: 'grave'`. More dramatic
+  but breaks determinism (needs seeded rolls) and complicates the counterfactual fork. Revisit
+  only if the deterministic scar proves insufficient for drama.
+- **UI surfacing of a reduced ceiling — optional polish.** Label the supply ledger "max reduced"
+  after a scar. Current numbers already drop visibly post-resupply, so low priority.
