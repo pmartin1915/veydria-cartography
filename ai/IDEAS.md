@@ -186,3 +186,46 @@ fake choices (fever/dry-wadi) that pre-date the scar work.
 
 Verification: 950 tests pass, `tsc --noEmit` clean. Reports at `output/sim/passage-{survive,headlong}.md`
 (gitignored). No code change this pass — `feat/passage-teeth` stays local, unpushed, unmerged.
+
+---
+
+## Passage v1.1 — Slice 4: dry-wadi gains teeth (scar); supply-threshold GATE tried + reverted (2026-06-23)
+
+`feat/passage-teeth` merged to master first (balance-clean). This slice on `feat/passage-gating`.
+
+**Shipped: dry-wadi is no longer a fake choice.** "Trust her, take the wadi" changed from a transient
+`waterDelta −2` to a permanent `scarWater 2` (a cask cracked and lost on the descent); "Stay on the
+mapped trail" unchanged (`daysDelta 2`). Result — full grid, both base policies:
+- **survive: outcome-impact 0% → 10.5%**, water/rations range 0/0 → 0.2/1.0, no dominance/dead flags.
+- **headlong: outcome-impact 0% → 13.3%**, range 0/0 → 2.0/0.8, no dominance/dead flags.
+- No regression elsewhere (only pre-existing flag is ford's n=1 survive artifact). 951 tests, `tsc` clean.
+
+**The headline finding — recorded so no future session re-attempts it: a supply-THRESHOLD gate cannot
+fix a slack-timing fake choice.** The plan was to *gate* dry-wadi (fire the choice only when water
+binds) rather than scar it, to avoid a switchback echo. Built the gate (`SupplyGate` type +
+`SIGNATURE_GATES` map + `gatePasses` + a check in `signatureForDay`, shared by app and sim) and measured
+it. **It does not work, and the reason generalizes:**
+- At `atOrBelow` 3 and 5, on *both* policies, dry-wadi stayed **0% outcome-impact, differentiation
+  exactly 0.0** — branches end at *identical* supply. A transient −2 water is **refilled at the next
+  resupply node regardless of *when* it is spent**, so no firing-time threshold can make it stick. Only
+  a *persistent* cost (scar) survives resupply. This is the same resupply-erasure that makes the choice
+  fake in the first place; gating moves *when* the cost lands, not *whether* it persists.
+- dry-wadi additionally collapses to a **single axis** (both branches trade only water: −2-now vs
+  +2-days-of-burn), so even asymmetric deltas yield *dominance*, not divergence. Scar-vs-days is the
+  **only** stable live form for it — structurally a switchback echo, unavoidably. The "clone" worry is
+  aesthetic; the contexts differ (escarpment/severe vs trade-route/opportunity), and a recurring
+  "permanent-water-price vs time" motif is acceptable. **Per-session decision (2026-06-23): accept the
+  scar; revert the gate** (simplicity-first — unused, and unproven on its real target).
+- **The gate is NOT proven infra for fever/bandits.** Those are 3-branch and were never gated in any
+  measured run. A supply-*threshold* gate may still not fire in the *no-resupply-ahead* window that is
+  the only place a transient cost sticks — so fever/bandits likely need a **resupply/position-aware**
+  gate (e.g. "no resupply node between here and the destination"), not a supply-threshold one. Revisit
+  there, and expect cost-rebalance too (gating fever on "water binds" makes its cheap-rations "Pay"
+  branch dominant — a dead/dominated-option trap on 3 branches).
+
+**Still open (unchanged from slice-3 note):** fever and bandits remain undifferentiated fake choices.
+The right tool is the resupply-aware gate above (+ per-branch cost rebalance), not the scar (a scar on
+one of three branches is the dominated/dead-option trap — see sabkha). Deferred to a dedicated slice.
+
+Verification: 951 tests pass, `tsc -b` clean. Reports at `output/sim/passage-{survive,headlong}.md`
+(gitignored). `feat/passage-gating` merged to master on completion.

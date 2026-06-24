@@ -316,4 +316,23 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
     expect(doubleTeam.journey.scarWater ?? 0).toBe(0)
     expect(doubleTeam.journey.scarRations ?? 0).toBe(0)
   })
+
+  it('dry-wadi "take the wadi" lowers the water ceiling by 2; "stay on trail" takes no scar', () => {
+    // Slice 4: dry-wadi gained teeth as a scar (a transient cost washed out at the
+    // next resupply; only a persistent scar survives it). "Take the wadi" trades a
+    // permanent water cask for two days saved; "stay on trail" trades time only.
+    const base = passageWithSignature('dry-wadi')
+    const pending = passageAct(base, { kind: 'continue' })
+    expect(pending.pending).not.toBeNull()
+    expect(pending.pending!.choices).toHaveLength(2)
+
+    const startingWater = base.journey.supplyConstants.startingWater
+    const takeWadi = passageChoose(pending, 0)    // scarWater: 2
+    const stayTrail = passageChoose(pending, 1)   // daysDelta: 2, no scar
+
+    expect(takeWadi.journey.scarWater).toBe(2)
+    expect(takeWadi.journey.waterLeft).toBeLessThanOrEqual(startingWater - 2)
+    expect(stayTrail.journey.scarWater ?? 0).toBe(0)
+    expect(stayTrail.extraDays).toBe(2)
+  })
 })

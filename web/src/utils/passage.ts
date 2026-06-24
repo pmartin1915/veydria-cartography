@@ -190,10 +190,10 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
     {
       label: 'Trust her, take the wadi',
       outcome: {
-        waterDelta: -2,
+        scarWater: 2,
         risk: 'minor',
         narrative:
-          'You follow the Qalībin path-finder down into the dry wadi. She reads the salt-cracks like a ledger and the floor runs true between the hills. It spares two days and there is not a drop of water in any of them.',
+          'You follow the Qalībin path-finder down into the dry wadi. She reads the salt-cracks like a ledger and the floor runs true between the hills. It spares two days. On the descent a cask cracks against the rock and bleeds out into the salt before anyone can right it, and the party draws less at every well from here on.',
       },
     },
     {
