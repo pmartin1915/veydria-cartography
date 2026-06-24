@@ -60,6 +60,9 @@ export const JOURNEY_TUTORIAL_KEY = 'veydria.journey.tutorial.completed.v1'
 /** First-run atmospheric cold-open shown once before the map tour.
  *  Persisted with the same shape via isTourCompleted/markTourCompleted. */
 export const WELCOME_KEY = 'veydria.welcome.seen.v1'
+/** First-run walkthrough of Passage (day-by-day travel) mode. A separate flag so
+ *  completing it never marks the journey tutorial or map tour done. */
+export const PASSAGE_TUTORIAL_KEY = 'veydria.passage.tutorial.completed.v1'
 
 export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
   try {

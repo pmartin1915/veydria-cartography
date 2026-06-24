@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useReducer, useCallback } from 'r
 import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
 import TourOverlay from './TourOverlay'
-import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
+import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, PASSAGE_TUTORIAL_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
 import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, isSeaLeg, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, type Encounter } from '../utils/encounters'
 import { resolveSighting } from '../utils/sea-sightings'
@@ -300,10 +300,52 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       body: 'Save the route to your party’s history, or hand players a stripped, player-safe version. That’s the loop: endpoints → priority → supply, then read the days. Replay this anytime from the “?” in the header.',
       onEnter: () => setRouteTab('route'),
     },
+    {
+      id: 'set-out',
+      targetSelector: '[data-tour="journey-set-out"]',
+      placement: 'top',
+      title: 'Then live it',
+      body: 'Plotting is only half the road. When the party is ready, Set out and travel the crossing a day at a time — supply, weather, and hard choices in real time.',
+      onEnter: () => setRouteTab('route'),
+    },
   ], [seedDemoRoute])
 
   const [tutState, tutDispatch] = useReducer(
     (s: TourState, act: TourAction) => tourReducer(s, act, journeyTourSteps.length),
+    { active: false, stepIndex: 0 },
+  )
+
+  const passageTourSteps: TourStep[] = useMemo(() => [
+    {
+      id: 'welcome',
+      title: 'The crossing begins',
+      body: 'You’ve set out. From here the road is lived a day at a time — supply burning, weather turning, the party’s fate in your hands.',
+    },
+    {
+      id: 'ledger',
+      targetSelector: '[data-tour="passage-ledger"]',
+      placement: 'bottom',
+      title: 'Your lifeline',
+      body: 'Rations and water, counted in days. Each march spends them; settlements resupply. If a choice cuts your carrying capacity, the lowered cap shows here.',
+    },
+    {
+      id: 'actions',
+      targetSelector: '[data-tour="passage-actions"]',
+      placement: 'top',
+      title: 'How you travel',
+      body: 'Each day, choose: Continue marches you onward. Rest, Force-march, and Ration trade supply against time. Turn back ends the crossing while you still can.',
+    },
+    {
+      id: 'journal',
+      targetSelector: '[data-tour="passage-journal"]',
+      placement: 'top',
+      title: 'The record',
+      body: 'This is where every day, encounter, and choice gets written as it happens — and hard encounters arrive as cards to decide. Travel well.',
+    },
+  ], [])
+
+  const [passTutState, passTutDispatch] = useReducer(
+    (s: TourState, act: TourAction) => tourReducer(s, act, passageTourSteps.length),
     { active: false, stepIndex: 0 },
   )
 
@@ -320,6 +362,18 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     const t = window.setTimeout(() => tutDispatch({ type: 'START' }), 600)
     return () => window.clearTimeout(t)
   }, [active, shareMode, mainTourActive])
+
+  // Auto-launch Passage tutorial on first entry into Passage mode.
+  const passageTutFiredRef = useRef(false)
+  useEffect(() => {
+    if (!passageActive || passageTutFiredRef.current) return
+    if (shareMode || mainTourActive || tutState.active) return
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return
+    if (isTourCompleted(PASSAGE_TUTORIAL_KEY)) return
+    passageTutFiredRef.current = true
+    const t = window.setTimeout(() => passTutDispatch({ type: 'START' }), 600)
+    return () => window.clearTimeout(t)
+  }, [passageActive, shareMode, mainTourActive, tutState.active])
 
   // Auto-compute route from URL defaults on first mount
   useEffect(() => {
@@ -1230,6 +1284,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         state={tutState}
         dispatch={tutDispatch}
         storageKey={JOURNEY_TUTORIAL_KEY}
+      />
+      <TourOverlay
+        steps={passageTourSteps}
+        state={passTutState}
+        dispatch={passTutDispatch}
+        storageKey={PASSAGE_TUTORIAL_KEY}
       />
     </div>
   )

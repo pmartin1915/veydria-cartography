@@ -14,6 +14,35 @@ The experience-polish arc has three axes; slice 1 (**branding chrome** — favic
 
 - **Journey "Travel mode" (journey-as-game)** — the north-star (Oregon Trail × A Dark Room × GoT). Today the journey planner is a static, read-only GM planning tool: everything is computed up-front and shown at once. The turn-based play-loop machinery **already exists** — `nextDay(state, action)` with `Action = continue|rest|force-march|ration|reroute|turn-back`, `JourneyState`, `DayOutcome = in-progress|arrived|aborted` in `web/src/utils/journey-days.ts` — but it's wired only to the batch sim harness (`scripts/sim/`), never to the UI. Making travel *feel lived* = surfacing that API into an interactive mode: step day-by-day, choose an action, watch supply burn live, resolve encounters as choices, end on arrive / turn-back / perish, and save a playthrough (not just a plan). *Why deferred:* largest/most-ambitious axis — a genuine new feature with real architecture and UX design, not chrome; warrants its own dedicated phase. **Now specced:** Perry chose the Hybrid interactivity tier (2026-06-21) — full v1 spec with data model + acceptance criteria in `ai/PASSAGE-MODE-V1-SPEC.md`. *Where it applies:* new "Passage" mode in `web/src/components/journey-planner/`, consuming the existing `journey-days.ts` `nextDay`/`JourneyState` API; a small signature-encounter choice registry over today's read-only `encounters.ts` beats.
 
+## experience-polish — Passage onboarding SHIPPED (2026-06-24, branch `feat/passage-onboarding`, commit cec91fe, NOT merged)
+
+Filled the "proceed along the road" half of the [[journey-experience-vision]] north-star. Ground
+truth at start: ocean styling, an on-map Map Key, and a 9-step journey **planning** tutorial were
+already shipped (the older "no tutorial / no legend" notes were stale) — but onboarding never
+mentioned **Passage** (the day-by-day travel game), so the crown feature was invisible to a
+first-time GM. Two pieces, reusing the existing tour engine (`tour.ts` reducer + `TourOverlay`):
+
+1. **Bridge step** — a 10th journey-tutorial step spotlighting the "Set out" button
+   (`data-tour="journey-set-out"` in `JourneyResults.tsx`).
+2. **Passage tutorial** — a new 4-step tour (welcome/ledger/actions/journal) auto-firing once on
+   first Passage entry, gated by `PASSAGE_TUTORIAL_KEY`, guarded against share/mobile/active-journey-
+   tutorial/prior-completion. Anchors in `PassageMode.tsx`. New key added to both e2e addInitScripts.
+
+Built via /orchestrate (Opus spec+review, Kimi impl in worktree). 956 unit tests, tsc + build green,
+Playwright visual check confirmed correct spotlight anchoring under `.passage-mode`.
+
+**Useful gotcha discovered (don't re-litigate):** the tour **backdrop blocks ALL clicks** —
+`.tour-backdrop` is full-screen `pointer-events:auto`; `.tour-spotlight` is `pointer-events:none`
+and purely visual (a box-shadow ring), NOT a clickable cutout. So spotlighting a live button shows
+it but does NOT make it clickable mid-tour; the user must use the card's Done/Next. We worried
+step 10's spotlighted Set out button would be a "click-trap" (clicking it mid-tour would suppress
+the passage tutorial via the `tutState.active` guard) — **empirically verified it cannot happen**,
+the backdrop intercepts the click. The Done-to-proceed flow is CSS-enforced, not just convention.
+
+**Deferred (v1 scope):** no replay entry point for the Passage tutorial (it needs Passage active to
+have anchors; auto-fire-once on first entry only). If wanted later, add a replay trigger that first
+enters a demo Passage, or surface it from KeyboardHelp only while `passageActive`.
+
 ## Other carried-forward items
 
 - **apple-touch-icon transparent corners** — `web/public/apple-touch-icon.png` (from `gen-icons.mjs`, `omitBackground:true`) has transparent rounded corners; older iOS composites those over black when the icon is added to the home screen. *Why deferred:* negligible for a GM desktop/web tool (iOS home-screen install is a non-use-case). *Fix if ever needed:* render that one target without `omitBackground` (solid `--bg-deep` square).

@@ -30,6 +30,7 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem('veydria.tour.completed.v1', done)
     localStorage.setItem('veydria.journey.tutorial.completed.v1', done)
     localStorage.setItem('veydria.welcome.seen.v1', done)
+    localStorage.setItem('veydria.passage.tutorial.completed.v1', done)
   })
 })
 
@@ -130,7 +131,7 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
   // drawer / switch tabs — clicking a moving, possibly off-screen card is racy.
   const next = () => page.keyboard.press('ArrowRight')
 
-  // Steps: welcome(0) from(1) to(2) modes(3) find(4) options(5) days(6) encounters(7) export(8).
+  // Steps: welcome(0) from(1) to(2) modes(3) find(4) options(5) days(6) encounters(7) export(8) set-out(9).
   for (let i = 0; i < 5; i++) await next()
   await expect(title).toHaveText('Party & supply = the fuel')
   await expect(page.locator('.journey-options-body')).toBeVisible() // onEnter opened the drawer
@@ -145,6 +146,9 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
 
   await next()
   await expect(title).toHaveText('Save it or share it')
+
+  await next()
+  await expect(title).toHaveText('Then live it')
 
   // NEXT past the last step dismisses the tour.
   await next()

@@ -105,7 +105,7 @@ export default function PassageMode({
         startingWater={state.journey.supplyConstants.startingWater}
       />
 
-      <div className="passage-journal">
+      <div className="passage-journal" data-tour="passage-journal">
         {state.log.length === 0 && (
           <div className="passage-empty">The journey has not yet begun. Choose an action below.</div>
         )}
@@ -150,7 +150,7 @@ export default function PassageMode({
             ))}
           </div>
         ) : (
-          <div className="passage-action-bar">
+          <div className="passage-action-bar" data-tour="passage-actions">
             {ACTION_KINDS.map(({ kind, label, title }) => (
               <button
                 key={kind}
@@ -197,7 +197,7 @@ export function PassageLedger({
   const scarTitle =
     'A choice this crossing permanently cut your carrying capacity. Resupply now refills only to this lower cap.'
   return (
-    <div className="passage-ledger">
+    <div className="passage-ledger" data-tour="passage-ledger">
       <div className="passage-ledger-item">
         <span className="passage-ledger-label">Rations</span>
         <span className={`passage-ledger-value ${rationsLeft < 0 ? 'passage-debt' : ''}`}>
