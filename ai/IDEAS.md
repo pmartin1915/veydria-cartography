@@ -195,9 +195,16 @@ Verification: 950 tests pass, `tsc --noEmit` clean. Reports at `output/sim/passa
 
 **Shipped: dry-wadi is no longer a fake choice.** "Trust her, take the wadi" changed from a transient
 `waterDelta −2` to a permanent `scarWater 2` (a cask cracked and lost on the descent); "Stay on the
-mapped trail" unchanged (`daysDelta 2`). Result — full grid, both base policies:
-- **survive: outcome-impact 0% → 10.5%**, water/rations range 0/0 → 0.2/1.0, no dominance/dead flags.
-- **headlong: outcome-impact 0% → 13.3%**, range 0/0 → 2.0/0.8, no dominance/dead flags.
+mapped trail" unchanged (`daysDelta 2`). The discriminating signal is **differentiation** (max−min
+final supply across branches), NOT outcome-impact — the latter is sample-noise at these n (see metric
+caution below). Result, full grid, both base policies:
+- **headlong (the solid case): differentiation 0/0 → 2.0 water / 0.8 rations** across 30 instances;
+  outcome-impact 0% → 13.3%; no dominance/dead flags.
+- **survive (genuinely marginal): differentiation 0/0 → 0.2 water / 1.0 rations** across 19 instances;
+  outcome-impact 0% → 10.5%; no flags. The split surfaces in *rations*, not water, despite the scar
+  being on water: survive rations at ≤2, so a lowered water ceiling converts into *earlier rationing* →
+  the pressure shows up as rations/time, not final water. Real but thin (water-range 0.2, n=2/19).
+  **headlong is where the scar bites cleanly; survive is marginal — "no flag" ≠ "balanced both ways."**
 - No regression elsewhere (only pre-existing flag is ford's n=1 survive artifact). 951 tests, `tsc` clean.
 
 **The headline finding — recorded so no future session re-attempts it: a supply-THRESHOLD gate cannot
@@ -223,9 +230,17 @@ it. **It does not work, and the reason generalizes:**
   there, and expect cost-rebalance too (gating fever on "water binds" makes its cheap-rations "Pay"
   branch dominant — a dead/dominated-option trap on 3 branches).
 
-**Still open (unchanged from slice-3 note):** fever and bandits remain undifferentiated fake choices.
-The right tool is the resupply-aware gate above (+ per-branch cost rebalance), not the scar (a scar on
-one of three branches is the dominated/dead-option trap — see sabkha). Deferred to a dedicated slice.
+**Metric caution for the next session — read DIFFERENTIATION, not outcome-impact, to judge "fake."**
+In these same reports fever shows outcome-impact **16.7% (survive) / 14.3% (headlong)** — do NOT read
+that as "fever is already live, skip it." Those are **n=1/6 and 1/7 sample artifacts**; fever's
+differentiation is still **0.0/0.0** (all branches end at identical supply), so it is still a fake
+choice. outcome-impact is a coarse fraction-of-instances count and goes noisy below ~20 instances;
+differentiation (final-supply spread across branches) is the metric that actually discriminates.
+
+**Still open (unchanged from slice-3 note):** fever and bandits remain undifferentiated fake choices
+(differentiation 0.0/0.0). The right tool is the resupply-aware gate above (+ per-branch cost rebalance),
+not the scar (a scar on one of three branches is the dominated/dead-option trap — see sabkha). Deferred
+to a dedicated slice.
 
 Verification: 951 tests pass, `tsc -b` clean. Reports at `output/sim/passage-{survive,headlong}.md`
 (gitignored). `feat/passage-gating` merged to master on completion.
