@@ -7,6 +7,7 @@ import {
   MAIN_TOUR_KEY,
   JOURNEY_TUTORIAL_KEY,
   WELCOME_KEY,
+  PASSAGE_TUTORIAL_KEY,
   type TourState,
 } from './tour'
 
@@ -117,6 +118,14 @@ describe('localStorage', () => {
     // main tour must not mark the cold-open seen.
     markTourCompleted(false, WELCOME_KEY)
     expect(isTourCompleted(WELCOME_KEY)).toBe(true)
+    expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(false)
+    expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(false)
+  })
+
+  it('the passage tutorial key is tracked independently of the other tour keys', () => {
+    expect(isTourCompleted(PASSAGE_TUTORIAL_KEY)).toBe(false)
+    markTourCompleted(false, PASSAGE_TUTORIAL_KEY)
+    expect(isTourCompleted(PASSAGE_TUTORIAL_KEY)).toBe(true)
     expect(isTourCompleted(MAIN_TOUR_KEY)).toBe(false)
     expect(isTourCompleted(JOURNEY_TUTORIAL_KEY)).toBe(false)
   })

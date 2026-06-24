@@ -66,6 +66,7 @@ export default function JourneyResults({
             onClick={onSetOut}
             title="Begin the day-by-day passage"
             data-testid="set-out-btn"
+            data-tour="journey-set-out"
           >
             Set out
           </button>
