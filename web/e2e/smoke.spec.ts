@@ -363,6 +363,10 @@ test('Passage mode walks a route to an ending and returns to Atlas', async ({ pa
   // The map dims and a position marker appears.
   await expect(page.locator('.app-main.passage-mode')).toBeAttached()
   await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+  // Regression: the pulse must scale about the marker's own centre. The marker is
+  // an SVG <path>; the default transform-box (view-box) scaled about the SVG origin
+  // and translated the marker across the map during the pulse. fill-box pins it.
+  await expect(page.locator('.passage-position-marker')).toHaveCSS('transform-box', 'fill-box')
 
   // Walk: Continue, resolving the first choice whenever cards appear.
   let ended = false

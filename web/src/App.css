@@ -586,6 +586,11 @@ body {
 }
 
 .passage-position-marker {
+  /* Leaflet circleMarker is an SVG <path>; the default transform-box (view-box)
+     scales about the SVG origin, so the pulse would translate the marker across
+     the map. Pin the scale to the marker's own centre so it throbs in place. */
+  transform-box: fill-box;
+  transform-origin: center;
   animation: passage-marker-pulse 2s ease-in-out infinite;
 }
 
