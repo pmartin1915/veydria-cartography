@@ -137,9 +137,11 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const didAutoComputeRef = useRef(false)
   const tabsRef = useRef<HTMLDivElement>(null)
 
-  // Switch tabs and re-anchor to the (sticky) tab strip. block:'nearest' is a
-  // no-op when the strip is already visible (so it never yanks the route summary
-  // out of view), and scrolls the strip back to the top when it had scrolled off.
+  // Switch tabs and re-anchor to the (sticky) tab strip. block:'nearest' scrolls
+  // only as far as needed to bring the strip into view: at rest the strip sits
+  // below the fold so clicking a tab scrolls down to it (you asked for that tab —
+  // you see its content); deep in a long list it scrolls up so the strip pins at
+  // top; and it's a no-op when the strip already happens to be fully visible.
   const selectRouteTab = (tab: 'route' | 'days' | 'encounters') => {
     setRouteTab(tab)
     tabsRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
