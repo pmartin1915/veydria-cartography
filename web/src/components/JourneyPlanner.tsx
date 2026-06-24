@@ -135,6 +135,15 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
   const exportToastTimeoutRef = useRef<number | null>(null)
   const didAutoComputeRef = useRef(false)
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  // Switch tabs and re-anchor to the (sticky) tab strip. block:'nearest' is a
+  // no-op when the strip is already visible (so it never yanks the route summary
+  // out of view), and scrolls the strip back to the top when it had scrolled off.
+  const selectRouteTab = (tab: 'route' | 'days' | 'encounters') => {
+    setRouteTab(tab)
+    tabsRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
 
   const nodes = useMemo(() => getJourneyNodes(geojson), [geojson])
   const graph = useMemo(() => buildGraph(geojson), [geojson])
@@ -1074,16 +1083,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             />
 
             {/* Tabs */}
-            <div className="journey-tabs">
+            <div className="journey-tabs" ref={tabsRef}>
               <button
                 className={`journey-tab ${routeTab === 'route' ? 'active' : ''}`}
-                onClick={() => setRouteTab('route')}
+                onClick={() => selectRouteTab('route')}
               >
                 Route
               </button>
               <button
                 className={`journey-tab ${routeTab === 'days' ? 'active' : ''}`}
-                onClick={() => setRouteTab('days')}
+                onClick={() => selectRouteTab('days')}
                 data-tour="journey-tab-days"
               >
                 Days
@@ -1091,7 +1100,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               {!shareMode && (
                 <button
                   className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
-                  onClick={() => setRouteTab('encounters')}
+                  onClick={() => selectRouteTab('encounters')}
                   data-tour="journey-tab-encounters"
                 >
                   Encounters
@@ -1122,7 +1131,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 shareMode={shareMode}
                 highlightCrisisEvents={highlightCrisisEvents}
                 onSelectSegment={(idx) => setSelectedSegmentIdx(idx)}
-                onSwitchToEncounters={() => setRouteTab('encounters')}
+                onSwitchToEncounters={() => selectRouteTab('encounters')}
               />
             )}
 

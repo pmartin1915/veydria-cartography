@@ -4716,6 +4716,21 @@ body {
   gap: 4px;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 10px;
+  /* Pin the tab strip to the top of the scrolling body so it stays reachable
+     while a long Days/Encounters list scrolls under it. Opaque bg + z-index so
+     tab content never peeks through above the strip.
+     The body scroll-clips to its PADDING box, so scrolled content renders in
+     the body's 12px top padding — the band above where this strip pins at
+     top:0. The spreadless box-shadow extends the strip's opaque bg up over that
+     band. box-shadow is used rather than a ::before because on mobile the strip
+     gains overflow-x:auto (→ overflow-y:auto) which would clip a pseudo, but a
+     box-shadow is painted outside the box and survives the element's overflow.
+     Invisible at rest since it matches the card background. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-card);
+  box-shadow: 0 -13px 0 0 var(--bg-card);
 }
 
 .journey-tab {
