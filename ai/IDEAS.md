@@ -244,3 +244,12 @@ to a dedicated slice.
 
 Verification: 951 tests pass, `tsc -b` clean. Reports at `output/sim/passage-{survive,headlong}.md`
 (gitignored). `feat/passage-gating` merged to master on completion.
+
+**Follow-up shipped same day — scar LEGIBILITY (closes the parked "UI surfacing of a reduced ceiling"
+item).** With three beats now carrying scars (switchback/sabkha/dry-wadi), the lowered resupply ceiling
+was invisible in the Passage ledger — a later resupply quietly refilled to a smaller number with nothing
+on screen explaining why. Extracted `PassageLedger` (exported from `PassageMode.tsx`); when
+`scarRations`/`scarWater > 0` it shows the lowered **cap Nd** + a **−K** amber delta (distinct from the
+red transient-debt tag), with a GM-facing tooltip. 954 tests (+3 `PassageMode.test.tsx`), `tsc -b` + web
+build clean. Unit-verified in isolation; the at-the-table visual is Perry's to confirm on the next run
+(forcing a scar in-app is RNG-gated, so not auto-screenshotted). Pushed to master.

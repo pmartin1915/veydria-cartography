@@ -90,31 +90,20 @@ export default function PassageMode({
     setState(prev => passageChoose(prev, choiceIndex))
   }
 
-  const ledgerRations = state.journey.rationsLeft
-  const ledgerWater = state.journey.waterLeft
-
   return (
     <div className="passage-mode">
       <h3 className="passage-heading" ref={headingRef} tabIndex={-1}>
         Passage
       </h3>
 
-      <div className="passage-ledger">
-        <div className="passage-ledger-item">
-          <span className="passage-ledger-label">Rations</span>
-          <span className={`passage-ledger-value ${ledgerRations < 0 ? 'passage-debt' : ''}`}>
-            {formatSupply(ledgerRations)}d
-            {ledgerRations < 0 && <span className="passage-debt-tag">debt</span>}
-          </span>
-        </div>
-        <div className="passage-ledger-item">
-          <span className="passage-ledger-label">Water</span>
-          <span className={`passage-ledger-value ${ledgerWater < 0 ? 'passage-debt' : ''}`}>
-            {formatSupply(ledgerWater)}d
-            {ledgerWater < 0 && <span className="passage-debt-tag">debt</span>}
-          </span>
-        </div>
-      </div>
+      <PassageLedger
+        rationsLeft={state.journey.rationsLeft}
+        waterLeft={state.journey.waterLeft}
+        scarRations={state.journey.scarRations ?? 0}
+        scarWater={state.journey.scarWater ?? 0}
+        startingRations={state.journey.supplyConstants.startingRations}
+        startingWater={state.journey.supplyConstants.startingWater}
+      />
 
       <div className="passage-journal">
         {state.log.length === 0 && (
@@ -173,6 +162,66 @@ export default function PassageMode({
               </button>
             ))}
           </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface PassageLedgerProps {
+  rationsLeft: number
+  waterLeft: number
+  scarRations: number
+  scarWater: number
+  startingRations: number
+  startingWater: number
+}
+
+/**
+ * Supply ledger pinned above the journal. Shows current days-of-supply for each
+ * reserve, and — only when a choice has permanently scarred capacity — the
+ * lowered resupply CAP plus the scar delta. Without this the scar is invisible
+ * bookkeeping: a later resupply quietly refills to a smaller number with nothing
+ * on screen explaining why. Exported for unit testing the scar-legibility path.
+ */
+export function PassageLedger({
+  rationsLeft,
+  waterLeft,
+  scarRations,
+  scarWater,
+  startingRations,
+  startingWater,
+}: PassageLedgerProps) {
+  const capRations = Math.max(0, startingRations - scarRations)
+  const capWater = Math.max(0, startingWater - scarWater)
+  const scarTitle =
+    'A choice this crossing permanently cut your carrying capacity. Resupply now refills only to this lower cap.'
+  return (
+    <div className="passage-ledger">
+      <div className="passage-ledger-item">
+        <span className="passage-ledger-label">Rations</span>
+        <span className={`passage-ledger-value ${rationsLeft < 0 ? 'passage-debt' : ''}`}>
+          {formatSupply(rationsLeft)}d
+          {rationsLeft < 0 && <span className="passage-debt-tag">debt</span>}
+        </span>
+        {scarRations > 0 && (
+          <span className="passage-ledger-cap" title={scarTitle}>
+            cap {formatSupply(capRations)}d
+            <span className="passage-scar-delta">&minus;{scarRations}</span>
+          </span>
+        )}
+      </div>
+      <div className="passage-ledger-item">
+        <span className="passage-ledger-label">Water</span>
+        <span className={`passage-ledger-value ${waterLeft < 0 ? 'passage-debt' : ''}`}>
+          {formatSupply(waterLeft)}d
+          {waterLeft < 0 && <span className="passage-debt-tag">debt</span>}
+        </span>
+        {scarWater > 0 && (
+          <span className="passage-ledger-cap" title={scarTitle}>
+            cap {formatSupply(capWater)}d
+            <span className="passage-scar-delta">&minus;{scarWater}</span>
+          </span>
         )}
       </div>
     </div>
