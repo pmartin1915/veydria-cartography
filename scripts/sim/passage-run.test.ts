@@ -22,6 +22,7 @@ import {
   computeInstanceDominance,
   computeDifferentiation,
   countDistinctOutcomes,
+  computePerKeyMetrics,
   median,
   loadGraph,
 } from './passage-run'
@@ -131,6 +132,41 @@ describe('metric helpers on synthetic branches', () => {
     expect(median([1, 2, 3])).toBe(2)
     expect(median([1, 2, 3, 4])).toBe(2.5)
     expect(median([])).toBe(0)
+  })
+})
+
+/* ─── Biting-tail disaggregation (verification scaffold) ─── */
+
+describe('computePerKeyMetrics biting-tail disaggregation', () => {
+  // The median can read 0.0 while a key still bites in a tail. The disaggregation
+  // splits biting instances (range ≥ 2) by terminal-outcome composition so a
+  // median-flat key can be read as genuine recurring tradeoff (allArrive = the
+  // no-resupply-ahead window) vs death-cliff (mixed) vs dead-march noise (allPerish).
+  const arr = (idx: number, r: number, w: number, out: 'arrived' | 'perished'): BranchOutcome => ({
+    index: idx, label: `b${idx}`, risk: 'none', outcome: out, finalRations: r, finalWater: w, totalDays: 10,
+  })
+  const inst = (key: string, branches: BranchOutcome[]) => ({ key, day: 1, offered: branches.length, branches, baselineChosen: 0 })
+
+  it('classifies allArrive / mixed / allPerish and computes live% from allArrive only', () => {
+    const instances = [
+      // allArrive, water range 5 ≥ 2 → bitingAllArrive (the genuine tradeoff)
+      inst('k', [arr(0, 9, 8, 'arrived'), arr(1, 9, 3, 'arrived')]),
+      // mixed (one arrived, one perished), rations range 6 ≥ 2 → bitingMixed (death-cliff)
+      inst('k', [arr(0, 9, 5, 'arrived'), arr(1, 3, 5, 'perished')]),
+      // allPerish, water range 4 ≥ 2 → bitingAllPerish (dead-march noise)
+      inst('k', [arr(0, 1, 1, 'perished'), arr(1, 1, 5, 'perished')]),
+      // allArrive but range 0 (washes out at resupply) → NOT biting
+      inst('k', [arr(0, 9, 5, 'arrived'), arr(1, 9, 5, 'arrived')]),
+    ]
+    const agg = computePerKeyMetrics(instances).get('k')!
+    expect(agg.instances).toBe(4)
+    expect(agg.bitingAllArrive).toBe(1)
+    expect(agg.bitingMixed).toBe(1)
+    expect(agg.bitingAllPerish).toBe(1)
+    expect(agg.fracBitingInstances).toBeCloseTo(3 / 4)
+    // max range across instances
+    expect(agg.maxWaterDiff).toBe(5)
+    expect(agg.maxRationsDiff).toBe(6)
   })
 })
 

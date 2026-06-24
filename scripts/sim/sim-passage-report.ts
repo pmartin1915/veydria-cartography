@@ -301,25 +301,42 @@ function sectionDifferentiation(allInstances: Instance[]): string {
   for (const key of Object.keys(SIGNATURE_CHOICES)) {
     const agg = metrics.get(key)
     if (!agg || agg.instances === 0) {
-      rows.push([key, '0', '0', '0', 'n/a'])
+      rows.push([key, '0', '0', '0', '0', '0', '0%', '0/0/0', 'n/a'])
       continue
     }
-    const note =
-      agg.medianWaterDiff < 0.5 && agg.medianRationsDiff < 0.5
-        ? 'undifferentiated'
-        : ''
+    // The genuine recurring tradeoff = biting instances where every branch
+    // still ARRIVED (different leftover supply, i.e. a real no-resupply-ahead
+    // window). Perish-flip (mixed) is a death-cliff; all-perish is dead-march
+    // noise. Report the all-arrive slice as the fraction of TOTAL instances.
+    const liveFrac = agg.instances === 0 ? 0 : agg.bitingAllArrive / agg.instances
     rows.push([
       key,
       String(agg.instances),
       agg.medianWaterDiff.toFixed(1),
       agg.medianRationsDiff.toFixed(1),
-      note,
+      agg.maxWaterDiff.toFixed(1),
+      agg.maxRationsDiff.toFixed(1),
+      `${(agg.fracBitingInstances * 100).toFixed(0)}%`,
+      `${agg.bitingAllArrive}/${agg.bitingMixed}/${agg.bitingAllPerish}`,
+      `${(liveFrac * 100).toFixed(0)}%`,
     ])
   }
   return [
     '## Differentiation\n',
-    'Median across instances of (max − min) final water / final rations among the branches.',
-    table(['key', 'instances', 'med water range', 'med rations range', 'note'], rows),
+    'Median (and max) across instances of (max − min) final water / final rations among ' +
+      'the branches. **biting%** = fraction of instances where either range ≥ 2. ' +
+      '**tail split** = biting instances by terminal-outcome composition: ' +
+      'allArrive / mixed (perish-flip) / allPerish. ' +
+      '**live%** = allArrive ÷ all instances — the genuine recurring tradeoff ' +
+      '(a no-resupply-ahead window where every branch still arrives, with different leftover). ' +
+      'mixed is a death-cliff (= outcome-impact); allPerish is dead-march noise.',
+    table(
+      [
+        'key', 'instances', 'med water', 'med rations', 'max water', 'max rations',
+        'biting%', 'tail split (arr/mix/perish)', 'live%',
+      ],
+      rows,
+    ),
   ].join('\n')
 }
 

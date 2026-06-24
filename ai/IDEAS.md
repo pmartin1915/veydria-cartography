@@ -253,3 +253,69 @@ on screen explaining why. Extracted `PassageLedger` (exported from `PassageMode.
 red transient-debt tag), with a GM-facing tooltip. 954 tests (+3 `PassageMode.test.tsx`), `tsc -b` + web
 build clean. Unit-verified in isolation; the at-the-table visual is Perry's to confirm on the next run
 (forcing a scar in-app is RNG-gated, so not auto-screenshotted). Pushed to master.
+
+---
+
+## Passage v1.1 — Slice 5: fever + bandits VERIFIED unfixable cheaply; closed as flavor (2026-06-24)
+
+The handoff proposed the slice-4 plan for the "last fake choices": a **resupply/position-aware
+gate + per-branch cost rebalance**, with the explicit instruction to *verify the premise first*
+and judge by **differentiation, not outcome-impact**. Verification killed the premise. **No
+engine change shipped — and that is the correct outcome, not an incomplete one.**
+
+**What the metric was hiding (the real product of verifying first).** The "fever/bandits are
+0.0/0.0 fake choices" verdict was a **median artifact**. The fork harness already plays each
+branch to completion, so it already captures no-resupply-ahead windows — it just reported only
+the *median* range, which is 0 whenever <50% of instances differentiate. Added a permanent
+diagnostic to `sim-passage-report.ts` / `passage-run.ts` (`PerKeyAggregates`): **max range**,
+**biting%** (fraction of instances with either resource range ≥ 2), and a **tail split** —
+biting instances by terminal-outcome composition: `allArrive / mixed / allPerish` — plus
+**live%** = `allArrive ÷ all instances`. allArrive is the *only* slice that is a genuine
+recurring tradeoff (every branch arrives, with different leftover = a true no-resupply-ahead
+window). `mixed` is a death-cliff (≡ outcome-impact); `allPerish` is dead-march noise.
+
+**The decisive numbers (full grid, 480 crossings, `--base survive`):**
+
+| key | instances | med | max water/rations | biting% | tail (arr/mix/perish) | **live%** |
+| --- | --- | --- | --- | --- | --- | --- |
+| **bandits** | 43 | 0.0/0.0 | 13.1 / 25.3 | 21% | **0 / 3 / 6** | **0%** |
+| **fever** | 6 | 0.0/0.0 | 14.0 / 8.1 | 17% | 0 / 1 / 0 | **0%** |
+| customs-raid | 30 | 0.0/0.0 | 16.3 / 25.3 | 43% | 1 / 4 / 8 | 3% |
+| switchback (scarred) | 22 | 2.0/0.0 | 9.7 / 10.4 | 86% | 14 / 2 / 3 | **64%** |
+| dry-wadi (scarred) | 19 | 0.2/1.0 | 16.0 / 19.5 | 63% | 7 / 2 / 3 | **37%** |
+
+- **bandits live% = 0%.** Of its entire 21% biting tail, *zero* instances are the all-arrive
+  gradient — it's 3 death-cliffs (= the 7% outcome-impact) + 6 dead-march noise. Whenever all
+  branches arrive they arrive at *identical* supply: there is **no natural no-resupply-ahead
+  window for bandits in the canon grid.** A position-aware gate would therefore have **almost
+  nothing to gate *to*** — it would suppress the choice to flavor in ~all firings, not make it
+  live. (This supersedes the slice-4 prediction that a resupply-aware gate "likely" fixes
+  fever/bandits: measured, it doesn't, because the target window doesn't occur.)
+- **fever is unjudgeable.** n=6 (8 fires / 480), far below IDEAS.md's own ~20-instance noise
+  floor. "Don't ship an untestable balance change" — leave as flavor, full stop.
+- **The transient-vs-scar dead-choice rule, now stated cleanly (generalizes the slice-2/4
+  notes).** A scarred branch arrives *below* cap whenever resupply lies ahead, so against a
+  recoverable-transient sibling it is **strictly worse → dominated → a dead choice** in the
+  79%+ wash-out regime. The terrain beats (switchback/dry-wadi/sabkha) escape this *only*
+  because their alternative is `+days` — also non-recoverable — so neither branch washes out.
+  So "2B done right" for bandits isn't one scar field; it's **redesigning all three branches to
+  persistent/time costs on different axes** (illustratively: toll = scarRations, fight =
+  scarWater + grave, parley = +days). That is a *beat redesign + sim-tune*, and the live%=0%
+  data says there's no natural window to justify manufacturing one. Not done.
+- **customs-raid (43% biting, 3% live) is the same class, and was never flagged** — confirming
+  the median-0.0 framing was always about measurement, not these two beats specifically. The
+  whole transient-cost family (ford/customs-raid/plague/bandits/fever) is live only via
+  occasional death-cliffs, not recurring gradients. If a future session ever wants any of them
+  reliably live, the lever is the all-persistent-branch redesign above, not a gate.
+
+**Decision (2026-06-24): close #2 as flavor.** fever + bandits are *contextually live* (they
+bite as rare death-cliffs) but have no recurring tradeoff window; forcing one would either ship
+a dead choice (naive scar) or manufacture a window the data says isn't there (full redesign /
+gate), for beats already well-served by the three scarred terrain choices. **Kept** the
+max/biting/live diagnostic — it is the metric that should have existed (it catches the next
+"median says fake" mirage) and is unit-tested (`passage-run.test.ts`). Engine, `passage.ts`,
+and the choice set are **unchanged**. The position-aware-gate idea from slice 4 is hereby
+**retired**, not deferred — measured and found inapplicable.
+
+Verification: tests + `tsc -b` + web build green; report at `output/sim/passage-report.md`
+(gitignored).

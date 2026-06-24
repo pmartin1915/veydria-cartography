@@ -379,6 +379,19 @@ export interface PerKeyAggregates {
   outcomeImpactFraction: number
   medianWaterDiff: number
   medianRationsDiff: number
+  /** Tail metrics (verification scaffold): max range across instances and the
+   *  fraction of instances where either resource range >= 2 (a "biting" window). */
+  maxWaterDiff: number
+  maxRationsDiff: number
+  fracBitingInstances: number
+  /** Disaggregation of the biting tail by terminal-outcome composition, so a
+   *  median-flat key's tail can be read as genuine tradeoff vs death-cliff vs
+   *  dead-march noise. Counts are instances with range >= 2 in each bucket.
+   *  bitingAllArrive (every branch arrived, different leftover = the genuine
+   *  recurring no-resupply-ahead tradeoff) is the number that actually matters. */
+  bitingAllArrive: number
+  bitingMixed: number
+  bitingAllPerish: number
 }
 
 export function computePerKeyMetrics(instances: Instance[]): Map<string, PerKeyAggregates> {
@@ -397,6 +410,12 @@ export function computePerKeyMetrics(instances: Instance[]): Map<string, PerKeyA
         outcomeImpactFraction: 0,
         medianWaterDiff: 0,
         medianRationsDiff: 0,
+        maxWaterDiff: 0,
+        maxRationsDiff: 0,
+        fracBitingInstances: 0,
+        bitingAllArrive: 0,
+        bitingMixed: 0,
+        bitingAllPerish: 0,
       }
       byKey.set(inst.key, agg)
       waterDiffsByKey.set(inst.key, [])
@@ -440,11 +459,23 @@ export function computePerKeyMetrics(instances: Instance[]): Map<string, PerKeyA
     const diff = computeDifferentiation(inst.branches)
     waterDiffsByKey.get(inst.key)!.push(diff.waterRange)
     rationsDiffsByKey.get(inst.key)!.push(diff.rationsRange)
+    if (diff.waterRange >= 2 || diff.rationsRange >= 2) {
+      const arrived = inst.branches.filter(b => b.outcome === 'arrived').length
+      if (arrived === inst.branches.length) agg.bitingAllArrive++
+      else if (arrived === 0) agg.bitingAllPerish++
+      else agg.bitingMixed++
+    }
   }
   for (const agg of byKey.values()) {
     agg.outcomeImpactFraction = agg.instances === 0 ? 0 : agg.outcomeImpactFraction / agg.instances
-    agg.medianWaterDiff = median(waterDiffsByKey.get(agg.key) ?? [])
-    agg.medianRationsDiff = median(rationsDiffsByKey.get(agg.key) ?? [])
+    const waterDiffs = waterDiffsByKey.get(agg.key) ?? []
+    const rationsDiffs = rationsDiffsByKey.get(agg.key) ?? []
+    agg.medianWaterDiff = median(waterDiffs)
+    agg.medianRationsDiff = median(rationsDiffs)
+    agg.maxWaterDiff = waterDiffs.length ? Math.max(...waterDiffs) : 0
+    agg.maxRationsDiff = rationsDiffs.length ? Math.max(...rationsDiffs) : 0
+    const biting = waterDiffs.filter((w, i) => w >= 2 || (rationsDiffs[i] ?? 0) >= 2).length
+    agg.fracBitingInstances = agg.instances === 0 ? 0 : biting / agg.instances
   }
   return byKey
 }
