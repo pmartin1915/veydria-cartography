@@ -275,6 +275,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       title: 'Party & supply = the fuel',
       body: 'Pace, mounts, party size, and your ration/water stores all feed the burn. A larger or forced-march party drains supplies faster — this is what the daily breakdown spends down.',
       onEnter: () => setOptionsOpen(true),
+      // The options config floats as an opaque sheet over the route; close it
+      // on leave so the later 'days'/'export' steps aren't hidden behind it.
+      onLeave: () => setOptionsOpen(false),
     },
     {
       id: 'days',
