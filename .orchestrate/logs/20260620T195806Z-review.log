@@ -1,0 +1,53 @@
+1. **Preference `write` signatures omit required `mode` parameter.**  
+   Sections 2(f) and 2(g) define preference writes as `write(value) { … }`, but the `CampaignSection['write']` type likely expects `(value: T, mode: ImportMode) => void`. If `mode` is not optional in the type definition, this will not typecheck. The spec should either show `write(value, _mode)` or explicitly state the type allows an omitted second argument.
+
+2. **No per-section shape validation after `migrateCampaign`.**  
+   `migrateCampaign` validates the envelope wrapper (`schema`, `version`, `content`, `preferences`) but treats the section payloads as `unknown`. The registry casts them (`value as ReturnType<typeof loadAnnotations>`), so a syntactically valid JSON file with malformed section contents (e.g., `annotations: "not-an-array"`) will crash inside `section.write` or corrupt `localStorage`. This is a significant robustness gap; the spec should require graceful rejection or validation.
+
+3. **`section.id in bucket` passes `undefined` to `write`.**  
+   In `importCampaign`, `if (!bucket || !(section.id in bucket)) continue` does not guard against a key whose value is explicitly `undefined`. `section.write(undefined, mode)` would then be called, which every `write` implementation must survive but is not guaranteed by the contract.
+
+4. **`mergeById` assumes every item has a string `id` at runtime.**  
+   The helper does not check `typeof item.id === 'string'` or that `id` exists. A malformed incoming array could call `map.set(undefined, item)`, producing an unexpected key. Combined with point 2, this makes record-level merges fragile.
+
+5. **Star merge can silently drop imported stars.**  
+   `stringArraySetter` concatenates existing + incoming, dedupes, then passes to `setStarredIds`, which caps at `MAX_STARS = 50` preserving first occurrence. If the existing list already has 50 entries, every imported star is dropped without feedback. The spec should state whether this is acceptable or whether a warning/toast is required.
+
+6. **`dedupeFirst` silently strips non-string entries.**  
+   If a corrupted file contains a non-string id in a string-array section, it is filtered out without error. This hides data-quality problems rather than rejecting the file.
+
+7. **No modal focus-trap or focus-return acceptance criteria.**  
+   The confirm modal must be accessible, but the spec only mentions `role="dialog"` and `aria-label`. It omits focus trapping, returning focus to the triggering button on close, and `aria-describedby` for the warning text — all needed to match the accessibility bar set by the share popover.
+
+8. **Dropdown keyboard navigation is unspecified.**  
+   The share-menu pattern is replicated, but the spec does not state whether arrow-key navigation, Home/End, or Tab cycling within the dropdown is required. If the share popover already supports these, the campaign menu should too.
+
+9. **`window.location.reload()` is a blunt success mechanism.**  
+   Reloading the full page on import success loses any transient UI state and cannot be exercised by the proposed vitest unit tests. It also assumes the import is the last action before re-hydration; if future phases want post-import feedback or routing, this will need rework.
+
+10. **Exact placement in `App.tsx` is under-specified.**  
+    "Next to the Parchment button" leaves ambiguity about DOM order and responsive behavior. A precise location (e.g., immediately before the Parchment button, inside the same flex container) would prevent visual regressions.
+
+11. **Reusing `share-popover` CSS classes creates semantic coupling.**  
+    The campaign menu is not a share menu, yet it will inherit all share-popover styling and future share-menu redesigns will unintentionally reshape it. The spec should either bless a small set of generic dropdown classes or accept that coupling explicitly.
+
+12. **File input `multiple` attribute is not specified.**  
+    The hidden `<input type="file" accept=".json">` should have `multiple={false}`; otherwise some browsers allow multi-select and only the first file will be processed, which is confusing and untested.
+
+13. **No acceptance criterion for cancelling an in-progress file pick.**  
+    If the user opens the file dialog and clicks Cancel, `onChange` does not fire. The dropdown should close (or stay open) consistently; the spec does not say which.
+
+14. **Test suite omits malformed section-content cases.**  
+    Test 7 only covers a top-level malformed envelope. There is no test for valid envelope + invalid section payload (e.g., `annotations: null`, `featureNotes: []`), which is exactly the failure mode in point 2.
+
+15. **Test suite omits key-preservation in record merge.**  
+    Test 4 verifies overwrite/add but does not assert that an existing key absent from the imported file is preserved, even though the spec explicitly claims this behavior.
+
+16. **`setPrepOrder` background note is potentially misleading.**  
+    The background states `setPrepOrder` does not dedupe and instructs callers to "pre-dedupe before calling it." The new `stringArraySetter` does pre-dedupe, but a reader might think deduplication is `setPrepOrder`'s caller responsibility and be surprised the helper changes the semantics. The note should be clarified or removed now that the helper owns deduplication.
+
+17. **`CampaignMenu` unmounts when `shareMode` is true.**  
+    Gating the menu with `{!shareMode && …}` means any open dropdown/modal disappears if `shareMode` toggles on. This is likely acceptable but should be called out as intentional behavior rather than an accident.
+
+18. **No loading state during `await file.text()`.**  
+    For large campaign files, the UI will appear unresponsive between picking the file and the confirm modal appearing. A loading indicator is not required but is a real UX risk worth noting.

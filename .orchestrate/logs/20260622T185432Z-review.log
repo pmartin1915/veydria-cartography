@@ -1,0 +1,59 @@
+1. **Contradiction — "Give up the scribe" outcome contradicts its design rationale.**  
+   The rationale calls the branch intentionally `0/0/0` (pure narrative loss), but the verbatim content assigns `risk: 'minor'`. If the report's "outcome-impact" metric counts `risk`, the branch will not read inert, violating the expectation in acceptance criterion #6 and the deferred-teeth rationale.
+
+2. **Ambiguity — "Qalibin" is not the attested "Qalībin".**  
+   The new narrative spells the name without the macron (`Qalibin`), while encounters.ts and the attested-morpheme list spell it `Qalībin`. Under strict string/diacritic matching, this violates hard constraint #2 ("only attested morphemes").
+
+3. **Contradiction/Ambiguity — "No em-dashes" vs. example shape.**  
+   Hard constraint #2 prohibits em-dashes, yet the example shape for line 89 preserves an em-dash in the unchanged beat text. The constraint reads as absolute, which may confuse whether new content may contain em-dashes.
+
+4. **Implementation risk — Brittle line-number anchors.**  
+   Edits are pinned to lines 89, 100, 101, 104, 179, 180, 430, etc. If the files have drifted, the executor must locate by content, undermining "insert exactly as written."
+
+5. **Missing instruction — New test may need an import.**  
+   The rewritten test references `SIGNATURE_CHOICES`, which may not be imported in `passage-run.test.ts`. The spec does not mention adding the import; if absent, typecheck (criterion #2) fails.
+
+6. **Implementation risk — Type assumptions unverified.**  
+   Adding `key` assumes the `Encounter` type already permits an optional `key`; the sparse `outcome` objects assume deltas are optional. The spec does not verify these assumptions, risking TSC errors despite "no engine changes."
+
+7. **Contradiction — Git-diff scope vs. generated output.**  
+   Criterion #1 says `git diff` touches only four source files, but criterion #4 runs a simulation that rewrites `output/sim/passage-report.md`. Unless `output/` is gitignored, the diff will include that file; the criterion should clarify excluded artifacts.
+
+8. **Untestable criterion — Stochastic coverage.**  
+   Criterion #4 demands all four new keys appear in a 120-run report. If the simulation is unseeded, this is probabilistic, not guaranteed; a "pass" may be flaky.
+
+9. **Implementation risk / criterion conflict — Second test may block suite pass.**  
+   Criterion #3 requires the full test suite to pass, but the notes say the second existing test may fail and must be reported to Opus rather than edited. If it fails, criterion #3 is unsatisfiable without Opus intervention.
+
+10. **Ambiguity — "Attested morphemes" matching rules undefined.**  
+    Hard constraint #2 lists allowed names but does not define case, diacritic, hyphenation, or compound-word rules, making automated voice verification impossible.
+
+11. **Implementation risk — IDEAS.md line reference becomes stale.**  
+    The appended note cites `passage.ts:430`. Inserting ~100 lines into `passage.ts` shifts line numbers, so the newly appended documentation will be incorrect immediately.
+
+12. **Missing criterion — No verification of untouched entries.**  
+    No criterion or test checks that existing `ford`/`bandits`/`fever` entries and `passageChoose`/`passageAct`/types remain unchanged.
+
+13. **Implementation risk — `dry-wadi` time-save narrative vs. code.**  
+    The "Trust her" narrative says the wadi "spares two days," but the code puts the +2-day cost on the *stay* branch. Although explained in the rationale, the mismatch is a maintainability trap; a future editor may add a negative `daysDelta`, violating the hard constraint.
+
+14. **Untestable criterion — Differentiation thresholds undefined.**  
+    Criterion #6 uses "water or rations range > 0.5, OR outcome-impact > 0," but these metrics and thresholds are not defined in the report format, so "inert" cannot be judged objectively.
+
+15. **Ambiguity — IDEAS.md append target.**  
+    Change 4 says to append under the existing "Passage v1.1" section. If that section does not exist or is named differently, the insertion point is undefined.
+
+16. **Implementation risk — Report structure assumptions.**  
+    Criterion #4 assumes the report has "per-signature-key tables," "differentiation" rows, and "outcome-impact" rows. If the generator's output format differs, the handoff cannot be completed as specified.
+
+17. **Implementation risk — `allInitialEncounters` return type.**  
+    The test reads `e.key`. If `allInitialEncounters` returns an encounter type without an optional `key`, the test will not typecheck after encounters.ts is edited.
+
+18. **Minor ambiguity — Test name wording.**  
+    "buckets bandits ≥2×" in the new test title is unclear ("buckets" reads like a typo or unexplained jargon).
+
+19. **Implementation risk — Apostrophe escaping.**  
+    The "Pay the audit fee" narrative includes `officer\'s`, which must remain escaped when inserted into single-quoted TypeScript strings. Any formatter that changes quote style would break it.
+
+20. **Missing criterion — No automated verbatim check.**  
+    There is no criterion verifying that the prose and cost numbers were inserted exactly as written (indentation, property order, escaping).

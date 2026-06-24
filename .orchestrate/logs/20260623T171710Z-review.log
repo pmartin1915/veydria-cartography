@@ -1,0 +1,51 @@
+1. **[Ambiguity]** “Byte-identical when the scar is unused” is undefined: the compiled output cannot be literally byte-identical because new parameters, fields, and branches are added. The spec likely means *behaviorally* identical at scar=0, but that is not what it says.
+
+2. **[Ambiguity]** No constraints on scar sign or magnitude. A negative `scarRations`/`scarWater` would raise the resupply ceiling *above* starting supply; a scar larger than starting supply clamps the ceiling to 0. Neither case is ruled in or out.
+
+3. **[Ambiguity]** Change 3(b) says clamping “so resupply stays a refill-up, never a reduction,” but `Math.min(current + delta, ceil)` can *reduce* current stores when the scar drops the ceiling. The comment contradicts the actual operation.
+
+4. **[Ambiguity]** `JourneyState` persistence is not addressed. If saved games serialize `JourneyState`, old saves missing `scarRations`/`scarWater` will load `undefined`; subsequent arithmetic (`undefined + number`) yields `NaN`.
+
+5. **[Ambiguity]** Change 2(b) asserts `initJourneyState` constructs exactly two `JourneyState` objects. If helpers, guards, or test fixtures inside the file construct more, the instruction is incomplete.
+
+6. **[Ambiguity]** The spec assumes `reroute` preserves scar by spreading `...state`, but it does not direct the executor to verify this; if `reroute` reassembles the object field-by-field, the scar will be silently dropped.
+
+7. **[Ambiguity]** Acceptance criterion 5’s “if a sabkha crossing is auto-selected” leaves the success condition undefined when no sabkha encounter is selected.
+
+8. **[Ambiguity]** “Supply debt” is mentioned but never defined. It implies supply can go negative, but the spec does not state whether negative supply is a valid game state or how downstream systems handle it.
+
+9. **[Contradiction]** The scar fields are added as *required* members of `JourneyState`, yet existing tests and callers are required to stay unchanged. Any existing code that constructs `JourneyState` object literals or uses exact-shape equality will fail to compile or assert.
+
+10. **[Contradiction]** Acceptance criterion 1 says the git diff touches only six files, but the sim scripts “rewrite `output/sim/passage-report.md`.” If that file is tracked, it appears in the diff; if untracked, the worktree is modified outside the listed files—both conflict with the strict six-file claim.
+
+11. **[Contradiction]** “All existing tests must stay byte-identical” while also adding new tests and new required state fields is contradictory; existing test objects will gain new properties.
+
+12. **[Missing/Untestable]** No acceptance test covers partial resupply tiers (`'water'` or `'rations'`) with scars.
+
+13. **[Missing/Untestable]** No test covers scar accumulation beyond the starting supply ceiling (clamp to 0) or repeated scar application.
+
+14. **[Missing/Untestable]** No test covers negative scar values, or a scar applied alongside a large negative `rationsDelta`/`waterDelta`.
+
+15. **[Missing/Untestable]** No criterion specifies what to paste if `npm run sim:passage` does not emit any `sabkha-sinkhole` rows.
+
+16. **[Missing/Untestable]** There is no explicit acceptance test that default-0 callers such as `computeSupplyTimeline` produce the same outputs as before.
+
+17. **[Missing/Untestable]** “Report the count” is vague: total tests, passed tests, or the delta over the baseline 937?
+
+18. **[Missing/Untestable]** No criterion verifies the hard constraints themselves, e.g., that `SupplyConstants`/`deriveSupplyConstants` and `ai/IDEAS.md` remain untouched.
+
+19. **[Implementation risk]** Adding `scarRations` and `scarWater` after optional `mode` changes the positional signature. Any caller passing `mode` positionally will silently misroute it into `scarRations`; TypeScript catches this only if the types differ.
+
+20. **[Implementation risk]** Required `scarRations`/`scarWater` fields in `JourneyState` will likely break existing test fixtures and object literals, violating the requirement that existing tests pass unchanged.
+
+21. **[Implementation risk]** `applyDailyBurn` may be called from preview/UI paths other than `nextDay`; those callers will default scars to 0. If the UI is supposed to display scarred ceilings, those call sites need updates that the spec forbids.
+
+22. **[Implementation risk]** Scar accumulation is unbounded and irreversible. Multiple scarring choices can drive a resupply ceiling permanently to 0 with no recovery mechanic specified.
+
+23. **[Implementation risk]** The clamp in `passageChoose` only bounds the upper side; combined with negative deltas, supply can become arbitrarily negative, which downstream systems may not expect.
+
+24. **[Implementation risk]** The `reroute` spread assumption must be verified by inspection; if false, scar state is lost on reroute despite the claim that “no edit is needed there.”
+
+25. **[Implementation risk]** The sim scripts (`sim:passage`, `sim:passage-play`) are assumed to exist and to produce deterministic, parseable output containing sabkha data. No fallback is defined if scripts are missing, output format differs, or sabkha is not selected.
+
+26. **[Implementation risk]** Existing tests that assert deep equality on `JourneyState` objects will fail even at scar=0 because the objects now carry additional properties, threatening the “existing tests pass unchanged” criterion.
