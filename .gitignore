@@ -44,3 +44,9 @@ Thumbs.db
 # Session handoff and scoping notes (working scratch pad — kept locally, not tracked)
 HANDOFF-*.md
 SCOPING-*.md
+
+# Dispatcher transient artifacts
+.orchestrate/logs/
+.orchestrate/wt/
+# Claude local settings
+.claude/settings.local.json
