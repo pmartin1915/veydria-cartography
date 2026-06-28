@@ -135,6 +135,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
   const exportToastTimeoutRef = useRef<number | null>(null)
   const didAutoComputeRef = useRef(false)
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  // Switch tabs and re-anchor to the (sticky) tab strip. block:'nearest' scrolls
+  // only as far as needed to bring the strip into view: at rest the strip sits
+  // below the fold so clicking a tab scrolls down to it (you asked for that tab —
+  // you see its content); deep in a long list it scrolls up so the strip pins at
+  // top; and it's a no-op when the strip already happens to be fully visible.
+  const selectRouteTab = (tab: 'route' | 'days' | 'encounters') => {
+    setRouteTab(tab)
+    tabsRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
 
   const nodes = useMemo(() => getJourneyNodes(geojson), [geojson])
   const graph = useMemo(() => buildGraph(geojson), [geojson])
@@ -275,6 +286,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       title: 'Party & supply = the fuel',
       body: 'Pace, mounts, party size, and your ration/water stores all feed the burn. A larger or forced-march party drains supplies faster — this is what the daily breakdown spends down.',
       onEnter: () => setOptionsOpen(true),
+      // The options config floats as an opaque sheet over the route; close it
+      // on leave so the later 'days'/'export' steps aren't hidden behind it.
+      onLeave: () => setOptionsOpen(false),
     },
     {
       id: 'days',
@@ -1125,16 +1139,16 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             />
 
             {/* Tabs */}
-            <div className="journey-tabs">
+            <div className="journey-tabs" ref={tabsRef}>
               <button
                 className={`journey-tab ${routeTab === 'route' ? 'active' : ''}`}
-                onClick={() => setRouteTab('route')}
+                onClick={() => selectRouteTab('route')}
               >
                 Route
               </button>
               <button
                 className={`journey-tab ${routeTab === 'days' ? 'active' : ''}`}
-                onClick={() => setRouteTab('days')}
+                onClick={() => selectRouteTab('days')}
                 data-tour="journey-tab-days"
               >
                 Days
@@ -1142,7 +1156,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               {!shareMode && (
                 <button
                   className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
-                  onClick={() => setRouteTab('encounters')}
+                  onClick={() => selectRouteTab('encounters')}
                   data-tour="journey-tab-encounters"
                 >
                   Encounters
@@ -1173,7 +1187,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 shareMode={shareMode}
                 highlightCrisisEvents={highlightCrisisEvents}
                 onSelectSegment={(idx) => setSelectedSegmentIdx(idx)}
-                onSwitchToEncounters={() => setRouteTab('encounters')}
+                onSwitchToEncounters={() => selectRouteTab('encounters')}
               />
             )}
 

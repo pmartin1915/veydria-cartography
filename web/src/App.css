@@ -3685,10 +3685,43 @@ body {
   text-align: left;
 }
 
+/* Options config floats as a sheet over the route area instead of expanding
+   inline — opening it no longer pushes the route summary + tabs down ("jump").
+   Positioned against .journey-planner (the position:absolute panel), so it
+   escapes the body's scroll-clip and is bounded by the panel. */
+.journey-options-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  animation: journeyOptionsFade 140ms ease-out;
+}
+
 .journey-options-body {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 58px;
+  bottom: 8px;
+  z-index: 26;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  animation: journeyOptionsFade 140ms ease-out;
+}
+
+@keyframes journeyOptionsFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .journey-party {
@@ -4688,6 +4721,21 @@ body {
   gap: 4px;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 10px;
+  /* Pin the tab strip to the top of the scrolling body so it stays reachable
+     while a long Days/Encounters list scrolls under it. Opaque bg + z-index so
+     tab content never peeks through above the strip.
+     The body scroll-clips to its PADDING box, so scrolled content renders in
+     the body's 12px top padding — the band above where this strip pins at
+     top:0. The spreadless box-shadow extends the strip's opaque bg up over that
+     band. box-shadow is used rather than a ::before because on mobile the strip
+     gains overflow-x:auto (→ overflow-y:auto) which would clip a pseudo, but a
+     box-shadow is painted outside the box and survives the element's overflow.
+     Invisible at rest since it matches the card background. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-card);
+  box-shadow: 0 -13px 0 0 var(--bg-card);
 }
 
 .journey-tab {

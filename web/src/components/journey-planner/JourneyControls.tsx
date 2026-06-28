@@ -162,6 +162,13 @@ export default function JourneyControls({
           <span className="journey-options-title">Party, supply &amp; options</span>
         </button>
         {optionsOpen && (
+          <div
+            className="journey-options-backdrop"
+            onClick={onToggleOptions}
+            aria-hidden="true"
+          />
+        )}
+        {optionsOpen && (
           <div className="journey-options-body">
             <PartyConfigBlock
               party={party}
