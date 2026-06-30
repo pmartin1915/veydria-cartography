@@ -55,7 +55,8 @@ import {
   type Action,
   type JourneyDay,
 } from './journey-days'
-import { applyDailyBurn, type SupplyDay } from './journey-supply'
+import { applyDailyBurn, getResupplyTier, type SupplyDay } from './journey-supply'
+import type { RouteMode } from './journey-graph'
 import type { Encounter } from './encounters'
 
 /* ─── Choice data model ─── */
@@ -417,6 +418,8 @@ export type PassageEntry =
   | { kind: 'wait'; dayLabel: number; supply: SupplyDay; narrative: string }
   /** The chosen branch of a signature encounter (one-off deltas folded in). */
   | { kind: 'choice'; dayLabel: number; label: string; narrative: string; risk: 'none' | 'minor' | 'grave' }
+  /** A mid-passage reroute to a new destination (no day consumed; route swapped). */
+  | { kind: 'reroute'; dayLabel: number; toName: string; narrative: string }
   /** The closing entry. */
   | { kind: 'ending'; dayLabel: number; outcome: Exclude<PassageOutcome, 'in-progress'>; narrative: string }
 
@@ -555,9 +558,16 @@ export function zeroSignatureCosts(journey: JourneyState): void {
  * Begin a passage from the same inputs Atlas computed. Seeds a JourneyState via
  * the existing engine, then zeroes the engine-side supplyCost of every signature
  * encounter so the player's choice owns its supply movement.
+ *
+ * Resupply is activated by default: if the caller does not supply its own
+ * `resupplyTierFor`, the canonical `getResupplyTier` mapping is used so reaching
+ * a town/caravanserai (full) or port/oasis (water) restocks. This brings live
+ * Passage into line with the sim-tuned 6/6 supply economy (the sim always ran
+ * with resupply on) and is what makes the capacity-scar ceiling actually bite.
+ * Pass `resupplyTierFor: () => 'none'` to opt out.
  */
 export function initPassage(opts: JourneyStateOpts): PassageState {
-  const journey = initJourneyState(opts)
+  const journey = initJourneyState({ ...opts, resupplyTierFor: opts.resupplyTierFor ?? getResupplyTier })
   zeroSignatureCosts(journey)
   return { journey, log: [], extraDays: 0, pending: null, outcome: 'in-progress', signatureCounts: {} }
 }
@@ -694,5 +704,41 @@ export function passageChoose(state: PassageState, choiceIndex: number): Passage
   }
 
   // Perish can be triggered by the wait/choice burn even before the day resolves.
+  return settleOutcome(next)
+}
+
+/**
+ * Turn the column toward a new destination mid-passage. Delegates to the engine's
+ * `reroute` action, which snaps the party to the nearer route node, recomputes the
+ * path from there to `newEndId`, and rebuckets it with `dayOffset = dayNum` so the
+ * day counter continues unbroken. Supply, scars, and exhaustion carry forward; no
+ * day is consumed (reroute is the decision, not a day's travel).
+ *
+ * No-op once finished, while a choice is pending, or if the passage was started
+ * without the graph/destination wiring the engine reroute requires.
+ */
+export function passageReroute(state: PassageState, newEndId: string, mode: RouteMode): PassageState {
+  if (state.outcome !== 'in-progress' || state.pending) return state
+  if (!state.journey.graph || !newEndId) return state
+
+  const journey: JourneyState = { ...state.journey, endId: newEndId }
+  const result = nextDay(journey, { kind: 'reroute', mode })
+  if (!result.advanced) return state
+
+  zeroSignatureCosts(result.state)
+  const dest = result.state.route.nodes[result.state.route.nodes.length - 1]?.name ?? 'a new heading'
+  const next: PassageState = {
+    ...state,
+    journey: result.state,
+    log: [
+      ...state.log,
+      {
+        kind: 'reroute',
+        dayLabel: currentDay(state),
+        toName: dest,
+        narrative: `You turn the column off the planned road. The new heading is ${dest}, and the party reckons its stores against the road still to come.`,
+      },
+    ],
+  }
   return settleOutcome(next)
 }

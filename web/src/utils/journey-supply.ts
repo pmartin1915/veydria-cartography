@@ -78,8 +78,20 @@ const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
 /** Softer-pressure tier (water × 1.25). Arid takes priority when both are present. */
 const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
 
-/** Tier of supply restored at a day's camp. See `getResupplyTier` (scripts/sim/run-journey.ts). */
+/** Tier of supply restored at a day's camp. */
 export type ResupplyTier = 'full' | 'rations' | 'water' | 'none'
+
+/**
+ * Canonical node-category → resupply tier mapping. Settled, walled towns restock
+ * the whole party (food + water); coastal ports and desert oases give water only.
+ * Single source of truth shared by the live product (Passage mode) and the sim
+ * harness (`scripts/sim/run-journey.ts` imports this), so balance can't drift.
+ */
+export function getResupplyTier(category: string): ResupplyTier {
+  if (category === 'civilization' || category === 'caravanserai') return 'full'
+  if (category === 'port' || category === 'oasis') return 'water'
+  return 'none'
+}
 
 /**
  * Per-day burn modifiers an action can impose (Phase 3 sim policies).

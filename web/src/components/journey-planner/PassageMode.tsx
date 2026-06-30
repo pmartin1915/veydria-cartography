@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   initPassage,
   passageAct,
   passageChoose,
+  passageReroute,
   currentNodeIndex,
   type PassageState,
   type PassageEntry,
@@ -11,7 +12,8 @@ import type { JourneyStateOpts } from '../../utils/journey-days'
 import { encounterTypeIcon, encounterSeverityLabel } from '../../utils/encounters'
 import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from '../../utils/time-of-day'
 import { IconCloudRain, IconPin } from '../icons'
-import type { JourneyRoute, Season, RouteMode, PartyConfig } from '../../utils/journey-graph'
+import NodeIcon from './NodeIcon'
+import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyNode, Graph } from '../../utils/journey-graph'
 import type { SupplyConfig } from '../../utils/journey-supply'
 
 interface PassageModeProps {
@@ -22,8 +24,22 @@ interface PassageModeProps {
   supply: SupplyConfig
   edgeBiomes?: (string | undefined)[]
   departureDayOfYear?: number
+  /** All map nodes — the reroute picker's destination list. */
+  nodes: JourneyNode[]
+  /** The journey graph — required for the engine to recompute a reroute path. */
+  graph: Graph
+  /** The original destination id, seeded into the engine for reroute snapping. */
+  endId: string
   onExit: () => void
   onPositionChange?: (nodeIndex: number | null) => void
+}
+
+/** Mirror of JourneyPlanner's category formatter for the reroute picker rows. */
+function formatNodeCategory(n: JourneyNode): string {
+  const cat = n.category.replace('_', ' ')
+  if (!n.civ) return cat
+  const civLabel = n.civ.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return `${civLabel} · ${cat}`
 }
 
 const ACTION_KINDS: { kind: 'continue' | 'rest' | 'force-march' | 'ration' | 'turn-back'; label: string; title: string }[] = [
@@ -55,13 +71,29 @@ export default function PassageMode({
   supply,
   edgeBiomes,
   departureDayOfYear,
+  nodes,
+  graph,
+  endId,
   onExit,
   onPositionChange,
 }: PassageModeProps) {
   const [state, setState] = useState<PassageState>(() =>
-    initPassage({ route, season, mode, party, supply, edgeBiomes, departureDayOfYear } as JourneyStateOpts)
+    initPassage({ route, season, mode, party, supply, edgeBiomes, departureDayOfYear, graph, endId } as JourneyStateOpts)
   )
+  const [rerouteOpen, setRerouteOpen] = useState(false)
+  const [rerouteSearch, setRerouteSearch] = useState('')
   const headingRef = useRef<HTMLHeadingElement>(null)
+
+  // The node the party is currently standing on — exclude it from reroute targets.
+  // Indexes the CURRENT journey route (which the engine swaps on each reroute).
+  const currentId = state.journey.route.nodes[currentNodeIndex(state)]?.id
+  const filteredReroute = useMemo(() => {
+    const q = rerouteSearch.toLowerCase()
+    return nodes.filter(n =>
+      n.id !== currentId &&
+      (n.name.toLowerCase().includes(q) || n.category.includes(q))
+    )
+  }, [nodes, rerouteSearch, currentId])
 
   // Report position on mount and after every state change.
   useEffect(() => {
@@ -88,6 +120,12 @@ export default function PassageMode({
 
   const handleChoice = (choiceIndex: number) => {
     setState(prev => passageChoose(prev, choiceIndex))
+  }
+
+  const handleReroute = (newEndId: string) => {
+    setState(prev => passageReroute(prev, newEndId, mode))
+    setRerouteSearch('')
+    setRerouteOpen(false)
   }
 
   return (
@@ -149,6 +187,40 @@ export default function PassageMode({
               </button>
             ))}
           </div>
+        ) : rerouteOpen ? (
+          <div className="passage-reroute-picker" data-testid="passage-reroute-picker">
+            <div className="passage-reroute-prompt">Turn the column toward a new destination.</div>
+            <input
+              type="text"
+              className="journey-dropdown-search"
+              placeholder="Search destinations..."
+              value={rerouteSearch}
+              onChange={(e) => setRerouteSearch(e.target.value)}
+              autoFocus
+            />
+            <div className="journey-dropdown-list passage-reroute-list">
+              {filteredReroute.map(n => (
+                <button
+                  key={n.id}
+                  className="journey-dropdown-item"
+                  onClick={() => handleReroute(n.id)}
+                >
+                  <NodeIcon category={n.category} />
+                  <span className="journey-dropdown-item-name">{n.name}</span>
+                  <span className="journey-dropdown-item-cat">{formatNodeCategory(n)}</span>
+                </button>
+              ))}
+              {filteredReroute.length === 0 && (
+                <div className="journey-dropdown-empty">No matches</div>
+              )}
+            </div>
+            <button
+              className="passage-btn"
+              onClick={() => { setRerouteSearch(''); setRerouteOpen(false) }}
+            >
+              Cancel
+            </button>
+          </div>
         ) : (
           <div className="passage-action-bar" data-tour="passage-actions">
             {ACTION_KINDS.map(({ kind, label, title }) => (
@@ -161,6 +233,14 @@ export default function PassageMode({
                 {label}
               </button>
             ))}
+            <button
+              className="passage-btn"
+              data-testid="passage-reroute-btn"
+              title="Change the party's destination. Recomputes the road from where you stand."
+              onClick={() => setRerouteOpen(true)}
+            >
+              Reroute
+            </button>
           </div>
         )}
       </div>
@@ -315,6 +395,16 @@ function PassageEntryBlock({ entry }: { entry: PassageEntry }) {
             <span className={`passage-choice-risk ${entry.risk}`}>{entry.risk}</span>
           </div>
           <div className="passage-choice-taken">{entry.label}</div>
+          <div className="passage-wait-narrative">{entry.narrative}</div>
+        </div>
+      )
+    case 'reroute':
+      return (
+        <div className="passage-reroute journey-day">
+          <div className="journey-day-header">
+            <span className="journey-day-num">Day {entry.dayLabel}</span>
+            <span className="passage-reroute-badge">Reroute</span>
+          </div>
           <div className="passage-wait-narrative">{entry.narrative}</div>
         </div>
       )

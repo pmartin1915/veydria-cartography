@@ -405,3 +405,43 @@ test('Passage mode walks a route to an ending and returns to Atlas', async ({ pa
   await expect(page.locator('.app-main.passage-mode')).toHaveCount(0)
   await expect(page.locator('.passage-position-marker')).toHaveCount(0)
 })
+
+test('Passage mode reroutes to a new destination mid-journey and still reaches an ending', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  await page.getByTestId('set-out-btn').click()
+  await expect(page.locator('.passage-action-bar')).toBeVisible()
+
+  // Advance one day so the party is underway (resolve a choice if one appears).
+  const firstChoice = page.locator('.passage-choice-card')
+  if (await firstChoice.count() > 0) await firstChoice.first().click()
+  const continueBtn = page.locator('.passage-action-bar .passage-btn--primary')
+  if (await continueBtn.isVisible().catch(() => false)) await continueBtn.click()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+
+  // Open the reroute picker and choose a new destination.
+  await page.getByTestId('passage-reroute-btn').click()
+  await expect(page.getByTestId('passage-reroute-picker')).toBeVisible()
+  await page.locator('.passage-reroute-list .journey-dropdown-item').first().click()
+
+  // The picker closes, a reroute journal entry is recorded, and the marker remains.
+  await expect(page.getByTestId('passage-reroute-picker')).toHaveCount(0)
+  await expect(page.locator('.passage-reroute').first()).toBeVisible()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+
+  // The rerouted passage still walks to an ending.
+  let ended = false
+  for (let i = 0; i < 40; i++) {
+    const choiceCards = page.locator('.passage-choice-card')
+    if (await choiceCards.count() > 0) await choiceCards.first().click()
+    if (await page.locator('.passage-ending-panel').isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+    const cont = page.locator('.passage-action-bar .passage-btn--primary')
+    if (await cont.isVisible().catch(() => false)) await cont.click()
+    else break
+  }
+  expect(ended, 'Rerouted passage should reach an ending within the bounded walk').toBe(true)
+})

@@ -831,6 +831,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             supply={supply}
             edgeBiomes={edgeBiomes}
             departureDayOfYear={departureDayOfYear}
+            nodes={nodes}
+            graph={graph}
+            endId={endId}
             onExit={() => { setPassageActive(false); onPassageActiveChange?.(false) }}
             onPositionChange={onPassagePositionChange}
           />
