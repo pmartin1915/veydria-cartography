@@ -292,11 +292,20 @@ function pickWeightedTime(rng: () => number): TimeOfDay {
   return 'night'
 }
 
-/** Time-of-day for a beat: its prose-anchored time if set, else a weighted roll. */
-export function pickEncounterTime(beat: Beat, rng: () => number): TimeOfDay {
-  return beat.timeOfDay && beat.timeOfDay.length > 0
-    ? beat.timeOfDay[Math.floor(rng() * beat.timeOfDay.length)]
-    : pickWeightedTime(rng)
+/**
+ * Time-of-day for a beat: its prose-anchored time if set, else a weighted roll.
+ * When `travelTime` is given (the leg's time-of-day, from a caller that passes it
+ * to generateEncounters), an unpinned beat takes the travel time, and a pinned
+ * beat that lists the travel time settles on it — so the badge matches the leg.
+ * Omitting `travelTime` (every existing caller) preserves the exact prior rng path.
+ */
+export function pickEncounterTime(beat: Beat, rng: () => number, travelTime?: TimeOfDay): TimeOfDay {
+  const pins = beat.timeOfDay
+  if (pins && pins.length > 0) {
+    if (travelTime && pins.includes(travelTime)) return travelTime
+    return pins[Math.floor(rng() * pins.length)]
+  }
+  return travelTime ?? pickWeightedTime(rng)
 }
 
 function timeOverlayFor(type: Encounter['type'], time: TimeOfDay, rng: () => number): string | undefined {
@@ -312,10 +321,13 @@ function timeOverlayFor(type: Encounter['type'], time: TimeOfDay, rng: () => num
  * so the caller's beat-selection RNG stream, and therefore severity / type /
  * supplyCost and the sim baseline, are never perturbed. `allowOverlay` is false
  * for "nothing" filler beats (a quiet leg shouldn't morph into a night ambush).
+ * When `travelTime` is set, an unpinned beat takes it directly without drawing the
+ * weighted-roll `todRng()`, so the overlay roll below reads one position earlier in
+ * the tod stream — expected, and still independent of the beat-selection stream.
  */
-function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOverlay: boolean): Encounter {
+function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOverlay: boolean, travelTime?: TimeOfDay): Encounter {
   const todRng = mulberry32(todSeed)
-  const time = pickEncounterTime(beat, todRng)
+  const time = pickEncounterTime(beat, todRng, travelTime)
   let text = beat.text
   // Signature beats (key in SIGNATURE_CHOICES) drive a choice prompt, so their prose
   // must stay coherent with the options — never swap it for a generic time overlay.
@@ -370,11 +382,28 @@ function poolForLeg(
   )
 }
 
+/**
+ * Drop beats pinned to a time-of-day the party isn't travelling in. Unpinned
+ * beats are always eligible (their badge is set to the travel time downstream).
+ * Falls back to the unfiltered pool if every beat is incompatible, so a leg
+ * never runs dry. A no-op when `travelTime` is omitted.
+ */
+export function filterBeatsByTime(pool: Beat[], travelTime?: TimeOfDay): Beat[] {
+  if (!travelTime) return pool
+  const kept = pool.filter(b => !b.timeOfDay || b.timeOfDay.includes(travelTime))
+  if (kept.length > 0) return kept
+  // Every beat is pinned to an incompatible time, yet the leg still needs one.
+  // Strip the pins so the chosen beat is stamped with the travel time instead of
+  // contradicting it — keeps "every encounter reads at the travel time" unconditional.
+  return pool.map(b => ({ ...b, timeOfDay: undefined }))
+}
+
 export function generateEncounters(
   route: JourneyRoute,
   season?: Season,
   mode: RouteMode = 'direct',
-  edgeBiomes?: (string | undefined)[]
+  edgeBiomes?: (string | undefined)[],
+  travelTime?: TimeOfDay,
 ): Encounter[] {
   const sig = route.nodes.map(n => n.id).join('|') + '#' + (season || 'any') + '#' + mode
   const seed = djb2Hash(sig)
@@ -393,27 +422,27 @@ export function generateEncounters(
     // the Aethelian sea-fauna rows (civ: 'aethelian') would never match. Alias it
     // for external matching only — a no-op on every non-basin leg.
     const edgeCivs = [fromNode?.civ, toNode?.civ].map(c => (c && CIV_ALIAS_FOR_EXTERNAL[c]) || c)
-    const pool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
+    const pool = filterBeatsByTime(poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea), travelTime)
 
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
     if (rng() < nothingChance) {
-      const nothingPool = filterNothingBeats(edgeBiomes?.[i], season, sea)
+      const nothingPool = filterBeatsByTime(filterNothingBeats(edgeBiomes?.[i], season, sea), travelTime)
       const nothing = nothingPool[Math.floor(rng() * nothingPool.length)]
-      encounters.push(makeEncounter(nothing, i, todBase + i * 131, false))
+      encounters.push(makeEncounter(nothing, i, todBase + i * 131, false, travelTime))
       continue
     }
 
     const beat = pool[Math.floor(rng() * pool.length)]
-    encounters.push(makeEncounter(beat, i, todBase + i * 131 + 977, true))
+    encounters.push(makeEncounter(beat, i, todBase + i * 131 + 977, true, travelTime))
 
     // Long legs get a second encounter
     if ((edge.segmentDays || 0) > 5) {
       const secondRng = mulberry32(seed + i + 10007)
       if (secondRng() >= nothingChance) {
-        const secondPool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
+        const secondPool = filterBeatsByTime(poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea), travelTime)
         const beat2 = secondPool[Math.floor(secondRng() * secondPool.length)]
-        encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true))
+        encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true, travelTime))
       }
     }
   }
