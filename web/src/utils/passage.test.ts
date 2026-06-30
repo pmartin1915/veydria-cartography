@@ -70,6 +70,16 @@ function passageWithSignature(key: string): PassageState {
   return state
 }
 
+/** Init a passage and plant the same signature encounter on multiple engine days. */
+function passageWithRepeatedSignature(key: string, days: number[]): PassageState {
+  const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1, 1], totalKm: 150 })
+  const state = initPassage({ route, season: 'spring', mode: 'direct' })
+  for (const d of days) {
+    state.journey.encountersByDay.set(d, [signatureEncounter(key)])
+  }
+  return state
+}
+
 describe('passage: init', () => {
   it('seeds a clean in-progress state from a computed route', () => {
     const route = makeRoute({ edgeDays: [2, 2, 1], totalKm: 125 })
@@ -150,7 +160,9 @@ describe('passage: signature encounters + choices', () => {
 
   it('each registered signature has at least 2 measurably-distinct choices', () => {
     for (const key of Object.keys(SIGNATURE_CHOICES)) {
-      const choices = SIGNATURE_CHOICES[key]
+      const variants = SIGNATURE_CHOICES[key]
+      expect(variants.length).toBeGreaterThanOrEqual(1)
+      const choices = variants[0]
       expect(choices.length).toBeGreaterThanOrEqual(2)
       // Distinct: the (rations, water, days) cost vectors are not all identical.
       const vectors = choices.map(c =>
@@ -191,6 +203,43 @@ describe('passage: signature encounters + choices', () => {
     expect(wait.journey.waterLeft).toBeLessThan(waterBefore)
     expect(lastWait).toMatchObject({ kind: 'wait' })
     void rationsBefore
+  })
+
+  it('a single encounter of key X always resolves to variants[0]', () => {
+    const base = passageWithSignature('bandits')
+    const pending = passageAct(base, { kind: 'continue' })
+    expect(pending.pending).not.toBeNull()
+    expect(pending.pending!.choices).toEqual(SIGNATURE_CHOICES.bandits[0])
+    expect(pending.signatureCounts).toEqual({})
+  })
+
+  it('repeated ford encounters use variants[0] then wrap to variants[0] fallback', () => {
+    const base = passageWithRepeatedSignature('ford', [1, 2])
+    const first = passageAct(base, { kind: 'continue' })
+    expect(first.pending).not.toBeNull()
+    expect(first.pending!.choices).toEqual(SIGNATURE_CHOICES.ford[0])
+
+    const afterFirst = passageChoose(first, 0)
+    expect(afterFirst.signatureCounts.ford).toBe(1)
+
+    const second = passageAct(afterFirst, { kind: 'continue' })
+    expect(second.pending).not.toBeNull()
+    // ford has only one variant, so the second encounter falls back to variants[0].
+    expect(second.pending!.choices).toEqual(SIGNATURE_CHOICES.ford[0])
+  })
+
+  it('repeated sand-wraith encounters cycle through variants', () => {
+    const base = passageWithRepeatedSignature('sand-wraith', [1, 2])
+    const first = passageAct(base, { kind: 'continue' })
+    expect(first.pending).not.toBeNull()
+    expect(first.pending!.choices).toEqual(SIGNATURE_CHOICES['sand-wraith'][0])
+
+    const afterFirst = passageChoose(first, 0)
+    expect(afterFirst.signatureCounts['sand-wraith']).toBe(1)
+
+    const second = passageAct(afterFirst, { kind: 'continue' })
+    expect(second.pending).not.toBeNull()
+    expect(second.pending!.choices).toEqual(SIGNATURE_CHOICES['sand-wraith'][1])
   })
 })
 
@@ -240,6 +289,7 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
     const enc = signatureEncounter('test-scar')
     state.journey.encountersByDay.set(1, [enc])
     state.pending = { encounter: enc, choices }
+    state.signatureCounts = {}
     return state
   }
 

@@ -100,7 +100,7 @@ export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'], key: 'customs-raid' },
   { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe', key: 'plague-quarantine' },
   // Biome-specific trade-route beats
-  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'] },
+  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'], key: 'sand-wraith' },
   { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha', key: 'sabkha-sinkhole' },
   { text: 'The Lam-Chen switchback climbs in tight loops up the escarpment; the carts are too heavy to take the grade as they stand.', type: 'environmental', severity: 'severe', biome: 'Escarpment', key: 'switchback' },
   { text: 'Date-palm shade at the oasis well; a water-rights dispute between two Irrah clans boils over.', type: 'social', severity: 'moderate', biome: 'Oasis' },

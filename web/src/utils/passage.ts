@@ -96,216 +96,304 @@ export interface EncounterChoice {
  * em-dash-free (Option B), only attested morphemes (Irrah, Ngaru-Bon, Tavakh Qarat,
  * salt-cube, letters of credit), all already present in the source beats.
  */
-export const SIGNATURE_CHOICES: Record<string, EncounterChoice[]> = {
+export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
   ford: [
-    {
-      label: 'Ford now',
-      outcome: {
-        rationsDelta: -2,
-        risk: 'minor',
-        narrative:
-          'The rope holds. The current does not forgive the slow. You cross wet to the chest and lose a sack of meal to the brown water.',
+    [
+      {
+        label: 'Ford now',
+        outcome: {
+          rationsDelta: -2,
+          risk: 'minor',
+          narrative:
+            'The rope holds. The current does not forgive the slow. You cross wet to the chest and lose a sack of meal to the brown water.',
+        },
       },
-    },
-    {
-      label: 'Wait out the flood',
-      outcome: {
-        daysDelta: 2,
-        risk: 'none',
-        narrative:
-          'You make camp above the waterline and wait. The flood drops on the third morning and the crossing is easy. The waiting was not.',
+      {
+        label: 'Wait out the flood',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            'You make camp above the waterline and wait. The flood drops on the third morning and the crossing is easy. The waiting was not.',
+        },
       },
-    },
-    {
-      label: 'Pay the Irrah guide',
-      outcome: {
-        rationsDelta: -1,
-        risk: 'none',
-        narrative:
-          'The Irrah guide swims the rope across for a fee in salt. You cross dry, a sack lighter in trade-goods and a story richer.',
+      {
+        label: 'Pay the Irrah guide',
+        outcome: {
+          rationsDelta: -1,
+          risk: 'none',
+          narrative:
+            'The Irrah guide swims the rope across for a fee in salt. You cross dry, a sack lighter in trade-goods and a story richer.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   bandits: [
-    {
-      label: 'Pay the toll',
-      outcome: {
-        rationsDelta: -3,
-        risk: 'none',
-        narrative:
-          'You hand over the strongbox by the count of three. The masked riders melt back into the scrub. The party eats thin for it.',
+    [
+      {
+        label: 'Pay the toll',
+        outcome: {
+          rationsDelta: -3,
+          risk: 'none',
+          narrative:
+            'You hand over the strongbox by the count of three. The masked riders melt back into the scrub. The party eats thin for it.',
+        },
       },
-    },
-    {
-      label: 'Stand and fight',
-      outcome: {
-        rationsDelta: -1,
-        waterDelta: -2,
-        risk: 'grave',
-        narrative:
-          'Steel answers steel in the scrub. The riders break and run. Two of yours do not rise, and the wounded drink double.',
+      {
+        label: 'Stand and fight',
+        outcome: {
+          rationsDelta: -1,
+          waterDelta: -2,
+          risk: 'grave',
+          narrative:
+            'Steel answers steel in the scrub. The riders break and run. Two of yours do not rise, and the wounded drink double.',
+        },
       },
-    },
-    {
-      label: 'Parley',
-      outcome: {
-        rationsDelta: -1,
-        daysDelta: 1,
-        risk: 'minor',
-        narrative:
-          'You talk. The bandit-chief knows your manifest and your patience both. A day of words buys passage for a tithe of meal.',
+      {
+        label: 'Parley',
+        outcome: {
+          rationsDelta: -1,
+          daysDelta: 1,
+          risk: 'minor',
+          narrative:
+            'You talk. The bandit-chief knows your manifest and your patience both. A day of words buys passage for a tithe of meal.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   fever: [
-    {
-      label: 'Pay the healer',
-      outcome: {
-        rationsDelta: -2,
-        risk: 'none',
-        narrative:
-          'The Tavakh Qarat healer takes payment in letters of credit and bitter root. The shivering eases by dusk. The strongbox is lighter.',
+    [
+      {
+        label: 'Pay the healer',
+        outcome: {
+          rationsDelta: -2,
+          risk: 'none',
+          narrative:
+            'The Tavakh Qarat healer takes payment in letters of credit and bitter root. The shivering eases by dusk. The strongbox is lighter.',
+        },
       },
-    },
-    {
-      label: 'Press on',
-      outcome: {
-        waterDelta: -3,
-        risk: 'grave',
-        narrative:
-          'You march the sick in the cart and hope. The fever rides with you. The water-skins empty faster than the road shortens.',
+      {
+        label: 'Press on',
+        outcome: {
+          waterDelta: -3,
+          risk: 'grave',
+          narrative:
+            'You march the sick in the cart and hope. The fever rides with you. The water-skins empty faster than the road shortens.',
+        },
       },
-    },
-    {
-      label: 'Rest the sick',
-      outcome: {
-        daysDelta: 2,
-        risk: 'minor',
-        narrative:
-          'You halt and let the fever break in its own time. Two days are lost to the cots. The party rises gaunt but whole.',
+      {
+        label: 'Rest the sick',
+        outcome: {
+          daysDelta: 2,
+          risk: 'minor',
+          narrative:
+            'You halt and let the fever break in its own time. Two days are lost to the cots. The party rises gaunt but whole.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   'dry-wadi': [
-    {
-      label: 'Trust her, take the wadi',
-      outcome: {
-        scarWater: 2,
-        risk: 'minor',
-        narrative:
-          'You follow the Qalībin path-finder down into the dry wadi. She reads the salt-cracks like a ledger and the floor runs true between the hills. It spares two days. On the descent a cask cracks against the rock and bleeds out into the salt before anyone can right it, and the party draws less at every well from here on.',
+    [
+      {
+        label: 'Trust her, take the wadi',
+        outcome: {
+          scarWater: 2,
+          risk: 'minor',
+          narrative:
+            'You follow the Qalībin path-finder down into the dry wadi. She reads the salt-cracks like a ledger and the floor runs true between the hills. It spares two days. On the descent a cask cracks against the rock and bleeds out into the salt before anyone can right it, and the party draws less at every well from here on.',
+        },
       },
-    },
-    {
-      label: 'Stay on the mapped trail',
-      outcome: {
-        daysDelta: 2,
-        risk: 'none',
-        narrative:
-          'You thank the path-finder and keep to the road you know. The mapped trail holds water at every marked well. It also holds every mile the wadi would have spared you.',
+      {
+        label: 'Stay on the mapped trail',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            'You thank the path-finder and keep to the road you know. The mapped trail holds water at every marked well. It also holds every mile the wadi would have spared you.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   'customs-raid': [
-    {
-      label: 'Pay the audit fee',
-      outcome: {
-        rationsDelta: -3,
-        risk: 'none',
-        narrative:
-          'You pay the audit before it becomes a trial. Coin and letters of credit both, counted out on a Basin officer\'s folding table. The manifest comes back stamped and a third lighter.',
+    [
+      {
+        label: 'Pay the audit fee',
+        outcome: {
+          rationsDelta: -3,
+          risk: 'none',
+          narrative:
+            'You pay the audit before it becomes a trial. Coin and letters of credit both, counted out on a Basin officer\'s folding table. The manifest comes back stamped and a third lighter.',
+        },
       },
-    },
-    {
-      label: 'Give up the scribe',
-      outcome: {
-        risk: 'none',
-        narrative:
-          'You let them take the senior scribe back to the Tavakh Qarat under guard. The caravan rolls on at dawn, one ledger-hand short and quieter for it. He knew the manifest better than any of you.',
+      {
+        label: 'Give up the scribe',
+        outcome: {
+          risk: 'none',
+          narrative:
+            'You let them take the senior scribe back to the Tavakh Qarat under guard. The caravan rolls on at dawn, one ledger-hand short and quieter for it. He knew the manifest better than any of you.',
+        },
       },
-    },
-    {
-      label: 'Refuse, force the issue',
-      outcome: {
-        daysDelta: 2,
-        waterDelta: -1,
-        risk: 'grave',
-        narrative:
-          'You refuse, and the standoff holds the road two days. The Basin officers send for a magistrate; the magistrate sends for his lunch. The seals break in the end, and you are poorer in days and patience both.',
+      {
+        label: 'Refuse, force the issue',
+        outcome: {
+          daysDelta: 2,
+          waterDelta: -1,
+          risk: 'grave',
+          narrative:
+            'You refuse, and the standoff holds the road two days. The Basin officers send for a magistrate; the magistrate sends for his lunch. The seals break in the end, and you are poorer in days and patience both.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   'plague-quarantine': [
-    {
-      label: 'Hold at the cordon',
-      outcome: {
-        daysDelta: 12,
-        risk: 'none',
-        narrative:
-          'You pitch camp below the red banner and wait the cordon out. The Irrah outrider counts the days on a knotted cord and will not be hurried. The fortnight passes. So do the stores.',
+    [
+      {
+        label: 'Hold at the cordon',
+        outcome: {
+          daysDelta: 12,
+          risk: 'none',
+          narrative:
+            'You pitch camp below the red banner and wait the cordon out. The Irrah outrider counts the days on a knotted cord and will not be hurried. The fortnight passes. So do the stores.',
+        },
       },
-    },
-    {
-      label: 'Buy a forged seal',
-      outcome: {
-        rationsDelta: -4,
-        risk: 'grave',
-        narrative:
-          'A Khazadari scribe sells you a seal of clean passage, the ink still wet. The outrider studies it a long moment, then waves you through. You ride hard until the cordon is a rumour behind you.',
+      {
+        label: 'Buy a forged seal',
+        outcome: {
+          rationsDelta: -4,
+          risk: 'grave',
+          narrative:
+            'A Khazadari scribe sells you a seal of clean passage, the ink still wet. The outrider studies it a long moment, then waves you through. You ride hard until the cordon is a rumour behind you.',
+        },
       },
-    },
-    {
-      label: 'Take the salt-track around',
-      outcome: {
-        daysDelta: 3,
-        waterDelta: -2,
-        risk: 'minor',
-        narrative:
-          'You leave the road for the old salt-track the Irrah drovers use. It costs three days and the flats give up no water. But no banner flies out here, and no one counts your dead.',
+      {
+        label: 'Take the salt-track around',
+        outcome: {
+          daysDelta: 3,
+          waterDelta: -2,
+          risk: 'minor',
+          narrative:
+            'You leave the road for the old salt-track the Irrah drovers use. It costs three days and the flats give up no water. But no banner flies out here, and no one counts your dead.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   'sabkha-sinkhole': [
-    {
-      label: 'Cut the cart loose',
-      outcome: {
-        rationsDelta: -2,
-        scarRations: 1,
-        risk: 'none',
-        narrative:
-          'You cut the traces and let the salt take the cart whole. The stores in it are gone, swallowed with the axles. The party walks lighter and hungrier from here.',
+    [
+      {
+        label: 'Cut the cart loose',
+        outcome: {
+          rationsDelta: -2,
+          scarRations: 1,
+          risk: 'none',
+          narrative:
+            'You cut the traces and let the salt take the cart whole. The stores in it are gone, swallowed with the axles. The party walks lighter and hungrier from here.',
+        },
       },
-    },
-    {
-      label: 'Haul it out by rope',
-      outcome: {
-        daysDelta: 2,
-        waterDelta: -4,
-        risk: 'grave',
-        narrative:
-          'You rig ropes to the cart and the whole party hauls against the salt. Two days it fights you before it comes free, sucking and reluctant. The water-skins paid for every hour of it.',
+      {
+        label: 'Haul it out by rope',
+        outcome: {
+          daysDelta: 2,
+          waterDelta: -4,
+          risk: 'grave',
+          narrative:
+            'You rig ropes to the cart and the whole party hauls against the salt. Two days it fights you before it comes free, sucking and reluctant. The water-skins paid for every hour of it.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
   ],
   switchback: [
-    {
-      label: 'Stave the water-casks',
-      outcome: {
-        scarWater: 2,
-        risk: 'none',
-        narrative:
-          'You stave in the big water-casks and roll them off the switchback\'s edge; the carts take the grade light and the party crests by dusk. The water they held is gone into the rock, and from here every leg runs on a thinner skin.',
+    [
+      {
+        label: 'Stave the water-casks',
+        outcome: {
+          scarWater: 2,
+          risk: 'none',
+          narrative:
+            'You stave in the big water-casks and roll them off the switchback\'s edge; the carts take the grade light and the party crests by dusk. The water they held is gone into the rock, and from here every leg runs on a thinner skin.',
+        },
       },
-    },
-    {
-      label: 'Double-team the climb',
-      outcome: {
-        daysDelta: 2,
-        risk: 'none',
-        narrative:
-          'You split the party and take the carts up one at a time, half hauling on the ropes while half set the chocks. Two days the escarpment costs you, loop by loop. No one falls and nothing is left behind. The party crests whole, and slower.',
+      {
+        label: 'Double-team the climb',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            'You split the party and take the carts up one at a time, half hauling on the ropes while half set the chocks. Two days the escarpment costs you, loop by loop. No one falls and nothing is left behind. The party crests whole, and slower.',
+        },
       },
-    },
+    ],
+    // TODO: add variant prose for instance 1+
+  ],
+  'sand-wraith': [
+    [
+      {
+        label: 'Drive straight through',
+        outcome: {
+          rationsDelta: -2,
+          waterDelta: -1,
+          risk: 'grave',
+          narrative:
+            'You crack the whip and run the dune face. The wraith keeps pace without breathing, and by dusk two pack animals have collapsed and a waterskin has burst under the heat.',
+        },
+      },
+      {
+        label: 'Circle wide through the salt-flat',
+        outcome: {
+          daysDelta: 1,
+          waterDelta: -1,
+          risk: 'minor',
+          narrative:
+            'You swing south onto the cracked salt, giving the crest a wide berth. The shape does not follow, but the flat costs a day and the glare drinks deep from the casks.',
+        },
+      },
+      {
+        label: 'Hold ranks, offer salt',
+        outcome: {
+          rationsDelta: -1,
+          risk: 'none',
+          narrative:
+            'You halt and heap salt-cubes on a flat stone. The wraith rides the crest once, twice, then dissolves into the shimmer. The Irrah drovers were not wrong about the old courtesy.',
+        },
+      },
+    ],
+    [
+      {
+        label: 'Run the horses until dusk',
+        outcome: {
+          rationsDelta: -3,
+          waterDelta: -2,
+          risk: 'grave',
+          narrative:
+            'The second wraith is faster. You flog the horses across the hardpan and do not look back. Two animals founder before sunset, and the survivors drink their share.',
+        },
+      },
+      {
+        label: 'Form a salt-circle and wait',
+        outcome: {
+          daysDelta: 1,
+          risk: 'none',
+          narrative:
+            'You trace a ring of salt around the camp and let the wraith circle until dawn. It does not cross the line. The night was costly in sleep, but the party is whole.',
+        },
+      },
+      {
+        label: 'Send the Irrah outrider to bargain',
+        outcome: {
+          rationsDelta: -1,
+          waterDelta: -1,
+          risk: 'minor',
+          narrative:
+            'The Irrah outrider walks out alone with salt-cubes in her open hands. She returns at noon empty-handed and white-faced, but the crest is clear and the road is open.',
+        },
+      },
+    ],
   ],
 }
 
@@ -346,6 +434,12 @@ export interface PassageState {
   /** A signature encounter awaiting the player's choice; null when free to advance. */
   pending: PendingEncounter | null
   outcome: PassageOutcome
+  /**
+   * Number of times each signature encounter key has already been resolved in this
+   * journey. Used to pick the next prose variant from SIGNATURE_CHOICES. Kept as a
+   * plain object so PassageState stays JSON-serializable.
+   */
+  signatureCounts: Record<string, number>
 }
 
 /* ─── Helpers ─── */
@@ -379,13 +473,20 @@ export function currentNodeIndex(state: PassageState): number {
 }
 
 /** The first signature encounter bucketed on engine day `d`, if any. */
-function signatureForDay(journey: JourneyState, d: number): PendingEncounter | null {
+function signatureForDay(
+  journey: JourneyState,
+  d: number,
+  signatureCounts: Record<string, number>,
+): PendingEncounter | null {
   const encs = journey.encountersByDay.get(d)
   if (!encs) return null
   for (const enc of encs) {
-    if (enc.key && SIGNATURE_CHOICES[enc.key]) {
-      return { encounter: enc, choices: SIGNATURE_CHOICES[enc.key] }
-    }
+    if (!enc.key) continue
+    const variants = SIGNATURE_CHOICES[enc.key]
+    if (!variants) continue
+    const instance = signatureCounts[enc.key] ?? 0
+    const idx = instance % variants.length
+    return { encounter: enc, choices: variants[idx] }
   }
   return null
 }
@@ -458,7 +559,7 @@ export function zeroSignatureCosts(journey: JourneyState): void {
 export function initPassage(opts: JourneyStateOpts): PassageState {
   const journey = initJourneyState(opts)
   zeroSignatureCosts(journey)
-  return { journey, log: [], extraDays: 0, pending: null, outcome: 'in-progress' }
+  return { journey, log: [], extraDays: 0, pending: null, outcome: 'in-progress', signatureCounts: {} }
 }
 
 /**
@@ -471,7 +572,7 @@ export function passageAct(state: PassageState, action: Action): PassageState {
   if (state.outcome !== 'in-progress' || state.pending) return state
 
   if (action.kind === 'continue') {
-    const sig = signatureForDay(state.journey, state.journey.dayNum + 1)
+    const sig = signatureForDay(state.journey, state.journey.dayNum + 1, state.signatureCounts)
     if (sig) {
       return { ...state, pending: sig }
     }
@@ -570,12 +671,18 @@ export function passageChoose(state: PassageState, choiceIndex: number): Passage
 
   // 4. Resolve the encounter day itself via the engine (signature cost already zeroed).
   const result = nextDay(journey, { kind: 'continue' })
+  const key = state.pending.encounter.key
+  const nextCounts = key
+    ? { ...state.signatureCounts, [key]: (state.signatureCounts[key] ?? 0) + 1 }
+    : state.signatureCounts
+
   let next: PassageState = {
     journey: result.advanced ? result.state : journey,
     log,
     extraDays,
     pending: null,
     outcome: 'in-progress',
+    signatureCounts: nextCounts,
   }
   if (result.advanced && result.day && result.supply) {
     next.log.push({
