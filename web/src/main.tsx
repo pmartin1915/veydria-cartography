@@ -28,9 +28,10 @@ void loadAsterisms(import.meta.env.BASE_URL)
 async function boot(): Promise<void> {
   // Tag the document so desktop-only CSS can opt out of entrance animations that
   // WebView2 swallows (the success-toast bug). Check both the Tauri IPC global and
-  // the WebView2 UA because __TAURI_INTERNALS__ may not be injected in dev mode
-  // even when the app is running inside a Tauri WebView2 window.
-  const inWebView2 = typeof navigator !== 'undefined' && navigator.userAgent.includes('WebView2-based')
+  // the WebView2 UA (Tauri's WebView2 identifies as 'Edg/N' without a 'WebView2-based'
+  // suffix — match the shared prefix so this fires whether or not __TAURI_INTERNALS__
+  // is injected in dev mode).
+  const inWebView2 = typeof navigator !== 'undefined' && navigator.userAgent.includes('Edg/')
   if (isTauri || inWebView2) document.body.classList.add('app-desktop')
 
   if (isTauri) {
