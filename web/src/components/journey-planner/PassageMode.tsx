@@ -82,6 +82,10 @@ export default function PassageMode({
   )
   const [rerouteOpen, setRerouteOpen] = useState(false)
   const [rerouteSearch, setRerouteSearch] = useState('')
+  const [rerouteError, setRerouteError] = useState<string | null>(null)
+  const [rerouteMode, setRerouteMode] = useState<RouteMode>(
+    mode === 'safest' ? 'safest' : 'fastest'
+  )
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   // The node the party is currently standing on — exclude it from reroute targets.
@@ -114,6 +118,13 @@ export default function PassageMode({
     headingRef.current?.focus()
   }, [])
 
+  // Reset the local reroute mode whenever the picker opens.
+  useEffect(() => {
+    if (rerouteOpen) {
+      setRerouteMode(mode === 'safest' ? 'safest' : 'fastest')
+    }
+  }, [rerouteOpen, mode])
+
   const handleAction = (kind: 'continue' | 'rest' | 'force-march' | 'ration' | 'turn-back') => {
     setState(prev => passageAct(prev, { kind }))
   }
@@ -123,7 +134,13 @@ export default function PassageMode({
   }
 
   const handleReroute = (newEndId: string) => {
-    setState(prev => passageReroute(prev, newEndId, mode))
+    const next = passageReroute(state, newEndId, rerouteMode)
+    if (next === state) {
+      setRerouteError('No road that way.')
+      return
+    }
+    setState(next)
+    setRerouteError(null)
     setRerouteSearch('')
     setRerouteOpen(false)
   }
@@ -190,12 +207,23 @@ export default function PassageMode({
         ) : rerouteOpen ? (
           <div className="passage-reroute-picker" data-testid="passage-reroute-picker">
             <div className="passage-reroute-prompt">Turn the column toward a new destination.</div>
+            <div className="passage-reroute-mode-toggle">
+              {(['fastest', 'safest'] as RouteMode[]).map(m => (
+                <button
+                  key={m}
+                  className={`passage-reroute-mode-btn${rerouteMode === m ? ' active' : ''}`}
+                  onClick={() => { setRerouteMode(m); setRerouteError(null) }}
+                >
+                  {m === 'fastest' ? 'Fastest' : 'Safest'}
+                </button>
+              ))}
+            </div>
             <input
               type="text"
               className="journey-dropdown-search"
               placeholder="Search destinations..."
               value={rerouteSearch}
-              onChange={(e) => setRerouteSearch(e.target.value)}
+              onChange={(e) => { setRerouteSearch(e.target.value); setRerouteError(null) }}
               autoFocus
             />
             <div className="journey-dropdown-list passage-reroute-list">
@@ -214,9 +242,10 @@ export default function PassageMode({
                 <div className="journey-dropdown-empty">No matches</div>
               )}
             </div>
+            {rerouteError && <p className="passage-reroute-error">{rerouteError}</p>}
             <button
               className="passage-btn"
-              onClick={() => { setRerouteSearch(''); setRerouteOpen(false) }}
+              onClick={() => { setRerouteSearch(''); setRerouteError(null); setRerouteOpen(false) }}
             >
               Cancel
             </button>

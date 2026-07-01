@@ -472,6 +472,11 @@ describe('passage: reroute (Passage v1.1)', () => {
     })
     expect(passageReroute(noGraph, 'n2', 'direct')).toBe(noGraph)
   })
+
+  it('returns the same state reference when the destination is unreachable', () => {
+    const { state } = rerouteable([1, 1, 1, 1, 1])
+    expect(passageReroute(state, 'C', 'fastest')).toBe(state)
+  })
 })
 
 describe('passage: resupply activation (live product)', () => {
