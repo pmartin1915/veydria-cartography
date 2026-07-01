@@ -348,3 +348,60 @@ and the choice set are **unchanged**. The position-aware-gate idea from slice 4 
 
 Verification: tests + `tsc -b` + web build green; report at `output/sim/passage-report.md`
 (gitignored).
+
+---
+
+## Oregon Trail '88 mode — Veydria skin (2026-07-01)
+
+**Perry's vision:** A dedicated game mode that emulates the 1988 Oregon Trail game almost exactly
+in structure and feel, but with Veydria lore and visuals throughout. Not a loose spiritual
+successor — the loop, the screens, the stakes all map 1:1 to OT '88.
+
+**Why deferred:** This is a major arc — effectively a second game mode sitting alongside Passage
+(which is more A Dark Room / choice-card). Warrants its own spec and Perry's sequencing decision.
+
+**Where it applies:** New top-level mode, likely `web/src/components/journey-planner/TrailMode.tsx`
+or equivalent, consuming the existing `journey-days.ts` + `journey-supply.ts` engines where
+natural. Passage's canvas can be borrowed from (biome backdrops, TravelVignette silhouettes) but
+the visual frame is new.
+
+### OT '88 → Veydria mapping (first-pass)
+
+| OT '88 mechanic | Veydria equivalent |
+|---|---|
+| Scrolling landscape (side-scroller) | Animated biome backdrop (extends TravelVignette's SVG idiom but scrolling, not static) |
+| 5 party members with names | Named Veydrian travelers with civ/role tags (e.g. Kheshkai scout, Irrah caravan leader) |
+| Food / clothing / ammo / spare parts / money | Rations / water / trade-coin / draft-animal condition (map to existing SupplyConfig axes) |
+| Daily pace (grueling / strenuous / steady / easy) | Direct / Fastest / Safest / Cheapest (already exists as `mode`) |
+| Rations level (filling / meager / bare bones) | Direct mapping to existing ration slider |
+| Random events (disease, breakage, weather) | Veydrian ailments: desert fever, salt-sickness, dune-cough, river murrain; wagon = draft-animal lameness; weather = sandstorm / flash flood / harmattan |
+| River crossing decision (ford / caulk / ferry / wait) | The existing `ford` signature beat + Halkar Strait crossing — expand to full OT river-screen |
+| Hunting mini-game | Biome-gated "hunt" action: oryx in Irrah, reef fish in Oravan, ibex in Kheshkai highlands; yields rations |
+| Fort / trading post | Waypoint resupply at existing canon nodes (Tavakh-Rubāṭ, Hākkar, etc.) with inventory trade screen |
+| Party member death notification | Grave-marker screen with Veydrian epitaph ("Here lies ___, who died of salt-sickness east of the Sabkha Corridor. Day 14.") |
+| Tombstone with name and cause | Canon death causes drawn from existing encounter pool prose; grave icon from existing map marker set |
+| Final score / rank | Arrival with party count + supply surplus; civ-appropriate rank label (e.g. Irrah: "Master Azalai") |
+
+### New vs reused
+
+- **Reuse**: `journey-days.ts` engine (nextDay / applyDailyBurn / resupply), `journey-supply.ts`,
+  existing biome/season data, TravelVignette backdrops, encounter prose, canon node names.
+- **New**: scrolling landscape renderer, per-member health model (OT tracked 5 individuals not
+  aggregate health), hunting action + simple shooting mechanic (even a dice-roll without animation
+  captures the OT feel), fort trade screen, death-notification screen with grave, final-score/rank
+  screen.
+
+### Key design decision for the spec
+
+OT '88 tracked **individual party members** — each person could get sick, die, and leave a named
+grave. The current Passage model is fully aggregate (supply per person, no individuals). Switching
+to per-member health means a new data structure on top of `JourneyState`. Options:
+- **Shallow:** N named slots, each with a `health: 'well' | 'ill' | 'very ill' | 'dead'` flag;
+  illness/death driven by existing encounter severity; supply model stays aggregate (OT '88
+  actually is aggregate too — "you have X lbs of food" not "each person eats Y").
+- **Full:** Per-member hunger + illness cascades; the real OT model.
+  Shallow is probably right for v1 — delivers the drama (named deaths, graves) without
+  rebuilding the supply engine.
+
+**How to approach:** Opus spec + /orchestrate for the view layer. Architecture (per-member health
+model) stays on Opus before any implementation.
