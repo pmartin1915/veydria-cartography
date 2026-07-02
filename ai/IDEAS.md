@@ -405,3 +405,13 @@ to per-member health means a new data structure on top of `JourneyState`. Option
 
 **How to approach:** Opus spec + /orchestrate for the view layer. Architecture (per-member health
 model) stays on Opus before any implementation.
+
+## 2026-07-02 — hex-overlay fractional-zoom quantization (from coords-UI review)
+
+**Idea:** `hex-overlay.ts` `reproject()` probes scale with 1-SVG-unit spans; `latLngToLayerPoint`
+returns integer-rounded points, so at the app's half-level zooms (zoomSnap/zoomDelta 0.5) the
+hex grid's scale quantizes (1.414 → 1) and the grid misaligns ~41% until the next integer zoom.
+**Fix:** probe across the full 1200/800-unit extent and divide (exactly the fix applied to
+`graticule-overlay.ts` + `scale-control.ts` in PR #50 — copy it over, ~4 lines).
+**Why deferred:** hex-overlay was a frozen file during the orchestrated coords batch; fix belongs
+on its own small branch off master after PR #50 merges. Found via Playwright zoom probing 2026-07-02.
