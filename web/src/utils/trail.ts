@@ -46,6 +46,7 @@ import {
 } from './passage'
 import { mulberry32, djb2Hash } from './encounters'
 import { classifyAridity } from './journey-supply'
+import { pickAilment, rankLabel, type RankSlot } from './trail-content'
 
 // re-export the floors so consumers don't need to import passage.ts
 export { PERISH_RATIONS_FLOOR, PERISH_WATER_FLOOR }
@@ -128,10 +129,8 @@ export interface TrailScore {
   /** rationsLeft + waterLeft at terminal (can be negative). */
   supplyMargin: number
   /**
-   * PROVISIONAL generic rank label (Step 4 replaces with per-civ flavor).
-   * NOTE / spec-correction: the spec's example ranks ("Trail Warden", "Dune Walker")
-   * are NOT in CIV_LABELS — that map is civ-slug→civ-name. Per-civ rank flavor is
-   * Step 4 (Content). This table is a structural stub so TrailScore is usable now.
+   * Per-civ rank label (Step 4 Content) — from trail-content.ts RANK_TABLES,
+   * keyed to the party leader's civ; generic ladder for unknown civ slugs.
    */
   rank: string
 }
@@ -171,6 +170,8 @@ export const HUNT_ODDS: Record<string, { chance: number; yield: number }> = {
 const HEALTH_DAY_MULT = 1000
 /** Hunt roll offset — different stream from health. */
 const HUNT_DAY_MULT = 777
+/** Ailment-name pick offset — separate stream so content never perturbs health rolls. */
+const AILMENT_DAY_MULT = 613
 
 /* ─── Private helpers ───────────────────────────────────────────────────── */
 
@@ -297,6 +298,9 @@ function applyDayHealth(state: TrailState): TrailState {
 
   const pressure: HealthPressure = { severity: maxSeverity, supplyStress, arid, atFort }
 
+  // Today's biome + nearest reached node — content context only (Step 4).
+  const dayBiome = dayEdges.length > 0 ? journey.biomeForEdge?.(dayEdges[0].edge) : undefined
+
   // ── Step each living member ──
 
   const log = [...state.log]
@@ -308,20 +312,30 @@ function applyDayHealth(state: TrailState): TrailState {
     const seed = ((state.runSeed ^ journey.routeSeed ^ (day * HEALTH_DAY_MULT) ^ memberIdx) >>> 0)
     const roll = mulberry32(seed)()
 
+    // Ailment name comes from its own seed stream (AILMENT_DAY_MULT ≠ HEALTH/HUNT)
+    // so content selection can never perturb health or hunt outcomes.
+    const nameAilment = (): string =>
+      m.ailment ??
+      pickAilment(
+        ((state.runSeed ^ journey.routeSeed ^ (day * AILMENT_DAY_MULT) ^ memberIdx) >>> 0),
+        { biome: dayBiome, arid, supplyStress, civ: m.civ },
+      )
+
     const newHealth = stepMemberHealth(m.health, roll, pressure)
     if (newHealth === m.health) return m  // no change
 
     if (newHealth === 'dead') {
       // Invariant 5: diedDay and epitaph set once, never overwritten.
-      const loc = journey.route.nodes[journey.route.nodes.length - 1]?.name ?? 'the far road'
-      const ailment = m.ailment ?? 'fever'
+      // Location = nearest node actually reached, not the route's destination.
+      const loc = journey.route.nodes[currentTrailNodeIndex(state)]?.name ?? 'the far road'
+      const ailment = nameAilment()
       const epitaph = `${m.name} died of ${ailment} near ${loc}. Day ${day}.`
       log.push(`Day ${day} — ${m.name} has died. "${epitaph}"`)
       return { ...m, health: 'dead', diedDay: day, epitaph }
     }
 
     if (newHealth === 'very ill' || newHealth === 'ill') {
-      const ailment = m.ailment ?? 'fever'
+      const ailment = nameAilment()
       log.push(`Day ${day} — ${m.name} is ${newHealth}.`)
       return { ...m, health: newHealth, ailment }
     }
@@ -585,10 +599,9 @@ export function trailChoose(state: TrailState, choiceIndex: number): TrailState 
  * Compute the final score. Call at any terminal outcome (arrived / aborted /
  * perished / party-wiped).
  *
- * Rank thresholds PROVISIONAL — Step 4 (Content) replaces with per-civ flavor.
- * NOTE: spec example ranks ("Trail Warden", "Dune Walker") are NOT in CIV_LABELS
- * (that map is civ-slug → civ-name, e.g. basin → "Aethelian Basin"). Per-civ
- * rank vocabulary is Step 4 (Content). This is a generic tier stub.
+ * Rank label is per-civ flavor (Step 4 Content), keyed to the party leader's
+ * (first member's) civ via trail-content.ts; unknown civ slugs fall back to
+ * the generic ladder (the former PROVISIONAL labels). Threshold logic frozen.
  */
 export function scoreTrail(state: TrailState): TrailScore {
   const survivors = state.members.filter(m => m.health !== 'dead').length
@@ -596,20 +609,20 @@ export function scoreTrail(state: TrailState): TrailScore {
   const supplyMargin = state.journey.rationsLeft + state.journey.waterLeft
   const total = state.members.length
 
-  // PROVISIONAL rank table — Step 4 replaces with per-civ flavor.
-  let rank: string
+  let slot: RankSlot
   if (state.outcome === 'arrived') {
-    if (survivors === total && supplyMargin > 4) rank = 'Trail Warden'        // PROVISIONAL
-    else if (survivors === total)                rank = 'Dusty Survivor'      // PROVISIONAL
-    else if (survivors > total / 2)              rank = 'Road-Scarred'        // PROVISIONAL
-    else                                         rank = 'Last Walker'         // PROVISIONAL
+    if (survivors === total && supplyMargin > 4) slot = 'flawless'
+    else if (survivors === total)                slot = 'full-party'
+    else if (survivors > total / 2)              slot = 'majority'
+    else                                         slot = 'few'
   } else if (state.outcome === 'party-wiped') {
-    rank = 'Bones in the Sand'                                                // PROVISIONAL
+    slot = 'party-wiped'
   } else if (state.outcome === 'perished') {
-    rank = 'Lost to the Road'                                                 // PROVISIONAL
+    slot = 'perished'
   } else {
-    rank = 'Turn-Back'                                                        // PROVISIONAL
+    slot = 'aborted'
   }
+  const rank = rankLabel(state.members[0]?.civ, slot)
 
   return { survivors, daysElapsed, supplyMargin, rank }
 }

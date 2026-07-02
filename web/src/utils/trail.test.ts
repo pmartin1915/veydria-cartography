@@ -17,6 +17,7 @@ import {
   type TrailMember,
 } from './trail'
 import { SIGNATURE_CHOICES } from './passage'
+import { AILMENTS } from './trail-content'
 
 /* ─── Test helpers ──────────────────────────────────────────────────────── */
 
@@ -401,6 +402,22 @@ describe('invariant 5 — diedDay and epitaph set once, never overwritten', () =
         // diedDay is a number (set once).
         expect(typeof m.diedDay).toBe('number')
         expect(m.epitaph).toMatch(/Day \d+/)
+        // Step 4 content: the ailment is a real AILMENTS name, and the location
+        // is the node nearest the death day — not blindly the destination.
+        const named = AILMENTS.some(a => m.epitaph!.includes(`died of ${a.name}`))
+        expect(named, `epitaph names a real ailment: "${m.epitaph}"`).toBe(true)
+        const route = final.journey.route
+        let acc = 0
+        let idx = route.nodes.length - 1
+        for (let i = 0; i < route.edges.length; i++) {
+          const ed = route.edges[i].segmentDays || 0
+          if (acc + ed >= m.diedDay!) {
+            idx = ed > 0 && (m.diedDay! - acc) / ed >= 0.5 ? i + 1 : i
+            break
+          }
+          acc += ed
+        }
+        expect(m.epitaph).toContain(`near ${route.nodes[idx].name}`)
       }
     })
   })
