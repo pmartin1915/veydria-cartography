@@ -22,6 +22,7 @@ interface JourneyResultsProps {
   routeHexLabels: string[]
   autoPivots: JourneyNode[]
   onSetOut?: () => void
+  onSetOutTrail?: () => void
 }
 
 /**
@@ -39,6 +40,7 @@ export default function JourneyResults({
   routeHexLabels,
   autoPivots,
   onSetOut,
+  onSetOutTrail,
 }: JourneyResultsProps) {
   const diff = getRouteDifficulty(route)
 
@@ -60,16 +62,31 @@ export default function JourneyResults({
       </div>
       <div className="journey-difficulty">
         <span className={`journey-difficulty-badge ${diff.class}`}>{diff.label}</span>
-        {onSetOut && (
-          <button
-            className="journey-set-out-btn"
-            onClick={onSetOut}
-            title="Begin the day-by-day passage"
-            data-testid="set-out-btn"
-            data-tour="journey-set-out"
-          >
-            Set out
-          </button>
+        {(onSetOut || onSetOutTrail) && (
+          <div className="journey-set-out-group">
+            {onSetOut && (
+              <button
+                className="journey-set-out-btn"
+                onClick={onSetOut}
+                title="Begin the day-by-day passage"
+                data-testid="set-out-btn"
+                data-tour="journey-set-out"
+              >
+                Passage
+              </button>
+            )}
+            {onSetOutTrail && (
+              <button
+                className="journey-set-out-btn journey-set-out-btn--trail"
+                onClick={onSetOutTrail}
+                title="Begin the Oregon Trail-style trek"
+                data-testid="set-out-trail-btn"
+                data-tour="journey-set-out-trail"
+              >
+                Trail
+              </button>
+            )}
+          </div>
         )}
       </div>
 
