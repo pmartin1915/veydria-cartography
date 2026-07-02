@@ -34,9 +34,12 @@ export function initScaleControl(map: L.Map): ScaleControl {
 
   const update = () => {
     if (!container || !bar || !label || !map) return
+    // Wide-span probe: latLngToLayerPoint rounds to integers, so a 1-unit
+    // probe quantizes the scale at fractional zoom levels (1.414 → 1).
+    const SPAN = 1200
     const p00 = map.latLngToLayerPoint(L.latLng(0, 0))
-    const p10 = map.latLngToLayerPoint(L.latLng(0, 1))
-    const pxPerSvg = p10.x - p00.x
+    const p10 = map.latLngToLayerPoint(L.latLng(0, SPAN))
+    const pxPerSvg = (p10.x - p00.x) / SPAN
     if (!pxPerSvg) return
 
     const kmPerPixel = worldScale.kmPerSvgUnit / pxPerSvg
@@ -54,7 +57,9 @@ export function initScaleControl(map: L.Map): ScaleControl {
       container = L.DomUtil.create('div', 'map-scale-bar')
       label = L.DomUtil.create('div', 'map-scale-bar-label', container)
       bar = L.DomUtil.create('div', 'map-scale-bar-line', container)
-      update()
+      // The control is added before the map's initial setView/fitBounds;
+      // latLngToLayerPoint throws until then. whenReady defers to first load.
+      map.whenReady(update)
       return container
     },
   })

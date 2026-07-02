@@ -90,11 +90,15 @@ export function initGraticuleOverlay(map: L.Map): GraticuleOverlay {
   }
 
   function reproject() {
+    // Probe across the FULL map extent, not 1 unit: latLngToLayerPoint returns
+    // integer-rounded points, so a 1-unit probe quantizes the scale (1.414 → 1
+    // at the zoom control's half-level steps). Wide-span probes make the
+    // rounding error negligible (≤0.5px over 1200 units).
     const p00 = map.latLngToLayerPoint(L.latLng(0, 0))
-    const p10 = map.latLngToLayerPoint(L.latLng(0, 1))
-    const p01 = map.latLngToLayerPoint(L.latLng(1, 0))
-    const sx = p10.x - p00.x // > 0
-    const sy = p00.y - p01.y // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
+    const pE = map.latLngToLayerPoint(L.latLng(0, SVG_WIDTH))
+    const pN = map.latLngToLayerPoint(L.latLng(SVG_HEIGHT, 0))
+    const sx = (pE.x - p00.x) / SVG_WIDTH // > 0
+    const sy = (p00.y - pN.y) / SVG_HEIGHT // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
     graticuleGroup.attr('transform', `matrix(${sx},0,0,${sy},${p00.x},${p00.y})`)
 
     // Distance labels are a functional readout — keep them a constant screen size
@@ -135,7 +139,11 @@ export function initGraticuleOverlay(map: L.Map): GraticuleOverlay {
   graticuleGroup.style('display', isVisible ? 'block' : 'none')
 
   reproject()
-  map.on('zoom move', reproject)
+  // 'viewreset moveend' — NOT 'zoom move': during an animated zoom the layer
+  // coordinate space only flips at the end, so mid-animation probes return
+  // stale values and nothing re-fires after the flip (the hex/marginalia
+  // overlays learned this the hard way — keep all three in lockstep).
+  map.on('viewreset moveend', reproject)
 
   return {
     setVisibility(visible: boolean) {
@@ -146,7 +154,7 @@ export function initGraticuleOverlay(map: L.Map): GraticuleOverlay {
       graticuleGroup.style('opacity', opacity)
     },
     destroy() {
-      map.off('zoom move', reproject)
+      map.off('viewreset moveend', reproject)
       graticuleGroup.remove()
     },
   }
