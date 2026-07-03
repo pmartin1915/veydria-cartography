@@ -415,3 +415,33 @@ hex grid's scale quantizes (1.414 → 1) and the grid misaligns ~41% until the n
 `graticule-overlay.ts` + `scale-control.ts` in PR #50 — copy it over, ~4 lines).
 **Why deferred:** hex-overlay was a frozen file during the orchestrated coords batch; fix belongs
 on its own small branch off master after PR #50 merges. Found via Playwright zoom probing 2026-07-02.
+
+## 2026-07-02 — Trail feel-check follow-ups (from live-UI feel-check session)
+
+Driving 7 configs through the real Trail UI via a scratch Playwright script (deleted after use;
+see `web/e2e/smoke.spec.ts` for the reusable tour-suppress + hash-navigation pattern) surfaced
+three things worth a small follow-up, none blocking:
+
+- **No dev seed hash param for Trail.** `TrailMode` accepts an `initialSeed` prop, but
+  `JourneyPlanner.tsx:848-858` never wires it and `url-hash.ts`'s `ViewportState` has no seed
+  field — every live run gets `Date.now() >>> 0`, so a Trail run can never be reproduced from a
+  URL (Passage and the sim harness can both be seeded; Trail can't). *Fix:* add a
+  `trailSeed`/`?seed=` hash param the same way `supplyRations`/`supplyWater` are wired, gated to
+  dev/debug use. *Where:* `web/src/utils/url-hash.ts` (new field + parse/build), `App.tsx:1846`
+  area (pass through as `initialSeed`), `JourneyPlanner.tsx` (thread to `TrailMode`).
+- **`sim-trail-report.ts`'s `ROUTE_PAIRS` "short" route may be silently broken.** It targets
+  `to: 'basin'` (`scripts/sim/sim-trail-report.ts:59`), but the real node id in
+  `veydria-spatial.geojson` is `aethelian_basin` — confirmed by hand when the live-UI driver's
+  identical hash param 404'd on `#journeyFrom=irrah&journeyTo=basin`. If `findRoute` silently
+  no-routes on an unknown id rather than throwing, the "short" cell of every past
+  `sim:trail-report` calibration grid may have been running against a null/degenerate route this
+  whole time. *Fix:* change the literal to `'aethelian_basin'` and re-run one report to confirm
+  the "short" row's numbers actually move.
+- **Promote the scratch driver to a real committed Trail smoke test.** No committed Playwright
+  spec drives Trail today (`web/e2e/smoke.spec.ts` only covers Passage). The scratch version
+  (hash-navigate directly into a computed route + preset supply, walk via `trail-action-continue`
+  resolving `trail-choice-*`/`trail-fort-choice`/`trail-ford-choice`, assert `.trail-score-screen`)
+  is a straightforward adaptation of the existing Passage test at `smoke.spec.ts:357-407`. *Why
+  deferred:* this session's version was intentionally verbose/observational (dumps full JSON per
+  run), not assertion-shaped; a committed version needs trimming to a single bounded-walk
+  assertion. *Where:* new `web/e2e/trail.spec.ts`.
