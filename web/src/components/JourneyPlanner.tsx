@@ -70,6 +70,8 @@ interface JourneyPlannerProps {
   onPassageActiveChange?: (active: boolean) => void
   /** Fired with the current route-node index while Passage mode is active; null when inactive. */
   onPassagePositionChange?: (nodeIndex: number | null) => void
+  /** Trail mode run seed (dev/debug; seeded from the URL hash) — makes a live run reproducible. */
+  defaultTrailSeed?: number
 }
 
 // Picker label format: "<Civ> · <category>" when the node carries a civ tag,
@@ -83,7 +85,7 @@ function formatNodeCategory(n: JourneyNode): string {
   return `${civLabel} · ${cat}`
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false, onPassageActiveChange, onPassagePositionChange }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false, onPassageActiveChange, onPassagePositionChange, defaultTrailSeed }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -853,6 +855,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
             supply={supply}
             edgeBiomes={edgeBiomes}
             departureDayOfYear={departureDayOfYear}
+            initialSeed={defaultTrailSeed}
             onExit={() => { setTrailActive(false); onPassageActiveChange?.(false) }}
             onPositionChange={onPassagePositionChange}
           />

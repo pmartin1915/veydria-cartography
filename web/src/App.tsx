@@ -1881,6 +1881,7 @@ function App() {
             })()}
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
             defaultPartyName={initialHashRef.current.party}
+            defaultTrailSeed={initialHashRef.current.trailSeed}
             mainTourActive={tourState.active}
             onPassageActiveChange={setPassageActive}
             onPassagePositionChange={setPassageNodeIndex}

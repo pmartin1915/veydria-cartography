@@ -55,8 +55,13 @@ const SEEDS_PER_CONFIG = numArg('seeds', 20)
 
 /* ─── Grid definition ─── */
 
+// NOTE: 'short' was irrah→'basin' through 2026-07-02 — findRoute has no alias
+// resolution (node id is 'aethelian_basin'), so every historical short row was a
+// No-Route sentinel (aborted, 0 days). aethelian_basin itself resolves but is a
+// trivial 37 km / 2-day hop; khulut (177 km, ~7 est. days) is the shortest route
+// that can actually exhibit a survival band. Historical short-row data is invalid.
 const ROUTE_PAIRS: { from: string; to: string; label: string }[] = [
-  { from: 'irrah',    to: 'basin',     label: 'short'  },
+  { from: 'irrah',    to: 'khulut',    label: 'short'  },
   { from: 'irrah',    to: 'ngaru_bon', label: 'medium' },
   { from: 'kheshkai', to: 'oravan',    label: 'long'   },
 ]
