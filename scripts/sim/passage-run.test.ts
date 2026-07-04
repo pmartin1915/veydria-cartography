@@ -173,17 +173,23 @@ describe('computePerKeyMetrics biting-tail disaggregation', () => {
 /* ─── Known-finding regression ─── */
 
 describe('known-finding regression', () => {
-  it('Kheshkai → Irrah, winter, direct buckets a repeated signature beat and presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
-    const opts = makePassageOpts(graph, 'kheshkai', 'irrah', 'winter', 'direct', STANDARD_SUPPLY, PASSAGE_PARTY)
+  it('Ngaru Bon → Oravan, summer, safest buckets a repeated signature beat and presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
+    // Was Kheshkai → Irrah, winter, direct until the Rubāṭ al-Darb waystation split the
+    // Aethelian Basin ↔ Ngaru Bon Caravan Thread leg in two (same total km/days, one extra
+    // pass-through node) — that extra edge shifts this crossing's per-edge encounter rolls
+    // enough that it no longer repeats a beat here. Retargeted to a crossing this map
+    // revision still exhibits both invariants on; see the comment below for why the exact
+    // crossing is not itself load-bearing.
+    const opts = makePassageOpts(graph, 'ngaru_bon', 'oravan', 'summer', 'safest', STANDARD_SUPPLY, PASSAGE_PARTY)
     expect(opts).not.toBeNull()
     const state0 = initPassage(opts!)
     const fires = countSignatureFiresPerCrossing(state0)
     // The known finding is that this crossing REPEATS a signature beat (deterministic).
     // We assert the repetition generically rather than pinning a specific key/count: the
     // exact key is an arbitrary RNG outcome that shifts whenever a beat is added to the
-    // shared trade-route pool (it has moved between bandits and plague-quarantine as the
-    // signature roster grew). The intent — multiple interactive choices, including a repeat —
-    // is what this guards.
+    // shared trade-route pool, or whenever the map graph itself changes (a new node/edge
+    // shifts per-edge day counts and thus encounter-roll timing) — see above. The intent —
+    // multiple interactive choices, including a repeat — is what this guards.
     expect(Math.max(0, ...fires.values())).toBeGreaterThanOrEqual(2)
 
     const signatureKeys = new Set(Object.keys(SIGNATURE_CHOICES))

@@ -409,6 +409,32 @@ describe('journey-graph: authored civ is authoritative (F5)', () => {
   })
 })
 
+describe('journey-graph: no_intra_civ opt-out', () => {
+  // port_near sits right next to civ "near"'s centroid (default: gets an intra_civ edge).
+  // port_far carries no_intra_civ: true despite sitting equally close — it must get NO
+  // intra_civ edge at all. Regression for the Rubāṭ al-Darb finding: a waystation placed
+  // deep in a corridor loop can otherwise get a straight-line intra_civ "shortcut" back to
+  // a civ centroid that is shorter in raw distanceSvg than the intended multi-hop
+  // trade-route path, letting 'direct'-mode Dijkstra bypass the waypoint chain entirely.
+  const fixture = {
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', properties: { id: 'near', name: 'Near', category: 'civilization', centroid: [0, 0] }, geometry: { type: 'Point', coordinates: [0, 0] } },
+      { type: 'Feature', properties: { id: 'port_near', name: 'Port Near', category: 'oasis' }, geometry: { type: 'Point', coordinates: [1, 1] } },
+      { type: 'Feature', properties: { id: 'port_far', name: 'Port Far', category: 'oasis', no_intra_civ: true }, geometry: { type: 'Point', coordinates: [2, 2] } },
+    ],
+  }
+
+  it('adds an intra_civ edge by default, but skips it when no_intra_civ is set', () => {
+    const g = buildGraph(fixture as never)
+    const nearEdges = g.adj.get('port_near')!.map(e => e.edge)
+    expect(nearEdges.some(e => e.type === 'intra_civ')).toBe(true)
+
+    const farEdges = g.adj.get('port_far')!.map(e => e.edge)
+    expect(farEdges.some(e => e.type === 'intra_civ')).toBe(false)
+  })
+})
+
 describe('journey-graph: strait annotation (F5 follow-up)', () => {
   // Pins the 17af505 fix: strait detection keys on Oravan membership, NOT on
   // both endpoints carrying a civ tag. The real fixture can't surface the

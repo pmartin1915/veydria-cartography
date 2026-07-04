@@ -298,7 +298,17 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   // civ. The intra_civ routing edge still connects to the geometrically
   // NEAREST centroid — that is physical graph topology carrying a real
   // distance, not a label — so routing and distances are unaffected.
-  for (const { node } of pointFeatures) {
+  for (const { feature, node } of pointFeatures) {
+    // Opt-out for waystations deep in a hostile crossing (no beeline through
+    // open desert/mountain/water back to a civ centroid — only reachable via
+    // the trade-route road). Without this, a point placed mid-corridor can
+    // get an intra_civ edge that is SHORTER in raw distanceSvg than the
+    // intended multi-hop trade-route path despite being a slower edge type,
+    // and 'direct' mode (distanceSvg-only cost, no speed term) then routes
+    // through it as an undercutting shortcut that bypasses the intended
+    // waypoint chain. Default false — zero behavior change for every other
+    // feature; opt in per-feature via geojson `properties.no_intra_civ`.
+    if (feature.properties.no_intra_civ === true) continue
     const nearestCiv = findNearestCiv(node, civNodes)
     if (nearestCiv) {
       const d = dist(node, nearestCiv)

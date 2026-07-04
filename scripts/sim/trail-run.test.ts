@@ -211,11 +211,15 @@ describe('buildEdgeBiomes', () => {
 
 describe('trail-run water-aware policy', () => {
   it('water-aware: forages when water is low and digs seeps', () => {
-    // Run enough seeds on a medium route to exercise the new pendings.
+    // Run enough seeds on a medium route to exercise the new pendings. Uses 'tight'
+    // supply (not BASE's 'standard') — the Rubāṭ al-Darb waystation now grants a
+    // full (rations + water) resupply at the route's midpoint, so 'standard' rarely
+    // drops water to the dig-seep gate (waterLeft <= 3) anymore on either half of the
+    // split leg; 'tight' still stresses water enough to exercise the mechanic reliably.
     let sawForage = false
     let sawDig = false
     for (let seed = 1; seed <= 30; seed++) {
-      const t = runTrail({ ...BASE, huntPolicy: 'water-aware', runSeed: seed }, graph, features)
+      const t = runTrail({ ...BASE, supplyPreset: 'tight', huntPolicy: 'water-aware', runSeed: seed }, graph, features)
       if (t.forageAttempts > 0) sawForage = true
       if (t.seepDug > 0) sawDig = true
     }
