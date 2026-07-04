@@ -422,6 +422,7 @@ test('Trail mode walks a seeded run to the score screen and returns to the plann
   // Setup card mounts with a default roster; begin the run.
   await page.getByTestId('trail-begin-btn').click()
   await expect(page.locator('.trail-ledger')).toBeVisible()
+  await expect(page.getByTestId('trail-vista')).toBeVisible()
   await expect(page.getByTestId('trail-action-continue')).toBeVisible()
 
   // Walk: Continue, resolving the first card whenever one appears (signature /

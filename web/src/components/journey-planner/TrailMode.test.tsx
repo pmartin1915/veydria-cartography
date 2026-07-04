@@ -151,6 +151,7 @@ describe('TrailMode: active run', () => {
   it('begins a run and shows the journal after clicking Begin', () => {
     beginRun(basicRoute)
     expect(screen.getByTestId('trail-journal')).toBeTruthy()
+    expect(screen.getByTestId('trail-vista')).toBeTruthy()
     expect(screen.queryByTestId('trail-begin-btn')).toBeNull()
   })
 

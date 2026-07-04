@@ -8296,6 +8296,13 @@ select:focus-visible {
   gap: 10px;
 }
 
+.trail-vista {
+  width: 100%;
+  aspect-ratio: 320 / 88;
+  image-rendering: pixelated;
+  display: block;
+}
+
 .trail-heading {
   font-family: var(--font-display);
   font-size: 15px;

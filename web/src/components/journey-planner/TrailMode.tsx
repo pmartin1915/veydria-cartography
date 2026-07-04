@@ -14,7 +14,7 @@ import type { EncounterChoice } from '../../utils/passage'
 import type { JourneyRoute, JourneyEdge, Season, RouteMode, PartyConfig } from '../../utils/journey-graph'
 import type { SupplyConfig } from '../../utils/journey-supply'
 import { PassageLedger } from './PassageMode'
-import TravelVignette from './TravelVignette'
+import TrailVista from './TrailVista'
 import { DIG_SEEP_TEXT } from '../../utils/trail-content'
 
 interface TrailModeProps {
@@ -347,12 +347,15 @@ export default function TrailMode({
         Trail
       </h3>
 
-      <TravelVignette
-        route={route}
-        edgeBiomes={edgeBiomes}
-        selectedSegmentIdx={selectedSegmentIdx}
-        season={season}
-      />
+      {route.edges.length > 0 && (
+        <TrailVista
+          biome={edgeBiomes?.[selectedSegmentIdx]}
+          season={season}
+          dayNum={state.journey.dayNum}
+          paused={!!state.pending || state.outcome !== 'in-progress'}
+          seed={runSeed}
+        />
+      )}
 
       <div className="trail-ledger passage-ledger" data-tour="trail-ledger">
         <PassageLedger
