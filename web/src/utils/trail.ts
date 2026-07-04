@@ -46,7 +46,7 @@ import {
 } from './passage'
 import { mulberry32, djb2Hash } from './encounters'
 import { classifyAridity } from './journey-supply'
-import { pickAilment, rankLabel, type RankSlot } from './trail-content'
+import { pickAilment, rankLabel, DIG_SEEP_TEXT, type RankSlot } from './trail-content'
 
 // re-export the floors so consumers don't need to import passage.ts
 export { PERISH_RATIONS_FLOOR, PERISH_WATER_FLOOR }
@@ -89,8 +89,10 @@ export type TrailOutcome =
 export type TrailPending =
   | { kind: 'signature'; key: string; choices: EncounterChoice[] }
   | { kind: 'ford' }   // reserved: route-level ford crossing (not an encounter beat)
-  | { kind: 'hunt' }   // biome-gated dice-roll; view offers "Hunt" | "Press on"
+  | { kind: 'hunt' }   // biome-gated dice-roll; view offers "Hunt" | "Press on" | "Forage"
   | { kind: 'fort' }   // waypoint resupply — advance automatically
+  | { kind: 'stream'; waterAmount: number; contaminated: boolean }
+  | { kind: 'dig-seep' }
 
 export interface TrailState {
   /** Frozen engine state — never bypassed. */
@@ -106,6 +108,10 @@ export interface TrailState {
   outcome: TrailOutcome
   /** Per-key call count → prose variation (same semantics as passage.ts). */
   signatureCounts: Record<string, number>
+  /** Last day a stream pending surfaced (absent = never). */
+  lastStreamDay?: number
+  /** Last day a dig-seep pending surfaced (absent = never). */
+  lastSeepDay?: number
 }
 
 /* ─── Health pressure ───────────────────────────────────────────────────── */
@@ -164,6 +170,49 @@ export const HUNT_ODDS: Record<string, { chance: number; yield: number }> = {
   default:   { chance: 0.30, yield: 2 }, // PROVISIONAL
 }
 
+/**
+ * Biome → {chance, yield} for foraging for water while travelling.
+ * PROVISIONAL — sim-calibrated in Step 2b.
+ * A successful forage adds `yield` water, clamped to the scarred ceiling.
+ * A failed forage adds nothing.
+ */
+export const FORAGE_WATER_ODDS: Record<string, { chance: number; yield: number }> = {
+  Desert:             { chance: 0.30, yield: 1 }, // PROVISIONAL
+  Sabkha:             { chance: 0.20, yield: 1 }, // PROVISIONAL
+  Steppe:             { chance: 0.45, yield: 2 }, // PROVISIONAL
+  Escarpment:         { chance: 0.35, yield: 1 }, // PROVISIONAL
+  'Highland savanna': { chance: 0.60, yield: 2 }, // PROVISIONAL
+  'Cloud forest':     { chance: 0.75, yield: 3 }, // PROVISIONAL
+  'Miombo woodland':  { chance: 0.65, yield: 2 }, // PROVISIONAL
+  Oasis:              { chance: 0.90, yield: 3 }, // PROVISIONAL
+  default:            { chance: 0.55, yield: 2 }, // PROVISIONAL
+}
+
+/**
+ * Biome → chance that a stream surfaces before a travel day.
+ * PROVISIONAL — sim-calibrated in Step 2b.
+ */
+export const STREAM_ODDS: Record<string, number> = {
+  Desert: 0.05,            // PROVISIONAL
+  Sabkha: 0.02,            // PROVISIONAL
+  Steppe: 0.18,            // PROVISIONAL
+  Escarpment: 0.10,        // PROVISIONAL
+  'Highland savanna': 0.30, // PROVISIONAL
+  'Cloud forest': 0.40,    // PROVISIONAL
+  'River gorge': 0.60,     // PROVISIONAL
+  'River gallery': 0.60,   // PROVISIONAL
+  Floodplain: 0.55,        // PROVISIONAL
+  'Monsoon delta': 0.55,   // PROVISIONAL
+  Oasis: 0.70,             // PROVISIONAL
+  default: 0.30,           // PROVISIONAL
+}
+
+/** Water restored by filling or boiling at a surfaced stream. PROVISIONAL. */
+export const STREAM_WATER = 6 // PROVISIONAL
+
+/** Chance a surfaced stream is contaminated. PROVISIONAL. */
+export const STREAM_CONTAM_CHANCE = 0.25 // PROVISIONAL
+
 /* ─── Seed offsets — isolate RNG streams ────────────────────────────────── */
 
 /** Per-member health roll offset. Mix: runSeed ^ routeSeed ^ (day*HEALTH_DAY_MULT) ^ memberIdx. */
@@ -172,8 +221,28 @@ const HEALTH_DAY_MULT = 1000
 const HUNT_DAY_MULT = 777
 /** Ailment-name pick offset — separate stream so content never perturbs health rolls. */
 const AILMENT_DAY_MULT = 613
+/** Forage-for-water roll offset — isolated from hunt/health/ailment streams. */
+const FORAGE_DAY_MULT = 271
+/** Stream-surfacing roll offset. */
+const STREAM_DAY_MULT = 389
+/** Stream contamination flag + sick-member picker offset. */
+const CONTAM_DAY_MULT = 149
+/** Dig-seep outcome roll offset. */
+const SEEP_DAY_MULT = 97
 
 /* ─── Private helpers ───────────────────────────────────────────────────── */
+
+/** Resupply ceiling for water, reduced by permanent scar. Exported for tests. */
+export function ceilWaterOf(journey: JourneyState): number {
+  return Math.max(0, journey.supplyConstants.startingWater - (journey.scarWater ?? 0))
+}
+
+/** Rest-day camp-spring recovery by aridity of the surrounding terrain. */
+export function campSpringRecovery(aridity: ReturnType<typeof classifyAridity>): number {
+  if (aridity === 'arid') return 1
+  if (aridity === 'semi-arid') return 2
+  return 3
+}
 
 /** First signature encounter for engine day `d`, or null. Private (mirrors passage.ts). */
 function signatureForDay(
@@ -427,10 +496,10 @@ export function initTrail(opts: InitTrailOpts): TrailState {
 
 /**
  * Advance the trail by one player action. A `continue` that would land on a
- * pending event (priority: signature/ford → fort → hunt) sets `pending` and
- * returns WITHOUT stepping health — the day has not yet been travelled.
- * All other actions (or continues with no pending event) advance via the engine
- * and call applyDayHealth exactly once.
+ * pending event (priority: signature/ford → fort → stream → dig-seep → hunt)
+ * sets `pending` and returns WITHOUT stepping health — the day has not yet been
+ * travelled. All other actions (or continues with no pending event) advance via
+ * the engine and call applyDayHealth exactly once.
  *
  * No-op when finished or while a choice is pending.
  */
@@ -458,12 +527,45 @@ export function trailAct(state: TrailState, action: Action): TrailState {
       return { ...state, pending: { kind: 'fort' } }
     }
 
-    // Priority 3: hunt (only when biome data is available on this journey).
-    // Routes without biomeForEdge advance normally — no hunt pending surfaces.
+    // Priority 3-5: water recovery pendings / hunt (only when biome data is available).
+    // Routes without biomeForEdge advance normally — no pending surfaces.
     // v1 simplification: hunt surfaces whenever biomeForEdge is set and edges exist.
     if (state.journey.biomeForEdge) {
       const dayEdges = state.journey.edgesByDay.get(nextDayNum) ?? []
       if (dayEdges.length > 0) {
+        const biomeName = state.journey.biomeForEdge(dayEdges[0].edge) ?? 'default'
+
+        // Priority 3: stream refill.
+        const streamOdds = STREAM_ODDS[biomeName] ?? STREAM_ODDS.default
+        const streamRoll = mulberry32(
+          ((state.runSeed ^ state.journey.routeSeed ^ (nextDayNum * STREAM_DAY_MULT)) >>> 0),
+        )()
+        if (
+          streamRoll < streamOdds &&
+          nextDayNum - (state.lastStreamDay ?? -Infinity) >= 2
+        ) {
+          const contamRoll = mulberry32(
+            ((state.runSeed ^ state.journey.routeSeed ^ (nextDayNum * CONTAM_DAY_MULT)) >>> 0),
+          )()
+          const contaminated = contamRoll < STREAM_CONTAM_CHANCE
+          return {
+            ...state,
+            pending: { kind: 'stream', waterAmount: STREAM_WATER, contaminated },
+            lastStreamDay: nextDayNum,
+          }
+        }
+
+        // Priority 4: dig-seep (arid + thirsty + cooldown).
+        const aridity = classifyAridity(dayEdges, state.journey.biomeForEdge)
+        if (
+          aridity === 'arid' &&
+          state.journey.waterLeft <= 2 &&
+          nextDayNum - (state.lastSeepDay ?? -Infinity) >= 3
+        ) {
+          return { ...state, pending: { kind: 'dig-seep' }, lastSeepDay: nextDayNum }
+        }
+
+        // Priority 5: hunt.
         return { ...state, pending: { kind: 'hunt' } }
       }
     }
@@ -473,7 +575,22 @@ export function trailAct(state: TrailState, action: Action): TrailState {
   const result = nextDay(state.journey, action)
   if (!result.advanced) return state
 
-  const next: TrailState = { ...state, journey: result.state, log: [...state.log] }
+  let journey = result.state
+  const log: string[] = [...state.log]
+
+  // Trail-layer rest bonus: a camp spring adds water on top of the engine burn.
+  if (action.kind === 'rest') {
+    const aridity = classifyAridity(journey.edgesByDay.get(journey.dayNum) ?? [], journey.biomeForEdge)
+    const recovery = campSpringRecovery(aridity)
+    const before = journey.waterLeft
+    journey = { ...journey, waterLeft: Math.min(journey.waterLeft + recovery, ceilWaterOf(journey)) }
+    const gained = journey.waterLeft - before
+    if (gained > 0) {
+      log.push(`Day ${journey.dayNum} — The party rests; a camp spring yields ${gained} water.`)
+    }
+  }
+
+  const next: TrailState = { ...state, journey, log }
   return applyDayHealth(next)
 }
 
@@ -486,22 +603,27 @@ export function trailAct(state: TrailState, action: Action): TrailState {
  * during wait days — the party is stationary). Clamps positive rations to
  * the resupply ceiling (hunting cannot stockpile above the starting cap).
  *
- * Hunt (choiceIndex 0 = Hunt, 1 = Press on): seeded roll, yield clamped to ceiling.
+ * Hunt (choiceIndex 0 = Hunt, 1 = Press on, 2 = Forage): seeded rolls,
+ * yields clamped to ceiling.
+ * Stream (choiceIndex 0 = Fill, 1 = Boil, 2 = Push on): refill + optional
+ * contamination sickness.
+ * Dig-seep (choiceIndex 0 = Dig, 1 = Push on): wait-cost + chance of water.
  * Fort: advance automatically (engine resupply fires via the day's resupplyByDay tier).
  * Ford: reserved pending kind — advances with a log entry.
  */
 export function trailChoose(state: TrailState, choiceIndex: number): TrailState {
-  if (!state.pending || state.outcome !== 'in-progress') return state
-
   const pending = state.pending
-  let journey: JourneyState = { ...state.journey }
-  const log: string[] = [...state.log]
-  let signatureCounts = state.signatureCounts
+  if (!pending || state.outcome !== 'in-progress') return state
+
+  let currentState = state
+  let journey: JourneyState = { ...currentState.journey }
+  const log: string[] = [...currentState.log]
+  let signatureCounts = currentState.signatureCounts
   const nextDayNum = journey.dayNum + 1
 
   if (pending.kind === 'signature') {
     const choice = pending.choices[choiceIndex]
-    if (!choice) return state
+    if (!choice) return currentState
 
     // Apply daysDelta as simplified wait burns: 1 water per wait day (flat-rate).
     // Health does NOT step during wait days (party is stationary, not travelling).
@@ -550,7 +672,7 @@ export function trailChoose(state: TrailState, choiceIndex: number): TrailState 
   } else if (pending.kind === 'hunt') {
     if (choiceIndex === 0) {
       // "Hunt" — seeded roll. Separate seed stream from health rolls (HUNT_DAY_MULT).
-      const seed = ((state.runSeed ^ journey.routeSeed ^ (nextDayNum * HUNT_DAY_MULT)) >>> 0)
+      const seed = ((currentState.runSeed ^ journey.routeSeed ^ (nextDayNum * HUNT_DAY_MULT)) >>> 0)
       const roll = mulberry32(seed)()
 
       // Determine biome for this day's edges.
@@ -570,9 +692,91 @@ export function trailChoose(state: TrailState, choiceIndex: number): TrailState 
       } else {
         log.push(`Day ${nextDayNum} — Hunting: nothing found.`)
       }
+    } else if (choiceIndex === 2) {
+      // "Forage" — search for water while travelling. Separate stream from hunt.
+      const seed = ((currentState.runSeed ^ journey.routeSeed ^ (nextDayNum * FORAGE_DAY_MULT)) >>> 0)
+      const roll = mulberry32(seed)()
+
+      const dayEdges = journey.edgesByDay.get(nextDayNum) ?? []
+      let biomeName = 'default'
+      if (journey.biomeForEdge && dayEdges.length > 0) {
+        biomeName = journey.biomeForEdge(dayEdges[0].edge) ?? 'default'
+      }
+      const odds = FORAGE_WATER_ODDS[biomeName] ?? FORAGE_WATER_ODDS.default
+
+      if (roll < odds.chance) {
+        const before = journey.waterLeft
+        journey = { ...journey, waterLeft: Math.min(journey.waterLeft + odds.yield, ceilWaterOf(journey)) }
+        const gained = journey.waterLeft - before
+        log.push(`Day ${nextDayNum} — Foraging: ${gained} day(s) of water found.`)
+      } else {
+        log.push(`Day ${nextDayNum} — Foraging: no water found.`)
+      }
     } else {
       // "Press on" — skip hunt, advance normally.
       log.push(`Day ${nextDayNum} — The party presses on without hunting.`)
+    }
+  } else if (pending.kind === 'stream') {
+    if (choiceIndex === 0) {
+      // Fill the barrels.
+      journey = { ...journey, waterLeft: Math.min(journey.waterLeft + pending.waterAmount, ceilWaterOf(journey)) }
+
+      if (pending.contaminated) {
+        // Sicken exactly one living member one step. Foul water never kills.
+        const rng = mulberry32(
+          ((currentState.runSeed ^ journey.routeSeed ^ (nextDayNum * CONTAM_DAY_MULT) ^ 1) >>> 0),
+        )
+        const living = currentState.members.filter(m => m.health !== 'dead')
+        const picked = living[Math.floor(rng() * living.length)]
+        if (picked) {
+          const healthOrder: Health[] = ['well', 'ill', 'very ill', 'dead']
+          const oldIdx = healthOrder.indexOf(picked.health)
+          const newHealth = healthOrder[Math.min(oldIdx + 1, healthOrder.length - 2)]
+
+          const dayEdges = journey.edgesByDay.get(nextDayNum) ?? []
+          const dayBiome = dayEdges.length > 0 ? journey.biomeForEdge?.(dayEdges[0].edge) : undefined
+          const arid = classifyAridity(dayEdges, journey.biomeForEdge) === 'arid'
+          const rStress: 0 | 1 | 2 = journey.rationsLeft <= 0 ? 2 : journey.rationsLeft <= 2 ? 1 : 0
+          const wStress: 0 | 1 | 2 = journey.waterLeft <= 0 ? 2 : journey.waterLeft <= 2 ? 1 : 0
+          const supplyStress: 0 | 1 | 2 = (Math.max(rStress, wStress) as 0 | 1 | 2)
+          const memberIdx = currentState.members.findIndex(m => m.id === picked.id)
+
+          const ailment = picked.ailment ?? pickAilment(
+            ((currentState.runSeed ^ journey.routeSeed ^ (nextDayNum * AILMENT_DAY_MULT) ^ memberIdx) >>> 0),
+            { biome: dayBiome, arid, supplyStress, civ: picked.civ },
+          )
+
+          const members = [...currentState.members]
+          members[memberIdx] = { ...picked, health: newHealth, ailment }
+          currentState = { ...currentState, members }
+          log.push(`Day ${nextDayNum} — The water was foul. ${picked.name} is ill.`)
+        }
+      }
+
+    } else if (choiceIndex === 1) {
+      // Boil before filling: wait cost, then safe refill.
+      journey = { ...journey, waterLeft: Math.max(0, journey.waterLeft - 1) }
+      log.push(`Day ${nextDayNum} — The party halts to boil the water.`)
+      journey = { ...journey, waterLeft: Math.min(journey.waterLeft + pending.waterAmount, ceilWaterOf(journey)) }
+    } else {
+      // Push on: no change.
+      log.push(`Day ${nextDayNum} — The party pushes on past the stream.`)
+    }
+  } else if (pending.kind === 'dig-seep') {
+    if (choiceIndex === 0) {
+      // Dig for a seep: wait cost, then seeded outcome.
+      journey = { ...journey, waterLeft: Math.max(0, journey.waterLeft - 1) }
+      const seed = ((currentState.runSeed ^ journey.routeSeed ^ (nextDayNum * SEEP_DAY_MULT)) >>> 0)
+      const roll = mulberry32(seed)()
+      if (roll < 0.65) {
+        journey = { ...journey, waterLeft: Math.min(journey.waterLeft + 8, ceilWaterOf(journey)) }
+        log.push(`Day ${nextDayNum} — ${DIG_SEEP_TEXT.success}`)
+      } else {
+        log.push(`Day ${nextDayNum} — ${DIG_SEEP_TEXT.failure}`)
+      }
+    } else {
+      // Push on and pray.
+      log.push(`Day ${nextDayNum} — ${DIG_SEEP_TEXT.push}`)
     }
   } else if (pending.kind === 'ford') {
     // Reserved for route-level ford crossings (no encounter beat required).
@@ -586,7 +790,7 @@ export function trailChoose(state: TrailState, choiceIndex: number): TrailState 
   const nextJourney = result.advanced ? result.state : journey
 
   const next: TrailState = {
-    ...state,
+    ...currentState,
     journey: nextJourney,
     log,
     pending: null,

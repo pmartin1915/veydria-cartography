@@ -15,6 +15,7 @@ import type { JourneyRoute, JourneyEdge, Season, RouteMode, PartyConfig } from '
 import type { SupplyConfig } from '../../utils/journey-supply'
 import { PassageLedger } from './PassageMode'
 import TravelVignette from './TravelVignette'
+import { DIG_SEEP_TEXT } from '../../utils/trail-content'
 
 interface TrailModeProps {
   route: JourneyRoute
@@ -233,6 +234,16 @@ export default function TrailMode({
     })
   }
 
+  function handleForage() {
+    advance(prev => {
+      const afterAct = trailAct(prev, { kind: 'continue' })
+      if (afterAct.pending?.kind === 'hunt') {
+        return trailChoose(afterAct, 2)
+      }
+      return afterAct
+    })
+  }
+
   function handleChoice(choiceIndex: number) {
     advance(prev => {
       if (!prev.pending || prev.outcome !== 'in-progress') return prev
@@ -423,6 +434,14 @@ export default function TrailMode({
             </button>
             <button
               className="trail-btn"
+              title="Travel on and search for water"
+              onClick={handleForage}
+              data-testid="trail-action-forage"
+            >
+              Forage
+            </button>
+            <button
+              className="trail-btn"
               title="Halt and recover. Burns water but no rations."
               onClick={() => handleAction('rest')}
               data-testid="trail-action-rest"
@@ -495,6 +514,49 @@ function TrailPendingCard({ pending, onChoose }: { pending: TrailPending; onChoo
           data-testid="trail-fort-choice"
         >
           <div className="passage-choice-label">Resupply at the waypoint</div>
+        </button>
+      </div>
+    )
+  }
+
+  if (pending.kind === 'stream') {
+    return (
+      <div className="trail-choice-cards passage-choice-cards" data-testid="trail-choice-cards">
+        <div className="passage-choice-prompt">
+          A stream crosses the road.
+          {pending.contaminated && ' The water runs cloudy.'}
+        </div>
+        {['Fill the barrels', 'Boil before filling', 'Push on'].map((label, i) => (
+          <button
+            key={i}
+            className="passage-choice-card"
+            onClick={() => onChoose(i)}
+            data-testid={`trail-stream-choice-${i}`}
+          >
+            <div className="passage-choice-label">{label}</div>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  if (pending.kind === 'dig-seep') {
+    return (
+      <div className="trail-choice-cards passage-choice-cards" data-testid="trail-choice-cards">
+        <div className="passage-choice-prompt">{DIG_SEEP_TEXT.prompt}</div>
+        <button
+          className="passage-choice-card"
+          onClick={() => onChoose(0)}
+          data-testid="trail-seep-choice-0"
+        >
+          <div className="passage-choice-label">{DIG_SEEP_TEXT.dig}</div>
+        </button>
+        <button
+          className="passage-choice-card"
+          onClick={() => onChoose(1)}
+          data-testid="trail-seep-choice-1"
+        >
+          <div className="passage-choice-label">{DIG_SEEP_TEXT.push}</div>
         </button>
       </div>
     )

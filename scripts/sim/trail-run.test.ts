@@ -207,3 +207,42 @@ describe('buildEdgeBiomes', () => {
     expect(withBiome.length).toBeGreaterThan(0)
   })
 })
+
+
+describe('trail-run water-aware policy', () => {
+  it('water-aware: forages when water is low and digs seeps', () => {
+    // Run enough seeds on a medium route to exercise the new pendings.
+    let sawForage = false
+    let sawDig = false
+    for (let seed = 1; seed <= 30; seed++) {
+      const t = runTrail({ ...BASE, huntPolicy: 'water-aware', runSeed: seed }, graph, features)
+      if (t.forageAttempts > 0) sawForage = true
+      if (t.seepDug > 0) sawDig = true
+    }
+    expect(sawForage).toBe(true)
+    expect(sawDig).toBe(true)
+  })
+
+  it('water-aware trace fields populate on a short deterministic run', () => {
+    const t = runTrail({ ...BASE, huntPolicy: 'water-aware', runSeed: 42 }, graph, features)
+    expect(t).toMatchObject({
+      forageAttempts: expect.any(Number),
+      forageSuccess: expect.any(Number),
+      streamSurfaced: expect.any(Number),
+      streamRefills: expect.any(Number),
+      contamHits: expect.any(Number),
+      seepSurfaced: expect.any(Number),
+      seepDug: expect.any(Number),
+      seepSuccess: expect.any(Number),
+      waterRecoveryPeaks: expect.any(Number),
+      pendingCounts: expect.objectContaining({
+        signature: expect.any(Number),
+        hunt: expect.any(Number),
+        fort: expect.any(Number),
+        ford: expect.any(Number),
+        stream: expect.any(Number),
+        digSeep: expect.any(Number),
+      }),
+    })
+  })
+})

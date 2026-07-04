@@ -17,7 +17,7 @@
  *   --supply      caravan | standard | tight (default: standard)
  *   --party       number of trail members 2–5 (default: 3)
  *   --seed        integer run seed (default: 42)
- *   --policy      hunt-when-low | never-hunt | always-hunt (default: hunt-when-low)
+ *   --policy      hunt-when-low | never-hunt | always-hunt | water-aware (default: hunt-when-low)
  *   --pretty      pretty-print JSON
  */
 
@@ -36,7 +36,7 @@ import type { Season, RouteMode } from '../../web/src/utils/journey-graph'
 const SEASONS: Season[]         = ['spring', 'summer', 'autumn', 'winter']
 const MODES: RouteMode[]        = ['direct', 'fastest', 'safest', 'cheapest']
 const SUPPLY_OPTS: SupplyPreset[] = ['caravan', 'standard', 'tight']
-const POLICY_OPTS: HuntPolicy[] = ['hunt-when-low', 'never-hunt', 'always-hunt']
+const POLICY_OPTS: HuntPolicy[] = ['hunt-when-low', 'never-hunt', 'always-hunt', 'water-aware']
 
 function parseArgs(argv: string[]): TrailInputs & { pretty: boolean } {
   const get = (k: string): string | undefined => {

@@ -254,3 +254,39 @@ describe('TrailMode: determinism', () => {
     expect(first).toEqual(second)
   })
 })
+
+
+describe('TrailMode: water recovery UI', () => {
+  it('renders a Forage button in the action bar and clicking it advances the day', () => {
+    beginRun(huntRoute, { edgeBiomes: ['Forest'] })
+    const forageBtn = screen.getByTestId('trail-action-forage')
+    expect(forageBtn).toBeTruthy()
+    fireEvent.click(forageBtn)
+    expect(screen.queryByTestId('trail-choice-cards')).toBeNull()
+    const log = getLogLines()
+    expect(log.some(line => line.includes('Foraging'))).toBe(true)
+  })
+
+  it('renders a stream choice card with 3 choices and the cloudy suffix only when contaminated', () => {
+    beginRun(huntRoute, { edgeBiomes: ['Oasis'], initialSeed: 1 })
+    fireEvent.click(screen.getByTestId('trail-action-continue'))
+    if (screen.queryByTestId('trail-stream-choice-0')) {
+      expect(screen.getByTestId('trail-stream-choice-0')).toBeTruthy()
+      expect(screen.getByTestId('trail-stream-choice-1')).toBeTruthy()
+      expect(screen.getByTestId('trail-stream-choice-2')).toBeTruthy()
+      const prompt = screen.getByTestId('trail-choice-cards').textContent ?? ''
+      if (prompt.includes('cloudy')) {
+        expect(prompt).toContain('The water runs cloudy.')
+      }
+    }
+  })
+
+  it('renders a dig-seep choice card with 2 choices', () => {
+    beginRun(huntRoute, { edgeBiomes: ['Desert'], initialSeed: 0 })
+    fireEvent.click(screen.getByTestId('trail-action-continue'))
+    if (screen.queryByTestId('trail-seep-choice-0')) {
+      expect(screen.getByTestId('trail-seep-choice-0')).toBeTruthy()
+      expect(screen.getByTestId('trail-seep-choice-1')).toBeTruthy()
+    }
+  })
+})

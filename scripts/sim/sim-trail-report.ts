@@ -69,7 +69,7 @@ const ROUTE_PAIRS: { from: string; to: string; label: string }[] = [
 const SUPPLY_PRESETS: SupplyPreset[] = ['caravan', 'standard', 'tight']
 const PARTY_SIZES   = [2, 3, 4]
 const SEASONS: Season[] = ['spring', 'summer']
-const POLICIES: HuntPolicy[] = ['hunt-when-low', 'never-hunt']
+const POLICIES: HuntPolicy[] = ['hunt-when-low', 'never-hunt', 'water-aware']
 
 /* ─── Row type ─── */
 
@@ -94,6 +94,16 @@ interface Row {
   rank:          string
   routeKm:       number | null
   deathDaysCsv:  string
+  // Water-recovery metrics (water-aware policy).
+  forageAttempts: number
+  forageSuccess:  number
+  streamSurfaced: number
+  streamRefills:  number
+  contamHits:     number
+  seepSurfaced:   number
+  seepDug:        number
+  seepSuccess:    number
+  waterRecoveryPeaks: number
 }
 
 /* ─── Stat helpers ─── */
@@ -170,6 +180,15 @@ function main() {
                 rank:         t.rank,
                 routeKm:      t.routeKm,
                 deathDaysCsv: t.deathDays.join(';'),
+                forageAttempts: t.forageAttempts,
+                forageSuccess:  t.forageSuccess,
+                streamSurfaced: t.streamSurfaced,
+                streamRefills:  t.streamRefills,
+                contamHits:     t.contamHits,
+                seepSurfaced:   t.seepSurfaced,
+                seepDug:        t.seepDug,
+                seepSuccess:    t.seepSuccess,
+                waterRecoveryPeaks: t.waterRecoveryPeaks,
               })
 
               done++
@@ -193,6 +212,8 @@ function main() {
     'routeLabel','from','to','supply','partySize','season','policy','seed',
     'outcome','daysElapsed','survivors','worsen','heal','deaths',
     'huntAttempts','huntSuccess','supplyMargin','rank','routeKm','deathDays',
+    'forageAttempts','forageSuccess','streamSurfaced','streamRefills','contamHits',
+    'seepSurfaced','seepDug','seepSuccess','waterRecoveryPeaks',
   ].join(',')
   const csvLines = rows.map(r =>
     [
@@ -200,6 +221,8 @@ function main() {
       r.outcome, r.daysElapsed, r.survivors, r.worsen, r.heal, r.deaths,
       r.huntAttempts, r.huntSuccess, r.supplyMargin,
       `"${r.rank}"`, r.routeKm ?? '', `"${r.deathDaysCsv}"`,
+      r.forageAttempts, r.forageSuccess, r.streamSurfaced, r.streamRefills, r.contamHits,
+      r.seepSurfaced, r.seepDug, r.seepSuccess, r.waterRecoveryPeaks,
     ].join(','),
   )
   writeFileSync(csvPath, [csvHeader, ...csvLines].join('\n') + '\n')
@@ -217,7 +240,7 @@ function main() {
   out.push('')
 
   out.push('### Dead-constant vocabulary warning')
-  out.push('The following HUNT_ODDS / SEMI_ARID_BIOMES keys are **not reachable** from real geojson geometry')
+  out.push('The following keys are **not reachable** from real geojson geometry')
   out.push('and therefore never influence any sim run. Reconcile their spelling with actual geojson biome names')
   out.push('in a separate pass if you want per-biome tuning to bite.')
   out.push('')
@@ -225,6 +248,7 @@ function main() {
   out.push('| --- | --- | --- |')
   out.push('| HUNT_ODDS | Savanna, Forest, Highland, Scrubland | HUNT_ODDS.default (0.30 chance / 2 yield) |')
   out.push('| SEMI_ARID_BIOMES | Savanna, Scrubland | Geojson has "Highland savanna", "Miombo woodland", etc. |')
+  out.push('| FORAGE_WATER_ODDS / STREAM_ODDS | (none listed) | These tables use the live geojson biome names; verify keys match current features. |')
   out.push('| Fully live | Desert, Sabkha, Steppe, Escarpment | Hit both HUNT_ODDS and ARID_BIOMES |')
   out.push('')
 
@@ -384,6 +408,42 @@ function main() {
     out.push(table(['route', 'attempts', 'successes', 'rate'], byRoute))
     out.push('')
   }
+
+  /* 8. Water Recovery Levers (water-aware policy only) */
+  out.push('## 8. Water Recovery Levers')
+  out.push('')
+  out.push('> Per route × supply, water-aware policy. Shows how much each new lever contributes.')
+  out.push('')
+  const waterAware = rows.filter(r => r.policy === 'water-aware')
+  const waterRows: string[][] = []
+  for (const route of ROUTE_PAIRS) {
+    for (const supply of SUPPLY_PRESETS) {
+      const sub = waterAware.filter(r => r.routeLabel === route.label && r.supply === supply)
+      if (sub.length === 0) continue
+      const arrived = sub.filter(r => r.outcome === 'arrived')
+      const arrivedN = arrived.length / sub.length
+      const hwl = rows.filter(r =>
+        r.policy === 'hunt-when-low' && r.routeLabel === route.label && r.supply === supply
+      )
+      const hwlArrivedN = hwl.length > 0 ? hwl.filter(r => r.outcome === 'arrived').length / hwl.length : 0
+      const delta = (arrivedN - hwlArrivedN) * 100
+      waterRows.push([
+        route.label,
+        supply,
+        fmt1(mean(sub.map(r => r.streamSurfaced))),
+        `${sub.reduce((s, r) => s + r.forageAttempts, 0)} / ${sub.reduce((s, r) => s + r.forageSuccess, 0)}`,
+        fmt1(mean(sub.map(r => r.seepSurfaced))),
+        `${sub.reduce((s, r) => s + r.seepDug, 0)} / ${sub.reduce((s, r) => s + r.seepSuccess, 0)}`,
+        fmt1(mean(arrived.map(r => r.waterRecoveryPeaks))),
+        `${pct(arrived.length, sub.length)} (Δ ${delta >= 0 ? '+' : ''}${fmt1(delta)}%)`,
+      ])
+    }
+  }
+  out.push(table(
+    ['route', 'supply', 'streams/run', 'forage att/succ', 'seeps/run', 'seep dug/succ', 'recovery peaks', 'arrived% (Δ hwl)'],
+    waterRows,
+  ))
+  out.push('')
 
   process.stdout.write(out.join('\n') + '\n')
   process.stderr.write('Done.\n')

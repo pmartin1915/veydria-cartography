@@ -70,7 +70,7 @@ const HEALTH_ORDER: Health[] = ['well', 'ill', 'very ill', 'dead']
 /* ─── Supply / party / policy presets ─── */
 
 export type SupplyPreset = 'caravan' | 'standard' | 'tight'
-export type HuntPolicy = 'hunt-when-low' | 'never-hunt' | 'always-hunt'
+export type HuntPolicy = 'hunt-when-low' | 'never-hunt' | 'always-hunt' | 'water-aware'
 
 /**
  * Ration margin (rationsLeft) below which hunt-when-low policy hunts.
@@ -158,11 +158,31 @@ export interface TrailTrace {
     hunt: number
     fort: number
     ford: number
+    stream: number
+    digSeep: number
   }
   /** Times we chose to Hunt (idx=0), i.e., policy triggered a hunt attempt. */
   huntAttempts: number
   /** Of huntAttempts, how many succeeded (rations increased). */
   huntSuccess: number
+  /** Times we chose to Forage (idx=2). */
+  forageAttempts: number
+  /** Forage resolutions where waterLeft increased. */
+  forageSuccess: number
+  /** Stream pendings that surfaced. */
+  streamSurfaced: number
+  /** Stream resolutions (fill or boil) where waterLeft ended higher. */
+  streamRefills: number
+  /** Contaminated stream fills. */
+  contamHits: number
+  /** Dig-seep pendings that surfaced. */
+  seepSurfaced: number
+  /** Dig-seep resolutions with index 0. */
+  seepDug: number
+  /** Dig-seep digs where waterLeft increased. */
+  seepSuccess: number
+  /** Number of sim-loop iterations where waterLeft strictly rose. */
+  waterRecoveryPeaks: number
   /** null means no route was found for this from/to pair. */
   routeKm: number | null
   routeEstimatedDays: number | null
@@ -206,10 +226,21 @@ export function buildEdgeBiomes(
 /**
  * Returns the choiceIndex for the current pending event under the given hunt policy.
  *
- * Hunt (kind='hunt'): 0=Hunt, 1=Press on.
+ * Hunt (kind='hunt'): 0=Hunt, 1=Press on, 2=Forage.
  *   - hunt-when-low: hunt when rationsLeft < HUNT_RATION_THRESHOLD, else press on.
  *   - always-hunt:   always 0 (trivializes supply — upper-bound for report).
  *   - never-hunt:    always 1 (phantom economy — lower-bound / harsh floor).
+ *   - water-aware:   forage when waterLeft < 3; else hunt when rationsLeft < 3; else press on.
+ *
+ * Stream (kind='stream'): 0=Fill, 1=Boil, 2=Push on.
+ *   - water-aware:   boil if contaminated, else fill.
+ *   - always-hunt:   fill (bounds probe).
+ *   - never-hunt:    push on.
+ *   - hunt-when-low: fill.
+ *
+ * Dig-seep (kind='dig-seep'): 0=Dig, 1=Push on.
+ *   - water-aware / hunt-when-low / always-hunt: dig.
+ *   - never-hunt:    push on.
  *
  * Signature: argmin over choices by supply cost, heavily penalizing scars and wait days.
  *   Rational: scars permanently reduce resupply ceiling; wait days drain water without
@@ -225,7 +256,22 @@ export function chooseByPolicy(state: TrailState, huntPolicy: HuntPolicy): numbe
   if (pending.kind === 'hunt') {
     if (huntPolicy === 'always-hunt') return 0
     if (huntPolicy === 'never-hunt')  return 1
+    if (huntPolicy === 'water-aware') {
+      if (state.journey.waterLeft < 3) return 2
+      return state.journey.rationsLeft < HUNT_RATION_THRESHOLD ? 0 : 1
+    }
     return state.journey.rationsLeft < HUNT_RATION_THRESHOLD ? 0 : 1
+  }
+
+  if (pending.kind === 'stream') {
+    if (huntPolicy === 'never-hunt') return 2
+    if (huntPolicy === 'water-aware' && pending.contaminated) return 1
+    return 0
+  }
+
+  if (pending.kind === 'dig-seep') {
+    if (huntPolicy === 'never-hunt') return 1
+    return 0
   }
 
   if (pending.kind === 'signature') {
@@ -288,9 +334,18 @@ export function runTrail(
       members: members.map(m => ({ ...m, finalHealth: 'dead' as Health, diedDay: undefined, ailment: undefined })),
       events: { worsen: 0, heal: 0, deaths: 0 },
       deathDays: [],
-      pendingCounts: { signature: 0, hunt: 0, fort: 0, ford: 0 },
+      pendingCounts: { signature: 0, hunt: 0, fort: 0, ford: 0, stream: 0, digSeep: 0 },
       huntAttempts: 0,
       huntSuccess: 0,
+      forageAttempts: 0,
+      forageSuccess: 0,
+      streamSurfaced: 0,
+      streamRefills: 0,
+      contamHits: 0,
+      seepSurfaced: 0,
+      seepDug: 0,
+      seepSuccess: 0,
+      waterRecoveryPeaks: 0,
       routeKm: null,
       routeEstimatedDays: null,
     }
@@ -329,7 +384,16 @@ export function runTrail(
   let deaths      = 0
   let huntAttempts = 0
   let huntSuccess  = 0
-  const pendingCounts = { signature: 0, hunt: 0, fort: 0, ford: 0 }
+  let forageAttempts = 0
+  let forageSuccess  = 0
+  let streamSurfaced = 0
+  let streamRefills  = 0
+  let contamHits     = 0
+  let seepSurfaced   = 0
+  let seepDug        = 0
+  let seepSuccess    = 0
+  let waterRecoveryPeaks = 0
+  const pendingCounts = { signature: 0, hunt: 0, fort: 0, ford: 0, stream: 0, digSeep: 0 }
 
   // Safety cap: 3× the route's day budget to bound any runaway loop.
   const safetyMax = (state.journey.totalDays + 1) * 3
@@ -340,9 +404,8 @@ export function runTrail(
 
     if (state.pending) {
       const kind = state.pending.kind
-      pendingCounts[kind]++
-
       if (kind === 'hunt') {
+        pendingCounts.hunt++
         const idx = chooseByPolicy(state, inputs.huntPolicy)
         if (idx === 0) {
           // Chose to Hunt — detect success via rations delta.
@@ -350,11 +413,34 @@ export function runTrail(
           const rationsBefore = state.journey.rationsLeft
           state = trailChoose(state, idx)
           if (state.journey.rationsLeft > rationsBefore) huntSuccess++
+        } else if (idx === 2) {
+          // Chose to Forage — detect success via water delta.
+          forageAttempts++
+          const waterBefore = state.journey.waterLeft
+          state = trailChoose(state, idx)
+          if (state.journey.waterLeft > waterBefore) forageSuccess++
         } else {
-          // Press on — no hunt attempt.
+          // Press on.
           state = trailChoose(state, idx)
         }
+      } else if (kind === 'stream') {
+        pendingCounts.stream++
+        streamSurfaced++
+        const idx = chooseByPolicy(state, inputs.huntPolicy)
+        if (idx === 0 && state.pending.contaminated) contamHits++
+        const waterBefore = state.journey.waterLeft
+        state = trailChoose(state, idx)
+        if (state.journey.waterLeft > waterBefore) streamRefills++
+      } else if (kind === 'dig-seep') {
+        pendingCounts.digSeep++
+        seepSurfaced++
+        const idx = chooseByPolicy(state, inputs.huntPolicy)
+        if (idx === 0) seepDug++
+        const waterBefore = state.journey.waterLeft
+        state = trailChoose(state, idx)
+        if (state.journey.waterLeft > waterBefore) seepSuccess++
       } else {
+        pendingCounts[kind as keyof typeof pendingCounts]++
         state = trailChoose(state, chooseByPolicy(state, inputs.huntPolicy))
       }
     } else {
@@ -362,6 +448,8 @@ export function runTrail(
     }
 
     if (state === before) break // shim returned no-op — shouldn't happen in normal flow
+
+    if (state.journey.waterLeft > before.journey.waterLeft) waterRecoveryPeaks++
 
     // Snapshot-diff: tally health transitions.
     const curIdx = state.members.map(m => HEALTH_ORDER.indexOf(m.health))
@@ -401,6 +489,15 @@ export function runTrail(
     pendingCounts,
     huntAttempts,
     huntSuccess,
+    forageAttempts,
+    forageSuccess,
+    streamSurfaced,
+    streamRefills,
+    contamHits,
+    seepSurfaced,
+    seepDug,
+    seepSuccess,
+    waterRecoveryPeaks,
     routeKm: route.totalKm,
     routeEstimatedDays: route.estimatedDays,
   }

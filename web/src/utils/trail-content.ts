@@ -222,6 +222,17 @@ export const RANK_TABLES: Readonly<Record<CivSlug, RankLadder>> = {
   },
 }
 
+/* ─── Dig-seep narrative ────────────────────────────────────────────────── */
+
+/** UI text and log lines for the dig-seep water-recovery pending. */
+export const DIG_SEEP_TEXT = {
+  prompt: 'The ground is cracked and dry. A seep might lie beneath.',
+  dig: 'Dig for a seep (about 2 in 3 find water; costs a day)',
+  push: 'Push on and pray',
+  success: 'The party digs until dusk; water seeps up dark and cold.',
+  failure: 'The party digs until dusk and finds only dust.',
+}
+
 /** Rank label for a civ (any slug form) and slot; generic ladder on unknown civ. */
 export function rankLabel(civ: string | undefined, slot: RankSlot): string {
   const normalized = normalizeCivSlug(civ)
