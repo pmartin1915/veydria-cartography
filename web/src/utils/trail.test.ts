@@ -871,9 +871,9 @@ describe('dig-seep', () => {
     expect(after.pending?.kind).not.toBe('dig-seep')
   })
 
-  it('does not surface when water is above 2', () => {
+  it('does not surface when water is above the threshold', () => {
     const s = makeTrailWithBiome('Desert', 42)
-    s.journey.waterLeft = 3
+    s.journey.waterLeft = 4 // threshold is <= 3 (2026-07-03 calibration pass)
     const after = trailAct(s, { kind: 'continue' })
     expect(after.pending?.kind).not.toBe('dig-seep')
   })

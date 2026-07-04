@@ -177,15 +177,20 @@ export const HUNT_ODDS: Record<string, { chance: number; yield: number }> = {
  * A failed forage adds nothing.
  */
 export const FORAGE_WATER_ODDS: Record<string, { chance: number; yield: number }> = {
-  Desert:             { chance: 0.30, yield: 1 }, // PROVISIONAL
-  Sabkha:             { chance: 0.20, yield: 1 }, // PROVISIONAL
-  Steppe:             { chance: 0.45, yield: 2 }, // PROVISIONAL
-  Escarpment:         { chance: 0.35, yield: 1 }, // PROVISIONAL
+  // Tuned up from the initial draft (2026-07-03 calibration pass): the 50-seed
+  // sim showed water-aware arriving far below the medium/standard 40-60% target
+  // (4.3%) with the original 0.20-0.45 arid-biome odds — forage is the highest-
+  // volume lever (1000+ attempts/config on arid routes) so it carries most of
+  // the adjustment. See ai/TRAIL-WATER-RECOVERY-RECOMMENDATIONS.md §4.
+  Desert:             { chance: 0.42, yield: 1 }, // PROVISIONAL (was 0.30)
+  Sabkha:             { chance: 0.32, yield: 1 }, // PROVISIONAL (was 0.20)
+  Steppe:             { chance: 0.55, yield: 2 }, // PROVISIONAL (was 0.45)
+  Escarpment:         { chance: 0.45, yield: 1 }, // PROVISIONAL (was 0.35)
   'Highland savanna': { chance: 0.60, yield: 2 }, // PROVISIONAL
   'Cloud forest':     { chance: 0.75, yield: 3 }, // PROVISIONAL
   'Miombo woodland':  { chance: 0.65, yield: 2 }, // PROVISIONAL
   Oasis:              { chance: 0.90, yield: 3 }, // PROVISIONAL
-  default:            { chance: 0.55, yield: 2 }, // PROVISIONAL
+  default:            { chance: 0.60, yield: 2 }, // PROVISIONAL (was 0.55)
 }
 
 /**
@@ -559,7 +564,7 @@ export function trailAct(state: TrailState, action: Action): TrailState {
         const aridity = classifyAridity(dayEdges, state.journey.biomeForEdge)
         if (
           aridity === 'arid' &&
-          state.journey.waterLeft <= 2 &&
+          state.journey.waterLeft <= 3 && // PROVISIONAL (was <= 2 — 2026-07-03 calibration pass)
           nextDayNum - (state.lastSeepDay ?? -Infinity) >= 3
         ) {
           return { ...state, pending: { kind: 'dig-seep' }, lastSeepDay: nextDayNum }

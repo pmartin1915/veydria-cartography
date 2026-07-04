@@ -444,4 +444,38 @@ three things worth a small follow-up, none blocking:
   is a straightforward adaptation of the existing Passage test at `smoke.spec.ts:357-407`. *Why
   deferred:* this session's version was intentionally verbose/observational (dumps full JSON per
   run), not assertion-shaped; a committed version needs trimming to a single bounded-walk
-  assertion. *Where:* new `web/e2e/trail.spec.ts`.
+  assertion. *Where:* new `web/e2e/trail.spec.ts`. **DONE 2026-07-03** — see the water-recovery
+  entry below; this landed as part of that session's Phase A.
+
+## 2026-07-03 — Tier 1 water recovery shipped; medium/summer route-length outlier found
+
+Implemented `ai/TRAIL-WATER-RECOVERY-RECOMMENDATIONS.md`'s Tier 1 (forage/stream/camp-spring/
+dig-seep) via /orchestrate, on `feat/trail-mode` (commits `c2f8987` harness-fix, `96c0617`
+mechanics, plus one tuning pass). Fixed the sim's "short" route (was `'basin'`, never resolved —
+every historical short-row was a No-Route sentinel; now `irrah→khulut`). Added a `trailSeed`
+URL-hash param + committed Trail Playwright smoke. Never-hunt regression verified byte-identical
+across 1080 rows against a pre-change baseline — seed-stream isolation holds.
+
+**Tuning result (50-seed grid, water-aware policy vs §4 targets):** short route improved
+meaningfully (standard 79%→90%, tight 63.7%→69.3% after bumping arid-biome `FORAGE_WATER_ODDS`
+~10-12pt and widening the dig-seep gate to `waterLeft <= 3`). Streams/run and recovery-peaks land
+in-range for medium. **medium|standard and medium|tight stay pinned near 0-5% arrived**, well
+under the 40-60% target, and did not move with the forage/stream/seep tuning pass.
+
+**Root cause found, NOT a water-tuning problem:** `irrah→ngaru_bon` (the medium pair) resolves to
+a **season-dependent route length** — 542 km / ~11 days in spring vs **850 km / ~68 est. days in
+summer** for the identical from/to pair (confirmed via `sim:trail --season spring` vs `--season
+summer`, same seed). The route graph is choosing a much longer path in summer (sea detour /
+seasonal edge penalty, not inspected further this session). No amount of forage/stream/seep
+tuning closes a ~1.6x distance gap — resource caps don't scale with route length. *Why deferred:*
+diagnosing `journey-graph.ts`'s seasonal route selection is a different subsystem than water
+recovery and a comparable-sized investigation on its own. *Where to look:* `findRoute`/
+`findRouteWithFallback` in `web/src/utils/journey-graph.ts` and whatever seasonal edge-weight or
+availability logic feeds it; compare the spring vs summer edge list for this specific node pair.
+*Re-measure after fixing:* `cd web && npm run sim:trail-report -- --seeds 50`, §5 and §8 tables.
+
+Constants remain PROVISIONAL (`FORAGE_WATER_ODDS`, `STREAM_ODDS`, `STREAM_WATER`,
+`STREAM_CONTAM_CHANCE`, dig-seep gate/odds, camp-spring 3/2/1) — camp-spring specifically is
+**never exercised by the sim harness** (the drive loop only ever calls `continue`, never `rest`),
+so its numbers are unit-test-verified only, not sim-calibrated; a rest-including policy would be
+needed to tune it against real data.
