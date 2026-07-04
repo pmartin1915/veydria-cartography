@@ -479,3 +479,48 @@ Constants remain PROVISIONAL (`FORAGE_WATER_ODDS`, `STREAM_ODDS`, `STREAM_WATER`
 **never exercised by the sim harness** (the drive loop only ever calls `continue`, never `rest`),
 so its numbers are unit-test-verified only, not sim-calibrated; a rest-including policy would be
 needed to tune it against real data.
+
+## 2026-07-04 — Chokepoint routing-penalty reporting bug FIXED; medium-route survivability gap is real, NOT explained by it (closes the entry above)
+
+Root-caused and fixed the "1.6x route-length gap" from the entry above. It was **two things, not
+one**: (1) an unambiguous reporting bug — chokepoint edges baked their routing-difficulty penalty
+(2.0× for `smith_spring`'s `frontier_resource` type) directly into `distanceSvg`, the field then
+summed for `totalKm` *and* used to compute `segmentDays`, so every chokepoint-crossing route
+app-wide (Passage, Trail, journey-planner UI — not just this pair) reported a physically-wrong,
+doubled distance and day count. (2) An **intended** seasonal divert — `caravan_thread` is
+`blockedIn: ['summer']` (canon: "Irrah caravans avoid high summer"), pushing routing off the fast
+trade route onto the slow `smith_spring` chokepoint in summer only; this was working as designed.
+
+**Fix (`web/src/utils/journey-graph.ts`):** added `JourneyEdge.routingPenalty`, moved the
+chokepoint penalty there from `distanceSvg` (now physical), applied it only inside `getEdgeWeight`
+(the Dijkstra cost function) so every routing mode's cost is numerically identical to before —
+Dijkstra picks the same paths. Verified: summer `irrah→ngaru_bon` still diverts via `smith_spring`
+(routing unchanged), reported distance/days are now honest (~425km vs the old ~850km). 4 new tests
+in `journey-graph.test.ts`, 1082/1082 total pass, `tsc -b` + build clean.
+
+**The re-measure (`npm run sim:trail-report -- --seeds 50`, §5) surfaced the real finding — the
+optimistic hypothesis in the entry above ("un-inflating will reveal spring-medium was fine all
+along") was WRONG, and is recorded here so no future session re-assumes it.** Spring never crosses
+the summer-only chokepoint, so the reporting fix changes **zero** spring numbers — and per-season
+breakdown shows `medium|standard|spring` = **10.0%** arrived and `medium|tight|spring` = **0.0%**,
+both far under the §4 40–60% target, on the *identical* route where `medium|caravan|spring` = 95.3%.
+Compare the supply-tier cliff at the same route length: `short|standard|spring` 79.3% →
+`medium|standard|spring` 10.0% — a much steeper drop than caravan's graceful 100%→95.3%→73.3%
+across short/medium/long. **This is not a route-length or reporting artifact — it's a genuine,
+still-open water/rations-tuning gap specific to the standard/tight supply tiers on medium (and
+likely long: `long|standard|spring` = 0.0%, `long|caravan|spring` = 73.3%, same pattern).**
+
+*Why deferred:* this is a different, likely larger investigation than a routing bug — it's asking
+whether standard/tight supply constants are miscalibrated for the medium/long route lengths
+specifically (as opposed to short, which tunes fine), or whether the route's biome mix burns water
+disproportionately, or something else. The prior session's forage/stream/seep tuning pass already
+tried and failed to move this number — that tuning pass predates today's reporting fix but wouldn't
+have been affected by it either (it was tuning against spring numbers that were always correct).
+*Where to look next:* compare the short vs medium route's biome/edge-type composition
+(`web/src/utils/journey-graph.ts` route nodes for `irrah→khulut` vs `irrah→ngaru_bon`) for an
+aridity or edge-type skew; consider whether standard/tight `DEFAULT_SUPPLY` scaling should be
+route-length-aware rather than flat. *Re-measure:* same command, §5 per-season medium/long rows.
+
+Land the routing-penalty fix regardless — it is correct and valuable on its own (fixes reporting for
+every chokepoint route app-wide, including live Passage play, not just the sim). The medium-route
+tuning gap is a separate open item, not a blocker on this fix.
