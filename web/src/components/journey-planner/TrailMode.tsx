@@ -12,7 +12,7 @@ import {
 import type { JourneyStateOpts } from '../../utils/journey-days'
 import type { EncounterChoice } from '../../utils/passage'
 import type { JourneyRoute, JourneyEdge, Season, RouteMode, PartyConfig } from '../../utils/journey-graph'
-import type { SupplyConfig } from '../../utils/journey-supply'
+import { getResupplyTier, type SupplyConfig } from '../../utils/journey-supply'
 import { PassageLedger } from './PassageMode'
 import TrailVista from './TrailVista'
 import { DIG_SEEP_TEXT } from '../../utils/trail-content'
@@ -171,6 +171,7 @@ export default function TrailMode({
     edgeBiomes,
     departureDayOfYear,
     biomeForEdge,
+    resupplyTierFor: getResupplyTier,
   }), [route, season, mode, party, supply, edgeBiomes, departureDayOfYear, biomeForEdge])
 
   function computeJournalDeltas(prev: TrailState, next: TrailState): JournalEntry[] {

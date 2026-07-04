@@ -7,12 +7,11 @@ import {
   type PassageState,
   type PassageEntry,
 } from '../../utils/passage'
-import type { JourneyStateOpts } from '../../utils/journey-days'
 import { encounterTypeIcon, encounterSeverityLabel } from '../../utils/encounters'
 import { TIME_OF_DAY_LABELS, TIME_OF_DAY_GLYPH } from '../../utils/time-of-day'
 import { IconCloudRain, IconPin } from '../icons'
 import type { JourneyRoute, Season, RouteMode, PartyConfig } from '../../utils/journey-graph'
-import type { SupplyConfig } from '../../utils/journey-supply'
+import { getResupplyTier, type SupplyConfig } from '../../utils/journey-supply'
 
 interface PassageModeProps {
   route: JourneyRoute
@@ -59,7 +58,7 @@ export default function PassageMode({
   onPositionChange,
 }: PassageModeProps) {
   const [state, setState] = useState<PassageState>(() =>
-    initPassage({ route, season, mode, party, supply, edgeBiomes, departureDayOfYear } as JourneyStateOpts)
+    initPassage({ route, season, mode, party, supply, edgeBiomes, departureDayOfYear, resupplyTierFor: getResupplyTier })
   )
   const headingRef = useRef<HTMLHeadingElement>(null)
 

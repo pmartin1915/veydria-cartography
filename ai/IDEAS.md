@@ -524,3 +524,91 @@ route-length-aware rather than flat. *Re-measure:* same command, §5 per-season 
 Land the routing-penalty fix regardless — it is correct and valuable on its own (fixes reporting for
 every chokepoint route app-wide, including live Passage play, not just the sim). The medium-route
 tuning gap is a separate open item, not a blocker on this fix.
+
+---
+
+## 2026-07-04 — Root cause found: live Passage/Trail play had ZERO waypoint resupply (fixed); medium-route survival gap is a structural corridor hole, not a tuning shortfall (open — Perry's call)
+
+Picked up the entry above ("a bigger tuning investigation"). Fresh exploration overturned the framing
+twice before landing on the real fix.
+
+**Root cause #1 (fixed): `resupplyTierFor` was wired ONLY in the offline sim, never in the app.**
+`getResupplyTier` (the category→tier mapper) lived solely in `scripts/sim/run-journey.ts` and was
+passed to `initJourneyState`/`initPassage`/`initTrail` only by the sim harness. Every `web/src` caller —
+live Passage (`PassageMode.tsx`), live Trail (`TrailMode.tsx`), *and* the pre-trip supply forecast
+(`JourneyDaysTab.tsx`, `campaign-log.ts`, `journey-export.ts`, all calling `computeSupplyTimeline`
+directly) — omitted it entirely, so `resupplyByDay` was **always empty in the running app**. Waypoint
+resupply (forts, oases, ports) has silently never worked at the table, in either play mode, for the
+whole time these features have existed — only the offline sim was ever calibrated against real
+resupply. This explains the feel-check's "fort resupply never triggered in 7 runs"
+(`TRAIL-WATER-RECOVERY-RECOMMENDATIONS.md:31`) that launched this entire arc: it was missing wiring,
+not route geometry or water-tuning.
+
+**Fixed:** moved `getResupplyTier` into `web/src/utils/journey-supply.ts` (one shared definition; the
+sim re-exports it from `run-journey.ts` so `trail-run.ts`/`passage-run.ts` don't need import changes),
+wired `resupplyTierFor` into `PassageMode.tsx`/`TrailMode.tsx`, and added `resupplyByDayForRoute()` (a
+thin wrapper over `journey-days.ts`'s existing `bucketRoute`) for the three UI callers that compute
+`computeSupplyTimeline` as a separate pass. **Live-verified in a real running session** (Playwright,
+scratch-only, deleted after use): on the medium route (irrah→ngaru_bon), water held flat at the
+starting cap across days 1–2 despite the ~1.65/day arid burn that should have dropped it — proof
+resupply now fires at the table, not just in the sim. 6 new unit tests, 1088/1088 total pass, `tsc -b`
++ `npm run build` clean.
+
+**Root cause #2 (fixed, smaller): the shared mapper had no case for category `water`.** The Aethelian
+Basin's own node carries category `water` (its named ports — Halani-Tamu, Ki-Mbuhari, etc. — are
+already `port`, already correctly mapped). Canon (`worldbuilder/geography/locations/aethelian-basin.yaml`)
+describes Halani-Tamu as "the Sweetwater Harbor" where Irrah caravans are "certified for desert
+crossing" and Ki-Mbuhari as "the Surplus-Water Settlement" — a freshwater provisioning stop, not open
+salt sea — so the Basin should refill water like a port. Added `water` → `'water'` tier. Only one
+geojson node carries this category (confirmed by direct query), so there's no risk of the fix leaking
+onto other sea/coastal nodes.
+
+**Measured result — the honest, load-bearing finding: root cause #2 did NOT close the survival gap.**
+Traced the medium route directly: Qarat al-Fidda (day 1, pre-existing oasis) and Aethelian Basin (day 2,
+the fix) both grant `water` tier — but they fire while the party is still near-full, 2 days into an
+11.3-day trip. The actual killer is what comes next: a single unbroken **~10.1-day arid `Caravan
+Thread` edge (Aethelian Basin → Ngaru Bon) with zero resupply of any kind until arrival.** Re-measured
+(`sim:trail-report --seeds 50`): `medium|standard|spring` moved **10.0% → 8.7%** (statistically flat —
+the Basin refill happens too early to matter; it resets the tank right before the corridor, but the
+tank was already full).
+
+**Tried and reverted: loosening the dig-seep cooldown (3→2 days, `trail.ts:568`).** Measured effect:
+**zero** movement on `medium|standard|spring` (stayed at 8.7%) but **trivialized the guardrail route** —
+`short|standard|spring` jumped 79.3%→98.0%, `short|tight|spring` 56.7%→65.3-76.0%. Mechanism: a
+successful dig-seep grants +8 water, which at ~1.65/day arid burn takes ~5 days to burn back under the
+≤3 gate — so the natural recharge/redeplete cycle, not the 3-day cooldown, is what actually throttles
+dig frequency in a long corridor. Loosening cooldown only helps the "failed roll, retry sooner" case,
+a minority of instances — explaining the near-zero effect on medium and the outsized effect on short's
+tighter, shorter loop. **Reverted immediately** (byte-identical to before) rather than keep a change
+that only causes harm. Lesson for the next session: on a long arid corridor, **dig-seep's yield/success
+rate is the lever with more headroom than its cooldown** — the recharge cycle, not the gate frequency,
+is what's binding. Untested; a candidate for a future pass, but see the framing below before spending
+more cycles on constants.
+
+**Why constants likely can't close this cleanly, and why the decision is Perry's:** the corridor asks
+for ~16.5 water over ~10 days against a 6-water starting/resupply cap — a ~10.5 water deficit that
+recovery alone must fully cover. The mean is achievable only through near-certain recovery success,
+which either (a) makes the risk/reward mechanic close to deterministic (removing its "risk" character,
+same trap the original recommendations doc's §5 "what NOT to do" warns against for blanket buffs), or
+(b) inevitably leaks into the short/tight routes that share the same arid-biome tables (as the dig-seep
+experiment just demonstrated empirically). The clean fix is structural, not numeric: **split the
+10-day corridor with a genuine mid-route stop** — e.g. a canon Qalībin desert well/oasis roughly
+midway between Aethelian Basin and Ngaru Bon. That's new canon geography, a creative/worldbuilding
+call, not a mechanical one — **Perry's decision, not mine to make unilaterally.** Long (0% arid, dies
+from sheer leg length over its ~48-day span, a different problem entirely) has the same character:
+effectively caravan-only today (`long|caravan` = 84%), no cheap fix visible.
+
+**Options for next session (unchanged from the approved plan, now data-backed):**
+1. Add a canon mid-corridor desert-well node (worldbuilder canon sync — regions YAML,
+   PLACE-NAME-INDEX, attested morphemes — then a new route/graph node on the veydria side). The
+   structural fix; closes the actual hole.
+2. Re-scope the §4 target for `medium|standard` — accept it as a harder tier than the original doc
+   assumed (the sim header already says "tight should mostly fail on long"; maybe standard should
+   mostly fail on medium too, and caravan is the intended medium-route tier).
+3. Try the dig-seep yield/success-rate lever (untested this session) before reaching for new canon —
+   cheaper to test, uncertain payoff given the deficit's size.
+
+Verification this session: 1088/1088 tests, `tsc -b` + `npm run build` clean, live Playwright proof of
+the resupply fix. The wiring + Basin fixes are complete, correct, and shipped regardless of how the
+survival-gap decision above resolves — they were a real, long-standing correctness bug independent of
+the balance question.
