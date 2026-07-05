@@ -115,7 +115,7 @@ chokepoints:
 
 aethelian_basin:
   type: "semi-enclosed shallow sea"
-  description: "A three-day sail across. Six port cities stand on its shores. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried."
+  description: "A three-day sail across. Six port cities stand on its shores. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried. The rim ports lie about a day's coasting apart: Tavakh-Qarat to Halani-Tamu is a single day along the north-east shore, the short hop the cool-season credit traffic makes between settlements, against the three days of the open sail straight across."
   opening: "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea"
   functional_zones:
     ki_mbuhari:

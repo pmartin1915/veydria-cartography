@@ -44,7 +44,7 @@ const SYNC_MAP = [
   {
     src: 'design/narrative-schema/canon.json',
     dest: 'web/public/canon.json',
-    description: 'Compendium entity corpus (188 entities) for narrative browsing',
+    description: 'Compendium entity corpus (340 entities) for narrative browsing',
     optional: true,
   },
   {
@@ -56,7 +56,7 @@ const SYNC_MAP = [
   {
     src: 'design/narrative-schema/map-anchors.json',
     dest: 'web/public/map-anchors.json',
-    description: 'Compendium→map anchor mappings (20 entries)',
+    description: 'Compendium→map anchor mappings (30 entries)',
     optional: true,
   },
   {
