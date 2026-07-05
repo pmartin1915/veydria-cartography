@@ -12,6 +12,87 @@
 
 import { GeoJSONFeature, GeoJSONCollection } from '../App'
 import { svgDistanceToKm } from './measure'
+import travelGraphDataRaw from '../generated/veydria-travel-graph.json'
+
+interface TravelGraphNode {
+  kind: string
+  aliases?: string[]
+  display?: { x: number; y: number }
+}
+
+interface TravelGraphEdge {
+  between: string[]
+  days: number | { min: number; max: number }
+}
+
+interface TravelGraphGap {
+  between: string[]
+  kind: string
+}
+
+interface TravelGraphData {
+  nodes: Record<string, TravelGraphNode>
+  edges: TravelGraphEdge[]
+  gaps: TravelGraphGap[]
+}
+
+const travelGraphData = travelGraphDataRaw as unknown as TravelGraphData
+
+function normalizeTravelId(id: string): string {
+  return id.toLowerCase().replace(/-/g, '_')
+}
+
+const travelGraphCanonical = new Map<string, string>()
+for (const [canonicalId, node] of Object.entries(travelGraphData.nodes)) {
+  const norm = normalizeTravelId(canonicalId)
+  travelGraphCanonical.set(norm, norm)
+  for (const alias of node.aliases ?? []) {
+    travelGraphCanonical.set(normalizeTravelId(alias), norm)
+  }
+}
+
+const authoredDaysByPair = new Map<string, number>()
+for (const edge of travelGraphData.edges) {
+  const [aRaw, bRaw] = edge.between
+  const a = travelGraphCanonical.get(normalizeTravelId(aRaw)) ?? normalizeTravelId(aRaw)
+  const b = travelGraphCanonical.get(normalizeTravelId(bRaw)) ?? normalizeTravelId(bRaw)
+  const key = [a, b].sort().join('|')
+  const days = typeof edge.days === 'number' ? edge.days : (edge.days.min + edge.days.max) / 2
+  authoredDaysByPair.set(key, days)
+}
+
+// `turn_back_hub` gaps (e.g. Smith-Spring) mark a frontier the two bound civs'
+// own trade never runs through — but that's an institutional fact about their
+// caravans, not a physical wall. An independent travel party isn't bound by
+// the hostage-price truce, so the crossing stays routable: nearly impassable,
+// the kind of road only the desperate or the criminal attempt (see
+// HARD_CROSSING_PENALTY below), rather than deleted from the graph.
+/** Routing penalty for a `turn_back_hub` crossing — steeper than any ordinary
+ *  chokepoint (2.5 max), reflecting a frontier with no legal or physical
+ *  protection: an unmapped buffer zone with no maintained road. */
+export const HARD_CROSSING_PENALTY = 6.0
+
+const hardCrossingDyads = new Set<string>()
+for (const gap of travelGraphData.gaps) {
+  if (gap.kind === 'turn_back_hub') {
+    const [aRaw, bRaw] = gap.between
+    const a = normalizeTravelId(aRaw)
+    const b = normalizeTravelId(bRaw)
+    hardCrossingDyads.add([a, b].sort().join('|'))
+  }
+}
+
+/**
+ * Return the authored day-count for an unordered pair of place ids, resolving
+ * hyphenated aliases to their canonical underscore form. Returns `null` when
+ * the pair is not attested in the travel graph.
+ */
+export function authoredDaysForEdge(fromId: string, toId: string): number | null {
+  const a = travelGraphCanonical.get(normalizeTravelId(fromId)) ?? normalizeTravelId(fromId)
+  const b = travelGraphCanonical.get(normalizeTravelId(toId)) ?? normalizeTravelId(toId)
+  const key = [a, b].sort().join('|')
+  return authoredDaysByPair.has(key) ? authoredDaysByPair.get(key)! : null
+}
 
 export interface JourneyNode {
   id: string
@@ -495,7 +576,9 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         // physical (reporting reads it as raw geography) — the penalty is
         // routing friction, kept in a separate field applied by getEdgeWeight.
         const baseDist = dist(civA, civB)
-        const penalty = f.properties.type === 'mountain_pass' ? 2.5 :
+        const isHardCrossing = hardCrossingDyads.has([normalizeTravelId(a), normalizeTravelId(b)].sort().join('|'))
+        const penalty = isHardCrossing ? HARD_CROSSING_PENALTY :
+                        f.properties.type === 'mountain_pass' ? 2.5 :
                         f.properties.type === 'river_crossing' ? 1.8 :
                         f.properties.type === 'maritime_strait' ? 1.5 :
                         2.0
@@ -525,6 +608,31 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   return { nodes, adj }
 }
 
+// Routing-time speeds (km/day) by edge type — the same figures the per-segment
+// day estimate uses. Routing weights on the CANONICAL (default-party) traversal
+// time so a route choice does not flap with pace/mount; the per-edge reported
+// segmentDays still reflects party config.
+const ROUTING_SPEED_BY_TYPE: Record<string, number> = {
+  trade_route: 50,
+  chokepoint: 12.5,
+  intra_civ: 25,
+  civ_link: 25,
+}
+
+/**
+ * Canonical traversal time (in days, default party) for an edge: the authored
+ * worldbuilder day-count where one exists, else the geometric km/speed estimate.
+ * This is the currency the router optimizes, so journeys follow canon-attested
+ * routes (e.g. the 4-day Lam-Chen pass instead of a longer geometric detour
+ * around it) rather than the shortest drawn polyline.
+ */
+function edgeBaseDays(edge: JourneyEdge): number {
+  const authored = authoredDaysForEdge(edge.from, edge.to)
+  if (authored != null) return authored
+  const km = svgDistanceToKm(edge.distanceSvg)
+  return km / (ROUTING_SPEED_BY_TYPE[edge.type] || 25)
+}
+
 function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
   // routingPenalty (e.g. chokepoint difficulty) is routing friction, not
   // physical distance — it was previously baked into distanceSvg itself,
@@ -532,24 +640,23 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
   // routing cost numerically identical while distanceSvg stays physical.
   const penalty = edge.routingPenalty ?? 1
 
+  // `direct` keeps its literal meaning — shortest drawn distance — and is the one
+  // mode that ignores travel-time (it can therefore return a slow, winding route).
   if (mode === 'direct') return edge.distanceSvg * penalty
 
-  const distance = edge.distanceSvg
+  // Every other mode weights on canonical days (authored where worldbuilder states
+  // a duration, else geometric), so routes follow canon travel-times. `fastest` is
+  // pure least-days; safest/cheapest keep their edge-type character on top of days.
+  const days = edgeBaseDays(edge)
 
-  if (mode === 'fastest') {
-    const speed = edge.type === 'trade_route' ? 2.0 :
-                  edge.type === 'chokepoint' ? 0.5 :
-                  edge.type === 'intra_civ' ? 1.0 :
-                  1.0
-    return (distance / speed) * penalty
-  }
+  if (mode === 'fastest') return days * penalty
 
   if (mode === 'safest') {
     const risk = edge.type === 'trade_route' ? 1.0 :
                  edge.type === 'chokepoint' ? 3.0 :
                  edge.type === 'intra_civ' ? 1.2 :
                  1.5
-    return distance * risk * penalty
+    return days * risk * penalty
   }
 
   if (mode === 'cheapest') {
@@ -557,10 +664,10 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
                  edge.type === 'chokepoint' ? 2.0 :
                  edge.type === 'intra_civ' ? 1.0 :
                  1.5
-    return distance * cost * penalty
+    return days * cost * penalty
   }
 
-  return distance * penalty
+  return days * penalty
 }
 
 /** Dijkstra shortest path with optional seasonal filtering and route mode.
@@ -645,18 +752,12 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
   const rawTotalSvg = pathEdges.reduce((sum, e) => sum + e.distanceSvg, 0)
   const totalKm = svgDistanceToKm(rawTotalSvg)
 
-  // Per-segment day estimates based on edge type, modulated by party config
-  const speedByType: Record<string, number> = {
-    trade_route: 50,
-    chokepoint: 12.5,
-    intra_civ: 25,
-    civ_link: 25,
-  }
+  // Per-segment day estimate: the canonical traversal time (authored where
+  // worldbuilder states one, else geometric km/speed) scaled by the party pace
+  // multiplier. Same currency the router optimized, so the reported timeline
+  // matches the chosen route's canon durations.
   for (const edge of pathEdges) {
-    const km = svgDistanceToKm(edge.distanceSvg)
-    const baseSpeed = speedByType[edge.type] || 25
-    const speed = baseSpeed * getPaceMultiplier(party, edge.type)
-    edge.segmentDays = km / speed
+    edge.segmentDays = edgeBaseDays(edge) / getPaceMultiplier(party, edge.type)
   }
 
   // estimatedDays = sum of per-edge segmentDays so it stays consistent with

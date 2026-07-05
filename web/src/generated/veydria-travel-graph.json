@@ -1,0 +1,225 @@
+{
+  "status": "draft — increment 2; gap-durations ratified by Perry 2026-06-09; Smith-Spring retained as an intentional non-edge",
+  "coordinate_note": "display.x/.y are schematic [0,1] coords copied from tools/map-viewer/data/positions.yaml (1200x800 SVG viewBox, origin top-left). They exist for rendering only. They have NO real-world scale and are NOT used to compute `days` — travel-times come solely from attested prose.",
+  "nodes": {
+    "ngaru_bon": {
+      "kind": "region",
+      "aliases": [
+        "ngaru-bon"
+      ],
+      "display": {
+        "x": 0.5417,
+        "y": 0.15
+      }
+    },
+    "kheshkai": {
+      "kind": "region",
+      "display": {
+        "x": 0.8417,
+        "y": 0.425
+      }
+    },
+    "qollari": {
+      "kind": "region",
+      "display": {
+        "x": 0.3042,
+        "y": 0.5875
+      }
+    },
+    "ndjadi": {
+      "kind": "region",
+      "display": {
+        "x": 0.5667,
+        "y": 0.7625
+      }
+    },
+    "oravan": {
+      "kind": "region",
+      "display": {
+        "x": 0.1667,
+        "y": 0.4563
+      }
+    },
+    "tavakh_qarat": {
+      "kind": "port",
+      "aliases": [
+        "tavakh-qarat"
+      ],
+      "display": {
+        "x": 0.5,
+        "y": 0.3625
+      }
+    },
+    "ki_mbuhari": {
+      "kind": "port",
+      "aliases": [
+        "ki-mbuhari"
+      ],
+      "display": {
+        "x": 0.5417,
+        "y": 0.775
+      }
+    },
+    "halani_tamu": {
+      "kind": "port",
+      "aliases": [
+        "halani-tamu"
+      ],
+      "display": {
+        "x": 0.7167,
+        "y": 0.525
+      }
+    },
+    "frankincense_coast": {
+      "kind": "coast",
+      "aliases": [
+        "irrah-frankincense-coast"
+      ]
+    },
+    "aethelian_basin": {
+      "kind": "sea",
+      "aliases": [
+        "aethelian-basin"
+      ]
+    },
+    "dzong_tamu": {
+      "kind": "port",
+      "aliases": [
+        "dzong-tamu"
+      ]
+    }
+  },
+  "edges": [
+    {
+      "between": [
+        "ngaru_bon",
+        "kheshkai"
+      ],
+      "via": "lam_chen_pass",
+      "days": 4,
+      "mode": "mountain_pass",
+      "seasonal": "the pass closes ~6 weeks at the late-winter snow",
+      "source": "Three days under cliff and a day in scree",
+      "source_ref": "geography/continents/veydria-topology.yaml#chokepoints.lam_chen_pass"
+    },
+    {
+      "between": [
+        "qollari",
+        "ndjadi"
+      ],
+      "via": "qollari_cliff_roads",
+      "days": {
+        "min": 4,
+        "max": 6
+      },
+      "mode": "cliff_road",
+      "note": "southern carved descent from the cloud forest to the Ndjadi floodplains",
+      "source": "The carved descent from the cloud forest takes four days for a loaded llama and six for a sick one",
+      "source_ref": "geography/continents/veydria-topology.yaml#chokepoints.qollari_cliff_roads"
+    },
+    {
+      "between": [
+        "qollari",
+        "oravan"
+      ],
+      "via": "qollari_cliff_roads",
+      "days": {
+        "min": 4,
+        "max": 6
+      },
+      "mode": "cliff_road",
+      "note": "western carved descent from the cloud forest to the Oravan coast; same general descent figure",
+      "source": "The carved descent from the cloud forest takes four days for a loaded llama and six for a sick one",
+      "source_ref": "geography/continents/veydria-topology.yaml#chokepoints.qollari_cliff_roads"
+    },
+    {
+      "between": [
+        "tavakh_qarat",
+        "ki_mbuhari"
+      ],
+      "via": "aethelian_basin",
+      "days": 3,
+      "mode": "sail",
+      "note": "north shore to south shore — the across-Basin sail",
+      "source": "A three-day sail across",
+      "source_ref": "geography/continents/veydria-topology.yaml#aethelian_basin.description"
+    },
+    {
+      "between": [
+        "halani_tamu",
+        "frankincense_coast"
+      ],
+      "via": "irrah",
+      "days": 60,
+      "mode": "caravan",
+      "seasonal": "the khatti letters of credit settle at Tavakh-Qarat in the cool season",
+      "note": "the full Irrah desert belt, from the Basin's east-shore port to the southeastern frankincense coast",
+      "source": "A horizontal swathe of desert from the Basin's east shore to the frankincense coast, sixty days under good water and never under bad",
+      "source_ref": "geography/continents/veydria-topology.yaml#civilization_positions.irrah.gazetteer"
+    },
+    {
+      "between": [
+        "oravan",
+        "aethelian_basin"
+      ],
+      "via": "halkar_straits",
+      "days": 1,
+      "mode": "sail",
+      "seasonal": "piloted transit only; a keel may wait days at the western anchorage for a fair tide",
+      "note": "the piloted narrows transit only; the unattested archipelago→port open-water leg is deliberately not weighted",
+      "source": "A keel takes the narrows in a day under an Oravan pilot",
+      "source_ref": "geography/locations/halkar-straits.md#the-mouth-of-the-basin"
+    },
+    {
+      "between": [
+        "kheshkai",
+        "ndjadi"
+      ],
+      "via": "a_tzalan_ford",
+      "days": {
+        "min": 4,
+        "max": 5
+      },
+      "mode": "cliff_descent_ford",
+      "seasonal": "impassable at flood; two of four seasons crossable only by a seized bank",
+      "note": "cliff-edge-to-delta descent reading off Lam-Chen (4d) and Qollari cliff-roads (4–6d); the ford is the low-water window at the foot",
+      "source": "The descent from the cliff-edge to the delta floor is four days in the low-water season, the last of them at the ford",
+      "source_ref": "geography/locations/a-tzalan-ford.md#the-water-crossing-and-what-it-joins"
+    },
+    {
+      "between": [
+        "tavakh_qarat",
+        "halani_tamu"
+      ],
+      "via": "aethelian_basin",
+      "days": 1,
+      "mode": "sail",
+      "note": "north-east rim coasting hop; a chord of the 3-day across-Basin diameter",
+      "source": "Tavakh-Qarat to Halani-Tamu is a single day along the north-east shore",
+      "source_ref": "geography/continents/veydria-topology.yaml#aethelian_basin.description"
+    },
+    {
+      "between": [
+        "dzong_tamu",
+        "ki_mbuhari"
+      ],
+      "via": "aethelian_basin",
+      "days": 1,
+      "mode": "sail",
+      "note": "southern-rim coasting hop to the SE-margin metal door",
+      "source": "Dzong-Tamu sits on the Basin's south-eastern margin, a day's coasting around the southern rim from Ki-Mbuhari",
+      "source_ref": "geography/locations/dzong-tamu.md#the-door-and-what-it-admits"
+    }
+  ],
+  "gaps": [
+    {
+      "between": [
+        "ngaru_bon",
+        "irrah"
+      ],
+      "via": "smith_spring",
+      "kind": "turn_back_hub",
+      "reason": "Intentional non-edge: canon forbids the traverse. The iron turns back at the buffer and the salt turns back at the buffer ('the place past which neither people goes'). The only figure is the 3-league ore-flow, not a route time. Modeled as a turn-back hub, not a crossing."
+    }
+  ]
+}

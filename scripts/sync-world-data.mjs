@@ -66,6 +66,13 @@ const SYNC_MAP = [
     optional: true,
     transform: 'yaml2json',
   },
+  {
+    src: 'geography/continents/veydria-travel-graph.yaml',
+    dest: 'web/src/generated/veydria-travel-graph.json',
+    description: 'Authored inter-place travel durations (ADR-0018); yaml→json for the journey graph',
+    optional: true,
+    transform: 'yaml2json',
+  },
 ];
 
 // yaml→json conversion keeps the web app on its familiar fetch-JSON path (no
