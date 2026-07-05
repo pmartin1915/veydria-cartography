@@ -7,7 +7,7 @@
 
 import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyEdge } from './journey-graph'
 import { getRouteDifficulty, isDefaultParty, describeParty } from './journey-graph'
-import { buildDailyBreakdown } from './journey-days'
+import { buildDailyBreakdown, resupplyByDayForRoute } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import { listPartyNames, journeysForParty, type SavedJourney } from './journey-saved'
 import type { MapAnnotation } from './annotations'
@@ -139,7 +139,10 @@ export function exportJourneyMarkdown(
     const biomeForEdge = edgeBiomes
       ? (e: JourneyEdge) => edgeBiomes[route.edges.indexOf(e)]
       : undefined
-    const timeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
+    const resupplyByDay = resupplyByDayForRoute(route, season, mode)
+    const timeline = computeSupplyTimeline(
+      days, party, supply, biomeForEdge, season, (dayNum) => resupplyByDay.get(dayNum) ?? 'none', mode,
+    )
     const pressure = summarizeSupplyPressure(timeline)
     const lines: string[] = []
     if (pressure.rationsLowDay !== null) lines.push(`Rations critical on day ${pressure.rationsLowDay}.`)

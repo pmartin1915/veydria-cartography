@@ -575,7 +575,7 @@ body {
 .app-main.passage-mode .layer-controls,
 .app-main.passage-mode .compass-rose,
 .app-main.passage-mode .marginalia-cartouche,
-.app-main.passage-mode .hex-coord-chip {
+.app-main.passage-mode .coord-chip-stack {
   opacity: 0.45;
   transition: opacity 0.5s ease;
 }
@@ -2430,6 +2430,34 @@ body {
   border-color: rgba(232, 200, 64, 0.5);
 }
 
+/* --- Custom scale bar (bottom-right) --- */
+.map-scale-bar {
+  margin: 0 10px 10px 0;
+  padding: 4px 6px;
+  background: rgba(13, 15, 20, 0.88);
+  border: 1px solid rgba(212, 168, 84, 0.5);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  line-height: 1;
+}
+.map-scale-bar-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #f4dca0;
+}
+.map-scale-bar-line {
+  height: 6px;
+  min-width: 20px;
+  border: 2px solid rgba(244, 220, 160, 0.9);
+  border-top: none;
+  border-radius: 0 0 2px 2px;
+}
+
 .measure-panel-hint {
   font-size: 10px;
   color: var(--text-muted);
@@ -2945,6 +2973,23 @@ body {
 
 .toast-notification.exiting {
   animation: toastOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* WebView2 swallows CSS entrance animations — the toast stays at the from-keyframe's
+   opacity:0 and never appears (success-toast bug). On desktop, take the same
+   no-animation path that SaveStatusIndicator (below) uses to render reliably; the web
+   build keeps its animated toasts untouched. The body.app-desktop class is added at
+   boot in main.tsx when isTauri. Covers both toast systems (.toast-notification and
+   the JourneyPlanner .journey-export-toast). */
+body.app-desktop .toast-notification,
+body.app-desktop .journey-export-toast {
+  animation: none;
+  opacity: 1;
+}
+
+body.app-desktop .toast-notification.exiting {
+  animation: none;
+  opacity: 1; /* no fade-out; the element simply unmounts after the leaving window */
 }
 
 /* Persistent "last save failed" badge. Deliberately NO entrance animation: the
@@ -4715,6 +4760,13 @@ body {
   font-style: italic;
 }
 
+.journey-path-edge-detail {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 /* Tabs */
 .journey-tabs {
   display: flex;
@@ -5250,6 +5302,49 @@ body {
 }
 .hex-coord-chip-sep { color: var(--text-muted); }
 .hex-coord-chip-descriptors { color: var(--text-primary); }
+
+/* Stacking container for the hex and world-coordinate chips. */
+.coord-chip-stack {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 998;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.coord-chip-stack > .hex-coord-chip,
+.coord-chip-stack > .world-coord-chip {
+  position: relative;
+  top: auto;
+  left: auto;
+}
+
+.world-coord-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(13, 15, 20, 0.88);
+  border: 1px solid rgba(212, 168, 84, 0.5);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  max-width: calc(100% - 80px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-coord-chip-label {
+  color: #f4dca0;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+.world-coord-chip-sep { color: var(--text-muted); }
+.world-coord-chip-value { color: var(--text-primary); }
 
 /* --- Hex info panel (click-to-select) --- */
 .hex-info-panel {
@@ -8361,3 +8456,418 @@ select:focus-visible {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── Trail mode ─────────────────────────────────────────────────────────── */
+
+.trail-mode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trail-vista {
+  width: 100%;
+  aspect-ratio: 320 / 88;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.trail-heading {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-accent);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.trail-heading:focus-visible {
+  outline: none;
+}
+
+/* Setup card: the OT naming ritual */
+.trail-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.trail-setup-instructions {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.trail-roster-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trail-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trail-roster-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+}
+
+.trail-roster-name-input:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}
+
+.trail-roster-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.trail-roster-role {
+  color: var(--text-secondary);
+}
+
+.trail-roster-remove {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.trail-roster-remove:hover:not(:disabled) {
+  border-color: #c06040;
+  color: #c06040;
+}
+
+.trail-roster-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.trail-setup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.trail-roster-add {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.trail-roster-add:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.trail-roster-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Ledger: supply + roster */
+.trail-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trail-ledger-members {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.trail-member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.trail-member.dead {
+  opacity: 0.75;
+}
+
+.trail-member-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.trail-member.dead .trail-member-name {
+  color: var(--text-muted);
+}
+
+.trail-member-role {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.trail-member-health {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.trail-member-health.well {
+  background: rgba(100, 180, 120, 0.12);
+  color: #a8d8b8;
+}
+
+.trail-member-health.ill {
+  background: rgba(232, 160, 48, 0.12);
+  color: #e8c860;
+}
+
+.trail-member-health.very-ill {
+  background: rgba(192, 96, 64, 0.12);
+  color: #d4a08c;
+}
+
+.trail-member-health.dead {
+  background: rgba(120, 120, 120, 0.12);
+  color: #888;
+}
+
+.trail-member-ailment {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.trail-member-died {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Journal */
+.trail-journal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.trail-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.trail-log-line {
+  border-left-color: var(--color-route);
+}
+
+.trail-log-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+/* Grave markers */
+.trail-grave {
+  border-left-color: #888;
+  background: rgba(20, 24, 32, 0.7);
+}
+
+.trail-grave-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: line-through;
+}
+
+.trail-grave-epitaph {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.trail-grave-day {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Controls */
+.trail-controls {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.trail-action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.trail-btn {
+  padding: 7px 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.trail-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.trail-btn--primary {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.35);
+  color: var(--text-accent);
+}
+
+.trail-btn--primary:hover:not(:disabled) {
+  background: rgba(196, 168, 98, 0.2);
+  border-color: rgba(196, 168, 98, 0.5);
+}
+
+/* Choice cards reuse .passage-choice-cards; this scope adds no extra rules. */
+
+/* Score screen */
+.trail-score-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trail-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.trail-score-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: rgba(13, 15, 20, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.trail-score-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.trail-score-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+}
+
+.trail-score-graves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trail-score-graves-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.trail-score-seed {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Mode selector on JourneyResults */
+.journey-set-out-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.journey-set-out-btn--trail {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.35);
+  color: var(--text-accent);
+}
+
+.journey-set-out-btn--trail:hover {
+  background: rgba(196, 168, 98, 0.2);
+  border-color: rgba(196, 168, 98, 0.5);
+}
+
+/* Mobile: keep the action bar usable at narrow widths */
+@media (max-width: 360px) {
+  .trail-action-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

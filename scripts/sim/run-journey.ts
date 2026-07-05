@@ -26,23 +26,21 @@ import {
   type Action,
   type JourneyDay,
 } from '../../web/src/utils/journey-days'
-import { computeSupplyTimeline, getResupplyTier, type ResupplyTier, type SupplyConfig, type SupplyDay } from '../../web/src/utils/journey-supply'
+import {
+  computeSupplyTimeline,
+  getResupplyTier,
+  type ResupplyTier,
+  type SupplyConfig,
+  type SupplyDay,
+} from '../../web/src/utils/journey-supply'
 import { getPolicy, type PolicyName } from './policies'
 
 export type Graph = ReturnType<typeof buildGraph>
 
-/**
- * Category → resupply tier. Now single-sourced in web/src/utils/journey-supply.ts
- * (`getResupplyTier`) so the live product Passage and this sim share one mapping;
- * re-exported here for the sim's existing importers. Provenance (decision log):
- * SCOPING-supply-recalibration-2026-05-24.md section 3a step 1 (Q2). Civilizations
- * and caravanserai both restore rations and water (Option E retier 2026-05-25:
- * rations-only at caravanserai didn't shift bands, so they grant full restore as
- * purpose-built relay stations with both grain stores AND cisterns/wells);
- * ports/oases restore water only; everything else (landmarks, chokepoints,
- * contested sites, rivers) grants nothing in v1. The 'rations' tier remains valid
- * engine vocabulary for future categories even though no category currently maps to it.
- */
+// getResupplyTier now lives in web/src/utils/journey-supply.ts (2026-07-04) so the
+// app and every sim entry point share one definition. Re-exported here so existing
+// importers of this module (trail-run.ts, passage-run.ts) don't need to change
+// their import path.
 export { getResupplyTier }
 
 export interface JourneyInputs {

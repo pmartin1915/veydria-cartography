@@ -78,18 +78,40 @@ const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
 /** Softer-pressure tier (water × 1.25). Arid takes priority when both are present. */
 const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
 
-/** Tier of supply restored at a day's camp. */
+/** Tier of supply restored at a day's camp. See `getResupplyTier` below. */
 export type ResupplyTier = 'full' | 'rations' | 'water' | 'none'
 
 /**
- * Canonical node-category → resupply tier mapping. Settled, walled towns restock
- * the whole party (food + water); coastal ports and desert oases give water only.
- * Single source of truth shared by the live product (Passage mode) and the sim
- * harness (`scripts/sim/run-journey.ts` imports this), so balance can't drift.
+ * Category → resupply tier. Mirrored from SCOPING-supply-recalibration-2026-05-24.md
+ * section 3a step 1 (Q2 decision log). Civilizations and caravanserai both
+ * restore rations and water (Option E retier 2026-05-25: rations-only at
+ * caravanserai didn't shift bands, so they now grant full restore as
+ * purpose-built relay stations with both grain stores AND cisterns/wells);
+ * ports/oases restore water only; everything else (landmarks, chokepoints,
+ * contested sites, rivers) grants nothing in v1. Rivers as linear features
+ * are deferred to a later cycle. The 'rations' tier remains valid engine
+ * vocabulary for future categories even though no category currently maps to it.
+ *
+ * `water` (2026-07-04): the Aethelian Basin's own node carries category `water`
+ * (the only geojson node that does — its named ports Halani-Tamu/Ki-Mbuhari/etc.
+ * are already category `port`). Canon (`aethelian-basin.yaml`) describes
+ * Halani-Tamu as "the Sweetwater Harbor" where Irrah caravans are "certified
+ * for desert crossing," and Ki-Mbuhari as "the Surplus-Water Settlement" — the
+ * Basin is a freshwater caravan-provisioning stop, not open salt sea, so it
+ * should refill water like a port. Previously fell through to `none`, silently
+ * removing the only mid-route resupply on the medium (irrah→ngaru_bon) route
+ * right at the mouth of its long desert corridor.
+ *
+ * This was the SIM's copy (scripts/sim/run-journey.ts); moved here 2026-07-04
+ * so the app and the sim share one definition — the sim previously had the only
+ * wiring (no web/src caller ever passed a `resupplyTierFor`), so live Passage/
+ * Trail play ran with an always-empty `resupplyByDay` (zero waypoint resupply)
+ * while only the offline sim calibrated against real resupply behavior.
  */
 export function getResupplyTier(category: string): ResupplyTier {
-  if (category === 'civilization' || category === 'caravanserai') return 'full'
-  if (category === 'port' || category === 'oasis') return 'water'
+  if (category === 'civilization') return 'full'
+  if (category === 'caravanserai') return 'full'
+  if (category === 'port' || category === 'oasis' || category === 'water') return 'water'
   return 'none'
 }
 
