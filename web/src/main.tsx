@@ -4,6 +4,9 @@ import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import { loadExternalEncounters } from './utils/external-encounters'
 import { loadAsterisms } from './utils/asterisms'
+import { isTauri } from './persistence/runtime'
+import { kvStore } from './persistence/kv-store'
+import { reportSaveFailure } from './persistence/save-status'
 import './App.css'
 
 // Arm worldbuilder's encounter canon (ADR-0022). Fire-and-forget: by the time a
@@ -15,10 +18,49 @@ void loadExternalEncounters(import.meta.env.BASE_URL)
 // hot by the time App reads it; a missing file degrades to no marginalia.
 void loadAsterisms(import.meta.env.BASE_URL)
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-)
+/**
+ * Desktop boot: install the disk-backed store and hydrate it BEFORE first render,
+ * so every synchronous `kvStore.getString` at render time sees persisted data. The
+ * Tauri-only modules are dynamically imported so they never enter the web bundle.
+ * The web build skips all of this and keeps the default synchronous localStorage
+ * backend (no hydrate needed).
+ */
+async function boot(): Promise<void> {
+  // Tag the document so desktop-only CSS can opt out of entrance animations that
+  // WebView2 swallows (the success-toast bug). Check both the Tauri IPC global and
+  // the WebView2 UA (Tauri's WebView2 identifies as 'Edg/N' without a 'WebView2-based'
+  // suffix — match the shared prefix so this fires whether or not __TAURI_INTERNALS__
+  // is injected in dev mode).
+  const inWebView2 = typeof navigator !== 'undefined' && navigator.userAgent.includes('Edg/')
+  if (isTauri || inWebView2) document.body.classList.add('app-desktop')
+
+  if (isTauri) {
+    try {
+      const { createTauriFsProvider } = await import('./persistence/tauri-fs-ops')
+      await kvStore.hydrate(await createTauriFsProvider())
+    } catch (err) {
+      // A corrupt/unreadable store must not white-screen the app. Start on the
+      // empty default backend and surface that the load failed.
+      reportSaveFailure(
+        `Could not load your saved data: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    }
+    try {
+      const { installCloseFlush } = await import('./persistence/tauri-lifecycle')
+      await installCloseFlush()
+    } catch {
+      // Without the close-flush hook a quit may lose the last debounced write, but
+      // the app must still launch; the periodic write covers the common case.
+    }
+  }
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  )
+}
+
+void boot()

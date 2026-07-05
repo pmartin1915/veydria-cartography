@@ -1,0 +1,47 @@
+1. **Pace-multiplier direction is under-specified and easy to invert.**  
+   Step 3 divides the authored day-count by `getPaceMultiplier(party, edge.type)`. The comment says the authored value is at the “DEFAULT party (normal/foot/medium)” and that a faster party arrives sooner, which is consistent with division. But the spec never states the sign/convention of `getPaceMultiplier` (e.g., whether `1.0` is normal and `1.5` is faster), nor does it require a test that proves a “fast” party actually gets a *smaller* `segmentDays` than a “slow” party on an authored leg. Without that invariant test, a bug that multiplies instead of divides, or that uses the reciprocal multiplier, would still pass the listed acceptance criteria.
+
+2. **Smith-Spring suppression scope is ambiguous.**  
+   The gap entry is `between: [ngaru_bon, irrah] via: smith_spring kind: turn_back_hub`. The spec says to suppress any direct edge with the normalized endpoint pair. It does not say whether routes that pass through `smith_spring` as an intermediate node should also be blocked, or whether `via: smith_spring` is purely documentary. If canon forbids the traverse *via* Smith-Spring rather than the dyad itself, only pair-based suppression is insufficient. The acceptance criterion tests only the direct edge, leaving indirect routes untested.
+
+3. **Smith-Spring “determine first” instruction is not testable as written.**  
+   Step 4 requires the implementer to first determine whether the GeoJSON-built graph creates a direct `ngaru_bon ↔ irrah` edge, then either suppress it or add a test and comment. The spec gives no objective criterion for “does the graph create such an edge?” other than running `npm run sim:journey` and inspecting `buildGraph`. The resulting report (“suppression was needed” vs. “absent by construction”) is therefore environment-dependent and not reproducible from the spec alone.
+
+4. **Two `buildGraph` sites create duplication/omission risk.**  
+   The suppression instruction names both `scripts/sim/run-journey.ts` and the web `buildGraph` in `journey-graph.ts` (“wherever edges are added”). If the sim and the web build graphs independently, a fix in only one place leaves the other exposed. The acceptance criterion only tests “no route ever contains a direct `ngaru_bon↔irrah` edge,” without specifying *which* graph builder the test exercises, so cross-environment drift is possible.
+
+5. **Alias normalization is unspecified.**  
+   The loader must index aliases so that hyphenated viewer slugs resolve, but the spec does not say whether aliases themselves should be normalized (lowercase, `-` → `_`) before indexing. If the YAML aliases contain mixed case or underscores, the lookup will fail for slug-form inputs. The acceptance test only checks `ngaru-bon` → `ngaru_bon`; it does not cover case mismatches or alias lists containing underscores.
+
+6. **“No change to any lens that already existed” is untestable without a snapshot.**  
+   WS2 acceptance criterion 5 says existing lenses must be unchanged, but the spec provides no fixture or snapshot to verify ordering, labels, descriptions, or filter behavior of pre-existing lenses. Unless the existing test suite already snapshots the `LENSES` array and the switch block, this criterion can only be checked by manual inspection.
+
+7. **Hard-coded test count (856) is brittle.**  
+   WS3 acceptance criterion 5 asserts “all existing 856 tests still pass.” If the worktree currently has a different number of tests, this criterion becomes misleading. It also does not define what “still pass” means for tests that may be added by this change (the new tests are extra, so the total will exceed 856).
+
+8. **Optional sync + mandatory import create a latent build failure.**  
+   The `SYNC_MAP` entry sets `optional: true`, but `journey-graph.ts` imports `../generated/veydria-travel-graph.json` synchronously. If the generated file is missing (e.g., a fresh clone where sync has not been run), the build will fail even though the source file was marked optional. There is no fallback/empty-graph stub specified.
+
+9. **No error handling for malformed generated JSON.**  
+   The loader assumes `travelGraphData.nodes`, `.edges`, and `.gaps` exist and have the documented shape. The spec does not require validation, defensive defaults, or meaningful runtime errors if the YAML structure drifts or the JSON is partially written.
+
+10. **Range midpoint rounding is unspecified.**  
+    For `{min, max}` day values the spec uses `(min + max) / 2`. It does not say whether the result should be an integer, rounded, or left as a float. If the YAML contains odd sums, `segmentDays` could become fractional (e.g., 4.5), which may or may not be acceptable to downstream consumers that expect whole days.
+
+11. **Authored override scope is technically honored but not enforced.**  
+    The “scope honesty” note says overrides apply only when both endpoints are travel-graph nodes. The implementation naturally falls back to geometric for unknown pairs, but there is no explicit guard or test proving that a mixed pair (one travel-graph node, one snapped GeoJSON-only node) does *not* accidentally match via alias index or partial normalization.
+
+12. **No test requirement for non-authGeo fallback on authored routes.**  
+    The acceptance criteria test that authored legs use the authored count and that unknown pairs return `null`. They do not require a test for a route that mixes authored and geometric legs, even though the pathfinder will frequently produce such routes per the “scope honesty” note. A regression that accidentally applies an authored duration to a geometric sub-edge would not be caught.
+
+13. **`--check` criterion depends on committed generated output.**  
+    Step 1 says to run the sync once and commit the generated JSON. The acceptance criterion then requires `--check` to list the entry as in-sync. If the generated JSON is committed but `.gitignore` or the sync script’s checksum logic treats `src/generated/` differently from `public/`, `--check` could fail despite the file being present. The spec does not confirm the sync/check semantics for `web/src/generated/`.
+
+14. **Lens key / entity_type mismatch could confuse future maintainers.**  
+    The lens key is `characters` while the filter uses `entity_type === 'character'`; similarly `record-keeping` maps to `record_medium`, `underclass` to `underclass_life`, and `funerary` to `funerary_practice`. The mapping is documented, but the acceptance tests only assert the filter output, not the relationship between key and `entity_type`. A future edit that changes one but not the other could be missed.
+
+15. **Line-number references may be stale.**  
+    The spec cites `journey-graph.ts` ~line 633 and `CompendiumPanel.tsx` lines 310–334. If the files have drifted, the implementer must locate the blocks manually. This is a minor implementation risk, not a functional ambiguity.
+
+16. **No mention of `AGENTS.md` / docs updates.**  
+    Although the project-level `AGENTS.md` is empty, if subdirectory `AGENTS.md` or README files describe the lens list or the journey graph data flow, they would need updates. The spec’s file whitelist does not include documentation files, but the system instruction requires updating `AGENTS.md` when relevant files/styles are modified. This is a process gap, not a technical one.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, SEA_NOTHING_BEATS, filterNothingBeats, pickEncounterTime, TIME_OF_DAY_BEATS, type Beat } from './encounters'
+import { generateEncounters, encounterTypeIcon, encounterSeverityLabel, severityCost, NOTHING_BEATS, SEA_NOTHING_BEATS, filterNothingBeats, filterBeatsByTime, pickEncounterTime, TIME_OF_DAY_BEATS, type Beat } from './encounters'
 import { TIME_OF_DAY_ORDER } from './time-of-day'
 import type { JourneyRoute } from './journey-graph'
 
@@ -243,6 +243,90 @@ describe('encounters', () => {
     for (const v of [0, 0.4, 0.6, 0.75, 0.95]) {
       expect(TIME_OF_DAY_ORDER).toContain(pickEncounterTime(plain, () => v))
     }
+  })
+
+  /* ─── Time-of-day travel filter (V3 sub-item C) ─── */
+
+  it('filterBeatsByTime is a no-op when no travelTime is given', () => {
+    const pool: Beat[] = [
+      { text: 'a', type: 'social', severity: 'mild' },
+      { text: 'b', type: 'environmental', severity: 'mild', timeOfDay: ['day'] },
+    ]
+    expect(filterBeatsByTime(pool)).toBe(pool)
+  })
+
+  it('filterBeatsByTime keeps unpinned + matching beats, drops incompatible pins', () => {
+    const unpinned: Beat = { text: 'unpinned', type: 'social', severity: 'mild' }
+    const dayOnly: Beat = { text: 'day', type: 'environmental', severity: 'mild', timeOfDay: ['day'] }
+    const nightOnly: Beat = { text: 'night', type: 'environmental', severity: 'mild', timeOfDay: ['night'] }
+    const dawnOrNight: Beat = { text: 'both', type: 'opportunity', severity: 'mild', timeOfDay: ['dawn', 'night'] }
+    const pool = [unpinned, dayOnly, nightOnly, dawnOrNight]
+
+    const atNight = filterBeatsByTime(pool, 'night')
+    expect(atNight).toEqual([unpinned, nightOnly, dawnOrNight])
+    expect(atNight).not.toContain(dayOnly)
+
+    const atDay = filterBeatsByTime(pool, 'day')
+    expect(atDay).toEqual([unpinned, dayOnly])
+    expect(atDay).not.toContain(nightOnly)
+  })
+
+  it('filterBeatsByTime falls back with pins stripped when every beat is incompatible', () => {
+    const pool: Beat[] = [
+      { text: 'a', type: 'environmental', severity: 'mild', timeOfDay: ['day'] },
+      { text: 'b', type: 'environmental', severity: 'mild', timeOfDay: ['dusk'] },
+    ]
+    // Nothing matches 'night', but the leg still needs a beat. The fallback keeps the
+    // beats yet strips their pins, so downstream they're stamped with the travel time
+    // instead of contradicting it — the badge invariant holds even in the fallback.
+    const fallback = filterBeatsByTime(pool, 'night')
+    expect(fallback.map(b => b.text)).toEqual(['a', 'b'])
+    expect(fallback.every(b => b.timeOfDay === undefined)).toBe(true)
+    // A stripped beat now resolves to the travel time, not its old pin.
+    expect(pickEncounterTime(fallback[0], () => 0, 'night')).toBe('night')
+  })
+
+  it('pickEncounterTime takes the travel time for an unpinned beat', () => {
+    const plain: Beat = { text: 'x', type: 'social', severity: 'mild' }
+    // rng would otherwise weighted-roll; travelTime overrides without consuming it.
+    expect(pickEncounterTime(plain, () => 0.99, 'night')).toBe('night')
+    expect(pickEncounterTime(plain, () => 0.99, 'dawn')).toBe('dawn')
+  })
+
+  it('pickEncounterTime settles a multi-time pinned beat onto the travel time it lists', () => {
+    const dawnOrNight: Beat = { text: 'x', type: 'opportunity', severity: 'mild', timeOfDay: ['dawn', 'night'] }
+    expect(pickEncounterTime(dawnOrNight, () => 0, 'night')).toBe('night')
+    // A pin that does NOT list the travel time keeps its own pinned roll (unchanged).
+    const dayOnly: Beat = { text: 'y', type: 'environmental', severity: 'mild', timeOfDay: ['day'] }
+    expect(pickEncounterTime(dayOnly, () => 0, 'night')).toBe('day')
+  })
+
+  it('generateEncounters(travelTime) makes every encounter read at that time, and excludes day-only beats at night', () => {
+    const r = fakeRouteManyEdges(20, 'trade_route')
+    const night = generateEncounters(r, 'spring', 'direct', undefined, 'night')
+    const day = generateEncounters(r, 'spring', 'direct', undefined, 'day')
+    expect(night.length).toBeGreaterThan(0)
+    expect(day.length).toBeGreaterThan(0)
+    expect(night.every(e => e.timeOfDay === 'night')).toBe(true)
+    expect(day.every(e => e.timeOfDay === 'day')).toBe(true)
+    // The filter actually engaged: a time-biased run differs from the default roll.
+    const def = generateEncounters(r, 'spring', 'direct')
+    expect(night.map(e => e.timeOfDay)).not.toEqual(def.map(e => e.timeOfDay))
+  })
+
+  it('generateEncounters(travelTime) is deterministic', () => {
+    const r = fakeRouteManyEdges(8, 'intra_civ')
+    const a = generateEncounters(r, 'autumn', 'safest', undefined, 'night')
+    const b = generateEncounters(r, 'autumn', 'safest', undefined, 'night')
+    expect(a).toEqual(b)
+  })
+
+  it('omitting travelTime leaves the baseline encounter stream untouched', () => {
+    // Same args with an explicit undefined travelTime must equal the 4-arg call,
+    // proving the new param defaults cleanly and never perturbs existing callers.
+    const r = fakeRouteManyEdges(12, 'trade_route')
+    expect(generateEncounters(r, 'summer', 'direct', undefined, undefined))
+      .toEqual(generateEncounters(r, 'summer', 'direct'))
   })
 
   it('time-flavored overlay never changes type/severity (sim-safety invariant)', () => {

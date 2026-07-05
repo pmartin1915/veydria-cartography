@@ -1,3 +1,5 @@
+import { kvStore } from '../persistence/kv-store'
+
 export type TimeOfDay = 'day' | 'dawn' | 'dusk' | 'night'
 
 export const TIME_OF_DAY_ORDER: TimeOfDay[] = ['day', 'dawn', 'dusk', 'night']
@@ -32,7 +34,7 @@ export function cycleTimeOfDay(current: TimeOfDay): TimeOfDay {
 }
 
 export function loadTimeOfDay(): TimeOfDay {
-  const stored = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
+  const stored = kvStore.getString(STORAGE_KEY)
   if (stored && TIME_OF_DAY_ORDER.includes(stored as TimeOfDay)) {
     return stored as TimeOfDay
   }
@@ -40,9 +42,8 @@ export function loadTimeOfDay(): TimeOfDay {
 }
 
 export function saveTimeOfDay(value: TimeOfDay): void {
-  if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(STORAGE_KEY, value)
+    kvStore.setString(STORAGE_KEY, value)
   } catch {
     // quota / private mode
   }

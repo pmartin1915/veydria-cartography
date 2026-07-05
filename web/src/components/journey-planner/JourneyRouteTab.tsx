@@ -1,5 +1,7 @@
 import { IconScroll, IconMountain, IconArrow, IconWarning, IconCloudRain } from '../icons'
 import { straitAnnotation, type JourneyRoute, type Season, type RouteMode } from '../../utils/journey-graph'
+import { bearingDegrees, compass16, worldScale } from '../../utils/world-coords'
+import { formatDays } from '../../utils/format-measure'
 import { generateEncounters } from '../../utils/encounters'
 import { computeModeRiskWarning } from '../../utils/journey-mode-risk'
 import { computeEncounterDensityWarning } from '../../utils/journey-encounter-density'
@@ -79,13 +81,22 @@ export default function JourneyRouteTab({ route, mode, supply, season, edgeBiome
                 {node.name}
               </span>
               {i < route.edges.length && (() => {
-                const strait = straitAnnotation(node, route.nodes[i + 1])
+                const next = route.nodes[i + 1]
+                const strait = straitAnnotation(node, next)
+                const edge = route.edges[i]
+                // Bearing is the straight chord between the two endpoints, not the
+                // winding trade-route path — intentional for the route summary.
+                const bearing = bearingDegrees({ x: node.x, y: node.y }, { x: next.x, y: next.y })
+                const compass = compass16(bearing)
+                const km = Math.round(edge.distanceSvg * worldScale.kmPerSvgUnit)
+                const daysPart = edge.segmentDays !== undefined ? ` · ${formatDays(edge.segmentDays)}` : ''
                 return (
                   <span className="journey-path-edge">
-                    {route.edges[i].type === 'trade_route' && <IconScroll />}
-                    {route.edges[i].type === 'chokepoint' && <IconMountain />}
-                    {(route.edges[i].type === 'intra_civ' || route.edges[i].type === 'civ_link') && <IconArrow />}
-                    {' '}{strait ? `⚓ ${strait} · ${route.edges[i].name}` : route.edges[i].name}
+                    {edge.type === 'trade_route' && <IconScroll />}
+                    {edge.type === 'chokepoint' && <IconMountain />}
+                    {(edge.type === 'intra_civ' || edge.type === 'civ_link') && <IconArrow />}
+                    {' '}{strait ? `⚓ ${strait} · ${edge.name}` : edge.name}
+                    <span className="journey-path-edge-detail">{compass} · {km} km{daysPart}</span>
                   </span>
                 )
               })()}

@@ -5,13 +5,15 @@
  * Schema: Record<featureId, noteText>
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 const STORAGE_KEY = 'veydria.featureNotes.v1'
 
 export type FeatureNotes = Record<string, string>
 
 export function loadFeatureNotes(): FeatureNotes {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as unknown
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
@@ -29,7 +31,7 @@ export function loadFeatureNotes(): FeatureNotes {
 
 export function saveFeatureNotes(notes: FeatureNotes): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(notes))
   } catch {
     // Storage full or private mode — silently fail
   }

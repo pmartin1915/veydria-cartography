@@ -404,7 +404,12 @@ landmarks:
     civ: oravan
 
 # --- On-route Waystations (hand-authored trade-route stops, appended after rivers in the
-#     GeoJSON feature order). Each carries category: port | oasis | caravanserai. ---
+#     GeoJSON feature order). Each carries category: port | oasis | caravanserai. Optional
+#     no_intra_civ: true opts a waystation out of the auto intra_civ edge to its nearest
+#     civ centroid (see journey-graph.ts buildGraph section 3) — needed only when the
+#     waystation sits deep in a corridor where a straight-line "shortcut" back to a civ
+#     centroid would be shorter in raw distance than the intended trade-route path, letting
+#     'direct'-mode Dijkstra bypass the waypoint chain the waystation was placed to create. ---
 waystations:
   tavakh_rubat:
     category: port
@@ -474,6 +479,17 @@ waystations:
     marker_color: "#b87333"
     marker_symbol: "lodging"
     civ: kheshkai
+
+  rubat_al_darb:
+    category: caravanserai
+    coords: [826, 368]
+    in_world_name: "Rubāṭ al-Darb"
+    etymology: "Irrah: rubāṭ 'fortified relay-station' (canon architecture term: mudbrick enclosure, central well/cistern, Qalībin garrison) + al-darb (√d-r-b 'road, path'; institution-naming pattern, cf. Sharīf al-Darb). The Waystation of the Road"
+    description: "A single rubāṭ fort on the open desert crossing of the Caravan Thread, between Aethelian Basin's eastern ports and the Ngaru-Bon frontier: the only provisioning stop on an otherwise unsupported multi-day traverse. Central cistern, goods storage, and an arcaded animal yard for grain and mounts; Qalībin water-scholar militia (15-25, defensive only) maintain both the stores and the semaphore relay (smoke by day, fire by night)."
+    marker_color: "#4a9a3a"
+    marker_symbol: "garden"
+    civ: irrah
+    no_intra_civ: true
 
 # --- River Systems ---
 rivers:

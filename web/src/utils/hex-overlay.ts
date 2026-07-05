@@ -139,9 +139,37 @@ export function initHexOverlay(
   let exploredHexes: Set<string> | null = null
 
   function svgY(y: number): number {
-    // Leaflet CRS.Simple flips Y. hex-grid produces SVG-space coords
-    // (origin top-left); the overlay pane uses flipped Y.
-    return SVG_HEIGHT - y
+    // Y-flip lives HERE (not in the group matrix): hex-grid produces SVG-space
+    // coords (origin top-left, y DOWN); Leaflet CRS.Simple has y UP. Negating
+    // into `y - SVG_HEIGHT` lets reproject() use a POSITIVE-scale matrix, which
+    // is essential — a negative matrix scale would also vertically MIRROR every
+    // glyph (the coordinate labels would render upside-down).
+    return y - SVG_HEIGHT
+  }
+
+  // Map the group's authored SVG coordinates onto Leaflet's CURRENT layer-point
+  // space via a single affine transform, recomputed on zoom/move. Without this
+  // the group renders at a constant screen size — L.SVG sizes the renderer <svg>
+  // so width == viewBox px-bounds, making 1 user-unit == 1 px at every zoom — so
+  // it only aligned with the schematic at the one fit it was authored against
+  // (the old empirical "848 - y" calibration). With svgY already carrying the
+  // Y-flip, an authored coord (x, svgY(y)) maps to latLngToLayerPoint(svgToLatLng
+  // (x, y)) under a POSITIVE-scale affine — exactly the per-point projection
+  // d3-overlay.ts computes, so the group lands pixel-identical to the routes.
+  // Derived from three probes; scales are positive so no glyph mirroring.
+  function reproject() {
+    const p00 = map.latLngToLayerPoint(L.latLng(0, 0))
+    const p10 = map.latLngToLayerPoint(L.latLng(0, 1))
+    const p01 = map.latLngToLayerPoint(L.latLng(1, 0))
+    const sx = p10.x - p00.x // > 0
+    const sy = p00.y - p01.y // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
+    hexGroup.attr('transform', `matrix(${sx},0,0,${sy},${p00.x},${p00.y})`)
+    // Hex coordinate labels are a functional readout — keep them a constant
+    // screen size by counter-scaling the font against the matrix (sx == sy ==
+    // 2^zoom under CRS.Simple). The grid geometry still scales with the chart.
+    const baseFont = Math.max(5, Math.round(currentHexSize * 0.16))
+    const scale = Math.abs(sx) || 1
+    hexGroup.selectAll('text.hex-label').attr('font-size', baseFont / scale)
   }
 
   function rebuild(size: number) {
@@ -271,6 +299,7 @@ export function initHexOverlay(
 
     applyGridLinesVisibility()
     applySelectionStyle()
+    reproject()
   }
 
   function isFogDimmed(label: string): boolean {
@@ -405,6 +434,11 @@ export function initHexOverlay(
   hexGroup.style('display', 'none')
 
   map.on('zoomend', applyZoomLabels)
+  // Keep the group locked to the schematic across pan/zoom. viewreset + moveend
+  // mirror d3-overlay.ts: during a zoom animation Leaflet transforms the whole
+  // renderer <svg> (so children scale smoothly), then fires moveend where we
+  // recompute the exact matrix.
+  map.on('viewreset moveend', reproject)
 
   return {
     update: () => {
@@ -417,6 +451,7 @@ export function initHexOverlay(
     },
     destroy: () => {
       map.off('zoomend', applyZoomLabels)
+      map.off('viewreset moveend', reproject)
       hexGroup.remove()
       cellByAxial.clear()
       descriptorsByLabel.clear()

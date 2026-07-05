@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { buildDailyBreakdown, initJourneyState, nextDay } from './journey-days'
+import { buildDailyBreakdown, initJourneyState, nextDay, resupplyByDayForRoute } from './journey-days'
 import { DEFAULT_PARTY, type JourneyRoute, type PartyConfig } from './journey-graph'
-import { DEFAULT_SUPPLY, computeSupplyTimeline, type ResupplyTier } from './journey-supply'
+import { DEFAULT_SUPPLY, computeSupplyTimeline, getResupplyTier, type ResupplyTier } from './journey-supply'
 
 function makeRoute(opts: { edgeDays: number[]; totalKm: number }): JourneyRoute {
   const nodes = opts.edgeDays.map((_, i) => ({
@@ -472,5 +472,118 @@ describe('journey-days: resupply day mapping parity with legacy name-based walk'
     })
     const day1 = nextDay(state, { kind: 'continue' })
     expect(day1.supply!.resupplyFired).toBe('water')
+  })
+})
+
+describe('journey-days: resupplyByDayForRoute (2026-07-04 wiring fix)', () => {
+  /* Regression coverage for the root-cause bug this session found: every
+   * web/src caller of initJourneyState/computeSupplyTimeline used to omit a
+   * resupplyTierFor/resupplyAtDay predicate entirely, so resupplyByDay was
+   * always empty in live Passage/Trail play and in the JourneyDaysTab/
+   * campaign-log/journey-export supply forecasts — only the offline sim
+   * harness (scripts/sim/*) ever wired getResupplyTier. These tests exercise
+   * the real exported getResupplyTier (not a hand-rolled tierFor like the
+   * parity block above) end-to-end through the new resupplyByDayForRoute
+   * wrapper, the same one JourneyDaysTab/campaign-log/journey-export now call. */
+
+  it('is non-empty for a route with a civilization origin (would have been empty pre-fix)', () => {
+    const route = makeRoute({ edgeDays: [2, 2, 2], totalKm: 200 })
+    const resupplyByDay = resupplyByDayForRoute(route, 'spring', 'direct')
+    expect(resupplyByDay.size).toBeGreaterThan(0)
+  })
+
+  it("a 'water'-category node (the Aethelian Basin's own category, the canon fix) grants a 'water' tier at the day it's reached", () => {
+    // Minimal 2-edge route: civilization origin -> water-category midpoint -> oasis end.
+    // Mirrors the real medium route's shape (irrah -> ... -> aethelian_basin -> ... -> ngaru_bon).
+    const route: JourneyRoute = {
+      nodes: [
+        { id: 'a', name: 'Origin', category: 'civilization', x: 0, y: 0 },
+        { id: 'b', name: 'Basin', category: 'water', x: 100, y: 0 },
+        { id: 'c', name: 'Dest', category: 'oasis', x: 200, y: 0 },
+      ],
+      edges: [
+        { from: 'a', to: 'b', distanceSvg: 100, type: 'trade_route', name: 'Leg 0', segmentDays: 3 },
+        { from: 'b', to: 'c', distanceSvg: 100, type: 'trade_route', name: 'Leg 1', segmentDays: 3 },
+      ],
+      totalDistanceSvg: 200,
+      totalKm: 200,
+      estimatedDays: 6,
+      bottlenecks: [],
+      seasonalWarnings: [],
+    }
+    const resupplyByDay = resupplyByDayForRoute(route, 'spring', 'direct')
+    // Day 3 lands at the Basin node (end of the first 3-day leg) -> 'water' tier.
+    expect(resupplyByDay.get(3)).toBe('water')
+    // Confirms getResupplyTier itself (not a stand-in) is what's wired through.
+    expect(getResupplyTier('water')).toBe('water')
+  })
+})
+
+describe('journey-days: capacity scar persistence (Passage v1.1 Slice 2)', () => {
+  const tierFor = (cat: string): ResupplyTier => {
+    if (cat === 'civilization') return 'full'
+    if (cat === 'oasis' || cat === 'port') return 'water'
+    return 'none'
+  }
+
+  it('nextDay resupply respects scarRations and restores to the lowered ceiling', () => {
+    // 3-day route; make the first trailing node a civilization so day 1 camps at it
+    // and gets 'full'.
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    route.nodes[1].category = 'civilization'
+
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      resupplyTierFor: tierFor,
+    })
+    // Impose a Passage scar.
+    state = { ...state, scarRations: 3, scarWater: 2 }
+
+    const day1 = nextDay(state, { kind: 'continue' })
+    expect(day1.supply).not.toBeNull()
+    // Day 1 camps at Node 1 (civilization) → 'full' restore to scarred ceiling.
+    expect(day1.supply!.resupplyFired).toBe('full')
+    expect(day1.state.rationsLeft).toBe(state.supplyConstants.startingRations - 3)
+    expect(day1.state.waterLeft).toBe(state.supplyConstants.startingWater - 2)
+    expect(day1.state.scarRations).toBe(3)
+    expect(day1.state.scarWater).toBe(2)
+  })
+
+  it('scarRations and scarWater persist across a nextDay step', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    let state = initJourneyState({ route, season: 'spring', mode: 'direct' })
+    state = { ...state, scarRations: 2, scarWater: 1 }
+
+    const step = nextDay(state, { kind: 'continue' })
+    expect(step.state.scarRations).toBe(2)
+    expect(step.state.scarWater).toBe(1)
+  })
+
+  it('scarRations and scarWater persist across a reroute', () => {
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const graph: import('./journey-graph').Graph = {
+      nodes: new Map(route.nodes.map(n => [n.id, n])),
+      adj: new Map(),
+    }
+    for (const e of route.edges) {
+      if (!graph.adj.has(e.from)) graph.adj.set(e.from, [])
+      graph.adj.get(e.from)!.push({ to: e.to, edge: e })
+    }
+
+    let state = initJourneyState({
+      route, season: 'spring', mode: 'direct',
+      party: DEFAULT_PARTY, supply: DEFAULT_SUPPLY,
+      graph, endId: route.nodes[route.nodes.length - 1].id,
+      resupplyTierFor: tierFor,
+    })
+    state = { ...state, scarRations: 4, scarWater: 2 }
+
+    // Step one day, then reroute.
+    state = nextDay(state, { kind: 'continue' }).state
+    const rerouted = nextDay(state, { kind: 'reroute', mode: 'safest' })
+    expect(rerouted.advanced).toBe(true)
+    expect(rerouted.state.scarRations).toBe(4)
+    expect(rerouted.state.scarWater).toBe(2)
   })
 })

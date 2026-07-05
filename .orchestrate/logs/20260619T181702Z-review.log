@@ -1,0 +1,39 @@
+1. **(Ambiguity — default values)** The spec only explicitly defines the empty/default sentinel for two preference sections (`timeOfDay === 'day'`, `hexSize === 50`). For object-shaped sections (`featureNotes`, `featureHooks`) and especially `aiLoreSettings` and `prepOrder`, it never states what `load*()` returns for a fresh store, so an implementer cannot reliably decide when `read()` should return `undefined` to satisfy the “empty stores omitted” test.
+
+2. **(Contradiction — apiKey sanitization ownership)** The inventory says `saveAiLoreSettings(s): void — strip apiKey`, but the rules later call `aiLoreSettings.read()` the “single security-critical line” that must remove `apiKey`. Clarify which function owns sanitization; if the writer already strips the key, test 2 does not actually exercise the read-side removal.
+
+3. **(Missing AC — default `AiLoreSettings`)** Test 1 requires a “non-default endpoint/model” to make `aiLoreSettings` non-empty, but the spec never defines the default `AiLoreSettings` shape. Without that definition the test is not reproducible from the spec alone.
+
+4. **(Type / Missing AC — `migrateCampaign` vs. `CampaignEnvelope`)** `CampaignEnvelope` requires `savedAt: number`, but `migrateCampaign` is only required to validate that `content` is an object and “return it.” A minimally validated input can therefore pass migration while failing to satisfy the declared return type at runtime.
+
+5. **(Missing AC — `migrateCampaign` error cases)** The acceptance tests for `migrateCampaign` do not cover a missing/non-numeric `version` or a non-object `content`, even though the prose requires throwing in both cases.
+
+6. **(Ambiguity — `migrateCampaign` version policy)** The spec only defines behavior for `version === 1` and `version > CURRENT_CAMPAIGN_VERSION`. It is silent on `version < 1`, non-integer versions, or falsy versions, which should presumably also be rejected as “unknown.”
+
+7. **(Missing AC — `write('replace')` round-trip)** The prose refers to a “round-trip unit test” for `write('replace')`, but no such test is listed. Only the two new setters are round-tripped, so most registry `write` paths will be unverified in Phase 4.
+
+8. **(Ambiguity — `write('replace')` requirement)** “Export never calls write, so `replace` only needs to compile and pass the round-trip unit test” is confusing: if export never calls write, the only meaningful round-trip is import-then-export, which is Phase 5 work. Clarify what must actually be tested in Phase 4.
+
+9. **(Implementation risk — `setPrepDoneIds` invariants)** `setPrepDoneIds` is specified only to “filter to strings only, then `writeDone(...)`.” It says nothing about deduplication or ordering, so an input with duplicates may violate unstored store invariants or user expectations.
+
+10. **(Implementation risk — hex-size extraction fidelity)** The spec says to “mirror the current App.tsx logic” but does not specify `parseInt` radix, whitespace handling, or the exact lifecycle moment that triggers a save. A naive extraction can subtly change behavior.
+
+11. **(Ambiguity — `preferences` omitted vs. empty)** The schema says `preferences` must be omitted if empty, but test 4 says it should be “omitted/empty.” This weakens the acceptance criterion; pick one and test it explicitly.
+
+12. **(Missing AC — presence of non-empty sections)** The tests assert that seeded values appear with the correct ids, but there is no explicit assertion that a non-empty section cannot be accidentally omitted. The “round-trip” language is not backed by a concrete test.
+
+13. **(Implementation risk — lost generic types in registry)** `CAMPAIGN_SECTIONS` is typed as `CampaignSection[]`, erasing each section’s `T`. This makes it easy for a section’s `read`/`write` to drift from the actual stored type without TypeScript catching it.
+
+14. **(Missing AC — excluded-key test helpers)** Test 3 requires seeding `aiLoreCache`, `search.recent`, tour keys, and `sessionActive`, but the spec gives no file locations or store APIs for those keys. The test will have to use raw `localStorage.setItem` with magic strings.
+
+15. **(Contradiction / typo — `ImportMode` import)** The `CampaignSection` code snippet starts with `import type { ImportMode } from './...'  // define here`, which is self-contradictory; `ImportMode` should simply be defined in the same file.
+
+16. **(Missing AC — envelope constants)** No test asserts that `exportCampaign()` sets `schema`, `version`, or a numeric `savedAt`, nor that `content` is always present.
+
+17. **(Implementation risk — mutable default objects)** Because `read()` must return `undefined` for defaults but existing `load*` functions may return mutable default objects, the registry must compare or inspect store state rather than mutating and returning references.
+
+18. **(Contradiction — “exactly two new collection setters”)** The spec says “ADD exactly two new collection setters” but also requires creating `web/src/utils/hex-size.ts` with two new exported functions. Rephrase to avoid implying only two functions are added.
+
+19. **(Implementation risk — Phase 5 import overwrite of `apiKey`)** If `read()` strips `apiKey` and `write('replace')` later stores that object, a Phase 5 import could overwrite the user’s existing stored API key with an omitted property. The spec should state whether imported `aiLoreSettings` must preserve, require, or reject an `apiKey`.
+
+20. **(Ambiguity — wording of apiKey omission)** “do not serialize `null` either is fine, but the string must be gone” is unclear; specify whether the property must be absent or may be `null`/`undefined`.
