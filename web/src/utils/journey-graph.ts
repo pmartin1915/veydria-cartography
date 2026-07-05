@@ -61,13 +61,24 @@ for (const edge of travelGraphData.edges) {
   authoredDaysByPair.set(key, days)
 }
 
-const forbiddenDyads = new Set<string>()
+// `turn_back_hub` gaps (e.g. Smith-Spring) mark a frontier the two bound civs'
+// own trade never runs through — but that's an institutional fact about their
+// caravans, not a physical wall. An independent travel party isn't bound by
+// the hostage-price truce, so the crossing stays routable: nearly impassable,
+// the kind of road only the desperate or the criminal attempt (see
+// HARD_CROSSING_PENALTY below), rather than deleted from the graph.
+/** Routing penalty for a `turn_back_hub` crossing — steeper than any ordinary
+ *  chokepoint (2.5 max), reflecting a frontier with no legal or physical
+ *  protection: an unmapped buffer zone with no maintained road. */
+export const HARD_CROSSING_PENALTY = 6.0
+
+const hardCrossingDyads = new Set<string>()
 for (const gap of travelGraphData.gaps) {
   if (gap.kind === 'turn_back_hub') {
     const [aRaw, bRaw] = gap.between
     const a = normalizeTravelId(aRaw)
     const b = normalizeTravelId(bRaw)
-    forbiddenDyads.add([a, b].sort().join('|'))
+    hardCrossingDyads.add([a, b].sort().join('|'))
   }
 }
 
@@ -294,10 +305,6 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   }
 
   function addEdge(e: JourneyEdge) {
-    // Smith-Spring and any future turn-back-hub gaps are intentional non-edges.
-    const dyadKey = [normalizeTravelId(e.from), normalizeTravelId(e.to)].sort().join('|')
-    if (forbiddenDyads.has(dyadKey)) return
-
     const a = adj.get(e.from)
     const b = adj.get(e.to)
     if (a) a.push({ to: e.to, edge: e })
@@ -569,7 +576,9 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         // physical (reporting reads it as raw geography) — the penalty is
         // routing friction, kept in a separate field applied by getEdgeWeight.
         const baseDist = dist(civA, civB)
-        const penalty = f.properties.type === 'mountain_pass' ? 2.5 :
+        const isHardCrossing = hardCrossingDyads.has([normalizeTravelId(a), normalizeTravelId(b)].sort().join('|'))
+        const penalty = isHardCrossing ? HARD_CROSSING_PENALTY :
+                        f.properties.type === 'mountain_pass' ? 2.5 :
                         f.properties.type === 'river_crossing' ? 1.8 :
                         f.properties.type === 'maritime_strait' ? 1.5 :
                         2.0
