@@ -575,7 +575,7 @@ body {
 .app-main.passage-mode .layer-controls,
 .app-main.passage-mode .compass-rose,
 .app-main.passage-mode .marginalia-cartouche,
-.app-main.passage-mode .hex-coord-chip {
+.app-main.passage-mode .coord-chip-stack {
   opacity: 0.45;
   transition: opacity 0.5s ease;
 }
@@ -2428,6 +2428,34 @@ body {
 .measure-btn--primary:hover {
   background: rgba(232, 200, 64, 0.2);
   border-color: rgba(232, 200, 64, 0.5);
+}
+
+/* --- Custom scale bar (bottom-right) --- */
+.map-scale-bar {
+  margin: 0 10px 10px 0;
+  padding: 4px 6px;
+  background: rgba(13, 15, 20, 0.88);
+  border: 1px solid rgba(212, 168, 84, 0.5);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  line-height: 1;
+}
+.map-scale-bar-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #f4dca0;
+}
+.map-scale-bar-line {
+  height: 6px;
+  min-width: 20px;
+  border: 2px solid rgba(244, 220, 160, 0.9);
+  border-top: none;
+  border-radius: 0 0 2px 2px;
 }
 
 .measure-panel-hint {
@@ -4715,6 +4743,13 @@ body {
   font-style: italic;
 }
 
+.journey-path-edge-detail {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 /* Tabs */
 .journey-tabs {
   display: flex;
@@ -5250,6 +5285,49 @@ body {
 }
 .hex-coord-chip-sep { color: var(--text-muted); }
 .hex-coord-chip-descriptors { color: var(--text-primary); }
+
+/* Stacking container for the hex and world-coordinate chips. */
+.coord-chip-stack {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 998;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.coord-chip-stack > .hex-coord-chip,
+.coord-chip-stack > .world-coord-chip {
+  position: relative;
+  top: auto;
+  left: auto;
+}
+
+.world-coord-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(13, 15, 20, 0.88);
+  border: 1px solid rgba(212, 168, 84, 0.5);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  max-width: calc(100% - 80px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-coord-chip-label {
+  color: #f4dca0;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+.world-coord-chip-sep { color: var(--text-muted); }
+.world-coord-chip-value { color: var(--text-primary); }
 
 /* --- Hex info panel (click-to-select) --- */
 .hex-info-panel {
