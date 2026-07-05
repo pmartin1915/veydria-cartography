@@ -90,14 +90,16 @@ describe('journey-graph: Dijkstra start-node fix', () => {
 })
 
 describe('findComparisonRoutes', () => {
-  it('returns all three non-null routes for a typical civilization pair', () => {
+  it('returns all four non-null routes for a typical civilization pair', () => {
     const civs = nodes.filter(n => n.category === 'civilization')
     expect(civs.length).toBeGreaterThanOrEqual(2)
     const comps = findComparisonRoutes(graph, civs[0].id, civs[1].id)
     expect(comps.direct).not.toBeNull()
+    expect(comps.fastest).not.toBeNull()
     expect(comps.safest).not.toBeNull()
     expect(comps.cheapest).not.toBeNull()
     expect(comps.direct!.nodes.length).toBeGreaterThanOrEqual(2)
+    expect(comps.fastest!.nodes.length).toBeGreaterThanOrEqual(2)
     expect(comps.safest!.nodes.length).toBeGreaterThanOrEqual(2)
     expect(comps.cheapest!.nodes.length).toBeGreaterThanOrEqual(2)
   })
@@ -106,12 +108,15 @@ describe('findComparisonRoutes', () => {
     const civs = nodes.filter(n => n.category === 'civilization')
     const comps = findComparisonRoutes(graph, civs[0].id, civs[civs.length - 1].id)
     expect(comps.direct).not.toBeNull()
+    expect(comps.fastest).not.toBeNull()
     expect(comps.safest).not.toBeNull()
     expect(comps.cheapest).not.toBeNull()
     const dKm = comps.direct!.totalKm
+    const fKm = comps.fastest!.totalKm
     const sKm = comps.safest!.totalKm
     const cKm = comps.cheapest!.totalKm
-    // Direct optimizes purely for distance; safest/cheapest add multipliers ≥1.
+    // Direct optimizes purely for distance; fastest/safest/cheapest add multipliers ≥1.
+    expect(dKm).toBeLessThanOrEqual(fKm)
     expect(dKm).toBeLessThanOrEqual(sKm)
     expect(dKm).toBeLessThanOrEqual(cKm)
   })
@@ -120,12 +125,15 @@ describe('findComparisonRoutes', () => {
     const civ = nodes.find(n => n.category === 'civilization')!
     const comps = findComparisonRoutes(graph, civ.id, civ.id)
     expect(comps.direct).not.toBeNull()
+    expect(comps.fastest).not.toBeNull()
     expect(comps.safest).not.toBeNull()
     expect(comps.cheapest).not.toBeNull()
     expect(comps.direct!.nodes.length).toBe(1)
+    expect(comps.fastest!.nodes.length).toBe(1)
     expect(comps.safest!.nodes.length).toBe(1)
     expect(comps.cheapest!.nodes.length).toBe(1)
     expect(comps.direct!.totalKm).toBe(0)
+    expect(comps.fastest!.totalKm).toBe(0)
     expect(comps.safest!.totalKm).toBe(0)
     expect(comps.cheapest!.totalKm).toBe(0)
   })
@@ -133,6 +141,7 @@ describe('findComparisonRoutes', () => {
   it('returns all-null for unknown node IDs', () => {
     const comps = findComparisonRoutes(graph, 'nonexistent-start', 'nonexistent-end')
     expect(comps.direct).toBeNull()
+    expect(comps.fastest).toBeNull()
     expect(comps.safest).toBeNull()
     expect(comps.cheapest).toBeNull()
   })
@@ -155,6 +164,8 @@ describe('findComparisonRoutes', () => {
     // We only assert that both calls succeed and return non-null routes.
     expect(spring.direct).not.toBeNull()
     expect(winter.direct).not.toBeNull()
+    expect(spring.fastest).not.toBeNull()
+    expect(winter.fastest).not.toBeNull()
     expect(spring.safest).not.toBeNull()
     expect(winter.safest).not.toBeNull()
     expect(spring.cheapest).not.toBeNull()

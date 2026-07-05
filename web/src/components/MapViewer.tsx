@@ -1461,7 +1461,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
     }, [passageMarkerNode])
 
-    // Render comparison route overlays (Direct vs Safest vs Cheapest)
+    // Render comparison route overlays (Direct vs Fastest vs Safest vs Cheapest)
     useEffect(() => {
       if (!mapRef.current) return
       if (comparisonRouteLayerRef.current) {
@@ -1472,8 +1472,16 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       const COMPARISON_STYLES: Record<string, { color: string; weight: number }> = {
         direct:   { color: '#4a9a3a', weight: 4 },
+        fastest:  { color: '#c2574a', weight: 4 },
         safest:   { color: '#3a7ca5', weight: 4 },
         cheapest: { color: '#c4a862', weight: 4 },
+      }
+
+      const DASH_BY_MODE: Record<string, string | undefined> = {
+        direct: undefined,
+        fastest: '2,3',
+        safest: '6,4',
+        cheapest: '3,3',
       }
 
       const group = L.layerGroup()
@@ -1495,7 +1503,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
             lineCap: 'round',
             lineJoin: 'round',
             className: `journey-comparison-line journey-comparison-${mode}`,
-            dashArray: mode === 'direct' ? undefined : mode === 'safest' ? '6,4' : '3,3',
+            dashArray: DASH_BY_MODE[mode],
           }).addTo(group)
         }
       }

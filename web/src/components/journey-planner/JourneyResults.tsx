@@ -27,8 +27,8 @@ interface JourneyResultsProps {
 
 /**
  * Route summary block: distance/travel/segments stats, difficulty badge, the
- * optional Direct/Safest/Cheapest comparison cards, the hex path, and the
- * auto-pivot note. Clicking a comparison card switches the active mode.
+ * optional Direct/Fastest/Safest/Cheapest comparison cards, the hex path, and
+ * the auto-pivot note. Clicking a comparison card switches the active mode.
  */
 export default function JourneyResults({
   route,
@@ -90,12 +90,13 @@ export default function JourneyResults({
         )}
       </div>
 
-      {/* Comparison stats: side-by-side Direct / Safest / Cheapest */}
+      {/* Comparison stats: side-by-side Direct / Fastest / Safest / Cheapest */}
       {compareMode && comparisonRoutes && (
         <div className="journey-comparison-stats">
           {(() => {
             const entries = [
               { key: 'direct' as const, label: 'Direct', color: '#4a9a3a', route: comparisonRoutes.direct },
+              { key: 'fastest' as const, label: 'Fastest', color: '#c2574a', route: comparisonRoutes.fastest },
               { key: 'safest' as const, label: 'Safest', color: '#3a7ca5', route: comparisonRoutes.safest },
               { key: 'cheapest' as const, label: 'Cheapest', color: '#c4a862', route: comparisonRoutes.cheapest },
             ]

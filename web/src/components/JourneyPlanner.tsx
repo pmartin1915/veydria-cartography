@@ -121,7 +121,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [oneOffRolls, setOneOffRolls] = useState<Encounter[]>([])
   const [selectedSegmentIdx, setSelectedSegmentIdx] = useState(0)
   const [compareMode, setCompareMode] = useState(false)
-  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
+  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, fastest: null, safest: null, cheapest: null })
   const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
   const [highlightCrisisEvents, setHighlightCrisisEvents] = useState(false)
   const [passageActive, setPassageActive] = useState(false)
@@ -438,8 +438,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         setComparisonRoutes(comparisons)
         onComparisonRoutesComputed?.(comparisons)
       } else if (!compareMode) {
-        setComparisonRoutes({ direct: null, safest: null, cheapest: null })
-        onComparisonRoutesComputed?.({ direct: null, safest: null, cheapest: null })
+        setComparisonRoutes({ direct: null, fastest: null, safest: null, cheapest: null })
+        onComparisonRoutesComputed?.({ direct: null, fastest: null, safest: null, cheapest: null })
       }
     }, 250)
     return () => clearTimeout(t)
@@ -452,8 +452,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       didAutoComputeRef.current = false
       setRoute(null)
       onRouteComputed(null)
-      setComparisonRoutes({ direct: null, safest: null, cheapest: null })
-      onComparisonRoutesComputed?.({ direct: null, safest: null, cheapest: null })
+      setComparisonRoutes({ direct: null, fastest: null, safest: null, cheapest: null })
+      onComparisonRoutesComputed?.({ direct: null, fastest: null, safest: null, cheapest: null })
       setCompareMode(false)
       setStartId('')
       setEndId('')

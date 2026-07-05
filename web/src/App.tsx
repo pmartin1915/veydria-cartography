@@ -420,7 +420,7 @@ function App() {
   }, [])
 
   const [journeyRoute, setJourneyRoute] = useState<JourneyRoute | null>(null)
-  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
+  const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, fastest: null, safest: null, cheapest: null })
   const [journeySeason, setJourneySeason] = useState<Season | undefined>(initialHashRef.current.season)
   const [journeyModeState, setJourneyModeState] = useState<RouteMode>(initialHashRef.current.mode ?? 'fastest')
   const [pinMode, setPinMode] = useState(false)
@@ -831,7 +831,7 @@ function App() {
     clearHexMeasureFromHash()
     setJourneyMode(false)
     setJourneyRoute(null)
-    setComparisonRoutes({ direct: null, safest: null, cheapest: null })
+    setComparisonRoutes({ direct: null, fastest: null, safest: null, cheapest: null })
     setJourneySeason(undefined)
     setJourneyModeState('fastest')
     mapRef.current?.clearJourneyRoute()
@@ -989,7 +989,7 @@ function App() {
   const handleJourneyClose = useCallback(() => {
     setJourneyMode(false)
     setJourneyRoute(null)
-    setComparisonRoutes({ direct: null, safest: null, cheapest: null })
+    setComparisonRoutes({ direct: null, fastest: null, safest: null, cheapest: null })
     setJourneySeason(undefined)
     setJourneyModeState('fastest')
     mapRef.current?.clearJourneyRoute()
