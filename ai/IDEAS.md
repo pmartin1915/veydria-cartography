@@ -719,3 +719,24 @@ Verification this session: 1088/1088 tests, `tsc -b` + `npm run build` clean, li
 the resupply fix. The wiring + Basin fixes are complete, correct, and shipped regardless of how the
 survival-gap decision above resolves — they were a real, long-standing correctness bug independent of
 the balance question.
+
+---
+
+## 2026-07-05 — e2e smoke suite is flaky under parallel Playwright workers
+
+**Idea:** `web/e2e/smoke.spec.ts` intermittently times out on 4-9 of 18 tests when run with the
+default 6 parallel workers, always the same failure shape (button/dropdown interactions not
+becoming clickable within 30s, or `.leaflet-container` occasionally missing within 5s on cold
+mount). Confirmed via 4 separate runs during the PR #42/#49/#50/#51 merge session: a baseline run
+on master *before* #51 merged already showed 4/17 failing (civs-route, tutorial, party-mount,
+save-journey — all dropdown/button-click timeouts); two isolated reruns *after* #51 merged showed
+4/18 and 5/18 failures with an overlapping-but-not-identical set (the extra failure was
+`.leaflet-container` not mounting, present in only one of the two reruns). Unit tests (1120/1120)
+and Trail/Passage mode's own e2e specs were 100% green across every run — only the broader
+map-bootstrap-dependent tests flake, and the specific tests that fail change run to run.
+**Why deferred:** Root cause looks like CPU contention across parallel workers on this machine, not
+a code regression — #51's own diff to `App.tsx` is a single line and doesn't touch the map-mount
+path. Not worth blocking merges on; worth a real fix (retry-on-timeout, `--workers=1` for the
+map-dependent specs, or an explicit `waitFor('.leaflet-container')` before interacting with anything
+downstream of the map) on its own branch. *Where it applies:* `web/e2e/smoke.spec.ts`, maybe
+`playwright.config.ts`'s worker count.
