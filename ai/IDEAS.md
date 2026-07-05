@@ -740,3 +740,16 @@ path. Not worth blocking merges on; worth a real fix (retry-on-timeout, `--worke
 map-dependent specs, or an explicit `waitFor('.leaflet-container')` before interacting with anything
 downstream of the map) on its own branch. *Where it applies:* `web/e2e/smoke.spec.ts`, maybe
 `playwright.config.ts`'s worker count.
+
+---
+
+## Passage reroute — deferred polish (2026-06-30, feat/passage-reroute)
+- **Unreachable reroute pick is a silent dead click.** The destination picker lists
+  ALL map nodes; if a pick has no route from the party's current node,
+  `passageReroute` no-ops (engine `nextDay` reroute returns `advanced:false`) but
+  `handleReroute` still closes the picker + clears search → no feedback. CONSCIOUS
+  DEFER (advisor-flagged): for a private GM tool on the well-connected canon graph an
+  unreachable pick is unlikely. If it ever bites, the fix is either pre-filtering the
+  list to reachable nodes or surfacing a "no road that way" line. Not done.
+- **Per-reroute mode is fixed to the journey's current `mode`** (v1). A mode toggle on
+  the reroute picker (reroute via safest vs fastest) is a later nicety.

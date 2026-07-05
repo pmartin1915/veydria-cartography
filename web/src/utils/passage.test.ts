@@ -1,17 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { initJourneyState } from './journey-days'
-import type { JourneyRoute } from './journey-graph'
+import type { JourneyRoute, Graph } from './journey-graph'
 import type { Encounter } from './encounters'
 import {
   initPassage,
   passageAct,
   passageChoose,
+  passageReroute,
   zeroSignatureCosts,
   currentNodeIndex,
   SIGNATURE_CHOICES,
   PERISH_WATER_FLOOR,
   type PassageState,
 } from './passage'
+
+/** Build a forward-adjacency Graph from a makeRoute() route, for reroute tests. */
+function makeGraph(route: JourneyRoute): Graph {
+  const graph: Graph = { nodes: new Map(route.nodes.map(n => [n.id, n])), adj: new Map() }
+  for (const e of route.edges) {
+    if (!graph.adj.has(e.from)) graph.adj.set(e.from, [])
+    graph.adj.get(e.from)!.push({ to: e.to, edge: e })
+  }
+  return graph
+}
 
 /* Mirrors the makeRoute helper in journey-days.test.ts. */
 /** Last element (the project's TS lib target predates Array.prototype.at). */
@@ -62,18 +73,22 @@ function signatureEncounter(key: string, cost = { rations: 0, water: 0 }): Encou
   }
 }
 
-/** Init a passage and plant a signature encounter on engine day 1. */
+/** Init a passage and plant a signature encounter on engine day 1.
+ *  Resupply is disabled so these tests isolate the CHOICE mechanic — a full-tier
+ *  camp node would otherwise refill stores and mask the choice's supply delta.
+ *  Resupply-on behaviour has its own dedicated test below. */
 function passageWithSignature(key: string): PassageState {
   const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 125 })
-  const state = initPassage({ route, season: 'spring', mode: 'direct' })
+  const state = initPassage({ route, season: 'spring', mode: 'direct', resupplyTierFor: () => 'none' })
   state.journey.encountersByDay.set(1, [signatureEncounter(key)])
   return state
 }
 
-/** Init a passage and plant the same signature encounter on multiple engine days. */
+/** Init a passage and plant the same signature encounter on multiple engine days.
+ *  Resupply disabled (see passageWithSignature). */
 function passageWithRepeatedSignature(key: string, days: number[]): PassageState {
   const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1, 1], totalKm: 150 })
-  const state = initPassage({ route, season: 'spring', mode: 'direct' })
+  const state = initPassage({ route, season: 'spring', mode: 'direct', resupplyTierFor: () => 'none' })
   for (const d of days) {
     state.journey.encountersByDay.set(d, [signatureEncounter(key)])
   }
@@ -139,6 +154,9 @@ describe('passage: stepping + endings', () => {
       season: 'spring',
       mode: 'direct',
       supply: { rationsPerPerson: 30, waterPerPerson: 2, encumbrance: 'normal', packAnimals: 'none' },
+      // Resupply off: this isolates the perish-floor mechanic. A refill node would
+      // top water back up and the party would arrive instead of perishing.
+      resupplyTierFor: () => 'none',
     })
     let guard: number = 30
     while (s.outcome === 'in-progress' && guard-- > 0) s = passageAct(s, { kind: 'continue' })
@@ -285,7 +303,8 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
     choices: import('./passage').EncounterChoice[],
   ): PassageState {
     const route = makeRoute({ edgeDays: [1, 1, 1, 1, 1], totalKm: 125 })
-    const state = initPassage({ route, season: 'spring', mode: 'direct' })
+    // Resupply off so the clamp/scar mechanic is measured in isolation.
+    const state = initPassage({ route, season: 'spring', mode: 'direct', resupplyTierFor: () => 'none' })
     const enc = signatureEncounter('test-scar')
     state.journey.encountersByDay.set(1, [enc])
     state.pending = { encounter: enc, choices }
@@ -384,5 +403,100 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
     expect(takeWadi.journey.waterLeft).toBeLessThanOrEqual(startingWater - 2)
     expect(stayTrail.journey.scarWater ?? 0).toBe(0)
     expect(stayTrail.extraDays).toBe(2)
+  })
+})
+
+describe('passage: reroute (Passage v1.1)', () => {
+  /** Init a passage with the graph + endId wiring the engine reroute needs.
+   *  Resupply off so supply carry-forward is measured cleanly. Supply is generous
+   *  because findRouteWithFallback recomputes segmentDays from the synthetic SVG
+   *  distances (not the original edgeDays), so a rerouted leg can run several days
+   *  longer than its nominal 1 — we want completion to depend on the reroute, not
+   *  on whether the synthetic geometry happens to fit the default water skin. */
+  function rerouteable(edgeDays: number[]): { state: PassageState; route: JourneyRoute } {
+    const route = makeRoute({ edgeDays, totalKm: edgeDays.reduce((s, d) => s + d, 0) * 25 })
+    const state = initPassage({
+      route, season: 'spring', mode: 'direct',
+      supply: { rationsPerPerson: 60, waterPerPerson: 60, encumbrance: 'normal', packAnimals: 'none' },
+      graph: makeGraph(route), endId: route.nodes[route.nodes.length - 1].id,
+      resupplyTierFor: () => 'none',
+    })
+    return { state, route }
+  }
+
+  it('swaps the route to the new destination and carries supply forward without consuming a day', () => {
+    const { state, route } = rerouteable([1, 1, 1, 1, 1]) // nodes n0..n5
+    const afterDay = passageAct(state, { kind: 'continue' }) // dayNum 1
+    const rationsBefore = afterDay.journey.rationsLeft
+    const waterBefore = afterDay.journey.waterLeft
+    const dayBefore = afterDay.journey.dayNum
+
+    const newDest = route.nodes[3].id // a nearer destination than n5
+    const rerouted = passageReroute(afterDay, newDest, 'direct')
+
+    // New route terminates at the chosen destination.
+    expect(rerouted.journey.route.nodes[rerouted.journey.route.nodes.length - 1].id).toBe(newDest)
+    // Day counter continues unbroken: dayOffset pinned to the reroute day, no day spent.
+    expect(rerouted.journey.dayOffset).toBe(dayBefore)
+    expect(rerouted.journey.dayNum).toBe(dayBefore)
+    // Supply carried forward exactly (reroute is a decision, not travel).
+    expect(rerouted.journey.rationsLeft).toBeCloseTo(rationsBefore, 5)
+    expect(rerouted.journey.waterLeft).toBeCloseTo(waterBefore, 5)
+    // A reroute journal entry naming the destination was appended.
+    const lastEntry = last(rerouted.log)
+    expect(lastEntry.kind).toBe('reroute')
+    expect(lastEntry).toMatchObject({ kind: 'reroute', toName: route.nodes[3].name })
+    // Marker snaps to the head of the new route (localDay 0 → node 0).
+    expect(currentNodeIndex(rerouted)).toBe(0)
+  })
+
+  it('can be marched to an ending after a reroute', () => {
+    const { state, route } = rerouteable([1, 1, 1, 1, 1])
+    let s = passageAct(state, { kind: 'continue' })
+    s = passageReroute(s, route.nodes[2].id, 'direct')
+    let guard = 30
+    while (s.outcome === 'in-progress' && guard-- > 0) s = passageAct(s, { kind: 'continue' })
+    expect(s.outcome).toBe('arrived')
+    expect(last(s.log)).toMatchObject({ kind: 'ending', outcome: 'arrived' })
+  })
+
+  it('is a no-op while a choice is pending, when terminal, or without graph wiring', () => {
+    // Pending: a signature blocks reroute.
+    const pendingState = passageAct(passageWithSignature('ford'), { kind: 'continue' })
+    expect(pendingState.pending).not.toBeNull()
+    expect(passageReroute(pendingState, 'n2', 'direct')).toBe(pendingState)
+
+    // No graph wiring (the production pre-reroute path): no-op, not a throw.
+    const noGraph = initPassage({
+      route: makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 }), season: 'spring', mode: 'direct',
+    })
+    expect(passageReroute(noGraph, 'n2', 'direct')).toBe(noGraph)
+  })
+})
+
+describe('passage: resupply activation (live product)', () => {
+  it('reaching a full-tier camp node restocks toward the carrying cap', () => {
+    // makeRoute: n1.. are "civilization" (full tier). Start below cap so the
+    // restock is observable. Resupply is ON by default in initPassage now.
+    const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 75 })
+    const state = initPassage({
+      route, season: 'spring', mode: 'direct',
+      supply: { rationsPerPerson: 8, waterPerPerson: 8, encumbrance: 'normal', packAnimals: 'none' },
+    })
+    const afterDay1 = passageAct(state, { kind: 'continue' }) // camps at n1 (civilization → full)
+    const day1 = last(afterDay1.log)
+    expect(day1.kind).toBe('day')
+    if (day1.kind === 'day') {
+      expect(day1.supply.resupplyFired).toBe('full')
+    }
+    // Restocked back to (at most) the carrying cap — strictly above the post-burn level.
+    expect(afterDay1.journey.rationsLeft).toBeGreaterThan(8 - 2)
+  })
+
+  it('a default-init passage activates resupply (getResupplyTier) without an explicit tier fn', () => {
+    const route = makeRoute({ edgeDays: [1, 1], totalKm: 50 })
+    const state = initPassage({ route, season: 'spring', mode: 'direct' })
+    // resupplyByDay is populated => the engine will restock at full/water nodes.
+    expect(state.journey.resupplyByDay.size).toBeGreaterThan(0)
   })
 })

@@ -8288,6 +8288,42 @@ select:focus-visible {
   border-color: rgba(196, 168, 98, 0.5);
 }
 
+/* Reroute picker replaces the action bar when changing destination */
+.passage-reroute-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.passage-reroute-prompt {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  background: rgba(13, 15, 20, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.passage-reroute-list {
+  position: static;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Reroute journal entry */
+.passage-reroute {
+  border-left: 3px solid var(--color-route);
+}
+
+.passage-reroute-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
 /* Choice cards replace the action bar during a signature encounter */
 .passage-choice-cards {
   display: flex;
