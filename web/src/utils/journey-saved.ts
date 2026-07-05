@@ -5,6 +5,7 @@
  * Migrates defensively from legacy veydria-journey-history on first read.
  */
 
+import { kvStore } from '../persistence/kv-store'
 import type { Season, RouteMode, PartyConfig, TravelPace, Mount, PartySize } from './journey-graph'
 import { DEFAULT_PARTY } from './journey-graph'
 import type { SupplyConfig, Encumbrance, PackAnimals } from './journey-supply'
@@ -103,7 +104,7 @@ function makeDefaultName(from: string, to: string, waypoints: string[]): string 
 
 function migrateFromLegacy(): SavedJourney[] | null {
   try {
-    const raw = localStorage.getItem(LEGACY_KEY)
+    const raw = kvStore.getString(LEGACY_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Array<Partial<SavedJourney> & Record<string, unknown>>
     if (!Array.isArray(parsed)) return null
@@ -154,7 +155,7 @@ function migrateFromLegacy(): SavedJourney[] | null {
 
 export function loadSavedJourneys(): SavedJourney[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as SavedJourney[]
       if (!Array.isArray(parsed)) return []
@@ -169,7 +170,7 @@ export function loadSavedJourneys(): SavedJourney[] {
     // No v1 data — attempt one-time migration from legacy key
     const migrated = migrateFromLegacy()
     if (migrated) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated)) } catch { /* quota */ }
+      try { kvStore.setString(STORAGE_KEY, JSON.stringify(migrated)) } catch { /* quota */ }
     }
     return migrated ?? []
   } catch {
@@ -179,7 +180,7 @@ export function loadSavedJourneys(): SavedJourney[] {
 
 export function saveJourneys(entries: SavedJourney[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)))
   } catch {
     // Storage full or private mode — silently fail
   }

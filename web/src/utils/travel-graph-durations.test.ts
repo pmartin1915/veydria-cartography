@@ -7,6 +7,7 @@ import {
   findRoute,
   authoredDaysForEdge,
   DEFAULT_PARTY,
+  HARD_CROSSING_PENALTY,
   type PartyConfig,
   type JourneyNode,
 } from './journey-graph'
@@ -157,15 +158,25 @@ describe('time-weighted routing (Fastest mode)', () => {
   })
 })
 
-describe('Smith-Spring intentional non-edge', () => {
-  it('never produces a direct ngaru_bon ↔ irrah adjacency', () => {
-    const fromA = realGraph.adj.get('ngaru_bon')?.some((n) => n.to === 'irrah') ?? false
-    const fromB = realGraph.adj.get('irrah')?.some((n) => n.to === 'ngaru_bon') ?? false
-    expect(fromA).toBe(false)
-    expect(fromB).toBe(false)
+describe('Smith-Spring hard crossing (turn_back_hub, not a deleted edge)', () => {
+  // Canon (geography/locations/smith-spring.md) marks this frontier a
+  // turn_back_hub: the bound civs' own trade never runs through it ("the
+  // place past which neither people goes"). Perry's call (2026-07-05): that's
+  // an institutional fact about Ngaru-Bon/Irrah trade, not a physical wall —
+  // an independent travel party isn't bound by the hostage-price truce, so
+  // the crossing stays routable but nearly impassable (HARD_CROSSING_PENALTY),
+  // the kind of road only the desperate or the criminal attempt.
+
+  it('produces a direct ngaru_bon <-> irrah adjacency with the hard-crossing penalty', () => {
+    const fromA = realGraph.adj.get('ngaru_bon')?.find((n) => n.to === 'irrah')
+    const fromB = realGraph.adj.get('irrah')?.find((n) => n.to === 'ngaru_bon')
+    expect(fromA).toBeDefined()
+    expect(fromB).toBeDefined()
+    expect(fromA?.edge.routingPenalty).toBe(HARD_CROSSING_PENALTY)
+    expect(fromB?.edge.routingPenalty).toBe(HARD_CROSSING_PENALTY)
   })
 
-  it('guard removes a synthetic turn-back-hub edge', () => {
+  it('a synthetic turn-back-hub edge is kept but penalized, not deleted', () => {
     const synth = buildSynth([
       {
         type: 'Feature',
@@ -187,24 +198,26 @@ describe('Smith-Spring intentional non-edge', () => {
       },
     ])
     const graph = buildGraph(synth as never)
-    expect(graph.adj.get('ngaru_bon')?.some((n) => n.to === 'irrah')).toBe(false)
-    expect(graph.adj.get('irrah')?.some((n) => n.to === 'ngaru_bon')).toBe(false)
+    const edge = graph.adj.get('ngaru_bon')?.find((n) => n.to === 'irrah')
+    expect(edge).toBeDefined()
+    expect(edge?.edge.routingPenalty).toBe(HARD_CROSSING_PENALTY)
   })
 
-  it('reports whether the guard was a no-op or removed an edge', () => {
+  it('the physical distance stays honest — penalty applies to routing weight only', () => {
     const sourceHasDirect = realGeojson.features.some((f) => {
       if (f.properties.category !== 'chokepoint') return false
       const connects = f.properties.connects as string[] | undefined
       if (!connects) return false
       return connects.includes('ngaru_bon') && connects.includes('irrah')
     })
-    const graphHasDirect =
-      (realGraph.adj.get('ngaru_bon')?.some((n) => n.to === 'irrah') ?? false) ||
-      (realGraph.adj.get('irrah')?.some((n) => n.to === 'ngaru_bon') ?? false)
-    // The source topology contains the Smith-Spring chokepoint; the guard must
-    // have removed it from the routable graph.
+    const edge = realGraph.adj.get('ngaru_bon')?.find((n) => n.to === 'irrah')
+    // The source topology contains the Smith-Spring chokepoint, and it survives
+    // into the routable graph — routingPenalty carries the "nearly impassable"
+    // cost, while distanceSvg stays the real physical crossing distance.
     expect(sourceHasDirect).toBe(true)
-    expect(graphHasDirect).toBe(false)
+    expect(edge).toBeDefined()
+    expect(edge?.edge.distanceSvg).toBeGreaterThan(0)
+    expect(edge?.edge.routingPenalty).toBe(HARD_CROSSING_PENALTY)
   })
 })
 

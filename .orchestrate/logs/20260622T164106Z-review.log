@@ -1,0 +1,59 @@
+1. **Undefined variable in safety cap.** `playPassage` must stop at “a safety cap of `(totalDays+1)*3`,” but `totalDays` is not defined anywhere in the function signature or state description. Is it `state.day`, a property on `JourneyState`, or a loop counter? Without a precise field name, the cap is unimplementable.
+
+2. **`BranchOutcome` fields `risk` and `label` are unspecified.** The spec declares `BranchOutcome = { index; label; risk; outcome; finalRations; finalWater; totalDays }` but never says what `label` is (choice text? short id? derived from `SIGNATURE_CHOICES`?) or what `risk` is (the choice’s risk tier string? a computed value?). These must be sourced from `SIGNATURE_CHOICES`/`passageChoose` return shapes, which are not documented here.
+
+3. **Choice-policy cost terms are not mapped to real fields.** `cautious` uses `(-rationsDelta) + 1.5*(-waterDelta) + 0.5*daysDelta`, and `aggressive`/`spendy` reference `daysDelta` and “supply hit.” The spec does not name the actual fields on the choice option objects returned by `passageChoose`/`SIGNATURE_CHOICES`. Implementers must reverse-engineer the shape from `web/src/utils/passage.ts`.
+
+4. **`aggressive` tie-break is ambiguous.** “Tie-break lowest supply hit” could mean smallest `rationsDelta+waterDelta`, smallest maximum loss, smallest weighted loss, or something else. The spec gives no formula.
+
+5. **`spendy` tie-break is missing.** Multiple options may have `daysDelta === 0`; the policy does not say which to pick among them.
+
+6. **`--seasons` and `--modes` CLI semantics are undefined.** The report script accepts `--seasons` and `--modes`, but it is not stated whether they take comma-separated lists, are boolean toggles, or filter the grid some other way.
+
+7. **`moderate`/`severe` classification source is undocumented.** The “severe-beat coverage” metric requires classifying encounters by severity. The spec never names the field or enum value that carries severity, so it cannot be implemented without reading engine internals.
+
+8. **Grid validity assumption is risky.** “All ordered civ-pairs (the 6 civs …)” implies 30 directed routes. `findRouteWithFallback` may return `null` for some pairs. The spec does not say whether null routes are skipped silently, counted in denominators, or reported as failures; this changes death-march and repetition denominators.
+
+9. **Death-march denominator is ambiguous.** “Fraction of crossings that reach a terminal `aborted`/`perished` without ever presenting a signature choice” is described as “per (supply preset × mode).” It is unclear whether the denominator is (a) all crossings in that group, (b) only non-arrived crossings, or (c) only crossings that presented zero choices. These give very different rates.
+
+10. **Repetition metric interpretation is ambiguous.** “Rate of crossings where any key fires ≥2×” could mean: any single signature key appears twice, the total count of signature fires across all keys is ≥2, or two different signature keys appear. The parenthetical about “identical prose on the repeat” suggests same-key repetition, but the metric definition should be explicit.
+
+11. **`--limit` coverage is not guaranteed to populate all sections.** Acceptance criterion 2 says `--limit 60` must write a report containing all sections, but with 480 possible crossings, a slice of 60 might easily contain zero signature choices or zero death-marches. Empty-but-present sections would technically pass yet defeat the purpose of the report. The criterion does not require minimum sample counts per section.
+
+12. **Known-finding regression tests are brittle to grid slicing.** Criterion 4 correctly says the pinned crossings must be run directly, not through `--limit`. However, the broader batch report is still expected to produce meaningful aggregate metrics from a sliced grid; the spec does not reconcile why `--limit 60` is an acceptable acceptance test while the same slice might miss the very findings the tool is meant to surface.
+
+13. **Determinism test proves only one instance.** The fork-determinism unit test uses “a fixed (from,to,season,mode) known to present a choice.” Passing it does not prove that `passageChoose`/`passageAct` are pure for all states, only for that one pending state. The no-clone rule depends on global purity, but the spec only requires local verification.
+
+14. **No-clone rule creates hidden contamination risk.** If any engine function mutates the passed state in an un-tested edge case (e.g., terminal outcome mutation, RNG state side effects, cached graph traversal), calling `passageChoose(S,0)`, `passageChoose(S,1)`, … sequentially from the same `S` will produce cross-branch pollution. The spec says “if any impurity is discovered, STOP,” but provides no way to discover it beyond the single determinism test.
+
+15. **`playPassage` “no-op (returned same ref)” termination is an engine implementation detail.** The spec requires detecting termination when the function returns the same reference, but it does not confirm that `passageAct` actually behaves this way in all cases. If it returns a shallow-equal object instead, the loop will spin into the safety cap.
+
+16. **`PassageState`/`JourneyState` type relationship is unclear.** `BasePolicy = (state: PassageState) => Action` while `playPassage` receives `state` and passes it to `passageAct`. The spec never defines `PassageState` or says whether it is identical to, a subtype of, or a wrapper around `JourneyState`. Type errors are likely without a precise type map.
+
+17. **`ResolvedChoice` purpose is unclear.** `playPassage` returns `{ state, choices: ResolvedChoice[] }`, but none of the report metrics or acceptance criteria reference the `choices` array. It is not stated whether `walkWithForks` must return these, use them for instance recording, or simply ignore them.
+
+18. **Median definition is unspecified.** The per-key branch table and differentiation metric require medians. The spec does not say whether medians use average-of-middle for even counts, floor/ceil, or a specific selection algorithm.
+
+19. **Auto-pick “choice-rich arrived crossing” is heuristic-dependent and untestable.** Acceptance criterion 1 requires `npm run sim:passage-play` with no args to auto-pick a crossing that reaches ≥1 signature choice and an ending. The heuristic is not defined, so a test cannot verify it deterministically without pinning the random seed or hard-coding a fallback.
+
+20. **`git diff` acceptance criterion is unenforceable by tests.** Criterion 5 requires the diff to touch only `scripts/sim/**` and `web/package.json`. This is a process check, not a unit-testable behavior, and relies entirely on implementer discipline. The test suite cannot guard against accidental edits to engine files.
+
+21. **“922 tests” is a brittle number.** Criterion 6 pins the existing suite at 922 tests. If unrelated tests are added or removed before or after this work, the criterion becomes either impossible or meaningless. It should refer to “the existing full unit suite” without a hard count.
+
+22. **Report output directory is ambiguous.** `output/sim/passage-report.md` is written by an npm script running in `web/`, but the path is given relative to an unspecified root. It is unclear whether the script should resolve it against `web/`, the project root, or `scripts/sim/`.
+
+23. **Markdown escaping is not specified.** Choice labels and narrative strings may contain `|`, `*`, or backticks. The spec does not say how to sanitize them for the markdown tables, risking malformed report output.
+
+24. **`makePassageOpts` null handling is unspecified.** When `findRouteWithFallback` or `getResupplyTier` returns null, `makePassageOpts` returns `null`. The spec does not say whether callers should filter these silently, log them, or treat them as errors; this affects grid coverage and failure modes.
+
+25. **Severe-beat “top ~10” is imprecise.** The report must “list the top ~10 non-interactive severe/moderate beats by frequency.” The tilde makes the requirement untestable; the exact count and tie-breaking rule should be fixed.
+
+26. **`signatureKeysInState` vs. initial-state counting contradiction.** The repetition metric insists on counting from the *initial* `encountersByDay`, but the helper `signatureKeysInState(state)` sounds like it operates on any state. If used on a current state during the walk, it could under-count keys the party never survived to see.
+
+27. **The fixed downstream policy conflates baseline and counterfactual.** Both baseline walk and downstream fork use `(survive, cautious)`. This is intentional, but it means the report cannot distinguish “this choice is bad under any reasonable policy” from “this choice is bad only under the baseline policy.” The spec labels this a measurement choice, but it should be noted as a limitation in the report.
+
+28. **`(totalDays+1)*3` cap can grow unboundedly.** If `totalDays` increases each loop iteration, the cap grows with it, potentially allowing very long or infinite loops in pathological cases before termination is detected.
+
+29. **Playthrough “em-dash-free” and “VOICE-SPEC Option B” are external references.** The spec requires em-dash-free prose and cites “worldbuilder VOICE-SPEC Option B,” neither of which is included in the document. These are unverifiable without access to the external style guide.
+
+30. **The default `--limit 200` silently drops most of the grid.** With 30 ordered civ-pairs × 4 seasons × 2 modes × 2 supply presets = 480 crossings, the default limit covers less than half. While the spec requires logging the cap, the default itself biases the batch report toward arbitrary subsets and may hide route/season-specific balance issues.

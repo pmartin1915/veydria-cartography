@@ -1,0 +1,49 @@
+1. **Ambiguous "dwindling stores" ledger rendering.** The spec says "Render the supply ledger (rations + water remaining, as dwindling stores; show negative debt distinctly)" but never defines the ledger's position in the layout, whether it is sticky/pinned while scrolling the journal, or whether the negative-debt indicator is a CSS class, a prefix, or a color change. This leaves the visual contract underspecified.
+
+2. **Ambiguous "reuse existing day-row rendering idiom."** `JourneyDaysTab.tsx` is cited as the visual model, but the spec does not say whether PassageMode should import its component or copy its markup/CSS. If the idiom is later refactored, the spec gives no rule for staying in sync.
+
+3. **Contradiction in action-state preconditions.** Section 1 says the action bar renders when `!state.pending && state.outcome === 'in-progress'`, but `passageAct` is documented as returning a state with `pending` set on signature encounters. If `passageAct` itself is allowed to return a state where `outcome` is no longer `'in-progress'` (e.g., death on the same action), the action bar must also disappear on the same render cycle. The spec does not explicitly require that, which could leave the action bar rendered next to an ending.
+
+4. **Missing acceptance criterion for the "Rest" / "Force-march" / "Ration" / "Turn back" immediate actions.** AC 2 only covers Continue; AC 4 only covers outcomes. There is no explicit criterion that the four non-continue actions are visible and functional, nor that they produce their documented log entries or supply effects.
+
+5. **Untestable "no residual marker" requirement.** AC 5 says the marker must unmount cleanly, but the spec does not say how to determine this in the E2E test (no marker selector, no assertion that `.leaflet-marker-icon` count equals the pre-passage count). The smoke test only asserts the planner reappears, not map cleanliness.
+
+6. **Missing acceptance criterion for `onPositionChange` frequency.** The spec requires calling `onPositionChange(currentNodeIndex(state))` "after every state change," but does not define whether this includes the initial mount or only post-`setState` effects. If not fired on mount, the marker may lag behind by one render.
+
+7. **Ambiguous `onPositionChange(null)` lifecycle.** Section 1 says to call it "on unmount / exit." The `onExit` callback is for the ending-panel exit button, but `PassageMode` is unmounted by `JourneyPlanner` when `passageActive` becomes false. The implementer must call `onPositionChange(null)` both in an effect cleanup and in `onExit`, otherwise the marker persists when exiting via an ending, and a duplicate/late cleanup call must be safe. The spec does not state idempotency expectations.
+
+8. **Risk: `currentNodeIndex(state)` may be undefined/unsupported on non-`in-progress` states.** The spec defines `currentNodeIndex` as returning "the route-node index of current position," but does not guarantee it returns a sensible value for `arrived`, `aborted`, or `perished`. If it returns an out-of-bounds index for an ended journey, the marker could crash when `route.nodes[passageNodeIndex]` is undefined. No acceptance criterion guards against this.
+
+9. **Risk: marker projection reuse is underspecified.** The spec says "Reuse the SAME projection the route polyline already uses," but `MapViewer.tsx` may compute its projection inline or via a library. If the projection depends on the active map instance, zoom, or layer, the marker position could drift when the user zooms or resizes. There is no criterion for marker accuracy under map interaction.
+
+10. **Risk: `passageActive && passageNodeIndex != null` marker condition allows stale marker on route switch.** `JourneyPlanner` owns `route`, and `App` owns `passageNodeIndex`. If the route is recomputed while passage mode is active, `passageNodeIndex` could point to a node index that no longer exists or is semantically wrong for the new route. The spec does not forbid route recomputation during passage mode, nor require index reset.
+
+11. **Missing acceptance criterion for route recomputation during passage mode.** Because `JourneyPlanner` still exposes the planner controls when `passageActive` is false, but the spec says PassageMode is a "full takeover of the planner body" when true, it is unclear whether the planner sidebar/form remains interactive. If it does, reroute during passage mode is possible and undefined.
+
+12. **Ambiguous button labels / VOICE-SPEC scope.** The hard constraint says "All NEW player-facing prose must be em-dash-free." It is not stated whether labels such as "Set out", "Continue", "Rest", "Force-march", "Ration", "Turn back" are fixed by VOICE-SPEC or open to the implementer; if any of these contain or later need em-dashes, the `grep` test must be explicit about file scope.
+
+13. **Untestable `grep -n "—"` constraint in CI.** The spec instructs `grep -n "—"` over "your new strings," but strings are not a grep-able concept. `grep` checks bytes, so it will also flag comments or third-party strings unless the command is scoped to specific files and excludes comments. This is a test-definition bug.
+
+14. **Missing error handling for `initPassage` or `passageAct` exceptions.** The state machine is asserted as fully unit-tested, but the UI layer has no criterion for what happens if an unexpected action is dispatched (e.g., clicking Continue while `pending` is set, or a network/serialization edge case). The action bar is disabled by the conditional, but a race condition via rapid clicks could still dispatch invalid transitions.
+
+15. **Risk: action-button rapid-click race.** Because `setState(passageAct(state, {kind}))` reads `state` from the closure, rapid clicks could dispatch two actions against the same base state, losing one. The spec mandates this exact call shape; it does not require functional updates or pending-state guards. This is a real implementation risk in React.
+
+16. **Ambiguous E2E bounded loop semantics.** The smoke test says "click Continue repeatedly (a bounded loop, e.g. ≤40 clicks) until an ending panel appears." It does not specify what to do if 40 clicks pass without an ending (fail? pass with warning?), nor does it require that intermediate signature-encounter choice cards are handled. The helper might loop through choices automatically or might fail on them.
+
+17. **Missing criterion for localStorage intro gating.** Section 6 says "If you add any one-time intro localStorage key, gate it in the existing `beforeEach` `addInitScript` block." This is conditional and optional, so there is no acceptance criterion that verifies localStorage gating, leaving the E2E potentially flaky if an intro overlay is added later.
+
+18. **Contradiction in file-touch restriction vs. CSS edits.** The hard constraints say "Touch ONLY the files named below," and later list `web/src/App.css`. However, if existing journey-planner components import their own CSS modules or rely on classes defined elsewhere, the implementer may need to touch additional files to "reuse existing CSS variables" without adding literals. The spec does not resolve this tension.
+
+19. **Risk: `type PassageState` import path mismatch.** The import example uses `../../utils/passage` from `web/src/components/journey-planner/PassageMode.tsx`, which resolves to `web/src/utils/passage.ts`. This is correct, but the example also imports `JourneyStateOpts` from `journey-days.ts` without a path. The spec says `JourneyStateOpts` is exported from `journey-days.ts`, but not from where `PassageMode.tsx` should import it. This is a minor path ambiguity.
+
+20. **Missing acceptance criterion for accessibility / focus management.** A "full takeover" replacing tabs/results can disorient keyboard/screen-reader users. There is no requirement to move focus into the journal, trap focus, or restore focus on exit, despite the takeover pattern typically needing it.
+
+21. **Untestable "mirror existing `.app-main.time-of-day-*` filter rules."** The spec says the new filter should mirror existing rules, but does not assert exact CSS output, transition timing, or that it does not override time-of-day filters when both classes are present (e.g., `passage-mode time-of-day-night`). The cascade interaction is undefined.
+
+22. **Risk: `PassageMode` receives stale props if `JourneyPlanner` rerenders with changed inputs.** `useState(() => initPassage({...}))` captures the initial props. If `route`, `party`, `supply`, etc., change while PassageMode is mounted, the component will continue operating on the old state machine state. The spec does not require reset-on-prop-change or warn against it.
+
+23. **Ambiguous "render each `.kind`" requirement for `PassageEntry`.** The spec lists shapes but does not say whether `choice` entries are appended to `state.log` or only rendered via `state.pending`. Section 1 says render `state.log` "one block per entry kind," then separately says render choice cards when `state.pending`. This could be read as requiring choices in both places, which may double-render the active choice.
+
+24. **Missing criterion for negative supply debt display precision.** `SupplyDay` values are floats and "may be NEGATIVE = debt." There is no specification for rounding, decimal places, or formatting (e.g., `-0.3` vs `-0.30`), making visual testing ambiguous.
+
+25. **Risk: `route.nodes[passageNodeIndex]` may fail if `route.nodes` is empty or index is invalid.** The spec assumes a computed route always has nodes, but does not require a guard in `App.tsx`. `JourneyResults` says "a route exists, which is always true where JourneyResults renders," but that does not prove `route.nodes` is non-empty or that `passageNodeIndex` is in range after an ending.

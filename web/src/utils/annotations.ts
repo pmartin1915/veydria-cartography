@@ -9,6 +9,8 @@
  * forward without feature links, and removes the v1 key.
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 const STORAGE_KEY_V1 = 'veydria-annotations-v1'
 const STORAGE_KEY = 'veydria-annotations-v2'
 
@@ -64,7 +66,7 @@ const UNLINKABLE_CATEGORIES = new Set(['terrain_cell', 'water'])
 export function loadAnnotations(): MapAnnotation[] {
   try {
     migrateV1ToV2()
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
@@ -76,17 +78,17 @@ export function loadAnnotations(): MapAnnotation[] {
 
 function migrateV1ToV2(): void {
   try {
-    if (localStorage.getItem(STORAGE_KEY) !== null) return
-    const legacy = localStorage.getItem(STORAGE_KEY_V1)
+    if (kvStore.getString(STORAGE_KEY) !== null) return
+    const legacy = kvStore.getString(STORAGE_KEY_V1)
     if (!legacy) return
     const parsed = JSON.parse(legacy)
     if (!Array.isArray(parsed)) {
-      localStorage.removeItem(STORAGE_KEY_V1)
+      kvStore.remove(STORAGE_KEY_V1)
       return
     }
     const migrated = parsed.filter(isValidAnnotation)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
-    localStorage.removeItem(STORAGE_KEY_V1)
+    kvStore.setString(STORAGE_KEY, JSON.stringify(migrated))
+    kvStore.remove(STORAGE_KEY_V1)
   } catch {
     // localStorage unavailable or corrupt — leave v1 in place silently
   }
@@ -94,7 +96,7 @@ function migrateV1ToV2(): void {
 
 export function saveAnnotations(annotations: MapAnnotation[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(annotations))
   } catch {
     // localStorage may be full or unavailable — silently fail
   }

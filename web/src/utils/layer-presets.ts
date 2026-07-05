@@ -6,6 +6,7 @@
  * can save their own working sets.
  */
 
+import { kvStore } from '../persistence/kv-store'
 import type { LayerVisibility, LayerOpacity } from '../App'
 
 export interface LayerPreset {
@@ -25,6 +26,7 @@ const ALL_OFF: LayerVisibility = {
   oasis: false,
   contested_site: false,
   hex_grid: false,
+  graticule: false,
   trade_route: false,
   landmark: false,
   river: false,
@@ -44,6 +46,7 @@ const FULL_OPACITY: LayerOpacity = {
   oasis: 1,
   contested_site: 1,
   hex_grid: 0.7,
+  graticule: 0.7,
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
@@ -68,6 +71,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       oasis: true,
       contested_site: true,
       hex_grid: false,
+      graticule: false,
       trade_route: true,
       landmark: true,
       river: true,
@@ -150,6 +154,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       chokepoint: true,
       landmark: true,
       hex_grid: true,
+      graticule: false,
     },
     // Dim terrain so the hex grid reads as the primary structure.
     opacities: { ...FULL_OPACITY, terrain_cell: 0.3, water: 0.4, hex_grid: 0.9 },
@@ -167,6 +172,7 @@ export const BUILT_IN_PRESETS: LayerPreset[] = [
       oasis: true,
       contested_site: true,
       hex_grid: false,
+      graticule: false,
       trade_route: true,
       landmark: true,
       river: true,
@@ -184,7 +190,7 @@ const STORAGE_KEY = 'veydria.layer.presets.v1'
 
 export function loadCustomPresets(): LayerPreset[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as LayerPreset[]
     if (!Array.isArray(parsed)) return []
@@ -196,7 +202,7 @@ export function loadCustomPresets(): LayerPreset[] {
 
 export function saveCustomPresets(presets: LayerPreset[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets.filter(p => !p.builtIn)))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(presets.filter(p => !p.builtIn)))
   } catch {
     // ignore storage errors (quota, private mode)
   }

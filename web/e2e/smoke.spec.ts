@@ -29,6 +29,8 @@ test.beforeEach(async ({ page }) => {
     const done = JSON.stringify({ completed: true, skipped: true, timestamp: 0 })
     localStorage.setItem('veydria.tour.completed.v1', done)
     localStorage.setItem('veydria.journey.tutorial.completed.v1', done)
+    localStorage.setItem('veydria.welcome.seen.v1', done)
+    localStorage.setItem('veydria.passage.tutorial.completed.v1', done)
   })
 })
 
@@ -129,7 +131,7 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
   // drawer / switch tabs — clicking a moving, possibly off-screen card is racy.
   const next = () => page.keyboard.press('ArrowRight')
 
-  // Steps: welcome(0) from(1) to(2) modes(3) find(4) options(5) days(6) encounters(7) export(8).
+  // Steps: welcome(0) from(1) to(2) modes(3) find(4) options(5) days(6) encounters(7) export(8) set-out(9).
   for (let i = 0; i < 5; i++) await next()
   await expect(title).toHaveText('Party & supply = the fuel')
   await expect(page.locator('.journey-options-body')).toBeVisible() // onEnter opened the drawer
@@ -144,6 +146,9 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
 
   await next()
   await expect(title).toHaveText('Save it or share it')
+
+  await next()
+  await expect(title).toHaveText('Then live it')
 
   // NEXT past the last step dismisses the tour.
   await next()
@@ -354,4 +359,147 @@ test('the travel vignette crowns a computed route and names a region + travel mo
   await expect(vig).toHaveAttribute('data-mode', /^(horse|camel|llama|porter|river-boat|sea-ship)$/)
   await expect(page.getByTestId('travel-vignette-region')).not.toBeEmpty()
   await expect(page.getByTestId('travel-vignette-mode')).not.toBeEmpty()
+})
+
+
+test('Passage mode walks a route to an ending and returns to Atlas', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  await page.getByTestId('set-out-btn').click()
+
+  // The ledger and action bar mount immediately.
+  await expect(page.locator('.passage-ledger')).toBeVisible()
+  await expect(page.locator('.passage-action-bar')).toBeVisible()
+
+  // The map dims and a position marker appears.
+  await expect(page.locator('.app-main.passage-mode')).toBeAttached()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+  // Regression: the pulse must scale about the marker's own centre. The marker is
+  // an SVG <path>; the default transform-box (view-box) scaled about the SVG origin
+  // and translated the marker across the map during the pulse. fill-box pins it.
+  await expect(page.locator('.passage-position-marker')).toHaveCSS('transform-box', 'fill-box')
+
+  // Walk: Continue, resolving the first choice whenever cards appear.
+  let ended = false
+  for (let i = 0; i < 40; i++) {
+    const choiceCards = page.locator('.passage-choice-card')
+    if (await choiceCards.count() > 0) {
+      await choiceCards.first().click()
+    }
+
+    const endingPanel = page.locator('.passage-ending-panel')
+    if (await endingPanel.isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+
+    const continueBtn = page.locator('.passage-action-bar .passage-btn--primary')
+    if (await continueBtn.isVisible().catch(() => false)) {
+      await continueBtn.click()
+    } else {
+      // If neither choices nor continue nor ending are visible, something is wrong.
+      break
+    }
+  }
+
+  expect(ended, 'Passage mode should reach an ending within the bounded walk').toBe(true)
+  await expect(page.locator('.passage-ending-panel')).toBeVisible()
+  await expect(page.locator('.passage-ending-panel .passage-btn--primary')).toBeVisible()
+
+  // Exit returns to the planner and removes the map marker.
+  await page.locator('.passage-ending-panel .passage-btn--primary').click()
+  await expect(page.locator('.journey-route')).toBeVisible()
+  await expect(page.locator('.app-main.passage-mode')).toHaveCount(0)
+  await expect(page.locator('.passage-position-marker')).toHaveCount(0)
+})
+
+test('Passage mode reroutes to a new destination mid-journey and still reaches an ending', async ({ page }) => {
+  await page.goto('/')
+  await computeRoute(page)
+
+  await page.getByTestId('set-out-btn').click()
+  await expect(page.locator('.passage-action-bar')).toBeVisible()
+
+  // Advance one day so the party is underway (resolve a choice if one appears).
+  const firstChoice = page.locator('.passage-choice-card')
+  if (await firstChoice.count() > 0) await firstChoice.first().click()
+  const continueBtn = page.locator('.passage-action-bar .passage-btn--primary')
+  if (await continueBtn.isVisible().catch(() => false)) await continueBtn.click()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+
+  // Open the reroute picker and choose a new destination.
+  await page.getByTestId('passage-reroute-btn').click()
+  await expect(page.getByTestId('passage-reroute-picker')).toBeVisible()
+  await page.locator('.passage-reroute-list .journey-dropdown-item').first().click()
+
+  // The picker closes, a reroute journal entry is recorded, and the marker remains.
+  await expect(page.getByTestId('passage-reroute-picker')).toHaveCount(0)
+  await expect(page.locator('.passage-reroute').first()).toBeVisible()
+  await expect(page.locator('.passage-position-marker')).toHaveCount(1)
+
+  // The rerouted passage still walks to an ending.
+  let ended = false
+  for (let i = 0; i < 40; i++) {
+    const choiceCards = page.locator('.passage-choice-card')
+    if (await choiceCards.count() > 0) await choiceCards.first().click()
+    if (await page.locator('.passage-ending-panel').isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+    const cont = page.locator('.passage-action-bar .passage-btn--primary')
+    if (await cont.isVisible().catch(() => false)) await cont.click()
+    else break
+  }
+  expect(ended, 'Rerouted passage should reach an ending within the bounded walk').toBe(true)
+})
+
+test('Trail mode walks a seeded run to the score screen and returns to the planner', async ({ page }) => {
+  // Full-game walk: cold-start (first Vite transform of the app graph) plus a
+  // multi-day run can exceed the 30s default when this test runs first or alone.
+  test.setTimeout(60_000)
+  // Hash-navigate straight into a computed short route with a fixed run seed —
+  // trailSeed makes the walk deterministic (see url-hash.ts), so this test cannot
+  // flake on hunt/health RNG. irrah→khulut is the sim harness's "short" pair.
+  await page.goto('/#journeyFrom=irrah&journeyTo=khulut&trailSeed=42')
+  await expect(page.locator('.leaflet-container')).toBeVisible()
+  await expect(page.locator('.journey-route')).toBeVisible()
+
+  await page.getByTestId('set-out-trail-btn').click()
+
+  // Setup card mounts with a default roster; begin the run.
+  await page.getByTestId('trail-begin-btn').click()
+  await expect(page.locator('.trail-ledger')).toBeVisible()
+  await expect(page.getByTestId('trail-vista')).toBeVisible()
+  await expect(page.getByTestId('trail-action-continue')).toBeVisible()
+
+  // Walk: Continue, resolving the first card whenever one appears (signature /
+  // fort / ford / stream cards all render .passage-choice-card buttons).
+  let ended = false
+  for (let i = 0; i < 60; i++) {
+    const choiceCards = page.locator('.trail-choice-cards .passage-choice-card')
+    if (await choiceCards.count() > 0) {
+      await choiceCards.first().click()
+      continue
+    }
+
+    if (await page.getByTestId('trail-outcome-headline').isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+
+    const continueBtn = page.getByTestId('trail-action-continue')
+    if (await continueBtn.isVisible().catch(() => false)) {
+      await continueBtn.click()
+    } else {
+      break
+    }
+  }
+
+  expect(ended, 'Trail mode should reach the score screen within the bounded walk').toBe(true)
+  await expect(page.getByTestId('trail-score-rank')).not.toBeEmpty()
+
+  // Return lands back on the planner with the route intact.
+  await page.getByTestId('trail-return-btn').click()
+  await expect(page.locator('.journey-route')).toBeVisible()
 })

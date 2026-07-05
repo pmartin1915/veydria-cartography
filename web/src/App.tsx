@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
+import { kvStore } from './persistence/kv-store'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -11,13 +12,16 @@ import type { CanonCrossCivEntity } from './utils/faction-graph'
 // it out keeps it off the first-paint critical path. See Suspense boundary below.
 const JourneyPlanner = lazy(() => import('./components/JourneyPlanner'))
 import HexCoordChip from './components/HexCoordChip'
+import WorldCoordChip from './components/WorldCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
 import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
-import { formatDistance, type MeasureStats } from './utils/measure'
+import { formatDistance, estimateMeasureDays, svgDistanceToKm, type MeasureStats } from './utils/measure'
+import { formatDays } from './utils/format-measure'
+import { svgToWorldKm } from './utils/world-coords'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
@@ -37,10 +41,13 @@ import {
 import { loadSavedJourneys } from './utils/journey-saved'
 import { DEFAULT_SUPPLY } from './utils/journey-supply'
 import { loadAsterisms, type Asterism } from './utils/asterisms'
-import { captureMapPng, copyPngToClipboard, downloadPng, suggestSnapshotFilename } from './utils/map-snapshot'
+import { captureMapPng, copyPngToClipboard, suggestSnapshotFilename } from './utils/map-snapshot'
 import { downloadRenderConfig } from './utils/render-config'
-import { tourReducer, isTourCompleted, markTourCompleted, type TourStep } from './utils/tour'
+import { saveTextFile, savePngDataUrl } from './persistence/file-export'
+import { tourReducer, isTourCompleted, markTourCompleted, WELCOME_KEY, type TourStep } from './utils/tour'
+import WelcomeCurtain from './components/WelcomeCurtain'
 import { type TimeOfDay, loadTimeOfDay, saveTimeOfDay, cycleTimeOfDay, TIME_OF_DAY_LABELS } from './utils/time-of-day'
+import { loadHexSize, saveHexSize } from './utils/hex-size'
 import { useMediaQuery } from './utils/media-query'
 import { useToast } from './utils/use-toast'
 import TourOverlay from './components/TourOverlay'
@@ -48,6 +55,8 @@ import SettingsModal from './components/SettingsModal'
 import SessionPrepPanel from './components/SessionPrepPanel'
 import SessionHud from './components/SessionHud'
 import CompendiumPanel from './components/CompendiumPanel'
+import { CampaignMenu } from './components/CampaignMenu'
+import { SaveStatusIndicator } from './components/SaveStatusIndicator'
 
 import type { GeoJSONFeature, GeoJSONCollection } from './types/geojson'
 export type { GeoJSONFeature, GeoJSONCollection }
@@ -72,6 +81,7 @@ export interface LayerVisibility {
   oasis: boolean
   contested_site: boolean
   hex_grid: boolean
+  graticule: boolean
   trade_route: boolean
   landmark: boolean
   river: boolean
@@ -91,6 +101,7 @@ export interface LayerOpacity {
   oasis: number
   contested_site: number
   hex_grid: number
+  graticule: number
   trade_route: number
   landmark: number
   river: number
@@ -110,6 +121,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   oasis: true,
   contested_site: true,
   hex_grid: false,
+  graticule: false,
   trade_route: true,
   landmark: true,
   river: true,
@@ -129,6 +141,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   oasis: 1,
   contested_site: 1,
   hex_grid: 0.7,
+  graticule: 0.7,
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
@@ -137,6 +150,10 @@ const DEFAULT_OPACITY: LayerOpacity = {
   biome_colors: 1,
   explored: 1,
   marginalia: 1,
+}
+
+interface MeasureStatsExtended extends MeasureStats {
+  segmentDetails: Array<{ distanceSvg: number; bearingDeg: number; compass: string; days: number }>
 }
 
 function App() {
@@ -209,10 +226,14 @@ function App() {
   const [patchToast, patchToastLeaving, showPatchToast] = useToast(3000)
   const [annotationToast, annotationToastLeaving, showAnnotationToast] = useToast(2000)
   const [logToast, logToastLeaving, showLogToast] = useToast(2000)
-  const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
+  const [measureStats, setMeasureStats] = useState<MeasureStatsExtended | null>(null)
+  const [cursorSvg, setCursorSvg] = useState<{ x: number; y: number } | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
+  // First-run cold-open. Shown once before the map tour (see the gate in the
+  // geojson-load effect); onBegin hands off to the tour.
+  const [showWelcome, setShowWelcome] = useState(false)
   const [sessionPrepOpen, setSessionPrepOpen] = useState(false)
   const [journeyMode, setJourneyMode] = useState(false)
   const [starredIds, setStarredIds] = useState<string[]>(() => getStarredIds())
@@ -251,6 +272,36 @@ function App() {
       document.removeEventListener('keydown', onKey)
     }
   }, [shareOpen])
+
+  // "More ▾" overflow menu — collects the one-shot export/utility actions so the
+  // toolbar isn't a wall of buttons. Mirrors the share-menu fixed-popover idiom.
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [morePos, setMorePos] = useState<{ top: number; right: number } | null>(null)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const toggleMore = useCallback(() => {
+    setMoreOpen(prev => {
+      if (!prev && moreMenuRef.current) {
+        const r = moreMenuRef.current.getBoundingClientRect()
+        setMorePos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) })
+      }
+      return !prev
+    })
+  }, [])
+  useEffect(() => {
+    if (!moreOpen) return
+    function onDown(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setMoreOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
 
   const tourSteps: TourStep[] = useMemo(() => [
     {
@@ -346,6 +397,17 @@ function App() {
     { active: false, stepIndex: 0 }
   )
 
+  // Dismiss the cold-open: mark it seen, then hand off to the map tour for
+  // a brand-new visitor (a returning visitor whose tour is already done sees
+  // neither). The short delay lets the curtain finish unmounting first.
+  const handleWelcomeBegin = useCallback(() => {
+    markTourCompleted(false, WELCOME_KEY)
+    setShowWelcome(false)
+    if (!isTourCompleted() && window.innerWidth >= 768) {
+      window.setTimeout(() => tourDispatch({ type: 'START' }), 400)
+    }
+  }, [])
+
   const cleanupTour = useCallback(() => {
     closeSearch()
     setJourneyMode(false)
@@ -369,13 +431,11 @@ function App() {
   const [hexMeasureMode, setHexMeasureMode] = useState(false)
   const [hexMeasurePoints, setHexMeasurePoints] = useState<AxialCoord[]>([])
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTimeOfDay())
-  const [hexSize, setHexSize] = useState<number>(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('veydria.hexSize') : null
-    const n = stored ? Number.parseInt(stored, 10) : NaN
-    return [30, 50, 70].includes(n) ? n : 50
-  })
+  const [hexSize, setHexSize] = useState<number>(() => loadHexSize())
+  const [passageActive, setPassageActive] = useState(false)
+  const [passageNodeIndex, setPassageNodeIndex] = useState<number | null>(null)
   useEffect(() => {
-    try { window.localStorage.setItem('veydria.hexSize', String(hexSize)) } catch { /* quota / private mode */ }
+    try { saveHexSize(hexSize) } catch { /* quota / private mode */ }
   }, [hexSize])
   const shareMode = !!initialHashRef.current.share
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -524,7 +584,12 @@ function App() {
         // exploring organically), we're not in share mode, and the viewport
         // is wide enough for the tour card to be readable.
         const hasDeepLink = !!(featureId || hexLabel || hashState.hexA || hashState.hexB || journeyFrom || journeyTo)
-        if (!hasDeepLink && !hashState.share && !isTourCompleted() && window.innerWidth >= 768) {
+        const eligible = !hasDeepLink && !hashState.share && window.innerWidth >= 768
+        if (eligible && !isTourCompleted(WELCOME_KEY)) {
+          // Brand-new visitor: show the cold-open first. It hands off to the
+          // tour itself (onBegin), so we don't auto-start the tour here.
+          setShowWelcome(true)
+        } else if (eligible && !isTourCompleted()) {
           window.setTimeout(() => {
             tourDispatch({ type: 'START' })
           }, 1200)
@@ -634,15 +699,12 @@ function App() {
 
     const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n`
 
-    const blob = new Blob([yaml], { type: 'text/yaml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    void saveTextFile(
+      `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`,
+      yaml,
+      'text/yaml',
+      { name: 'YAML', extensions: ['yaml', 'yml'] },
+    )
   }, [coordinateUpdates])
 
   const handleApplyPatch = useCallback(async (file: File) => {
@@ -886,7 +948,7 @@ function App() {
     }
   }, [annotations])
 
-  const handleMeasureUpdate = useCallback((stats: MeasureStats) => {
+  const handleMeasureUpdate = useCallback((stats: MeasureStatsExtended) => {
     setMeasureStats(stats)
   }, [])
 
@@ -968,7 +1030,7 @@ function App() {
     // calendar data cluster. Loading it on-demand (this is a deliberate export
     // action) keeps that ~44 kB off the first-paint critical path.
     const { downloadCampaignLog } = await import('./utils/campaign-log')
-    downloadCampaignLog({
+    const result = await downloadCampaignLog({
       activeJourney: journeyRoute
         ? { route: journeyRoute, season: journeySeason, mode: journeyModeState }
         : undefined,
@@ -979,7 +1041,8 @@ function App() {
       // flag so the export is player-safe even if invoked from a share context.
       playerSafe: shareMode,
     })
-    showLogToast('Campaign log downloaded')
+    if (result.saved) showLogToast('Campaign log saved')
+    else if (result.error) showLogToast('Campaign log save failed')
   }, [journeyRoute, journeySeason, journeyModeState, annotations, shareMode])
 
   // Share button: copy current URL to clipboard. If `playerView` is true,
@@ -1026,8 +1089,9 @@ function App() {
       if (copied) {
         showShareToast(`${label} copied to clipboard`)
       } else {
-        downloadPng(dataUrl, suggestSnapshotFilename())
-        showShareToast(`${label} downloaded`)
+        const result = await savePngDataUrl(suggestSnapshotFilename(), dataUrl)
+        if (result.saved) showShareToast(`${label} saved`)
+        else if (result.error) showShareToast(`${label} save failed`)
       }
     } catch {
       showShareToast('Snapshot failed')
@@ -1198,6 +1262,7 @@ function App() {
 
   return (
     <div className={`app ${shareMode ? 'share-mode' : ''} ${mobilePlayerMode ? 'mobile-player-mode' : ''}`}>
+      {showWelcome && <WelcomeCurtain onBegin={handleWelcomeBegin} />}
       {shareMode && !mobilePlayerMode && (
         <div className="player-view-banner" role="status" aria-live="polite">
           Player view — annotations and encounter notes are hidden
@@ -1244,7 +1309,18 @@ function App() {
       )}
       {!mobilePlayerMode && <header className="app-header">
         <div className="header-left">
-          <h1 className="app-title">VEYDRIA</h1>
+          <span className="app-brand">
+            <svg className="app-mark" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <circle cx="32" cy="32" r="26" strokeOpacity="0.35" />
+              <path d="M32 11 L37 28 L32 32 L27 28 Z" fill="var(--text-accent)" stroke="none" />
+              <path d="M32 53 L37 36 L32 32 L27 36 Z" fill="var(--text-muted)" stroke="none" />
+              <line x1="32" y1="5" x2="32" y2="11" strokeOpacity="0.6" />
+              <line x1="32" y1="53" x2="32" y2="59" strokeOpacity="0.6" />
+              <line x1="5" y1="32" x2="11" y2="32" strokeOpacity="0.6" />
+              <line x1="53" y1="32" x2="59" y2="32" strokeOpacity="0.6" />
+            </svg>
+            <h1 className="app-title">VEYDRIA</h1>
+          </span>
           <span className="app-subtitle">Continental Reference Map</span>
         </div>
         <div className="header-right">
@@ -1304,45 +1380,39 @@ function App() {
               <span>{hexMeasureMode ? 'Pick hexes...' : 'Hex'}</span>
             </button>
           )}
-          <button
-            className="search-trigger"
-            onClick={() => handleShare(false)}
-            title="Copy shareable link"
-            id="share-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-            <span>Share</span>
-          </button>
-          <button
-            className="search-trigger"
-            onClick={handleSnapshot}
-            title="Capture the current map view as PNG  ·  Shift+click for player view (no pins)"
-            id="snapshot-trigger"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            <span>Snapshot</span>
-          </button>
-          {!shareMode && (
+          {/* Player view keeps Share + Snapshot at top level; in GM mode they
+              live in the "More ▾" menu below to keep the toolbar uncluttered. */}
+          {shareMode && (
             <button
               className="search-trigger"
-              onClick={() => downloadRenderConfig(layers)}
-              title="Download render config for high-DPI parchment export (run: python pipeline.py render-map --config ...)"
-              id="parchment-trigger"
+              onClick={() => handleShare(false)}
+              title="Copy shareable link"
+              id="share-trigger"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
-              <span>Parchment</span>
+              <span>Share</span>
             </button>
+          )}
+          {shareMode && (
+            <button
+              className="search-trigger"
+              onClick={handleSnapshot}
+              title="Capture the current map view as PNG  ·  Shift+click for player view (no pins)"
+              id="snapshot-trigger"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span>Snapshot</span>
+            </button>
+          )}
+          {!shareMode && (
+            <CampaignMenu onToast={showLogToast} />
           )}
           {!shareMode && (
             <div className="share-menu" ref={shareMenuRef}>
@@ -1394,40 +1464,6 @@ function App() {
           )}
           {!shareMode && (
             <button
-              className="search-trigger"
-              onClick={() => setGraphOpen(true)}
-              title="Open the faction relationship graph"
-              id="graph-trigger"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="6" cy="6" r="2.5" />
-                <circle cx="18" cy="6" r="2.5" />
-                <circle cx="12" cy="18" r="2.5" />
-                <line x1="6" y1="6" x2="18" y2="6" />
-                <line x1="6" y1="6" x2="12" y2="18" />
-                <line x1="18" y1="6" x2="12" y2="18" />
-              </svg>
-              <span>Graph</span>
-            </button>
-          )}
-          {!shareMode && (
-            <button
-              className="search-trigger"
-              onClick={handleDownloadCampaignLog}
-              title="Download campaign log as markdown"
-              id="log-trigger"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              <span>Log</span>
-            </button>
-          )}
-          {!shareMode && (
-            <button
               className={`search-trigger ${sessionPrepOpen ? 'active' : ''}`}
               onClick={() => setSessionPrepOpen(prev => !prev)}
               title="Session prep (S)"
@@ -1453,6 +1489,93 @@ function App() {
               </svg>
               <span>Compendium</span>
             </button>
+          )}
+          {!shareMode && (
+            <div className="share-menu" ref={moreMenuRef}>
+              <button
+                className={`search-trigger ${moreOpen ? 'active' : ''}`}
+                onClick={toggleMore}
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                title="More — snapshot, links, exports"
+                id="more-menu-trigger"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="5" cy="12" r="1.4" />
+                  <circle cx="12" cy="12" r="1.4" />
+                  <circle cx="19" cy="12" r="1.4" />
+                </svg>
+                <span>More&nbsp;▾</span>
+              </button>
+              {moreOpen && (
+                <div
+                  className="share-popover"
+                  role="menu"
+                  aria-label="More tools"
+                  style={morePos ? { top: morePos.top, right: morePos.right } : undefined}
+                >
+                  <h3 className="share-popover-title">Snapshot &amp; exports</h3>
+                  <button className="share-popover-action" role="menuitem" onClick={(e) => { void handleSnapshot(e); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Snapshot</span>
+                      <span className="share-popover-action-hint">PNG of the map · Shift+click hides pins</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void handleShare(false); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Copy link</span>
+                      <span className="share-popover-action-hint">A link that restores this exact view</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void downloadRenderConfig(layers); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Parchment config</span>
+                      <span className="share-popover-action-hint">JSON for the high-DPI map render</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { setGraphOpen(true); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="6" cy="6" r="2.5" />
+                      <circle cx="18" cy="6" r="2.5" />
+                      <circle cx="12" cy="18" r="2.5" />
+                      <line x1="6" y1="6" x2="18" y2="6" />
+                      <line x1="6" y1="6" x2="12" y2="18" />
+                      <line x1="18" y1="6" x2="12" y2="18" />
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Faction graph</span>
+                      <span className="share-popover-action-hint">Relationships between the six powers</span>
+                    </span>
+                  </button>
+                  <button className="share-popover-action" role="menuitem" onClick={() => { void handleDownloadCampaignLog(); setMoreOpen(false) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span className="share-popover-action-text">
+                      <span className="share-popover-action-label">Campaign log</span>
+                      <span className="share-popover-action-hint">Markdown of pins, journeys &amp; notes</span>
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <button
             className="search-trigger time-of-day-btn"
@@ -1587,7 +1710,7 @@ function App() {
           onClose={() => setCompendiumOpen(false)}
         />
       )}
-      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay} ${compendiumOpen ? 'compendium-active' : ''}`}>
+      <main className={`app-main ${measureMode ? 'measure-mode' : ''} time-of-day-${timeOfDay} ${compendiumOpen ? 'compendium-active' : ''} ${passageActive ? 'passage-mode' : ''}`}>
         {geojson && (
           <MapViewer
             ref={mapRef}
@@ -1608,8 +1731,10 @@ function App() {
             initialViewport={initialViewport}
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
+            onCursorMove={setCursorSvg}
             route={journeyRoute}
             comparisonRoutes={comparisonRoutes}
+            passageMarkerNode={passageActive && passageNodeIndex != null && journeyRoute?.nodes[passageNodeIndex] ? journeyRoute.nodes[passageNodeIndex] : null}
             onHoverHex={setHoverHex}
             onSelectHex={(hit) => {
               if (hexMeasureMode) {
@@ -1643,12 +1768,20 @@ function App() {
           />
         )}
 
-        {layers.hex_grid && (selectedHex || hoverHex) && (
-          <HexCoordChip
-            label={(selectedHex ?? hoverHex)!.hex.label}
-            descriptors={(selectedHex ?? hoverHex)!.descriptors}
-          />
-        )}
+        <div className="coord-chip-stack">
+          {layers.hex_grid && (selectedHex || hoverHex) && (
+            <HexCoordChip
+              label={(selectedHex ?? hoverHex)!.hex.label}
+              descriptors={(selectedHex ?? hoverHex)!.descriptors}
+            />
+          )}
+          {cursorSvg && (
+            <WorldCoordChip
+              eastKm={svgToWorldKm(cursorSvg).eastKm}
+              northKm={svgToWorldKm(cursorSvg).northKm}
+            />
+          )}
+        </div>
 
         {selectedHex && (
           <HexInfoPanel
@@ -1769,7 +1902,10 @@ function App() {
             })()}
             onMarkRouteExplored={shareMode ? undefined : handleMarkRouteExplored}
             defaultPartyName={initialHashRef.current.party}
+            defaultTrailSeed={initialHashRef.current.trailSeed}
             mainTourActive={tourState.active}
+            onPassageActiveChange={setPassageActive}
+            onPassagePositionChange={setPassageNodeIndex}
           />
           </Suspense>
         )}
@@ -1781,10 +1917,20 @@ function App() {
                 <span className="measure-stat">
                   {measureStats ? measureStats.pointCount : 0} point{measureStats?.pointCount !== 1 ? 's' : ''}
                 </span>
-                {measureStats && measureStats.pointCount >= 2 && (
-                  <span className="measure-stat measure-stat--total">
-                    Total: {formatDistance(measureStats.totalDistance)}
+                {measureStats?.segmentDetails.map((seg, i) => (
+                  <span key={i} className="measure-stat">
+                    {i + 1}. {formatDistance(seg.distanceSvg)} · {seg.compass} · {formatDays(seg.days)}
                   </span>
+                ))}
+                {measureStats && measureStats.pointCount >= 2 && (
+                  <>
+                    <span className="measure-stat measure-stat--total">
+                      Total: {formatDistance(measureStats.totalDistance)}
+                    </span>
+                    <span className="measure-stat">
+                      {formatDays(estimateMeasureDays(svgDistanceToKm(measureStats.totalDistance)))} overland
+                    </span>
+                  </>
                 )}
               </div>
               <div className="measure-panel-actions">
@@ -2034,6 +2180,7 @@ function App() {
             <span>{logToast}</span>
           </div>
         )}
+        <SaveStatusIndicator />
       </main>
     </div>
   )

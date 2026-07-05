@@ -14,6 +14,7 @@ const CURRENT_LAYERS: LayerVisibility = {
   oasis: true,
   contested_site: true,
   hex_grid: false,
+  graticule: false,
   trade_route: true,
   landmark: true,
   river: true,
@@ -33,6 +34,7 @@ const CURRENT_OPACITIES: LayerOpacity = {
   oasis: 1,
   contested_site: 1,
   hex_grid: 0.7,
+  graticule: 0.7,
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
@@ -96,7 +98,7 @@ describe('preset-apply defensive merge', () => {
     expect(opacities.faction_control).toBe(1)
     expect(opacities.terrain_cost).toBe(0.75)
 
-    // No undefined values anywhere — all 12 schema keys are populated.
+    // No undefined values anywhere — all schema keys are populated.
     for (const key of Object.keys(CURRENT_LAYERS) as (keyof LayerVisibility)[]) {
       expect(layers[key]).toBeDefined()
       expect(opacities[key]).toBeDefined()

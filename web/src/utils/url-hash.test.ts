@@ -256,4 +256,29 @@ describe('url-hash', () => {
       expect(parseHash('#share=1').party).toBeUndefined()
     })
   })
+
+  describe('trail seed (dev/debug)', () => {
+    it('round-trips an explicit seed', () => {
+      const hash = buildHash({ trailSeed: 42 })
+      expect(hash).toContain('trailSeed=42')
+      expect(parseHash(hash).trailSeed).toBe(42)
+    })
+
+    it('accepts the uint32 bounds', () => {
+      expect(parseHash('#trailSeed=0').trailSeed).toBe(0)
+      expect(parseHash('#trailSeed=4294967295').trailSeed).toBe(0xffffffff)
+    })
+
+    it('drops non-integer, negative, out-of-range, and malformed values', () => {
+      expect(parseHash('#trailSeed=1.5').trailSeed).toBeUndefined()
+      expect(parseHash('#trailSeed=-1').trailSeed).toBeUndefined()
+      expect(parseHash('#trailSeed=4294967296').trailSeed).toBeUndefined()
+      expect(parseHash('#trailSeed=abc').trailSeed).toBeUndefined()
+    })
+
+    it('is omitted from the hash when unset', () => {
+      expect(buildHash({ journeyFrom: 'irrah' })).not.toContain('trailSeed')
+      expect(parseHash('#journeyFrom=irrah').trailSeed).toBeUndefined()
+    })
+  })
 })

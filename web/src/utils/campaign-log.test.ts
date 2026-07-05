@@ -385,7 +385,7 @@ describe('campaign-log', () => {
   })
 
   describe('downloadCampaignLog', () => {
-    it('creates a download with the correct filename pattern', () => {
+    it('creates a download with the correct filename pattern', async () => {
       const clickSpy = vi.fn()
       const mockAnchor = {
         click: clickSpy,
@@ -406,7 +406,7 @@ describe('campaign-log', () => {
       vi.stubGlobal('document', mockDocument)
       const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
 
-      downloadCampaignLog({ savedJourneys: [], annotations: [] })
+      await downloadCampaignLog({ savedJourneys: [], annotations: [] })
 
       expect(mockDocument.createElement).toHaveBeenCalledWith('a')
       expect(mockAnchor.download).toMatch(/^veydria-campaign-log-\d{4}-\d{2}-\d{2}\.md$/)

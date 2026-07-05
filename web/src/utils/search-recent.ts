@@ -5,6 +5,8 @@
  * Stored under `veydria.search.recent.v1`.
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 const STORAGE_KEY = 'veydria.search.recent.v1'
 const MAX_ITEMS = 5
 
@@ -28,7 +30,7 @@ function isValidRecentItem(item: unknown): item is RecentItem {
 
 export function loadRecentItems(): RecentItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = kvStore.getString(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
@@ -40,7 +42,7 @@ export function loadRecentItems(): RecentItem[] {
 
 function saveItems(items: RecentItem[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    kvStore.setString(STORAGE_KEY, JSON.stringify(items))
   } catch {
     // Storage may be full or unavailable — silently fail
   }
@@ -62,7 +64,7 @@ export function pushRecentItem(id: string, name: string, category: string): void
 
 export function clearRecentItems(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    kvStore.remove(STORAGE_KEY)
   } catch {
     // ignore
   }

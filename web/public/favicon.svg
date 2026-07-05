@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Veydria">
+  <!-- Veydria compass mark — derived from the loading-screen compass (App.tsx).
+       Colors hard-coded (an SVG file can't read the App.css :root tokens):
+       bg #0d0f14 (--bg-deep), gold #c4a862 (--text-accent), muted #6b6355, cream #a09880. -->
+  <rect width="64" height="64" rx="14" fill="#0d0f14"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#c4a862" stroke-opacity="0.25" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#c4a862" stroke-opacity="0.35" stroke-width="2"/>
+  <g stroke="#a09880" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round">
+    <line x1="32" y1="6" x2="32" y2="12"/>
+    <line x1="32" y1="52" x2="32" y2="58"/>
+    <line x1="6" y1="32" x2="12" y2="32"/>
+    <line x1="52" y1="32" x2="58" y2="32"/>
+  </g>
+  <!-- north needle (gold), south needle (muted), sharing the centre -->
+  <path d="M32 11 L37 28 L32 32 L27 28 Z" fill="#c4a862"/>
+  <path d="M32 53 L37 36 L32 32 L27 36 Z" fill="#6b6355"/>
+  <circle cx="32" cy="32" r="2.4" fill="#0d0f14" stroke="#c4a862" stroke-width="1.5"/>
+</svg>
