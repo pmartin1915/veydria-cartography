@@ -41,8 +41,15 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('leaflet-tooltip base wraps and is width-capped', async ({ page }) => {
+// Mirrors smoke.spec's gotoApp: navigate and wait for the map to actually mount
+// before interacting, closing the "header clickable before app settles" race.
+async function gotoApp(page: Page) {
   await page.goto('/')
+  await expect(page.locator('.leaflet-container')).toBeAttached()
+}
+
+test('leaflet-tooltip base wraps and is width-capped', async ({ page }) => {
+  await gotoApp(page)
   await expect(page.locator('.leaflet-container')).toBeVisible()
 
   // Trade-route (and similar) polylines bind .leaflet-tooltip — the shared base that
@@ -79,14 +86,17 @@ test('leaflet-tooltip base wraps and is width-capped', async ({ page }) => {
 })
 
 test('journey segment tooltip wraps and is width-capped', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
 
   // Compute a route so the per-segment tooltips exist (mirrors smoke.spec's flow).
   await page.locator('#journey-trigger').waitFor()
   if (!(await page.locator('.journey-planner').isVisible())) {
     await page.locator('#journey-trigger').click()
   }
-  await expect(page.locator('.journey-planner')).toBeVisible()
+  // See smoke.spec's openPlanner: the lazy JourneyPlanner's Suspense fallback
+  // shares the .journey-planner class (aria-busy="true"), so the readiness wait
+  // must exclude it to avoid racing the real panel's controls.
+  await expect(page.locator('.journey-planner:not([aria-busy="true"])')).toBeVisible()
   for (const [testid, name] of [
     ['journey-from', 'Ngaru Bon'],
     ['journey-to', 'Kheshkai'],

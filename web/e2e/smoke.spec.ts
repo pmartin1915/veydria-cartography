@@ -39,6 +39,17 @@ function parseDays(text: string | null): number {
   return m ? Number(m[0]) : NaN
 }
 
+// Navigates and waits for the map to actually mount. JourneyPlanner (and every
+// other downstream panel) only renders once the geojson fetch resolves — the
+// same gate that stamps .leaflet-container — so this gives every test one
+// explicit "past the loading screen" sync point before it starts interacting,
+// closing the race where a header button is clickable before the app has
+// settled (see ai/IDEAS.md, 2026-07-05).
+async function gotoApp(page: Page, path = '/') {
+  await page.goto(path)
+  await expect(page.locator('.leaflet-container')).toBeAttached()
+}
+
 async function openPlanner(page: Page) {
   // Idempotent: the planner auto-opens when a route is present in the URL hash
   // (e.g. after reload / on a share link), so only click to open when it's closed —
@@ -47,7 +58,12 @@ async function openPlanner(page: Page) {
   if (!(await page.locator('.journey-planner').isVisible())) {
     await page.locator('#journey-trigger').click()
   }
-  await expect(page.locator('.journey-planner')).toBeVisible()
+  // JourneyPlanner is lazy-loaded; its Suspense fallback deliberately shares the
+  // .journey-planner class (App.tsx) so "open" is detectable before the chunk
+  // resolves, but that means a bare .journey-planner wait can pass on the
+  // fallback while the real data-testid controls haven't mounted yet. The
+  // fallback carries aria-busy="true"; the real panel doesn't.
+  await expect(page.locator('.journey-planner:not([aria-busy="true"])')).toBeVisible()
 }
 
 async function pickNode(page: Page, testid: 'journey-from' | 'journey-to', name: string) {
@@ -93,7 +109,7 @@ test('map loads with no console errors', async ({ page }) => {
     if (!isBenign(err.message)) errors.push(err.message)
   })
 
-  await page.goto('/')
+  await gotoApp(page)
   await expect(page.locator('.leaflet-container')).toBeVisible()
   // The SVG overlay pane is mounted by Leaflet once the map initialises.
   await expect(page.locator('.leaflet-container svg').first()).toBeAttached()
@@ -102,7 +118,7 @@ test('map loads with no console errors', async ({ page }) => {
 })
 
 test('picking two civs computes a route with day-by-day breakdown', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   // Stats render with a positive day estimate.
@@ -115,7 +131,7 @@ test('picking two civs computes a route with day-by-day breakdown', async ({ pag
 })
 
 test('journey tutorial walks the planner and drives its state', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   // Compute a real route first so the tab steps have populated content
   // regardless of the welcome step's demo-route seed (which no-ops when a
   // route already exists). Auto-launch is suppressed by the completed flag in
@@ -156,7 +172,7 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
 })
 
 test('mounting the party reduces estimated travel days', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await openPlanner(page)
   // Pin to Direct mode before routing. The default is now Fastest, but the
   // canon-duration modes (Fastest/Safest/Cheapest) use authored fixed day-counts
@@ -182,7 +198,7 @@ test('mounting the party reduces estimated travel days', async ({ page }) => {
 })
 
 test('config drawer is collapsed on load and opens on click', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await openPlanner(page)
 
   // The bulky config (party/supply/options) is folded away by default, so the
@@ -195,7 +211,7 @@ test('config drawer is collapsed on load and opens on click', async ({ page }) =
 })
 
 test('saving a journey persists across reload', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -212,7 +228,7 @@ test('saving a journey persists across reload', async ({ page }) => {
 })
 
 test('share link round-trips and auto-computes the route', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   await page.getByRole('button', { name: 'Link', exact: true }).click()
@@ -220,14 +236,14 @@ test('share link round-trips and auto-computes the route', async ({ page }) => {
   expect(shareUrl).toContain('journeyFrom')
   expect(shareUrl).toContain('journeyTo')
 
-  await page.goto(shareUrl)
+  await gotoApp(page, shareUrl)
   // Deep-link auto-compute renders the route without further interaction.
   await expect(page.locator('.journey-route')).toBeVisible()
   expect(parseDays(await page.getByTestId('est-days').textContent())).toBeGreaterThan(0)
 })
 
 test('Player MD copies a player-safe route handout', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   await page.getByRole('button', { name: 'Player MD', exact: true }).click()
@@ -241,7 +257,7 @@ test('Player MD copies a player-safe route handout', async ({ page }) => {
 })
 
 test('Share popover opens and copies a player link', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await page.locator('#player-share-trigger').click()
 
   const popover = page.getByRole('dialog', { name: 'Share with players' })
@@ -255,7 +271,7 @@ test('Share popover opens and copies a player link', async ({ page }) => {
 })
 
 test('creating a party scopes the My journeys list to the active party', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   // Save tags the journey with the active party — "Main party" by default.
@@ -280,7 +296,7 @@ test('creating a party scopes the My journeys list to the active party', async (
 })
 
 test('switching party tags the share link with party=', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   // The default "Main party" is omitted from the hash to keep URLs short.
@@ -298,7 +314,7 @@ test('switching party tags the share link with party=', async ({ page }) => {
 })
 
 test('map key renders, documents active layers, and collapses', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await expect(page.locator('.leaflet-container')).toBeVisible()
 
   // The key auto-shows because default layers (port/landmark/civilization/terrain)
@@ -320,7 +336,7 @@ test('map key renders, documents active layers, and collapses', async ({ page })
 })
 
 test('ocean marginalia shows the corner cartouche + key row, and toggles off', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await expect(page.locator('.leaflet-container')).toBeVisible()
 
   // Marginalia is ON by default: the always-visible corner cartouche shows, the
@@ -348,7 +364,7 @@ test('ocean marginalia shows the corner cartouche + key row, and toggles off', a
 })
 
 test('the travel vignette crowns a computed route and names a region + travel mode', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await expect(page.locator('.leaflet-container')).toBeVisible()
   await computeRoute(page)
 
@@ -363,7 +379,7 @@ test('the travel vignette crowns a computed route and names a region + travel mo
 
 
 test('Passage mode walks a route to an ending and returns to Atlas', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   await page.getByTestId('set-out-btn').click()
@@ -415,7 +431,7 @@ test('Passage mode walks a route to an ending and returns to Atlas', async ({ pa
 })
 
 test('Passage mode reroutes to a new destination mid-journey and still reaches an ending', async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await computeRoute(page)
 
   await page.getByTestId('set-out-btn').click()
@@ -461,8 +477,7 @@ test('Trail mode walks a seeded run to the score screen and returns to the plann
   // Hash-navigate straight into a computed short route with a fixed run seed —
   // trailSeed makes the walk deterministic (see url-hash.ts), so this test cannot
   // flake on hunt/health RNG. irrah→khulut is the sim harness's "short" pair.
-  await page.goto('/#journeyFrom=irrah&journeyTo=khulut&trailSeed=42')
-  await expect(page.locator('.leaflet-container')).toBeVisible()
+  await gotoApp(page, '/#journeyFrom=irrah&journeyTo=khulut&trailSeed=42')
   await expect(page.locator('.journey-route')).toBeVisible()
 
   await page.getByTestId('set-out-trail-btn').click()

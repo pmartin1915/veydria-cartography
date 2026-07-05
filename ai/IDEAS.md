@@ -741,6 +741,26 @@ map-dependent specs, or an explicit `waitFor('.leaflet-container')` before inter
 downstream of the map) on its own branch. *Where it applies:* `web/e2e/smoke.spec.ts`, maybe
 `playwright.config.ts`'s worker count.
 
+**RESOLVED 2026-07-05.** Root-caused to two distinct issues, both fixed:
+1. CPU contention — this box has 12 logical cores, so Playwright's local default was `workers: 6`
+   (unbounded → half of cores), and six cold Vite-transform + 3.65MB-geojson-parse workers in
+   parallel thrashed past the 30s per-test timeout with `retries: 0` locally. Fixed in
+   `playwright.config.ts`: `workers: process.env.CI ? 1 : 3`, `retries: 1` (matches CI),
+   `expect.timeout: 10_000` (from the 5s default).
+2. A real latent sync bug, not just contention: `JourneyPlanner`'s lazy-load Suspense fallback
+   (`App.tsx`) deliberately shares the `.journey-planner` class with the real panel (so "open" state
+   is detectable before the chunk resolves), but `openPlanner`'s readiness assertion
+   (`smoke.spec.ts`) could resolve on the fallback while the real `data-testid` controls hadn't
+   mounted. Fixed by asserting `.journey-planner:not([aria-busy="true"])` instead (the fallback
+   carries `aria-busy="true"`, the real panel doesn't).
+   Also added a `gotoApp` helper (navigate + wait for `.leaflet-container` to attach) used by every
+   test's navigation, closing the window where header buttons are clickable before the app has
+   finished its initial geojson-gated render.
+Verified: 3 consecutive local `npm run test:e2e` runs, 19/19 passing every time (one run absorbed a
+single flake via the new retry — unretried baseline was still a marked improvement over the
+documented 4-9/18 failure rate). Unit tests unaffected (1142/1142). No product code changed — the
+fix is entirely in `web/playwright.config.ts` and `web/e2e/*.spec.ts`.
+
 ---
 
 ## Passage reroute — deferred polish (2026-06-30, feat/passage-reroute)
