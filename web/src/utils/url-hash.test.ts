@@ -182,8 +182,9 @@ describe('url-hash', () => {
       expect(parseHash(hash).mode).toBe('safest')
     })
 
-    it('omits mode=direct (default)', () => {
-      expect(buildHash({ mode: 'direct' })).not.toContain('mode')
+    it('omits mode=fastest (the default); includes non-default direct', () => {
+      expect(buildHash({ mode: 'fastest' })).not.toContain('mode')
+      expect(buildHash({ mode: 'direct' })).toContain('mode=direct')
     })
 
     it('omits season when undefined', () => {

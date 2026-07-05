@@ -157,7 +157,15 @@ test('journey tutorial walks the planner and drives its state', async ({ page })
 
 test('mounting the party reduces estimated travel days', async ({ page }) => {
   await page.goto('/')
-  await computeRoute(page)
+  await openPlanner(page)
+  // Pin to Direct mode before routing. The default is now Fastest, but the
+  // canon-duration modes (Fastest/Safest/Cheapest) use authored fixed day-counts
+  // on the Ngaru Bon↔Kheshkai leg, which a mount cannot shorten. Direct routes by
+  // drawn distance, where the mounted speed bonus is visible after rounding.
+  await page.locator('.journey-modes-row .journey-mode-btn', { hasText: 'Direct' }).click()
+  await pickNode(page, 'journey-from', FROM)
+  await pickNode(page, 'journey-to', TO)
+  await expect(page.locator('.journey-route')).toBeVisible()
 
   const estDays = page.getByTestId('est-days')
   const daysFoot = parseDays(await estDays.textContent())

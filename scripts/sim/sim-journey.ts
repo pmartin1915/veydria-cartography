@@ -72,7 +72,7 @@ function parseArgs(argv: string[]): CliArgs {
     from: get('from') || 'ngaru_bon',
     to: get('to') || 'oravan',
     season: has('season') ? oneOf<Season>(get('season'), SEASONS, 'summer') : undefined,
-    mode: oneOf<RouteMode>(get('mode'), MODES, 'direct'),
+    mode: oneOf<RouteMode>(get('mode'), MODES, 'fastest'),
     depart: has('depart') ? num('depart', 1) : undefined,
     party,
     supply,

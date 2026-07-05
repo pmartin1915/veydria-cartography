@@ -95,7 +95,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [endOpen, setEndOpen] = useState(false)
   const [exportToast, setExportToast] = useState<string | null>(null)
   const [season, setSeason] = useState<Season | undefined>(defaultSeason)
-  const [mode, setMode] = useState<RouteMode>(defaultMode ?? 'direct')
+  const [mode, setMode] = useState<RouteMode>(defaultMode ?? 'fastest')
   const [party, setParty] = useState<PartyConfig>(defaultParty ?? DEFAULT_PARTY)
   // Party/Supply live inside the collapsed "Party, supply & options" drawer
   // (see optionsOpen below). Their inner toggles default OPEN so opening the
@@ -405,7 +405,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       didAutoComputeRef.current = true
       setStartId(defaultStartId)
       setEndId(defaultEndId)
-      const result = findRoute(graph, defaultStartId, defaultEndId, undefined, 'direct', party)
+      const result = findRoute(graph, defaultStartId, defaultEndId, undefined, mode, party)
       setRoute(result)
       onRouteComputed(result)
     }
@@ -463,7 +463,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setWpSearch('')
       setWpOpenIdx(null)
       setSeason(undefined)
-      setMode('direct')
+      setMode('fastest')
       setParty(DEFAULT_PARTY)
       setPartyOpen(false)
       setExportToast(null)

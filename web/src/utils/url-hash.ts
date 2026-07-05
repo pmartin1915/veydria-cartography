@@ -29,7 +29,7 @@ export interface ViewportState {
   journeyTo?: string
   /** Planner season — when omitted, planner shows "Any" (season-blind weights). */
   season?: Season
-  /** Planner mode — default 'direct'; omitted from the hash when at default. */
+  /** Planner mode — default 'fastest'; omitted from the hash when at default. */
   mode?: RouteMode
   share?: boolean
   partyPace?: 'slow' | 'normal' | 'fast'
@@ -178,8 +178,8 @@ export function buildHash(state: ViewportState): string {
   if (state.journeyFrom) params.set('journeyFrom', state.journeyFrom)
   if (state.journeyTo) params.set('journeyTo', state.journeyTo)
   if (state.season) params.set('season', state.season)
-  // Mode default 'direct' is omitted to keep URLs short
-  if (state.mode && state.mode !== 'direct') params.set('mode', state.mode)
+  // Mode default 'fastest' is omitted to keep URLs short
+  if (state.mode && state.mode !== 'fastest') params.set('mode', state.mode)
   if (state.zoom !== undefined) params.set('z', state.zoom.toFixed(2))
   if (state.centerX !== undefined) params.set('cx', state.centerX.toFixed(1))
   if (state.centerY !== undefined) params.set('cy', state.centerY.toFixed(1))

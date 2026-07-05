@@ -21,9 +21,10 @@ import type { Encounter } from './encounters'
 import { ENCOUNTER_DENSITY_SEVERE_THRESHOLD } from './journey-encounter-density'
 
 /** Below this many rations/person, the per-mode daily-burn delta matters enough
- *  that a high-burn mode (direct/fastest) is worth flagging. Half the default
- *  supply (12) — well above the tight preset (3), below standard (12). */
-export const LOW_RATIONS_THRESHOLD = 6
+ *  that a high-burn mode (direct/fastest) is worth flagging. Set just below the
+ *  default supply (6) so the default config does NOT perpetually nag, while the
+ *  tight preset (3) and any user-scarcer load still trip it. */
+export const LOW_RATIONS_THRESHOLD = 5
 
 export interface ModeRecommendation {
   mode: RouteMode

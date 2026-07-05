@@ -335,18 +335,18 @@ describe('passage: capacity scar (Passage v1.1 Slice 2)', () => {
         label: 'Lose the cart',
         outcome: {
           rationsDelta: 0,
-          scarRations: 5,
+          scarRations: 2,
           narrative: 'The cart is gone.',
         },
       },
     ])
-    // Default starting rations = 12. Scar of 5 lowers ceiling to 7.
-    // Even with rationsDelta 0, current stores clamp down to 7 before the
+    // Default starting rations = 6 (6/6 economy, PR #44). Scar of 2 lowers ceiling to 4.
+    // Even with rationsDelta 0, current stores clamp down to 4 before the
     // encounter day's burn (mode 'direct' => 1.15 ration burn).
     const chosen = passageChoose(state, 0)
-    expect(chosen.journey.scarRations).toBe(5)
-    expect(chosen.journey.rationsLeft).toBeLessThanOrEqual(7)
-    expect(chosen.journey.rationsLeft).toBeCloseTo(7 - 1.15, 5)
+    expect(chosen.journey.scarRations).toBe(2)
+    expect(chosen.journey.rationsLeft).toBeLessThanOrEqual(4)
+    expect(chosen.journey.rationsLeft).toBeCloseTo(4 - 1.15, 5)
   })
 
   it('a scarred branch ends with lower post-resupply supply than a non-scarred branch', () => {
