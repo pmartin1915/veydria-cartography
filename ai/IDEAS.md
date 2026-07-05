@@ -753,3 +753,7 @@ downstream of the map) on its own branch. *Where it applies:* `web/e2e/smoke.spe
   list to reachable nodes or surfacing a "no road that way" line. Not done.
 - **Per-reroute mode is fixed to the journey's current `mode`** (v1). A mode toggle on
   the reroute picker (reroute via safest vs fastest) is a later nicety.
+
+**DONE 2026-07-05 (feat/reroute-polish, PR #48):** both addressed — `handleReroute` now
+surfaces "No road that way." on a no-op reroute (`rerouteError` state), and the picker
+gained a `rerouteMode` toggle defaulting to the journey's current mode.
