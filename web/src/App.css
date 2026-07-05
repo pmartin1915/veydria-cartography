@@ -8311,6 +8311,44 @@ select:focus-visible {
   overflow-y: auto;
 }
 
+.passage-reroute-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.passage-reroute-mode-btn {
+  flex: 1;
+  padding: 5px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.passage-reroute-mode-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.passage-reroute-mode-btn.active {
+  background: rgba(196, 168, 98, 0.12);
+  border-color: rgba(196, 168, 98, 0.4);
+  color: var(--text-accent);
+}
+
+.passage-reroute-error {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
 /* Reroute journal entry */
 .passage-reroute {
   border-left: 3px solid var(--color-route);
