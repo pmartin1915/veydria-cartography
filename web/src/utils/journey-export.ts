@@ -18,7 +18,7 @@ import {
   type PartyConfig,
 } from './journey-graph'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
-import { buildDailyBreakdown } from './journey-days'
+import { buildDailyBreakdown, resupplyByDayForRoute } from './journey-days'
 import { formatDayOfYear } from './calendar'
 import {
   isDefaultSupply,
@@ -157,7 +157,10 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
     const biomeForEdge = edgeBiomes
       ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
       : undefined
-    const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
+    const resupplyByDay = resupplyByDayForRoute(route, season, mode)
+    const supplyTimeline = computeSupplyTimeline(
+      days, party, supply, biomeForEdge, season, (dayNum) => resupplyByDay.get(dayNum) ?? 'none', mode,
+    )
     const pressure = summarizeSupplyPressure(supplyTimeline)
     const pressureLines: string[] = []
     if (pressure.rationsLowDay !== null) pressureLines.push(`Rations critical on day ${pressure.rationsLowDay}.`)

@@ -17,6 +17,7 @@ const NONE: LayerVisibility = {
   oasis: false,
   contested_site: false,
   hex_grid: false,
+  graticule: false,
   trade_route: false,
   landmark: false,
   river: false,

@@ -162,6 +162,55 @@ describe('findComparisonRoutes', () => {
   })
 })
 
+describe('chokepoint distance reporting (routingPenalty fix)', () => {
+  // irrah → ngaru_bon: irrah's only two exits are the caravan_thread trade
+  // route (blocked in summer, ×10 routing cost) and the smith_spring
+  // chokepoint. Before the fix, the chokepoint's routing penalty was baked
+  // into distanceSvg itself, so summer's diversion onto it reported a
+  // doubled, physically-wrong distance and day count (~850km/68d for a
+  // ~425km crossing). These guard that routing choice is unchanged while
+  // reported distance/days are now physical.
+
+  it('summer still diverts onto the smith_spring chokepoint (routing unchanged)', () => {
+    const route = findRoute(graph, 'irrah', 'ngaru_bon', 'summer')
+    expect(route).not.toBeNull()
+    const chokepointEdge = route!.edges.find(e => e.type === 'chokepoint')
+    expect(
+      chokepointEdge,
+      'summer should still avoid the blocked caravan_thread and cross via a chokepoint'
+    ).toBeDefined()
+  })
+
+  it('spring still prefers the faster caravan_thread trade route (routing unchanged)', () => {
+    const route = findRoute(graph, 'irrah', 'ngaru_bon', 'spring')
+    expect(route).not.toBeNull()
+    expect(
+      route!.edges.every(e => e.type !== 'chokepoint'),
+      'spring should stay on the trade route, not divert to a chokepoint'
+    ).toBe(true)
+    expect(route!.estimatedDays).toBeLessThan(20)
+  })
+
+  it('reports physical (unpenalized) distance for a chokepoint crossing', () => {
+    const route = findRoute(graph, 'irrah', 'ngaru_bon', 'summer')
+    expect(route).not.toBeNull()
+    // totalDistanceSvg must equal the sum of physical per-edge distances —
+    // no routingPenalty leaking into the reported figure.
+    const physicalSvg = route!.edges.reduce((sum, e) => sum + e.distanceSvg, 0)
+    expect(route!.totalDistanceSvg).toBeCloseTo(physicalSvg, 5)
+  })
+
+  it('summer crossing reports honest (not penalty-doubled) km and days', () => {
+    const route = findRoute(graph, 'irrah', 'ngaru_bon', 'summer')
+    expect(route).not.toBeNull()
+    // Pre-fix this route reported ~850km / ~68 days (the chokepoint's 2×
+    // routing penalty baked into physical distance AND the day estimate).
+    // The real crossing is roughly half that.
+    expect(route!.totalKm).toBeLessThan(600)
+    expect(route!.estimatedDays).toBeLessThan(45)
+  })
+})
+
 describe('waypoint snap (Option D)', () => {
   function buildSynth(features: Array<Record<string, unknown>>) {
     return { type: 'FeatureCollection', features }
@@ -357,6 +406,32 @@ describe('journey-graph: authored civ is authoritative (F5)', () => {
     const intra = g.adj.get('port_x')!.map(e => e.edge).find(e => e.type === 'intra_civ')!
     expect(intra.to).toBe('near')               // physical hop is unchanged by the label
     expect(intra.name).toBe('Within Near')
+  })
+})
+
+describe('journey-graph: no_intra_civ opt-out', () => {
+  // port_near sits right next to civ "near"'s centroid (default: gets an intra_civ edge).
+  // port_far carries no_intra_civ: true despite sitting equally close — it must get NO
+  // intra_civ edge at all. Regression for the Rubāṭ al-Darb finding: a waystation placed
+  // deep in a corridor loop can otherwise get a straight-line intra_civ "shortcut" back to
+  // a civ centroid that is shorter in raw distanceSvg than the intended multi-hop
+  // trade-route path, letting 'direct'-mode Dijkstra bypass the waypoint chain entirely.
+  const fixture = {
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', properties: { id: 'near', name: 'Near', category: 'civilization', centroid: [0, 0] }, geometry: { type: 'Point', coordinates: [0, 0] } },
+      { type: 'Feature', properties: { id: 'port_near', name: 'Port Near', category: 'oasis' }, geometry: { type: 'Point', coordinates: [1, 1] } },
+      { type: 'Feature', properties: { id: 'port_far', name: 'Port Far', category: 'oasis', no_intra_civ: true }, geometry: { type: 'Point', coordinates: [2, 2] } },
+    ],
+  }
+
+  it('adds an intra_civ edge by default, but skips it when no_intra_civ is set', () => {
+    const g = buildGraph(fixture as never)
+    const nearEdges = g.adj.get('port_near')!.map(e => e.edge)
+    expect(nearEdges.some(e => e.type === 'intra_civ')).toBe(true)
+
+    const farEdges = g.adj.get('port_far')!.map(e => e.edge)
+    expect(farEdges.some(e => e.type === 'intra_civ')).toBe(false)
   })
 })
 

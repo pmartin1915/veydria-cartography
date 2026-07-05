@@ -363,6 +363,8 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
             }
         if ws.get("civ"):
             props["civ"] = ws["civ"]
+        if ws.get("no_intra_civ"):
+            props["no_intra_civ"] = True
         features.append(_make_feature("Point", coords, props))
 
     # --- Assemble FeatureCollection ---

@@ -13,6 +13,7 @@ describe('buildRenderConfig', () => {
       oasis: true,
       contested_site: false,
       hex_grid: true,
+      graticule: false,
       trade_route: true,
       landmark: false,
       river: true,
@@ -40,6 +41,7 @@ describe('buildRenderConfig', () => {
 
     // Web-only layers are omitted
     expect('hex_grid' in config.layers).toBe(false)
+    expect('graticule' in config.layers).toBe(false)
     expect('faction_control' in config.layers).toBe(false)
     expect('terrain_cost' in config.layers).toBe(false)
     expect('biome_colors' in config.layers).toBe(false)

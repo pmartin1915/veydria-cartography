@@ -106,6 +106,10 @@ export const LENSES: Lens[] = [
   { key: 'resources', label: 'Resource Governance', description: 'Resource control, trade structures, and economic institutions' },
   { key: 'institutions', label: 'Institutions', description: 'Political, economic, and social institutions' },
   { key: 'figures', label: 'Named Figures', description: 'Deities, prophets, and legendary figures' },
+  { key: 'characters', label: 'Characters', description: 'Named persons across the continent — journals, envoys, and recorded lives' },
+  { key: 'record-keeping', label: 'Record-Keeping & Writing', description: 'Writing media and record technologies — how each civilization commits word to material' },
+  { key: 'underclass', label: 'Underclass & Poverty', description: 'The asymmetric frame — bondage, debt, and the lives lived beneath the institutions' },
+  { key: 'funerary', label: 'Death & Funerary Rites', description: 'Burial, mourning, and the undecidable afterlife across the religion layer' },
 ];
 
 /**

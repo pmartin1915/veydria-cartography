@@ -1,12 +1,25 @@
 /**
  * measure.ts — Distance calculation utilities for CRS.Simple measurement mode
  *
- * Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent)
+ * Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent).
+ * The canonical scale config lives in world-coords.ts; these are re-exports
+ * kept for existing consumers.
  */
 
-// Scale constants
-export const KM_PER_SVG_UNIT = 3000 / 1200 // ≈ 2.5 km per SVG unit
-export const LEAGUES_PER_KM = 1 / 4 // 1 league ≈ 4 km
+import { worldScale } from './world-coords'
+
+// Scale constants (canonical values in world-coords.ts worldScale)
+export const KM_PER_SVG_UNIT = worldScale.kmPerSvgUnit // 2.5 km per SVG unit
+export const LEAGUES_PER_KM = worldScale.leaguesPerKm // 1 league ≈ 4 km
+
+// Freehand ruler segments have no route category, so travel-time.ts's
+// estimateTravelTime (category-keyed speed table) can't apply; use the
+// trade_route speed as the generic overland default.
+export const DEFAULT_OVERLAND_KM_PER_DAY = 30
+
+export function estimateMeasureDays(km: number): number {
+  return km / DEFAULT_OVERLAND_KM_PER_DAY
+}
 
 export function formatDistance(svgDistance: number): string {
   const km = svgDistance * KM_PER_SVG_UNIT
