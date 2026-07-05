@@ -6,6 +6,7 @@ import {
   computeSupplyTimeline,
   deriveSupplyConstants,
   DEFAULT_SUPPLY,
+  getResupplyTier,
   isDefaultSupply,
   modeBurnMultipliers,
   summarizeSupplyPressure,
@@ -248,6 +249,33 @@ describe('journey-supply: resupplyAtDay', () => {
   })
 })
 
+describe('journey-supply: getResupplyTier (category → tier map, moved from scripts/sim 2026-07-04)', () => {
+  it('civilization and caravanserai grant full restore', () => {
+    expect(getResupplyTier('civilization')).toBe('full')
+    expect(getResupplyTier('caravanserai')).toBe('full')
+  })
+
+  it('port and oasis grant water-only restore', () => {
+    expect(getResupplyTier('port')).toBe('water')
+    expect(getResupplyTier('oasis')).toBe('water')
+  })
+
+  it("'water' (the Aethelian Basin's own category) grants water-only restore — the canon fix", () => {
+    // The Basin's named ports (Halani-Tamu, Ki-Mbuhari, ...) are already category
+    // 'port'; the Basin node itself carries category 'water' and previously fell
+    // through to 'none', silently erasing the only mid-route resupply on the
+    // medium (irrah→ngaru_bon) route right at the mouth of its long desert leg.
+    expect(getResupplyTier('water')).toBe('water')
+  })
+
+  it('unrecognized categories (landmark, chokepoint, contested site, river, …) grant nothing', () => {
+    expect(getResupplyTier('landmark')).toBe('none')
+    expect(getResupplyTier('chokepoint')).toBe('none')
+    expect(getResupplyTier('river')).toBe('none')
+    expect(getResupplyTier('unknown-category')).toBe('none')
+  })
+})
+
 describe('journey-supply: semi-arid biome', () => {
   it('water burn x1.25 on days that traverse a Savanna edge', () => {
     const route = makeRoute({ edgeDays: [1, 1, 1], totalKm: 60 })
@@ -446,5 +474,63 @@ describe('journey-supply: per-mode burn multiplier', () => {
     const direct = computeSupplyTimeline(days, DEFAULT_PARTY, DEFAULT_SUPPLY, undefined, undefined, undefined, 'direct')
     expect(safest[4].rationsLeft).toBeGreaterThan(direct[4].rationsLeft)
     expect(safest[4].waterLeft).toBeGreaterThan(direct[4].waterLeft)
+  })
+})
+
+
+describe('journey-supply: capacity scar (Passage v1.1 Slice 2)', () => {
+  const constants = deriveSupplyConstants(DEFAULT_SUPPLY)
+
+  it("'full' resupply with scarRations restores to startingRations - scar", () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      /* scarRations */ 3,
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations - 3)
+    expect(r.waterLeft).toBe(constants.startingWater)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it("'full' resupply with scarWater restores to startingWater - scar", () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      0, /* scarWater */ 2,
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater - 2)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it("'water' tier with scarWater restores water ceiling and leaves rations on burn path", () => {
+    const r = applyDailyBurn(
+      10, 1, constants, DEFAULT_PARTY, undefined, 'none', 'water',
+      undefined, undefined, undefined,
+      0, /* scarWater */ 2,
+    )
+    // Water restored to scarred ceiling.
+    expect(r.waterLeft).toBe(constants.startingWater - 2)
+    expect(r.resupplyFired).toBe('water')
+    // Rations not restored: 10 - 1 burn = 9.
+    expect(r.rationsLeft).toBeCloseTo(9, 5)
+  })
+
+  it('default scar args (0) restore to full starting capacity', () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+    )
+    expect(r.rationsLeft).toBe(constants.startingRations)
+    expect(r.waterLeft).toBe(constants.startingWater)
+    expect(r.resupplyFired).toBe('full')
+  })
+
+  it('scar cannot drive the ceiling below zero', () => {
+    const r = applyDailyBurn(
+      2, 1, constants, DEFAULT_PARTY, undefined, 'none', 'full',
+      undefined, undefined, undefined,
+      /* scarRations */ 100,
+    )
+    expect(r.rationsLeft).toBe(0)
   })
 })

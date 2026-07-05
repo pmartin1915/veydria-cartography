@@ -52,15 +52,6 @@ export async function captureMapPng(opts: SnapshotOptions): Promise<string> {
   })
 }
 
-export function downloadPng(dataUrl: string, filename = 'veydria-map.png'): void {
-  const a = document.createElement('a')
-  a.href = dataUrl
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-}
-
 export async function copyPngToClipboard(dataUrl: string): Promise<boolean> {
   try {
     if (!('clipboard' in navigator) || !('write' in navigator.clipboard)) return false

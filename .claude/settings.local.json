@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Get-ChildItem -Path C:/Users/perry/DevProjects/veydria-cartography -Recurse -Name \"*.test.*\")"
+      "Bash(Get-ChildItem -Path C:/Users/perry/DevProjects/veydria-cartography -Recurse -Name \"*.test.*\")",
+      "Bash(exit 0)",
+      "Bash(git --no-pager log --oneline -3)",
+      "Bash(git --no-pager log --oneline origin/master..HEAD)",
+      "Bash(git --no-pager log -3 --format='%h %s')",
+      "Bash(git --no-pager log --oneline -1 origin/master)"
     ]
   }
 }

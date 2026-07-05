@@ -331,7 +331,7 @@ export default function SessionPrepPanel({
               <button
                 type="button"
                 className="keyboard-help-replay"
-                onClick={() => downloadPrepList(prepItems, hexPrepItems)}
+                onClick={() => { void downloadPrepList(prepItems, hexPrepItems) }}
               >
                 Export prep
               </button>

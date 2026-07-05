@@ -6,6 +6,8 @@
  * CSS classes doesn't break the tour.
  */
 
+import { kvStore } from '../persistence/kv-store'
+
 export interface TourStep {
   id: string
   targetSelector?: string
@@ -55,10 +57,16 @@ export const MAIN_TOUR_KEY = 'veydria.tour.completed.v1'
 /** Planner-scoped journey walkthrough — a separate flag so completing one
  *  tour never marks the other done. Reuses the same engine + overlay. */
 export const JOURNEY_TUTORIAL_KEY = 'veydria.journey.tutorial.completed.v1'
+/** First-run atmospheric cold-open shown once before the map tour.
+ *  Persisted with the same shape via isTourCompleted/markTourCompleted. */
+export const WELCOME_KEY = 'veydria.welcome.seen.v1'
+/** First-run walkthrough of Passage (day-by-day travel) mode. A separate flag so
+ *  completing it never marks the journey tutorial or map tour done. */
+export const PASSAGE_TUTORIAL_KEY = 'veydria.passage.tutorial.completed.v1'
 
 export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
   try {
-    const raw = localStorage.getItem(key)
+    const raw = kvStore.getString(key)
     if (!raw) return false
     const parsed = JSON.parse(raw)
     return parsed?.completed === true
@@ -69,7 +77,7 @@ export function isTourCompleted(key: string = MAIN_TOUR_KEY): boolean {
 
 export function markTourCompleted(skipped = false, key: string = MAIN_TOUR_KEY): void {
   try {
-    localStorage.setItem(
+    kvStore.setString(
       key,
       JSON.stringify({ completed: true, skipped, timestamp: Date.now() })
     )

@@ -27,14 +27,16 @@ import type { Asterism } from './asterisms'
 import { FAUNA_SHAPES } from './fauna-shapes'
 
 const SVG_HEIGHT = 800
-// The overlay pane group draws in a frame where, empirically (getScreenCTM at
-// the default fit), screen_x = anchor.x and screen_y = 848 - anchor.y - dy: so a
-// LARGER `y` is further NORTH (up), and dot `dy>0` is further down on screen.
-// We pass `svgY(y) = 800 - y` so the figures share the schematic's frame; the
-// schematic continent fills [0..1200]×[0..800], so figures placed with x<0 / x>1200
-// / y<0 / y>800 sit in the open water OUTSIDE it (revealed on zoom-out).
+// Figures are authored in the schematic frame: x east+ (0..1200), y north+
+// (0..800), placed with x<0/x>1200/y<0/y>800 to sit in the open water OUTSIDE
+// the continent rect (revealed on zoom-out). The Y-flip to Leaflet's CRS.Simple
+// (y UP) lives HERE as `y - SVG_HEIGHT`, so initMarginaliaOverlay's reproject()
+// can use a POSITIVE-scale matrix. (A negative matrix scale would position the
+// figures correctly but vertically MIRROR every glyph — the prose labels and
+// fauna silhouettes would render upside-down.) The old `848 - y` was an
+// empirical getScreenCTM hack at one fit; the live projection replaces it.
 function svgY(y: number): number {
-  return SVG_HEIGHT - y
+  return y - SVG_HEIGHT
 }
 
 /** A constellation dot in figure-local screen space (dx right+, dy up+). */
@@ -180,6 +182,25 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
   g.selectAll('.marginalia-group').remove()
   const group = g.append('g').attr('class', 'marginalia-group')
 
+  // Lock the group to Leaflet's CURRENT layer-point space via one affine
+  // transform, recomputed on zoom/move. Without it the group renders at a
+  // constant screen size (L.SVG makes 1 user-unit == 1 px at every zoom) and only
+  // aligned at the one fit the figures were authored against — the cause of the
+  // "constellations in weird places" bug. With svgY already carrying the Y-flip,
+  // an authored coord (x, svgY(y)) maps to latLngToLayerPoint(svgToLatLng(x, y))
+  // under a POSITIVE-scale affine (derived from three probes) — pixel-identical
+  // to d3-overlay.ts's per-point projection. The figures and fauna intentionally
+  // scale WITH the chart ("drawn on the chart"), so — unlike hex labels —
+  // nothing is counter-scaled. Positive scales keep glyphs upright (no mirror).
+  function reproject() {
+    const p00 = map.latLngToLayerPoint(L.latLng(0, 0))
+    const p10 = map.latLngToLayerPoint(L.latLng(0, 1))
+    const p01 = map.latLngToLayerPoint(L.latLng(1, 0))
+    const sx = p10.x - p00.x // > 0
+    const sy = p00.y - p01.y // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
+    group.attr('transform', `matrix(${sx},0,0,${sy},${p00.x},${p00.y})`)
+  }
+
   function draw() {
     group.selectAll('*').remove()
     for (const fig of selectMarginaliaFigures(asterisms)) {
@@ -307,14 +328,22 @@ export function initMarginaliaOverlay(map: L.Map, asterisms: Asterism[]): Margin
         .attr('pointer-events', 'none')
         .text(fauna.prose_label)
     })
+
+    reproject()
   }
 
   draw()
   group.style('display', 'none') // init hidden; the caller applies real state
 
+  // viewreset + moveend mirror d3-overlay.ts / hex-overlay.ts: smooth scale
+  // during the zoom animation (Leaflet transforms the whole renderer <svg>),
+  // exact matrix recomputed on settle.
+  map.on('viewreset moveend', reproject)
+
   return {
     update: () => draw(),
     destroy: () => {
+      map.off('viewreset moveend', reproject)
       group.remove()
     },
     setVisibility: (visible: boolean) => {

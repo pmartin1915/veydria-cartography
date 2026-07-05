@@ -86,22 +86,23 @@ export interface Beat {
 export const TRADE_ROUTE_BEATS: Beat[] = [
   { text: 'Copper merchant from the Irrah salt-flats offers passage in exchange for a letter of introduction.', type: 'social', severity: 'mild' },
   { text: 'Khazadari money-changer sets up a folding table at the crossroads; rates favour khatti credit over coin.', type: 'social', severity: 'mild' },
-  { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate' },
+  { text: 'Qalībin path-finder argues the mapped trail is wrong — knows a dry wadi that cuts two days if you trust her.', type: 'opportunity', severity: 'moderate', key: 'dry-wadi' },
   { text: 'Oravan wave-tithe collector boards the coastal leg; demands duty or a convincing story.', type: 'social', severity: 'moderate' },
   { text: 'Ndajdi foresters demand a "green toll" — payment in seed or labour, not metal.', type: 'social', severity: 'mild' },
   { text: 'Caravan of Kheshkai wool-merchants overtakes you at dawn; their pace reveals a hidden watering hole.', type: 'opportunity', severity: 'mild', timeOfDay: ['dawn'] },
   { text: 'Ngaru-Bon slate-porters refuse to share the trail; their loads are fragile and their tempers shorter.', type: 'social', severity: 'moderate' },
   { text: 'A broken axle on a southbound steel cart blocks the Copper for Steel Road; the smith\'s apprentice weeps openly.', type: 'environmental', severity: 'moderate' },
-  { text: 'Spring floods have washed out the ford; an Irrah guide offers to swim the rope across for a salt-cube fee.', type: 'environmental', severity: 'moderate', seasons: ['spring'] },
+  { text: 'Spring floods have washed out the ford; an Irrah guide offers to swim the rope across for a salt-cube fee.', type: 'environmental', severity: 'moderate', seasons: ['spring'], key: 'ford' },
   { text: 'Summer heat warps the horizon; a mirage shows the Tavakh Qarat spires where no citadel has ever stood.', type: 'environmental', severity: 'mild', seasons: ['summer'] },
   { text: 'Autumn mud on the Basin track swallows cart-wheels whole; a Qalībin crew will winch you out for a favour owed.', type: 'environmental', severity: 'moderate', seasons: ['autumn'] },
   { text: 'Winter ice sheaths the mountain road; a Khazadari patrol passes in silence, their yak-hair boots making no sound.', type: 'environmental', severity: 'mild', seasons: ['winter'] },
-  { text: 'Banditry: masked riders fan out from a Ngaru-Bon scrub-line and demand the strongbox by the count of three. They know your cargo manifest by name.', type: 'combat', severity: 'severe' },
-  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'] },
-  { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe' },
+  { text: 'Banditry: masked riders fan out from a Ngaru-Bon scrub-line and demand the strongbox by the count of three. They know your cargo manifest by name.', type: 'combat', severity: 'severe', key: 'bandits' },
+  { text: 'A Basin customs raid surrounds the caravan at dawn — letters of credit are seized for "audit", and the senior scribe is meant to ride back to the Tavakh Qarat under guard.', type: 'social', severity: 'severe', timeOfDay: ['dawn'], key: 'customs-raid' },
+  { text: 'Plague-quarantine: an Irrah salt-flats outrider blocks the road with a red banner. No party crosses without a fortnight\'s wait at the cordon, or a forged seal of clean passage.', type: 'environmental', severity: 'severe', key: 'plague-quarantine' },
   // Biome-specific trade-route beats
-  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'] },
-  { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha' },
+  { text: 'A sand-wraith rides the dune-crest at noon — heat-shimmer or spirit, the caravan master will not wait to find out.', type: 'environmental', severity: 'moderate', biome: 'Desert', timeOfDay: ['day'], key: 'sand-wraith' },
+  { text: 'The salt-crust crunches under wheel; a sabkha sinkhole opens, swallowing the rear cart whole.', type: 'environmental', severity: 'severe', biome: 'Sabkha', key: 'sabkha-sinkhole' },
+  { text: 'The Lam-Chen switchback climbs in tight loops up the escarpment; the carts are too heavy to take the grade as they stand.', type: 'environmental', severity: 'severe', biome: 'Escarpment', key: 'switchback' },
   { text: 'Date-palm shade at the oasis well; a water-rights dispute between two Irrah clans boils over.', type: 'social', severity: 'moderate', biome: 'Oasis' },
   { text: 'Mangrove roots tangle the trail; crocodiles sun on mud-banks and the guide will not pole past them.', type: 'environmental', severity: 'moderate', biome: 'Mangrove swamp' },
   { text: 'The Ndajdi floodplain is a maze of seasonal channels; a stranded fisher-family waves from a mud island.', type: 'opportunity', severity: 'mild', biome: 'Floodplain' },
@@ -136,7 +137,7 @@ export const INTRA_CIV_BEATS: Beat[] = [
   { text: 'Salt caravan crossing at dawn; the Irrah drivers sing a mourning hymn for the desert they left three weeks ago.', type: 'social', severity: 'mild', timeOfDay: ['dawn'] },
   { text: 'A tsetse-fly swarm rises from the Ndajdi canopy; the horses panic and the guide curses in three languages.', type: 'environmental', severity: 'moderate', seasons: ['spring', 'summer'] },
   { text: 'Local festival in the Kheshkai high pastures; every road is a dance floor and every merchant thinks they\'re a poet.', type: 'opportunity', severity: 'mild' },
-  { text: 'Basin fever — two members of the party wake shivering. The Tavakh Qarat healer charges in letters of credit, not coin.', type: 'environmental', severity: 'severe', seasons: ['summer', 'autumn'] },
+  { text: 'Basin fever — two members of the party wake shivering. The Tavakh Qarat healer charges in letters of credit, not coin.', type: 'environmental', severity: 'severe', seasons: ['summer', 'autumn'], key: 'fever' },
   { text: 'Ngaru-Bon slate-quarry overseer mistakes you for escaped labour; his guards are poorly paid and well-armed.', type: 'combat', severity: 'severe' },
   { text: 'A Khazadari scholar by the roadside, measuring shadows with a brass astrolabe; she\'ll pay for fresh observations.', type: 'opportunity', severity: 'mild' },
   { text: 'Oravan fisher-folk offer dried wave-cod and rumours of a drowned city off the cape, visible only at low tide.', type: 'opportunity', severity: 'mild' },
@@ -291,11 +292,20 @@ function pickWeightedTime(rng: () => number): TimeOfDay {
   return 'night'
 }
 
-/** Time-of-day for a beat: its prose-anchored time if set, else a weighted roll. */
-export function pickEncounterTime(beat: Beat, rng: () => number): TimeOfDay {
-  return beat.timeOfDay && beat.timeOfDay.length > 0
-    ? beat.timeOfDay[Math.floor(rng() * beat.timeOfDay.length)]
-    : pickWeightedTime(rng)
+/**
+ * Time-of-day for a beat: its prose-anchored time if set, else a weighted roll.
+ * When `travelTime` is given (the leg's time-of-day, from a caller that passes it
+ * to generateEncounters), an unpinned beat takes the travel time, and a pinned
+ * beat that lists the travel time settles on it — so the badge matches the leg.
+ * Omitting `travelTime` (every existing caller) preserves the exact prior rng path.
+ */
+export function pickEncounterTime(beat: Beat, rng: () => number, travelTime?: TimeOfDay): TimeOfDay {
+  const pins = beat.timeOfDay
+  if (pins && pins.length > 0) {
+    if (travelTime && pins.includes(travelTime)) return travelTime
+    return pins[Math.floor(rng() * pins.length)]
+  }
+  return travelTime ?? pickWeightedTime(rng)
 }
 
 function timeOverlayFor(type: Encounter['type'], time: TimeOfDay, rng: () => number): string | undefined {
@@ -311,12 +321,17 @@ function timeOverlayFor(type: Encounter['type'], time: TimeOfDay, rng: () => num
  * so the caller's beat-selection RNG stream, and therefore severity / type /
  * supplyCost and the sim baseline, are never perturbed. `allowOverlay` is false
  * for "nothing" filler beats (a quiet leg shouldn't morph into a night ambush).
+ * When `travelTime` is set, an unpinned beat takes it directly without drawing the
+ * weighted-roll `todRng()`, so the overlay roll below reads one position earlier in
+ * the tod stream — expected, and still independent of the beat-selection stream.
  */
-function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOverlay: boolean): Encounter {
+function makeEncounter(beat: Beat, segmentIdx: number, todSeed: number, allowOverlay: boolean, travelTime?: TimeOfDay): Encounter {
   const todRng = mulberry32(todSeed)
-  const time = pickEncounterTime(beat, todRng)
+  const time = pickEncounterTime(beat, todRng, travelTime)
   let text = beat.text
-  if (allowOverlay && !beat.timeOfDay && time !== 'day' && todRng() < TIME_OVERLAY_CHANCE) {
+  // Signature beats (key in SIGNATURE_CHOICES) drive a choice prompt, so their prose
+  // must stay coherent with the options — never swap it for a generic time overlay.
+  if (allowOverlay && !beat.timeOfDay && !beat.key && time !== 'day' && todRng() < TIME_OVERLAY_CHANCE) {
     const overlay = timeOverlayFor(beat.type, time, todRng)
     if (overlay) text = overlay
   }
@@ -367,11 +382,28 @@ function poolForLeg(
   )
 }
 
+/**
+ * Drop beats pinned to a time-of-day the party isn't travelling in. Unpinned
+ * beats are always eligible (their badge is set to the travel time downstream).
+ * Falls back to the unfiltered pool if every beat is incompatible, so a leg
+ * never runs dry. A no-op when `travelTime` is omitted.
+ */
+export function filterBeatsByTime(pool: Beat[], travelTime?: TimeOfDay): Beat[] {
+  if (!travelTime) return pool
+  const kept = pool.filter(b => !b.timeOfDay || b.timeOfDay.includes(travelTime))
+  if (kept.length > 0) return kept
+  // Every beat is pinned to an incompatible time, yet the leg still needs one.
+  // Strip the pins so the chosen beat is stamped with the travel time instead of
+  // contradicting it — keeps "every encounter reads at the travel time" unconditional.
+  return pool.map(b => ({ ...b, timeOfDay: undefined }))
+}
+
 export function generateEncounters(
   route: JourneyRoute,
   season?: Season,
   mode: RouteMode = 'direct',
-  edgeBiomes?: (string | undefined)[]
+  edgeBiomes?: (string | undefined)[],
+  travelTime?: TimeOfDay,
 ): Encounter[] {
   const sig = route.nodes.map(n => n.id).join('|') + '#' + (season || 'any') + '#' + mode
   const seed = djb2Hash(sig)
@@ -390,27 +422,27 @@ export function generateEncounters(
     // the Aethelian sea-fauna rows (civ: 'aethelian') would never match. Alias it
     // for external matching only — a no-op on every non-basin leg.
     const edgeCivs = [fromNode?.civ, toNode?.civ].map(c => (c && CIV_ALIAS_FOR_EXTERNAL[c]) || c)
-    const pool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
+    const pool = filterBeatsByTime(poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea), travelTime)
 
     // Roll: 30% chance of nothing on trade routes, 15% on chokepoints, 40% on intra-civ
     const nothingChance = edge.type === 'chokepoint' ? 0.15 : edge.type === 'trade_route' ? 0.30 : 0.40
     if (rng() < nothingChance) {
-      const nothingPool = filterNothingBeats(edgeBiomes?.[i], season, sea)
+      const nothingPool = filterBeatsByTime(filterNothingBeats(edgeBiomes?.[i], season, sea), travelTime)
       const nothing = nothingPool[Math.floor(rng() * nothingPool.length)]
-      encounters.push(makeEncounter(nothing, i, todBase + i * 131, false))
+      encounters.push(makeEncounter(nothing, i, todBase + i * 131, false, travelTime))
       continue
     }
 
     const beat = pool[Math.floor(rng() * pool.length)]
-    encounters.push(makeEncounter(beat, i, todBase + i * 131 + 977, true))
+    encounters.push(makeEncounter(beat, i, todBase + i * 131 + 977, true, travelTime))
 
     // Long legs get a second encounter
     if ((edge.segmentDays || 0) > 5) {
       const secondRng = mulberry32(seed + i + 10007)
       if (secondRng() >= nothingChance) {
-        const secondPool = poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea)
+        const secondPool = filterBeatsByTime(poolForLeg(edge, edgeCivs, edgeBiomes?.[i], season, sea), travelTime)
         const beat2 = secondPool[Math.floor(secondRng() * secondPool.length)]
-        encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true))
+        encounters.push(makeEncounter(beat2, i, todBase + i * 131 + 1954, true, travelTime))
       }
     }
   }

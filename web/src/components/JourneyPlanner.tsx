@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useReducer, useCallback } from 'r
 import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
 import TourOverlay from './TourOverlay'
-import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
+import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, PASSAGE_TUTORIAL_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
 import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, isSeaLeg, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, type Encounter } from '../utils/encounters'
 import { resolveSighting } from '../utils/sea-sightings'
@@ -17,6 +17,8 @@ import JourneyRouteTab from './journey-planner/JourneyRouteTab'
 import JourneyEncountersTab from './journey-planner/JourneyEncountersTab'
 import TravelVignette from './journey-planner/TravelVignette'
 import NodeIcon from './journey-planner/NodeIcon'
+import PassageMode from './journey-planner/PassageMode'
+import TrailMode from './journey-planner/TrailMode'
 import { buildHash } from '../utils/url-hash'
 import type { MapAnnotation } from '../utils/annotations'
 import { getRouteHexLabels, getBiomeAtPoint } from '../utils/hex-grid'
@@ -64,6 +66,12 @@ interface JourneyPlannerProps {
    *  its auto-launch until the map tour is done so the two overlays never race
    *  (the map tour's "journey" step flips this planner open). */
   mainTourActive?: boolean
+  /** Fired when Passage mode is entered or exited. */
+  onPassageActiveChange?: (active: boolean) => void
+  /** Fired with the current route-node index while Passage mode is active; null when inactive. */
+  onPassagePositionChange?: (nodeIndex: number | null) => void
+  /** Trail mode run seed (dev/debug; seeded from the URL hash) — makes a live run reproducible. */
+  defaultTrailSeed?: number
 }
 
 // Picker label format: "<Civ> · <category>" when the node carries a civ tag,
@@ -77,7 +85,7 @@ function formatNodeCategory(n: JourneyNode): string {
   return `${civLabel} · ${cat}`
 }
 
-export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false }: JourneyPlannerProps) {
+export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false, onPassageActiveChange, onPassagePositionChange, defaultTrailSeed }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
   const [route, setRoute] = useState<JourneyRoute | null>(null)
@@ -116,6 +124,8 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const [comparisonRoutes, setComparisonRoutes] = useState<ComparisonRoutes>({ direct: null, safest: null, cheapest: null })
   const [departureDayOfYear, setDepartureDayOfYear] = useState<number | undefined>(undefined)
   const [highlightCrisisEvents, setHighlightCrisisEvents] = useState(false)
+  const [passageActive, setPassageActive] = useState(false)
+  const [trailActive, setTrailActive] = useState(false)
   // "Party, supply & options" drawer — closed by default so the primary route
   // inputs (From/To/season/mode/Find) and the route tabs surface without
   // scrolling past the bulky config sections.
@@ -129,6 +139,17 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
   const wpRefs = useRef<(HTMLDivElement | null)[]>([])
   const exportToastTimeoutRef = useRef<number | null>(null)
   const didAutoComputeRef = useRef(false)
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  // Switch tabs and re-anchor to the (sticky) tab strip. block:'nearest' scrolls
+  // only as far as needed to bring the strip into view: at rest the strip sits
+  // below the fold so clicking a tab scrolls down to it (you asked for that tab —
+  // you see its content); deep in a long list it scrolls up so the strip pins at
+  // top; and it's a no-op when the strip already happens to be fully visible.
+  const selectRouteTab = (tab: 'route' | 'days' | 'encounters') => {
+    setRouteTab(tab)
+    tabsRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
 
   const nodes = useMemo(() => getJourneyNodes(geojson), [geojson])
   const graph = useMemo(() => buildGraph(geojson), [geojson])
@@ -269,6 +290,9 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       title: 'Party & supply = the fuel',
       body: 'Pace, mounts, party size, and your ration/water stores all feed the burn. A larger or forced-march party drains supplies faster — this is what the daily breakdown spends down.',
       onEnter: () => setOptionsOpen(true),
+      // The options config floats as an opaque sheet over the route; close it
+      // on leave so the later 'days'/'export' steps aren't hidden behind it.
+      onLeave: () => setOptionsOpen(false),
     },
     {
       id: 'days',
@@ -294,10 +318,52 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       body: 'Save the route to your party’s history, or hand players a stripped, player-safe version. That’s the loop: endpoints → priority → supply, then read the days. Replay this anytime from the “?” in the header.',
       onEnter: () => setRouteTab('route'),
     },
+    {
+      id: 'set-out',
+      targetSelector: '[data-tour="journey-set-out"]',
+      placement: 'top',
+      title: 'Then live it',
+      body: 'Plotting is only half the road. When the party is ready, Set out and travel the crossing a day at a time — supply, weather, and hard choices in real time.',
+      onEnter: () => setRouteTab('route'),
+    },
   ], [seedDemoRoute])
 
   const [tutState, tutDispatch] = useReducer(
     (s: TourState, act: TourAction) => tourReducer(s, act, journeyTourSteps.length),
+    { active: false, stepIndex: 0 },
+  )
+
+  const passageTourSteps: TourStep[] = useMemo(() => [
+    {
+      id: 'welcome',
+      title: 'The crossing begins',
+      body: 'You’ve set out. From here the road is lived a day at a time — supply burning, weather turning, the party’s fate in your hands.',
+    },
+    {
+      id: 'ledger',
+      targetSelector: '[data-tour="passage-ledger"]',
+      placement: 'bottom',
+      title: 'Your lifeline',
+      body: 'Rations and water, counted in days. Each march spends them; settlements resupply. If a choice cuts your carrying capacity, the lowered cap shows here.',
+    },
+    {
+      id: 'actions',
+      targetSelector: '[data-tour="passage-actions"]',
+      placement: 'top',
+      title: 'How you travel',
+      body: 'Each day, choose: Continue marches you onward. Rest, Force-march, and Ration trade supply against time. Turn back ends the crossing while you still can.',
+    },
+    {
+      id: 'journal',
+      targetSelector: '[data-tour="passage-journal"]',
+      placement: 'top',
+      title: 'The record',
+      body: 'This is where every day, encounter, and choice gets written as it happens — and hard encounters arrive as cards to decide. Travel well.',
+    },
+  ], [])
+
+  const [passTutState, passTutDispatch] = useReducer(
+    (s: TourState, act: TourAction) => tourReducer(s, act, passageTourSteps.length),
     { active: false, stepIndex: 0 },
   )
 
@@ -314,6 +380,23 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
     const t = window.setTimeout(() => tutDispatch({ type: 'START' }), 600)
     return () => window.clearTimeout(t)
   }, [active, shareMode, mainTourActive])
+
+  // Report whether any immersive mode (Passage or Trail) is active.
+  useEffect(() => {
+    onPassageActiveChange?.(passageActive || trailActive)
+  }, [passageActive, trailActive, onPassageActiveChange])
+
+  // Auto-launch Passage tutorial on first entry into Passage mode.
+  const passageTutFiredRef = useRef(false)
+  useEffect(() => {
+    if (!passageActive || passageTutFiredRef.current) return
+    if (shareMode || mainTourActive || tutState.active) return
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return
+    if (isTourCompleted(PASSAGE_TUTORIAL_KEY)) return
+    passageTutFiredRef.current = true
+    const t = window.setTimeout(() => passTutDispatch({ type: 'START' }), 600)
+    return () => window.clearTimeout(t)
+  }, [passageActive, shareMode, mainTourActive, tutState.active])
 
   // Auto-compute route from URL defaults on first mount
   useEffect(() => {
@@ -385,8 +468,12 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setPartyOpen(false)
       setExportToast(null)
       setDepartureDayOfYear(undefined)
+      setPassageActive(false)
+      setTrailActive(false)
+      onPassageActiveChange?.(false)
+      onPassagePositionChange?.(null)
     }
-  }, [active, onRouteComputed])
+  }, [active, onRouteComputed, onPassageActiveChange, onPassagePositionChange])
 
   const filteredStart = useMemo(() => {
     const q = startSearch.toLowerCase()
@@ -744,6 +831,39 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
         />
       )}
 
+      {passageActive && route ? (
+        <div className="journey-planner-body passage-mode-body">
+          <PassageMode
+            route={route}
+            season={season}
+            mode={mode}
+            party={party}
+            supply={supply}
+            edgeBiomes={edgeBiomes}
+            departureDayOfYear={departureDayOfYear}
+            nodes={nodes}
+            graph={graph}
+            endId={endId}
+            onExit={() => { setPassageActive(false); onPassageActiveChange?.(false) }}
+            onPositionChange={onPassagePositionChange}
+          />
+        </div>
+      ) : trailActive && route ? (
+        <div className="journey-planner-body trail-mode-body">
+          <TrailMode
+            route={route}
+            season={season}
+            mode={mode}
+            party={party}
+            supply={supply}
+            edgeBiomes={edgeBiomes}
+            departureDayOfYear={departureDayOfYear}
+            initialSeed={defaultTrailSeed}
+            onExit={() => { setTrailActive(false); onPassageActiveChange?.(false) }}
+            onPositionChange={onPassagePositionChange}
+          />
+        </div>
+      ) : (
       <div className="journey-planner-body">
         {/* Active party — split-party tracking (Tier 2c). GM-only: a share-link
             recipient sees one party's view, not the switcher. */}
@@ -1043,19 +1163,21 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               onSwitchMode={handleSwitchMode}
               routeHexLabels={routeHexLabels}
               autoPivots={autoPivots}
+              onSetOut={() => { setPassageActive(true); setTrailActive(false); onPassageActiveChange?.(true) }}
+              onSetOutTrail={() => { setTrailActive(true); setPassageActive(false); onPassageActiveChange?.(true) }}
             />
 
             {/* Tabs */}
-            <div className="journey-tabs">
+            <div className="journey-tabs" ref={tabsRef}>
               <button
                 className={`journey-tab ${routeTab === 'route' ? 'active' : ''}`}
-                onClick={() => setRouteTab('route')}
+                onClick={() => selectRouteTab('route')}
               >
                 Route
               </button>
               <button
                 className={`journey-tab ${routeTab === 'days' ? 'active' : ''}`}
-                onClick={() => setRouteTab('days')}
+                onClick={() => selectRouteTab('days')}
                 data-tour="journey-tab-days"
               >
                 Days
@@ -1063,7 +1185,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
               {!shareMode && (
                 <button
                   className={`journey-tab ${routeTab === 'encounters' ? 'active' : ''}`}
-                  onClick={() => setRouteTab('encounters')}
+                  onClick={() => selectRouteTab('encounters')}
                   data-tour="journey-tab-encounters"
                 >
                   Encounters
@@ -1094,7 +1216,7 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
                 shareMode={shareMode}
                 highlightCrisisEvents={highlightCrisisEvents}
                 onSelectSegment={(idx) => setSelectedSegmentIdx(idx)}
-                onSwitchToEncounters={() => setRouteTab('encounters')}
+                onSwitchToEncounters={() => selectRouteTab('encounters')}
               />
             )}
 
@@ -1198,12 +1320,19 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           </div>
         )}
       </div>
+      )}
 
       <TourOverlay
         steps={journeyTourSteps}
         state={tutState}
         dispatch={tutDispatch}
         storageKey={JOURNEY_TUTORIAL_KEY}
+      />
+      <TourOverlay
+        steps={passageTourSteps}
+        state={passTutState}
+        dispatch={passTutDispatch}
+        storageKey={PASSAGE_TUTORIAL_KEY}
       />
     </div>
   )

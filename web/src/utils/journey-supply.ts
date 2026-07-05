@@ -78,8 +78,42 @@ const ARID_BIOMES = new Set(['Desert', 'Sabkha', 'Steppe', 'Escarpment'])
 /** Softer-pressure tier (water × 1.25). Arid takes priority when both are present. */
 const SEMI_ARID_BIOMES = new Set(['Savanna', 'Scrubland'])
 
-/** Tier of supply restored at a day's camp. See `getResupplyTier` (scripts/sim/run-journey.ts). */
+/** Tier of supply restored at a day's camp. See `getResupplyTier` below. */
 export type ResupplyTier = 'full' | 'rations' | 'water' | 'none'
+
+/**
+ * Category → resupply tier. Mirrored from SCOPING-supply-recalibration-2026-05-24.md
+ * section 3a step 1 (Q2 decision log). Civilizations and caravanserai both
+ * restore rations and water (Option E retier 2026-05-25: rations-only at
+ * caravanserai didn't shift bands, so they now grant full restore as
+ * purpose-built relay stations with both grain stores AND cisterns/wells);
+ * ports/oases restore water only; everything else (landmarks, chokepoints,
+ * contested sites, rivers) grants nothing in v1. Rivers as linear features
+ * are deferred to a later cycle. The 'rations' tier remains valid engine
+ * vocabulary for future categories even though no category currently maps to it.
+ *
+ * `water` (2026-07-04): the Aethelian Basin's own node carries category `water`
+ * (the only geojson node that does — its named ports Halani-Tamu/Ki-Mbuhari/etc.
+ * are already category `port`). Canon (`aethelian-basin.yaml`) describes
+ * Halani-Tamu as "the Sweetwater Harbor" where Irrah caravans are "certified
+ * for desert crossing," and Ki-Mbuhari as "the Surplus-Water Settlement" — the
+ * Basin is a freshwater caravan-provisioning stop, not open salt sea, so it
+ * should refill water like a port. Previously fell through to `none`, silently
+ * removing the only mid-route resupply on the medium (irrah→ngaru_bon) route
+ * right at the mouth of its long desert corridor.
+ *
+ * This was the SIM's copy (scripts/sim/run-journey.ts); moved here 2026-07-04
+ * so the app and the sim share one definition — the sim previously had the only
+ * wiring (no web/src caller ever passed a `resupplyTierFor`), so live Passage/
+ * Trail play ran with an always-empty `resupplyByDay` (zero waypoint resupply)
+ * while only the offline sim calibrated against real resupply behavior.
+ */
+export function getResupplyTier(category: string): ResupplyTier {
+  if (category === 'civilization') return 'full'
+  if (category === 'caravanserai') return 'full'
+  if (category === 'port' || category === 'oasis' || category === 'water') return 'water'
+  return 'none'
+}
 
 /**
  * Per-day burn modifiers an action can impose (Phase 3 sim policies).
@@ -202,6 +236,12 @@ export function applyDailyBurn(
   /** Travel mode — applies a per-mode burn multiplier (see modeBurnMultipliers).
    *  Omitted → neutral {1,1}, so the legacy mode-blind burn stays byte-identical. */
   mode?: RouteMode,
+  /** Permanent reduction to the resupply ceiling (Passage scar). Subtracted from
+   *  startingRations on every restore. Default 0 keeps existing call sites neutral. */
+  scarRations: number = 0,
+  /** Permanent reduction to the resupply ceiling (Passage scar). Subtracted from
+   *  startingWater on every restore. Default 0 keeps existing call sites neutral. */
+  scarWater: number = 0,
 ): BurnResult {
   const { encMult, startingRations, startingWater } = constants
   const forcedRationsMult = party.forcedMarch ? 2.0 : 1.0
@@ -216,16 +256,19 @@ export function applyDailyBurn(
   let nextRations = rationsLeft - rationsBurned - encounterCost.rations
   let nextWater = waterLeft - waterBurned - encounterCost.water
 
+  const ceilRations = Math.max(0, startingRations - scarRations)
+  const ceilWater = Math.max(0, startingWater - scarWater)
+
   let resupplyFired: 'water' | 'rations' | 'full' | undefined
   if (resupplyTier === 'full') {
-    nextRations = startingRations
-    nextWater = startingWater
+    nextRations = ceilRations
+    nextWater = ceilWater
     resupplyFired = 'full'
   } else if (resupplyTier === 'water') {
-    nextWater = startingWater
+    nextWater = ceilWater
     resupplyFired = 'water'
   } else if (resupplyTier === 'rations') {
-    nextRations = startingRations
+    nextRations = ceilRations
     resupplyFired = 'rations'
   }
 

@@ -42,6 +42,8 @@ export interface ViewportState {
   supplyPack?: 'none' | 'few' | 'caravan'
   /** Fog-of-war: when paired with share=1, recipient sees the dim treatment on initial load. */
   fog?: boolean
+  /** Trail mode run seed (dev/debug) — makes a live Trail run reproducible. Omitted unless set. */
+  trailSeed?: number
   /** Active party name (Tier 2c) — labels the recipient's view; omitted at the "Main party" default. */
   party?: string
 }
@@ -157,6 +159,12 @@ export function parseHash(hash: string): ViewportState {
     if (trimmed) result.party = trimmed
   }
 
+  const trailSeed = params.get('trailSeed')
+  if (trailSeed !== null) {
+    const n = Number(trailSeed)
+    if (Number.isInteger(n) && n >= 0 && n <= 0xffffffff) result.trailSeed = n
+  }
+
   return result
 }
 
@@ -193,6 +201,9 @@ export function buildHash(state: ViewportState): string {
   }
   if (state.supplyEnc && state.supplyEnc !== 'normal') params.set('supplyEnc', state.supplyEnc)
   if (state.supplyPack && state.supplyPack !== 'none') params.set('supplyPack', state.supplyPack)
+
+  // Trail seed — dev/debug param, emitted only when explicitly set.
+  if (state.trailSeed !== undefined) params.set('trailSeed', state.trailSeed.toString())
 
   // Active party — omit the default to keep URLs short.
   if (state.party) {
