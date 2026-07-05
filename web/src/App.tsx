@@ -12,13 +12,16 @@ import type { CanonCrossCivEntity } from './utils/faction-graph'
 // it out keeps it off the first-paint critical path. See Suspense boundary below.
 const JourneyPlanner = lazy(() => import('./components/JourneyPlanner'))
 import HexCoordChip from './components/HexCoordChip'
+import WorldCoordChip from './components/WorldCoordChip'
 import HexInfoPanel from './components/HexInfoPanel'
 import type { AxialCoord, HexCell } from './utils/hex-grid'
 import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/hex-grid'
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
 import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
-import { formatDistance, type MeasureStats } from './utils/measure'
+import { formatDistance, estimateMeasureDays, svgDistanceToKm, type MeasureStats } from './utils/measure'
+import { formatDays } from './utils/format-measure'
+import { svgToWorldKm } from './utils/world-coords'
 import { parsePatchYaml, applyPatches } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
@@ -78,6 +81,7 @@ export interface LayerVisibility {
   oasis: boolean
   contested_site: boolean
   hex_grid: boolean
+  graticule: boolean
   trade_route: boolean
   landmark: boolean
   river: boolean
@@ -97,6 +101,7 @@ export interface LayerOpacity {
   oasis: number
   contested_site: number
   hex_grid: number
+  graticule: number
   trade_route: number
   landmark: number
   river: number
@@ -116,6 +121,7 @@ const DEFAULT_LAYERS: LayerVisibility = {
   oasis: true,
   contested_site: true,
   hex_grid: false,
+  graticule: false,
   trade_route: true,
   landmark: true,
   river: true,
@@ -135,6 +141,7 @@ const DEFAULT_OPACITY: LayerOpacity = {
   oasis: 1,
   contested_site: 1,
   hex_grid: 0.7,
+  graticule: 0.7,
   trade_route: 0.75,
   landmark: 1,
   river: 0.6,
@@ -143,6 +150,10 @@ const DEFAULT_OPACITY: LayerOpacity = {
   biome_colors: 1,
   explored: 1,
   marginalia: 1,
+}
+
+interface MeasureStatsExtended extends MeasureStats {
+  segmentDetails: Array<{ distanceSvg: number; bearingDeg: number; compass: string; days: number }>
 }
 
 function App() {
@@ -215,7 +226,8 @@ function App() {
   const [patchToast, patchToastLeaving, showPatchToast] = useToast(3000)
   const [annotationToast, annotationToastLeaving, showAnnotationToast] = useToast(2000)
   const [logToast, logToastLeaving, showLogToast] = useToast(2000)
-  const [measureStats, setMeasureStats] = useState<MeasureStats | null>(null)
+  const [measureStats, setMeasureStats] = useState<MeasureStatsExtended | null>(null)
+  const [cursorSvg, setCursorSvg] = useState<{ x: number; y: number } | null>(null)
   const [keyboardHelpOpen, setKeyboardHelpOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
@@ -936,7 +948,7 @@ function App() {
     }
   }, [annotations])
 
-  const handleMeasureUpdate = useCallback((stats: MeasureStats) => {
+  const handleMeasureUpdate = useCallback((stats: MeasureStatsExtended) => {
     setMeasureStats(stats)
   }, [])
 
@@ -1719,6 +1731,7 @@ function App() {
             initialViewport={initialViewport}
             onViewportChange={handleViewportChange}
             onMeasureUpdate={handleMeasureUpdate}
+            onCursorMove={setCursorSvg}
             route={journeyRoute}
             comparisonRoutes={comparisonRoutes}
             passageMarkerNode={passageActive && passageNodeIndex != null && journeyRoute?.nodes[passageNodeIndex] ? journeyRoute.nodes[passageNodeIndex] : null}
@@ -1755,12 +1768,20 @@ function App() {
           />
         )}
 
-        {layers.hex_grid && (selectedHex || hoverHex) && (
-          <HexCoordChip
-            label={(selectedHex ?? hoverHex)!.hex.label}
-            descriptors={(selectedHex ?? hoverHex)!.descriptors}
-          />
-        )}
+        <div className="coord-chip-stack">
+          {layers.hex_grid && (selectedHex || hoverHex) && (
+            <HexCoordChip
+              label={(selectedHex ?? hoverHex)!.hex.label}
+              descriptors={(selectedHex ?? hoverHex)!.descriptors}
+            />
+          )}
+          {cursorSvg && (
+            <WorldCoordChip
+              eastKm={svgToWorldKm(cursorSvg).eastKm}
+              northKm={svgToWorldKm(cursorSvg).northKm}
+            />
+          )}
+        </div>
 
         {selectedHex && (
           <HexInfoPanel
@@ -1896,10 +1917,20 @@ function App() {
                 <span className="measure-stat">
                   {measureStats ? measureStats.pointCount : 0} point{measureStats?.pointCount !== 1 ? 's' : ''}
                 </span>
-                {measureStats && measureStats.pointCount >= 2 && (
-                  <span className="measure-stat measure-stat--total">
-                    Total: {formatDistance(measureStats.totalDistance)}
+                {measureStats?.segmentDetails.map((seg, i) => (
+                  <span key={i} className="measure-stat">
+                    {i + 1}. {formatDistance(seg.distanceSvg)} · {seg.compass} · {formatDays(seg.days)}
                   </span>
+                ))}
+                {measureStats && measureStats.pointCount >= 2 && (
+                  <>
+                    <span className="measure-stat measure-stat--total">
+                      Total: {formatDistance(measureStats.totalDistance)}
+                    </span>
+                    <span className="measure-stat">
+                      {formatDays(estimateMeasureDays(svgDistanceToKm(measureStats.totalDistance)))} overland
+                    </span>
+                  </>
                 )}
               </div>
               <div className="measure-panel-actions">

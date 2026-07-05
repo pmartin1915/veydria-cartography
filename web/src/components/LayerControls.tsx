@@ -46,6 +46,7 @@ const LAYER_GROUPS: LayerGroup[] = [
       { key: 'faction_control', label: 'Faction Overlay', color: '#c4a862', icon: <IconFlag /> },
       { key: 'terrain_cost', label: 'Terrain Cost', color: '#c06040', icon: <IconFootsteps /> },
       { key: 'hex_grid', label: 'Hex Grid', color: '#d4a854', icon: <IconHex />, opacityControl: true },
+      { key: 'graticule', label: 'Distance Grid', color: '#a08060', icon: <IconHex />, opacityControl: true },
       { key: 'biome_colors', label: 'Biome Colors', color: '#4a9a3a', icon: <IconLeaf /> },
     ],
   },

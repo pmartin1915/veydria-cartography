@@ -13,13 +13,17 @@ interface GeoJSONFeature {
 
 import { initD3Overlay } from '../utils/d3-overlay'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
+import { initGraticuleOverlay, type GraticuleOverlay } from '../utils/graticule-overlay'
+import { initScaleControl } from '../utils/scale-control'
 import { initMarginaliaOverlay, type MarginaliaOverlay } from '../utils/marginalia-overlay'
 import { type Asterism } from '../utils/asterisms'
 import MarginaliaCartouche from './MarginaliaCartouche'
 import { applyLayerVisibility, type LayerEntry, type OverlayMock } from '../utils/layer-visibility'
 import type { HexCell } from '../utils/hex-grid'
 import { getRouteHexLabels } from '../utils/hex-grid'
-import { formatDistance, svgDistanceToKm } from '../utils/measure'
+import { formatDistance, svgDistanceToKm, estimateMeasureDays } from '../utils/measure'
+import { formatDays } from '../utils/format-measure'
+import { bearingDegrees, compass16 } from '../utils/world-coords'
 import type { LayerOpacity } from '../App'
 import type { JourneyRoute, ComparisonRoutes } from '../utils/journey-graph'
 import type { MapAnnotation } from '../utils/annotations'
@@ -61,6 +65,7 @@ interface LayerVisibility {
   oasis: boolean
   contested_site: boolean
   hex_grid: boolean
+  graticule: boolean
   trade_route: boolean
   landmark: boolean
   river: boolean
@@ -88,7 +93,13 @@ export interface MapViewerProps {
   onAnnotationDelete?: (id: string) => void
   initialViewport?: { zoom: number; centerX: number; centerY: number }
   onViewportChange?: (viewport: { zoom: number; centerX: number; centerY: number }) => void
-  onMeasureUpdate?: (stats: { pointCount: number; totalDistance: number; segments: number[] }) => void
+  onMeasureUpdate?: (stats: {
+    pointCount: number
+    totalDistance: number
+    segments: number[]
+    segmentDetails: Array<{ distanceSvg: number; bearingDeg: number; compass: string; days: number }>
+  }) => void
+  onCursorMove?: (svg: { x: number; y: number } | null) => void
   opacities?: LayerOpacity
   route?: JourneyRoute | null
   comparisonRoutes?: ComparisonRoutes
@@ -229,7 +240,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, opacities, route, comparisonRoutes, passageMarkerNode, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
+  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, onCursorMove, opacities, route, comparisonRoutes, passageMarkerNode, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, LayerEntry>>(new Map())
@@ -238,12 +249,14 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const markersRef = useRef<Map<string, L.Marker>>(new Map())
     const measureLayerRef = useRef<L.LayerGroup | null>(null)
     const measureLabelRef = useRef<L.Marker | null>(null)
+    const scaleControlRef = useRef<{ destroy: () => void } | null>(null)
     const journeyRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const passageMarkerLayerRef = useRef<L.LayerGroup | null>(null)
     const comparisonRouteLayerRef = useRef<L.LayerGroup | null>(null)
     const annotationLayerRef = useRef<L.LayerGroup | null>(null)
     const hexOverlayRef = useRef<HexOverlay | null>(null)
     const hexTooltipRef = useRef<HTMLDivElement | null>(null)
+    const graticuleOverlayRef = useRef<GraticuleOverlay | null>(null)
     const marginaliaOverlayRef = useRef<MarginaliaOverlay | null>(null)
     const geojsonRef = useRef(geojson)
     useEffect(() => { geojsonRef.current = geojson }, [geojson])
@@ -261,6 +274,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     const annotationMarkersRef = useRef<Map<string, L.Marker>>(new Map())
     const canvasRendererRef = useRef<L.Canvas | null>(null)
     const onHoverHexRef = useRef(onHoverHex)
+    const onCursorMoveRef = useRef(onCursorMove)
     const onSelectHexRef = useRef(onSelectHex)
     const onFeatureClickRef = useRef(onFeatureClick)
     const layersRef = useRef(layers)
@@ -270,6 +284,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
     useEffect(() => { pinModeRef.current = pinMode }, [pinMode])
     useEffect(() => { hexMeasureModeRef.current = hexMeasureMode }, [hexMeasureMode])
     useEffect(() => { onHoverHexRef.current = onHoverHex }, [onHoverHex])
+    useEffect(() => { onCursorMoveRef.current = onCursorMove }, [onCursorMove])
     useEffect(() => { onSelectHexRef.current = onSelectHex }, [onSelectHex])
     useEffect(() => { onFeatureClickRef.current = onFeatureClick }, [onFeatureClick])
     useEffect(() => { layersRef.current = layers }, [layers])
@@ -440,8 +455,8 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       // Zoom control in top-right
       L.control.zoom({ position: 'topright' }).addTo(map)
 
-      // Scale bar
-      L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map)
+      // Scale bar — custom control that labels true kilometres instead of raw SVG units.
+      scaleControlRef.current = initScaleControl(map)
 
       // Canvas renderer for high-count layers (terrain_cell has 3000+ polygons).
       // padding 0.3 reduces tile pop-in mid-pinch on phone at the cost of a
@@ -794,6 +809,19 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         __mock: true,
       }
       layerGroupsRef.current.set('hex_grid', hexGridMock)
+
+      // Distance grid overlay — a muted 250 km graticule with edge labels.
+      const graticuleOverlay = initGraticuleOverlay(map)
+      graticuleOverlay.setOpacity(opacities?.graticule ?? 0.7)
+      graticuleOverlayRef.current = graticuleOverlay
+      const graticuleMock: OverlayMock = {
+        addTo: () => graticuleOverlay.setVisibility(true),
+        removeFrom: () => graticuleOverlay.setVisibility(false),
+        setOpacity: (o: number) => graticuleOverlay.setOpacity(o),
+        __mock: true,
+      }
+      layerGroupsRef.current.set('graticule', graticuleMock)
+
       // biome_colors is driven by its own useEffect (see "Biome colors:" below)
       // — no entry in layerGroupsRef so the toggle dispatcher doesn't double-fire.
 
@@ -845,10 +873,13 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (containerRef.current) containerRef.current.appendChild(tip)
       hexTooltipRef.current = tip
       const handleMouseMove = (e: L.LeafletMouseEvent) => {
-        if (!hexOverlayRef.current) return
         // Convert lat/lng → SVG (CRS.Simple flips Y; svgY = SVG_HEIGHT - lat).
         const svgX = e.latlng.lng
         const svgYCoord = SVG_HEIGHT - e.latlng.lat
+        const inBounds = svgX >= 0 && svgX <= SVG_WIDTH && svgYCoord >= 0 && svgYCoord <= SVG_HEIGHT
+        onCursorMoveRef.current?.(inBounds ? { x: svgX, y: svgYCoord } : null)
+
+        if (!hexOverlayRef.current) return
         const hit = hexOverlayRef.current.getHexAtSvg(svgX, svgYCoord)
         if (!hit) {
           tip.style.display = 'none'
@@ -869,6 +900,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       const handleMouseOut = () => {
         if (tip) tip.style.display = 'none'
         onHoverHexRef.current?.(null)
+        onCursorMoveRef.current?.(null)
       }
       // On phones the hover tooltip steals tap-to-select. Mousemove also
       // fires on touch on many devices. Skip it entirely on mobile.
@@ -892,9 +924,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           hexOverlayRef.current.destroy()
           hexOverlayRef.current = null
         }
+        if (graticuleOverlayRef.current) {
+          graticuleOverlayRef.current.destroy()
+          graticuleOverlayRef.current = null
+        }
         if (marginaliaOverlayRef.current) {
           marginaliaOverlayRef.current.destroy()
           marginaliaOverlayRef.current = null
+        }
+        if (scaleControlRef.current) {
+          scaleControlRef.current.destroy()
+          scaleControlRef.current = null
         }
         if (tip.parentNode) tip.parentNode.removeChild(tip)
         hexTooltipRef.current = null
@@ -1122,7 +1162,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       }
 
       if (measurePoints.length === 0) {
-        if (onMeasureUpdate) onMeasureUpdate({ pointCount: 0, totalDistance: 0, segments: [] })
+        if (onMeasureUpdate) onMeasureUpdate({ pointCount: 0, totalDistance: 0, segments: [], segmentDetails: [] })
         return
       }
 
@@ -1145,6 +1185,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       // Draw lines between consecutive points + segment labels
       const segmentDistances: number[] = []
+      const segmentDetails: Array<{ distanceSvg: number; bearingDeg: number; compass: string; days: number }> = []
       if (measurePoints.length >= 2) {
         for (let i = 1; i < measurePoints.length; i++) {
           const a = measurePoints[i - 1]
@@ -1153,6 +1194,11 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           const dy = b.y - a.y
           const dist = Math.sqrt(dx * dx + dy * dy)
           segmentDistances.push(dist)
+
+          const bearingDeg = bearingDegrees(a, b)
+          const compass = compass16(bearingDeg)
+          const days = estimateMeasureDays(svgDistanceToKm(dist))
+          segmentDetails.push({ distanceSvg: dist, bearingDeg, compass, days })
 
           const latlngs = [svgToLatLng(a.x, a.y), svgToLatLng(b.x, b.y)]
           L.polyline(latlngs, {
@@ -1169,9 +1215,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           const midY = (a.y + b.y) / 2
           const segLabel = L.divIcon({
             className: 'measure-label measure-segment-label',
-            html: `<div class="measure-label-inner measure-segment-inner">${formatDistance(dist)}</div>`,
-            iconSize: [100, 20],
-            iconAnchor: [50, 10],
+            html: `<div class="measure-label-inner measure-segment-inner">${formatDistance(dist)} · ${compass} · ${formatDays(days)}</div>`,
+            iconSize: [120, 20],
+            iconAnchor: [60, 10],
           })
           L.marker(svgToLatLng(midX, midY) as L.LatLngExpression, {
             icon: segLabel,
@@ -1211,7 +1257,12 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
 
       // Report stats to parent
       if (onMeasureUpdate) {
-        onMeasureUpdate({ pointCount: measurePoints.length, totalDistance: totalSvgDist, segments: segmentDistances })
+        onMeasureUpdate({
+          pointCount: measurePoints.length,
+          totalDistance: totalSvgDist,
+          segments: segmentDistances,
+          segmentDetails,
+        })
       }
 
       return () => {
