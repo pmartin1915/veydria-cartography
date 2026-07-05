@@ -19,6 +19,8 @@
     "sim:passage": "vite-node ../scripts/sim/sim-passage-report.ts --",
     "sim:passage-play": "vite-node ../scripts/sim/passage-playthrough.ts --",
     "sim:regret-model": "vite-node ../scripts/sim/sim-regret-model.ts --",
+    "sim:trail": "vite-node ../scripts/sim/sim-trail.ts --",
+    "sim:trail-report": "vite-node ../scripts/sim/sim-trail-report.ts --",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

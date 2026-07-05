@@ -1,4 +1,4 @@
-import { buildDailyBreakdown } from '../../utils/journey-days'
+import { buildDailyBreakdown, resupplyByDayForRoute } from '../../utils/journey-days'
 import { computeSupplyTimeline, type SupplyConfig, type SupplyDay } from '../../utils/journey-supply'
 import { formatDayOfYear, CALENDAR_EVENT_COLORS, hasCrisis, formatCrisisRef } from '../../utils/calendar'
 import { encounterTypeIcon, encounterSeverityLabel } from '../../utils/encounters'
@@ -40,7 +40,10 @@ export default function JourneyDaysTab({
   const biomeForEdge = edgeBiomes
     ? (e: typeof route.edges[number]) => edgeBiomes[route.edges.indexOf(e)]
     : undefined
-  const supplyTimeline = computeSupplyTimeline(days, party, supply, biomeForEdge, season, undefined, mode)
+  const resupplyByDay = resupplyByDayForRoute(route, season, mode)
+  const supplyTimeline = computeSupplyTimeline(
+    days, party, supply, biomeForEdge, season, (dayNum) => resupplyByDay.get(dayNum) ?? 'none', mode,
+  )
   const supplyByDay = new Map<number, SupplyDay>(supplyTimeline.map(s => [s.dayNum, s]))
 
   return (

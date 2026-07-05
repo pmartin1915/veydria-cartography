@@ -106,6 +106,12 @@ export interface JourneyEdge {
   segmentDays?: number
   commodities?: string
   consequenceIfClosed?: string
+  /** Routing-preference multiplier (e.g. chokepoint difficulty). Applied to
+   *  routing cost only — kept separate from distanceSvg so reported
+   *  distance/days reflect physical geography, not routing friction.
+   *  Sole consumer is getEdgeWeight; any new cost path must read this too
+   *  or the penalty silently drops out of routing. */
+  routingPenalty?: number
 }
 
 export interface JourneyRoute {
@@ -292,7 +298,17 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   // civ. The intra_civ routing edge still connects to the geometrically
   // NEAREST centroid — that is physical graph topology carrying a real
   // distance, not a label — so routing and distances are unaffected.
-  for (const { node } of pointFeatures) {
+  for (const { feature, node } of pointFeatures) {
+    // Opt-out for waystations deep in a hostile crossing (no beeline through
+    // open desert/mountain/water back to a civ centroid — only reachable via
+    // the trade-route road). Without this, a point placed mid-corridor can
+    // get an intra_civ edge that is SHORTER in raw distanceSvg than the
+    // intended multi-hop trade-route path despite being a slower edge type,
+    // and 'direct' mode (distanceSvg-only cost, no speed term) then routes
+    // through it as an undercutting shortcut that bypasses the intended
+    // waypoint chain. Default false — zero behavior change for every other
+    // feature; opt in per-feature via geojson `properties.no_intra_civ`.
+    if (feature.properties.no_intra_civ === true) continue
     const nearestCiv = findNearestCiv(node, civNodes)
     if (nearestCiv) {
       const d = dist(node, nearestCiv)
@@ -475,7 +491,9 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         if (!nodes.has(a) || !nodes.has(b)) continue
         const civA = nodes.get(a)!
         const civB = nodes.get(b)!
-        // Chokepoints are harder: multiply distance by penalty
+        // Chokepoints are harder to route through, but distanceSvg must stay
+        // physical (reporting reads it as raw geography) — the penalty is
+        // routing friction, kept in a separate field applied by getEdgeWeight.
         const baseDist = dist(civA, civB)
         const penalty = f.properties.type === 'mountain_pass' ? 2.5 :
                         f.properties.type === 'river_crossing' ? 1.8 :
@@ -484,7 +502,8 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         addEdge({
           from: a,
           to: b,
-          distanceSvg: baseDist * penalty,
+          distanceSvg: baseDist,
+          routingPenalty: penalty,
           type: 'chokepoint',
           name: f.properties.name as string || 'Chokepoint',
           bottleneck: f.properties.strategic_value as string | undefined,
@@ -507,7 +526,13 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
 }
 
 function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
-  if (mode === 'direct') return edge.distanceSvg
+  // routingPenalty (e.g. chokepoint difficulty) is routing friction, not
+  // physical distance — it was previously baked into distanceSvg itself,
+  // which corrupted reported km/days. Applying it here instead keeps the
+  // routing cost numerically identical while distanceSvg stays physical.
+  const penalty = edge.routingPenalty ?? 1
+
+  if (mode === 'direct') return edge.distanceSvg * penalty
 
   const distance = edge.distanceSvg
 
@@ -516,7 +541,7 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
                   edge.type === 'chokepoint' ? 0.5 :
                   edge.type === 'intra_civ' ? 1.0 :
                   1.0
-    return distance / speed
+    return (distance / speed) * penalty
   }
 
   if (mode === 'safest') {
@@ -524,7 +549,7 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
                  edge.type === 'chokepoint' ? 3.0 :
                  edge.type === 'intra_civ' ? 1.2 :
                  1.5
-    return distance * risk
+    return distance * risk * penalty
   }
 
   if (mode === 'cheapest') {
@@ -532,10 +557,10 @@ function getEdgeWeight(edge: JourneyEdge, mode: RouteMode): number {
                  edge.type === 'chokepoint' ? 2.0 :
                  edge.type === 'intra_civ' ? 1.0 :
                  1.5
-    return distance * cost
+    return distance * cost * penalty
   }
 
-  return distance
+  return distance * penalty
 }
 
 /** Dijkstra shortest path with optional seasonal filtering and route mode.
@@ -615,7 +640,8 @@ export function findRoute(graph: Graph, startId: string, endId: string, season?:
     }
   }
 
-  // Raw geographic distance (not penalized cost)
+  // Raw geographic distance — distanceSvg is physical (routingPenalty, applied
+  // above in getEdgeWeight, is excluded), so this is genuinely unpenalized.
   const rawTotalSvg = pathEdges.reduce((sum, e) => sum + e.distanceSvg, 0)
   const totalKm = svgDistanceToKm(rawTotalSvg)
 

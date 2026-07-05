@@ -16,7 +16,7 @@ import { generateEncounters, type Encounter } from './encounters'
 import type { CalendarEvent } from './calendar'
 import { getEventsForDay } from './calendar'
 import type { SupplyConfig, ResupplyTier, SupplyConstants, SupplyDay, SupplyWarning } from './journey-supply'
-import { DEFAULT_SUPPLY, deriveSupplyConstants, applyDailyBurn, classifyAridity, type AridityLevel, type BurnModifiers } from './journey-supply'
+import { DEFAULT_SUPPLY, deriveSupplyConstants, applyDailyBurn, classifyAridity, getResupplyTier, type AridityLevel, type BurnModifiers } from './journey-supply'
 
 export interface JourneyDay {
   dayNum: number
@@ -707,7 +707,7 @@ export function buildDailyBreakdown(
   departureDayOfYear?: number,
   party?: PartyConfig
 ): JourneyDay[] {
-  let state = initJourneyState({ route, season, mode, edgeBiomes, departureDayOfYear, party })
+  let state = initJourneyState({ route, season, mode, edgeBiomes, departureDayOfYear, party, resupplyTierFor: getResupplyTier })
   const days: JourneyDay[] = []
   /* Hard cap on iterations as a defensive floor — totalDays is the natural bound. */
   let safety = state.totalDays + 1
@@ -717,6 +717,23 @@ export function buildDailyBreakdown(
     state = result.state
   }
   return days
+}
+
+/**
+ * Resupply tier granted at each 1-indexed journey day, for UI callers that need
+ * to feed `computeSupplyTimeline`'s `resupplyAtDay` param independently of
+ * `buildDailyBreakdown`'s JourneyDay[] (JourneyDaysTab, campaign-log, and
+ * journey-export all run the supply timeline as a separate pass and previously
+ * passed `resupplyAtDay: undefined`, so their forecasts never showed waypoint
+ * resupply). Thin wrapper over the same `bucketRoute` bucketing `initJourneyState`
+ * uses, so every path computes resupply identically — no second implementation.
+ */
+export function resupplyByDayForRoute(
+  route: JourneyRoute,
+  season?: Season,
+  mode: RouteMode = 'direct',
+): Map<number, ResupplyTier> {
+  return bucketRoute(route, season, mode, undefined, 0, getResupplyTier).resupplyByDay
 }
 
 /* Allow other modules to reach the encounter-bucketing logic when needed

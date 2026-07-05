@@ -6,6 +6,7 @@ import {
   computeSupplyTimeline,
   deriveSupplyConstants,
   DEFAULT_SUPPLY,
+  getResupplyTier,
   isDefaultSupply,
   modeBurnMultipliers,
   summarizeSupplyPressure,
@@ -245,6 +246,33 @@ describe('journey-supply: resupplyAtDay', () => {
     expect(timeline[2].resupplyFired).toBeUndefined()
     expect(timeline[3].resupplyFired).toBe('full')
     expect(timeline[4].resupplyFired).toBeUndefined()
+  })
+})
+
+describe('journey-supply: getResupplyTier (category → tier map, moved from scripts/sim 2026-07-04)', () => {
+  it('civilization and caravanserai grant full restore', () => {
+    expect(getResupplyTier('civilization')).toBe('full')
+    expect(getResupplyTier('caravanserai')).toBe('full')
+  })
+
+  it('port and oasis grant water-only restore', () => {
+    expect(getResupplyTier('port')).toBe('water')
+    expect(getResupplyTier('oasis')).toBe('water')
+  })
+
+  it("'water' (the Aethelian Basin's own category) grants water-only restore — the canon fix", () => {
+    // The Basin's named ports (Halani-Tamu, Ki-Mbuhari, ...) are already category
+    // 'port'; the Basin node itself carries category 'water' and previously fell
+    // through to 'none', silently erasing the only mid-route resupply on the
+    // medium (irrah→ngaru_bon) route right at the mouth of its long desert leg.
+    expect(getResupplyTier('water')).toBe('water')
+  })
+
+  it('unrecognized categories (landmark, chokepoint, contested site, river, …) grant nothing', () => {
+    expect(getResupplyTier('landmark')).toBe('none')
+    expect(getResupplyTier('chokepoint')).toBe('none')
+    expect(getResupplyTier('river')).toBe('none')
+    expect(getResupplyTier('unknown-category')).toBe('none')
   })
 })
 

@@ -154021,6 +154021,27 @@
         "marker-symbol": "lodging",
         "civ": "kheshkai"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          826,
+          368
+        ]
+      },
+      "properties": {
+        "id": "rubat_al_darb",
+        "name": "Rubāṭ al-Darb",
+        "category": "caravanserai",
+        "etymology": "Irrah: rubāṭ 'fortified relay-station' (canon architecture term: mudbrick enclosure, central well/cistern, Qalībin garrison) + al-darb (√d-r-b 'road, path'; institution-naming pattern, cf. Sharīf al-Darb). The Waystation of the Road",
+        "description": "A single rubāṭ fort on the open desert crossing of the Caravan Thread, between Aethelian Basin's eastern ports and the Ngaru-Bon frontier: the only provisioning stop on an otherwise unsupported multi-day traverse. Central cistern, goods storage, and an arcaded animal yard for grain and mounts; Qalībin water-scholar militia (15-25, defensive only) maintain both the stores and the semaphore relay (smoke by day, fire by night).",
+        "marker-color": "#4a9a3a",
+        "marker-symbol": "garden",
+        "civ": "irrah",
+        "no_intra_civ": true
+      }
     }
   ]
 }

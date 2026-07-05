@@ -1,97 +1,89 @@
-# Spec: Draggable Journey Planner panel + sensible default position (v2, post-Kimi-review)
+# Spec: Trail mode view layer (TrailMode.tsx)
 
-## Context
-The Journey Planner (`.journey-planner`) is `position:absolute; top:60px; left:16px;
-width:320px; max-height:calc(100% - 80px)` (desktop rule in `web/src/App.css` ~L2976).
-The Layers panel (`.layer-controls`) is `position:absolute; bottom:16px; left:16px`
-(`web/src/App.css` ~L768). Both hug the LEFT edge, so a tall planner overlaps the
-Layers panel — the user reported "the planner spawns directly in front of the layers
-window." Make the planner **draggable** (to move it off Layers) AND give it a
-**sensible default position that doesn't overlap Layers**.
+**Primary spec: `ai/TRAIL-VIEW-SPEC.md` in this worktree — read it FIRST and follow it.**
+This file is a binding ADDENDUM resolving ambiguities found in review. Where the two
+disagree, this addendum wins.
 
-Branch off `master`. Desktop-only feature. Component:
-`web/src/components/JourneyPlanner.tsx`; styles in `web/src/App.css`. This is a
-client-only Vite SPA (no SSR) — `window` is always defined at runtime and in jsdom
-tests, so `window.innerWidth` may be read directly.
+## A. Engine API contract (verified against trail.ts — if anything mismatches, STOP and report)
 
-## Acceptance criteria (testable)
-1. **Draggable by header.** On desktop, the user can drag the panel by its header
-   (`.journey-planner-header`) to reposition it. Pointer-based (pointerdown/move/up
-   with `setPointerCapture`), not mouse-only.
-2. **Desktop = `innerWidth > 768`.** The mobile bottom-sheet CSS is `@media
-   (max-width: 768px)` (fires at <= 768). To avoid both firing at exactly 768, the
-   JS "is desktop" gate MUST be `window.innerWidth > 768` (strictly greater). Drag +
-   inline positioning apply ONLY when desktop; at <= 768 no inline left/top is
-   applied so the bottom-sheet CSS wins, and drag is disabled.
-3. **Header buttons keep working + keep pointer cursor.** The star / "?" / "x"
-   buttons in the header must NOT initiate a drag and must show `cursor: pointer`
-   (not grab). Ignore any pointerdown whose
-   `target.closest('button, input, select, a, label, [role="button"]')` is truthy.
-   FIRST verify the actual header DOM in JourneyPlanner.tsx and make the ignore
-   selector cover every interactive element actually present in the header.
-4. **Sensible default that clears Layers.** On first mount, default the panel to the
-   RIGHT side: `left = innerWidth - 320 - 16`, `top = 60`, then clamp per AC6.
-   Remove the desktop CSS `left: 16px` (position now comes from inline `style={{
-   left, top }}`, applied only when desktop per AC2). Verify the top-right of the map
-   is otherwise clear (Leaflet zoom control, legend) — the map Legend is bottom-right
-   and Layers bottom-left, so top-right should be free; if the Leaflet zoom control
-   sits top-right, nudge `top`/`left` so they don't collide.
-5. **Position persists across open/close within the session (no reset).** Initialize
-   position once on mount; keep it across planner open/close. It need NOT persist
-   across full page reload (do not wire kvStore). (This supersedes any "reset on
-   reopen" idea — session-persist is the desired behavior.)
-6. **Clamp against the offset parent, keeping the panel grabbable.** Clamp so the
-   FULL panel stays horizontally within the bounds, and at least the full HEADER
-   stays vertically within the bounds (so a dragged-down panel can always be grabbed
-   again). Compute bounds from the panel's actual offset parent
-   (`el.offsetParent.getBoundingClientRect()` or its clientWidth/Height) rather than
-   assuming raw `innerWidth`/`innerHeight`, since `.journey-planner` is absolutely
-   positioned inside a container that starts below the app header. Re-clamp on the
-   desktop/mobile resize handler (AC7).
-7. **Minimal resize handling.** Add ONE `resize` listener (cleaned up on unmount)
-   that (a) re-evaluates the desktop gate (AC2) and (b) re-clamps the current
-   position into bounds. No continuous re-layout beyond this is required.
-8. **Text-selection + drag affordance.** While a drag is active, suppress text
-   selection (toggle `user-select: none` on the header/body or `preventDefault` on
-   pointermove only). Header shows `cursor: grab` at rest and `grabbing` while
-   dragging (desktop only); interactive children keep `cursor: pointer` (AC3).
-9. **Elevation.** Ensure the planner sits above the Layers panel while interacting —
-   `.layer-controls` and `.journey-planner` are both `z-index:999`; raise the
-   planner to `1000` (permanently is fine, or only while dragging).
-10. **Children still anchor correctly.** The Party/supply overlay sheet and From/To
-    dropdowns are `position:absolute` children of `.journey-planner`; confirm they
-    still anchor to the panel after it is moved.
-11. **Pure, unit-tested helpers.** Extract the two bits of math as pure functions in
-    a small module (e.g. `web/src/utils/planner-position.ts`):
-    `defaultPlannerPosition(parentW: number): {left:number; top:number}` and
-    `clampPlannerPosition(pos, parentW, parentH, panelW, headerH): {left:number;
-    top:number}`. Add a unit test file asserting: default is right-aligned (left =
-    parentW - 320 - 16) and never < 16; clamp keeps the full panel in-bounds
-    horizontally and at least the header in-bounds vertically; clamp is a no-op for
-    an already-in-bounds position. JourneyPlanner.tsx imports these.
-12. **Gates green.** `cd web && npm run build` (tsc -b + vite) clean; `cd web &&
-    npm test` (vitest) all pass INCLUDING the new helper tests; do not weaken or
-    delete existing tests.
+From `web/src/utils/trail.ts` (FROZEN):
 
-## Implementation guidance
-- Self-contained pointer-drag handler in JourneyPlanner.tsx (~40-70 lines). NO new
-  dependency (no react-draggable). `setPointerCapture` on the header; track the
-  pointer delta from pointerdown; on pointermove update position = clamp(start +
-  delta); release capture on pointerup.
-- Position state: `useState(() => clampPlannerPosition(defaultPlannerPosition(W),
-  ...))`. Apply `style` to `.journey-planner` ONLY when desktop (AC2); otherwise pass
-  no positional style.
-- Keep all existing classes, refs, and the entry animation on the panel root.
-- Do NOT touch Passage mode, tour overlays, route logic, or the tabs/sticky behavior.
+- `initTrail(opts: InitTrailOpts): TrailState` where `InitTrailOpts = { journeyOpts: JourneyStateOpts; members: Pick<TrailMember,'id'|'name'|'civ'|'role'>[]; runSeed: number }`.
+  Member ids: `'m0'..'m4'`.
+- `trailAct(state, action)` — action kinds for Trail v1: `'continue' | 'rest' | 'force-march' | 'ration' | 'turn-back'` (exact strings; `reroute` exists but is OUT of Trail v1 — no reroute button).
+- `trailChoose(state, choiceIndex): TrailState`
+- `currentTrailNodeIndex(state): number`
+- `scoreTrail(state): TrailScore = { survivors; daysElapsed; supplyMargin; rank: string }` — render `rank` verbatim (it's a provisional generic label; do not invent rank logic).
+- `TrailState = { journey: JourneyState; members: TrailMember[]; runSeed; log: string[]; pending: TrailPending | null; outcome: TrailOutcome; signatureCounts }`
+- `TrailMember = { id; name; civ; role?; health: 'well'|'ill'|'very ill'|'dead'; ailment?; diedDay?; epitaph? }`
+- `TrailPending = { kind:'signature'; key; choices: EncounterChoice[] } | { kind:'ford' } | { kind:'hunt' } | { kind:'fort' }` — `choices` is the SAME `EncounterChoice[]` PassageMode already renders; copy PassageMode's choice-card rendering.
+- `TrailOutcome = 'in-progress' | 'arrived' | 'aborted' | 'perished' | 'party-wiped'`
+- The engine yields AT MOST ONE pending per travelled day (single `nextDay` call inside
+  `trailAct`), and `trailChoose` never produces a new pending — so the Continue handler's
+  hunt auto-resolve is a plain `if`, no loop needed.
 
-## Out of scope (do NOT do)
-- Persistence across reloads/sessions; panel resizing; changes to the Layers panel;
-  mobile drag; new dependencies; keyboard-drag (pointer-only is an accepted v1
-  limitation — no a11y work this slice).
+## B. Resolutions to spec ambiguities
 
-## Verification before declaring done
-- `cd web && npm run build` -> clean.
-- `cd web && npm test` -> all pass (incl. new planner-position tests).
-- Playwright sanity (encouraged): open planner at >=1200px; confirm it spawns on the
-  right (not over bottom-left Layers); drag the header; confirm the "x" still closes
-  (drag not swallowed); confirm no console errors during the flow.
+1. **Seed test seam**: add optional `initialSeed?: number` to `TrailModeProps`. "Begin the
+   trail" uses `initialSeed ?? (Date.now() >>> 0)`, computed once at click. Tests always
+   pass `initialSeed` — no `Date.now` mocking, no assertions on wall-clock paths.
+2. **Mode mutual exclusivity** (JourneyPlanner): launching Trail sets
+   `trailActive=true, passageActive=false`; launching Passage does the reverse; `onExit`
+   from either sets its flag false. Both false = the normal results view. Never both true.
+3. **Setup card**: member-row count defaults from `party.size` — small→3, medium→4,
+   large→5 — and the user can add/remove rows within [2,5]. Each row = one text input for
+   the NAME only, pre-filled from `DEFAULT_TRAIL_ROSTER`; civ + role come from the roster
+   pool entry and display as a static tag beside the input (not editable v1). Renaming
+   keeps the entry's civ/role. Members passed to `initTrail` as
+   `{ id: 'm'+index, name (trimmed; fall back to the pool default if blank), civ, role }`.
+4. **Vignette timing**: before `initTrail`, the setup card is the ENTIRE TrailMode body
+   (no vignette, no ledger, no log). Vignette/ledger/journal/action-bar render only once
+   a run exists.
+5. **Death rendering**: log lines are rendered as plain journal entries — do NOT parse or
+   specially style log strings. Grave-marker cards are driven ONLY by the member diff
+   (`diedDay` newly set after an action); insert the grave card into the journal at that
+   point (after the day's log lines). Multiple same-day deaths → one card each, member order.
+6. **Hunt button semantics**: Hunt means "travel today; if game appears, hunt it"
+   (`trailAct(continue)` then `trailChoose(state, 0)` when pending is hunt). If the day's
+   pending is signature/fort instead, that card shows — hunting was unavailable. Give the
+   button `title="Travel on and hunt if game appears"`. No disabled-state logic in v1.
+7. **Outcome headlines** (exact copy):
+   - `arrived` → "You have arrived."
+   - `aborted` → "The party turned back."
+   - `perished` → "The party's supplies gave out."
+   - `party-wiped` → "The party has perished to the last."
+8. **`mode` prop**: use it exactly the way PassageMode uses its `mode` prop (pass-through
+   to TravelVignette / journeyOpts). Mirror, don't innovate.
+9. **Position reporting**: mirror PassageMode's `onPositionChange` effect (lines ~67–83 of
+   PassageMode.tsx) verbatim, substituting `currentTrailNodeIndex(state)`; report `null`
+   on unmount.
+
+## C. Testing clarifications
+
+- All TrailMode tests use a fixed `initialSeed` and fixed props → runs are deterministic.
+- Assert on STRUCTURE (roster row count, health badge text, grave-card presence, choice-card
+  count, score-screen fields, log growth), not on exact narrative strings — content vocabulary
+  is Step 4 and will change.
+- Determinism test: two renders with identical props + initialSeed, drive the same action
+  sequence, assert identical `state.log` arrays (expose state for this via the component's
+  rendered log entries, not internals).
+- Do not modify or skip any existing test. `PassageMode.test.tsx` must stay green.
+
+## D. Acceptance gate (replaces the spec's verification block)
+
+```
+cd web && npx tsc --noEmit && npx vitest run     # zero failures, zero newly-skipped
+git diff --name-only                              # must contain NO file under web/src/utils/ or scripts/sim/
+```
+
+Plus: no functional change to `JourneyResults`'s existing Passage path — choosing Passage
+must behave exactly as today.
+
+Commit your work in the worktree:
+`feat(trail): Trail mode view layer — setup card, roster ledger, journal, hunt flow, score screen (Step 3)`
+
+## E. Notes
+
+- `web/node_modules` is junctioned into the worktree — do not run `npm install`.
+- Match surrounding code style; no new dependencies; no drive-by refactors.
+- Anchor line numbers may have drifted — locate by pattern.

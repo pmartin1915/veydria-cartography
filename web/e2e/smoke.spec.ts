@@ -405,3 +405,53 @@ test('Passage mode walks a route to an ending and returns to Atlas', async ({ pa
   await expect(page.locator('.app-main.passage-mode')).toHaveCount(0)
   await expect(page.locator('.passage-position-marker')).toHaveCount(0)
 })
+
+test('Trail mode walks a seeded run to the score screen and returns to the planner', async ({ page }) => {
+  // Full-game walk: cold-start (first Vite transform of the app graph) plus a
+  // multi-day run can exceed the 30s default when this test runs first or alone.
+  test.setTimeout(60_000)
+  // Hash-navigate straight into a computed short route with a fixed run seed —
+  // trailSeed makes the walk deterministic (see url-hash.ts), so this test cannot
+  // flake on hunt/health RNG. irrah→khulut is the sim harness's "short" pair.
+  await page.goto('/#journeyFrom=irrah&journeyTo=khulut&trailSeed=42')
+  await expect(page.locator('.leaflet-container')).toBeVisible()
+  await expect(page.locator('.journey-route')).toBeVisible()
+
+  await page.getByTestId('set-out-trail-btn').click()
+
+  // Setup card mounts with a default roster; begin the run.
+  await page.getByTestId('trail-begin-btn').click()
+  await expect(page.locator('.trail-ledger')).toBeVisible()
+  await expect(page.getByTestId('trail-vista')).toBeVisible()
+  await expect(page.getByTestId('trail-action-continue')).toBeVisible()
+
+  // Walk: Continue, resolving the first card whenever one appears (signature /
+  // fort / ford / stream cards all render .passage-choice-card buttons).
+  let ended = false
+  for (let i = 0; i < 60; i++) {
+    const choiceCards = page.locator('.trail-choice-cards .passage-choice-card')
+    if (await choiceCards.count() > 0) {
+      await choiceCards.first().click()
+      continue
+    }
+
+    if (await page.getByTestId('trail-outcome-headline').isVisible().catch(() => false)) {
+      ended = true
+      break
+    }
+
+    const continueBtn = page.getByTestId('trail-action-continue')
+    if (await continueBtn.isVisible().catch(() => false)) {
+      await continueBtn.click()
+    } else {
+      break
+    }
+  }
+
+  expect(ended, 'Trail mode should reach the score screen within the bounded walk').toBe(true)
+  await expect(page.getByTestId('trail-score-rank')).not.toBeEmpty()
+
+  // Return lands back on the planner with the route intact.
+  await page.getByTestId('trail-return-btn').click()
+  await expect(page.locator('.journey-route')).toBeVisible()
+})
