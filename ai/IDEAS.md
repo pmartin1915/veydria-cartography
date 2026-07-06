@@ -777,3 +777,26 @@ fix is entirely in `web/playwright.config.ts` and `web/e2e/*.spec.ts`.
 **DONE 2026-07-05 (feat/reroute-polish, PR #48):** both addressed — `handleReroute` now
 surfaces "No road that way." on a no-op reroute (`rerouteError` state), and the picker
 gained a `rerouteMode` toggle defaulting to the journey's current mode.
+
+---
+
+## Passage repeat-encounter prose — RESOLVED (2026-07-06, commit `57152fe`)
+
+**DONE:** the "Repeated signature encounters are word-for-word identical" finding
+(above, 2026-06-22) and its "Per-instance prose variation" follow-up (slice-1 list)
+are closed. All 8 keys that still had only one `SIGNATURE_CHOICES` variant (ford,
+bandits, fever, dry-wadi, customs-raid, plague-quarantine, sabkha-sinkhole,
+switchback) gained a second variant — `sand-wraith` already had one since V4.
+
+**Design constraint used (reuse for any future variant-N):** each new variant's
+choices carry the *exact same cost vectors* (rationsDelta/waterDelta/daysDelta/
+scarRations/scarWater/risk), choice-for-choice, as variant 0 — only label+narrative
+differ. The sim's choice policies (`passage-policies.ts`) score purely on cost
+vector, so this guarantees the Passage sim's survival/differentiation numbers can't
+move; verified empirically via a before/after `npm run sim:passage` diff that came
+back byte-identical except the `Generated:` timestamp. Prose is canon-grounded
+(Hakim/matula, Azmarāʔ, khatti, rahab/foggara, Khazadari, azalai) — no new
+worldbuilder authoring needed. New tests lock the invariant: every key ships ≥2
+variants, no two variants of a key share identical prose, no em-dash (VOICE-SPEC
+Option B), and cost vectors match across variants except the documented sand-wraith
+exception. 1146 unit tests green, tsc/build clean.
