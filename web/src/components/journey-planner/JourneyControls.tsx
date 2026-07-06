@@ -190,7 +190,7 @@ export default function JourneyControls({
                 <button
                   className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
                   onClick={onToggleCompare}
-                  title="Overlay Direct, Safest, and Cheapest routes on the map"
+                  title="Overlay Direct, Fastest, Safest, and Cheapest routes on the map"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 20V10M12 20V4M6 20v-6" />

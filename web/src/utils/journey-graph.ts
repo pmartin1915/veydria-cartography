@@ -888,9 +888,9 @@ export function findRouteWithFallback(
   return { route: null, pivots: [] }
 }
 
-export type ComparisonRoutes = Record<'direct' | 'safest' | 'cheapest', JourneyRoute | null>
+export type ComparisonRoutes = Record<'direct' | 'fastest' | 'safest' | 'cheapest', JourneyRoute | null>
 
-/** Compute direct, safest, and cheapest routes for side-by-side comparison. */
+/** Compute direct, fastest, safest, and cheapest routes for side-by-side comparison. */
 export function findComparisonRoutes(
   graph: Graph,
   startId: string,
@@ -900,6 +900,7 @@ export function findComparisonRoutes(
 ): ComparisonRoutes {
   return {
     direct: findRouteWithFallback(graph, startId, endId, season, 'direct', party).route,
+    fastest: findRouteWithFallback(graph, startId, endId, season, 'fastest', party).route,
     safest: findRouteWithFallback(graph, startId, endId, season, 'safest', party).route,
     cheapest: findRouteWithFallback(graph, startId, endId, season, 'cheapest', party).route,
   }
