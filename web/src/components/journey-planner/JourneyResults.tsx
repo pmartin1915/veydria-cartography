@@ -90,8 +90,11 @@ export default function JourneyResults({
         )}
       </div>
 
-      {/* Comparison stats: side-by-side Direct / Fastest / Safest / Cheapest */}
-      {compareMode && comparisonRoutes && (
+      {/* Comparison stats: side-by-side Direct / Fastest / Safest / Cheapest.
+          comparisonRoutes is always a truthy object (its fields, not the object
+          itself, carry "no data") — a waypoint check on the object alone would
+          keep the grid up with stale/empty cards once a waypoint clears the fields. */}
+      {compareMode && comparisonRoutes && (comparisonRoutes.direct || comparisonRoutes.fastest || comparisonRoutes.safest || comparisonRoutes.cheapest) && (
         <div className="journey-comparison-stats">
           {(() => {
             const entries = [

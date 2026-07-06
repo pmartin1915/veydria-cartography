@@ -197,6 +197,42 @@ test('mounting the party reduces estimated travel days', async ({ page }) => {
   await expect.poll(async () => parseDays(await estDays.textContent())).toBeLessThan(daysFoot)
 })
 
+test('compare routes is visible without opening the options drawer', async ({ page }) => {
+  await gotoApp(page)
+  await computeRoute(page)
+
+  // Guards against the regression the compare button was moved to fix: it must
+  // be reachable without expanding "Party, supply & options" first.
+  const compareBtn = page.locator('.journey-compare-btn')
+  await expect(page.locator('.journey-options-body')).toHaveCount(0)
+  await expect(compareBtn).toBeVisible()
+  await expect(compareBtn).toBeEnabled()
+
+  await compareBtn.click()
+  await expect(compareBtn).toHaveClass(/active/)
+  await expect(page.locator('.journey-comparison-stats')).toBeVisible()
+
+  // An added-but-unselected "Via" slot doesn't count as a real waypoint (same
+  // waypoints.filter(Boolean) convention the route computation itself uses),
+  // so Compare should stay enabled/active until a location is actually chosen.
+  await page.locator('.journey-add-wp').click()
+  await expect(compareBtn).toBeEnabled()
+  await expect(page.locator('.journey-comparison-stats')).toBeVisible()
+
+  // Comparison only supports a simple A-to-B route — once the waypoint has a
+  // real location, Compare disables (not hides) and the comparison clears.
+  // "+ Add waypoint" already auto-opens this dropdown (handleAddWaypoint),
+  // so select directly rather than re-clicking the trigger (which would toggle it shut).
+  await page.locator('.journey-dropdown-menu .journey-dropdown-item').first().click()
+  await expect(compareBtn).toBeDisabled()
+  await expect(page.locator('.journey-comparison-stats')).toHaveCount(0)
+
+  await page.locator('.journey-wp-remove').click()
+  await expect(compareBtn).toBeEnabled()
+  await expect(compareBtn).toHaveClass(/active/)
+  await expect(page.locator('.journey-comparison-stats')).toBeVisible()
+})
+
 test('config drawer is collapsed on load and opens on click', async ({ page }) => {
   await gotoApp(page)
   await openPlanner(page)

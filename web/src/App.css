@@ -4547,6 +4547,16 @@ body.app-desktop .toast-notification.exiting {
   color: var(--accent);
 }
 
+.journey-compare-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.journey-compare-btn:disabled:hover {
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
 /* ── Comparison stats cards ──────────────────────────────────────── */
 .journey-comparison-stats {
   display: grid;

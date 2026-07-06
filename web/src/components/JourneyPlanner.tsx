@@ -432,12 +432,14 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
       setAttempted(true)
       onRouteComputed(result)
 
-      // Comparison routes: only for simple A→B (no waypoints) and when enabled
+      // Comparison routes: only for simple A→B (no waypoints) and when enabled.
+      // Waypoints added while Compare is still on must also clear it — otherwise
+      // the comparison grid keeps showing stale data once Compare disables.
       if (compareMode && stops.length === 2) {
         const comparisons = findComparisonRoutes(graph, startId, endId, season, party)
         setComparisonRoutes(comparisons)
         onComparisonRoutesComputed?.(comparisons)
-      } else if (!compareMode) {
+      } else {
         setComparisonRoutes({ direct: null, fastest: null, safest: null, cheapest: null })
         onComparisonRoutesComputed?.({ direct: null, fastest: null, safest: null, cheapest: null })
       }
@@ -1095,7 +1097,10 @@ export default function JourneyPlanner({ geojson, active, defaultStartId, defaul
           onToggleOptions={() => setOptionsOpen(o => !o)}
           compareMode={compareMode}
           onToggleCompare={() => setCompareMode(prev => !prev)}
-          waypointsLength={waypoints.length}
+          // Filtered (not raw) so an added-but-unselected "Via" slot doesn't
+          // disable Compare — matches the same waypoints.filter(Boolean)
+          // convention the route/comparison computation itself uses (line 420, 493).
+          waypointsLength={waypoints.filter(Boolean).length}
           departureDayOfYear={departureDayOfYear}
           onSetDeparture={setDepartureDayOfYear}
           highlightCrisisEvents={highlightCrisisEvents}

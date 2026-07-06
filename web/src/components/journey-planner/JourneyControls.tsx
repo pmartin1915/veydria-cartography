@@ -78,6 +78,9 @@ export default function JourneyControls({
     ? generateEncounters(route, season, mode, edgeBiomes)
     : []
   const rec = !shareMode ? computeRecommendedMode(mode, supply, recEncounters) : null
+  // Comparison only supports a simple A-to-B route; once waypoints are added the
+  // container clears comparisonRoutes, so never paint the button as "active" then.
+  const compareActive = compareMode && waypointsLength === 0
 
   return (
     <>
@@ -128,6 +131,29 @@ export default function JourneyControls({
         </div>
       </div>
 
+      {/* Compare routes toggle — promoted out of the options drawer so the
+          comparison workflow (which overlays exactly the four modes above)
+          is always visible, not several clicks deep. Disabled (not hidden)
+          when waypoints are present since comparison only supports a simple
+          A-to-B route; this avoids a layout jump as waypoints are added/removed. */}
+      {!shareMode && (
+        <div className="journey-compare-toggle">
+          <button
+            className={`journey-compare-btn ${compareActive ? 'active' : ''}`}
+            onClick={onToggleCompare}
+            disabled={waypointsLength > 0}
+            title={waypointsLength > 0
+              ? 'Remove waypoints to compare routes'
+              : 'Overlay Direct, Fastest, Safest, and Cheapest routes on the map'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+            <span>Compare routes</span>
+          </button>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="journey-actions" data-tour="journey-find">
         <button
@@ -149,7 +175,8 @@ export default function JourneyControls({
       {/* Party, supply & options — bulky config folded into a collapsed
           drawer so the primary route inputs + Route/Days/Encounters tabs
           surface without scrolling. Each inner section keeps its existing
-          shareMode / departure gating unchanged. */}
+          shareMode / departure gating unchanged. (Compare routes was moved
+          out of this drawer — see the always-visible toggle above.) */}
       <div className="journey-options-drawer">
         <button
           type="button"
@@ -183,22 +210,6 @@ export default function JourneyControls({
               onToggleOpen={onToggleSupplyOpen}
               onChange={onSupplyChange}
             />
-
-            {/* Compare routes toggle */}
-            {!shareMode && waypointsLength === 0 && (
-              <div className="journey-compare-toggle">
-                <button
-                  className={`journey-compare-btn ${compareMode ? 'active' : ''}`}
-                  onClick={onToggleCompare}
-                  title="Overlay Direct, Fastest, Safest, and Cheapest routes on the map"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 20V10M12 20V4M6 20v-6" />
-                  </svg>
-                  <span>Compare routes</span>
-                </button>
-              </div>
-            )}
 
             {/* Departure day-of-year */}
             {!shareMode && (
