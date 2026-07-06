@@ -176,17 +176,58 @@ describe('passage: signature encounters + choices', () => {
     expect(s.journey.dayNum).toBe(0) // did NOT advance
   })
 
-  it('each registered signature has at least 2 measurably-distinct choices', () => {
+  it('each registered signature has at least 2 measurably-distinct choices, in every variant', () => {
     for (const key of Object.keys(SIGNATURE_CHOICES)) {
       const variants = SIGNATURE_CHOICES[key]
       expect(variants.length).toBeGreaterThanOrEqual(1)
-      const choices = variants[0]
-      expect(choices.length).toBeGreaterThanOrEqual(2)
-      // Distinct: the (rations, water, days) cost vectors are not all identical.
-      const vectors = choices.map(c =>
-        `${c.outcome.rationsDelta ?? 0}|${c.outcome.waterDelta ?? 0}|${c.outcome.daysDelta ?? 0}`,
+      for (const choices of variants) {
+        expect(choices.length).toBeGreaterThanOrEqual(2)
+        // Distinct: the (rations, water, days) cost vectors are not all identical.
+        const vectors = choices.map(c =>
+          `${c.outcome.rationsDelta ?? 0}|${c.outcome.waterDelta ?? 0}|${c.outcome.daysDelta ?? 0}`,
+        )
+        expect(new Set(vectors).size).toBeGreaterThan(1)
+      }
+    }
+  })
+
+  it('every signature key ships at least 2 prose variants (no repeat-encounter falls flat)', () => {
+    for (const key of Object.keys(SIGNATURE_CHOICES)) {
+      expect(SIGNATURE_CHOICES[key].length).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('no two variants of the same signature key share identical prose', () => {
+    for (const key of Object.keys(SIGNATURE_CHOICES)) {
+      const variants = SIGNATURE_CHOICES[key]
+      const signatures = variants.map(choices =>
+        choices.map(c => `${c.label}|${c.outcome.narrative}`).join('||'),
       )
-      expect(new Set(vectors).size).toBeGreaterThan(1)
+      expect(new Set(signatures).size).toBe(signatures.length)
+    }
+  })
+
+  it('no signature-choice label or narrative uses an em-dash (VOICE-SPEC Option B)', () => {
+    for (const key of Object.keys(SIGNATURE_CHOICES)) {
+      for (const choices of SIGNATURE_CHOICES[key]) {
+        for (const c of choices) {
+          expect(c.label).not.toContain('—')
+          expect(c.outcome.narrative).not.toContain('—')
+        }
+      }
+    }
+  })
+
+  it('every variant of a signature key preserves that choice-index\'s cost vector across variants (sim balance-neutral)', () => {
+    for (const key of Object.keys(SIGNATURE_CHOICES)) {
+      const variants = SIGNATURE_CHOICES[key]
+      if (key === 'sand-wraith') continue // documented deliberate exception (divergent variant 1)
+      const vectorOf = (c: (typeof variants)[number][number]) =>
+        `${c.outcome.rationsDelta ?? 0}|${c.outcome.waterDelta ?? 0}|${c.outcome.daysDelta ?? 0}|${c.outcome.scarRations ?? 0}|${c.outcome.scarWater ?? 0}|${c.outcome.risk ?? 'none'}`
+      const base = variants[0].map(vectorOf)
+      for (const variant of variants.slice(1)) {
+        expect(variant.map(vectorOf)).toEqual(base)
+      }
     }
   })
 
@@ -231,7 +272,7 @@ describe('passage: signature encounters + choices', () => {
     expect(pending.signatureCounts).toEqual({})
   })
 
-  it('repeated ford encounters use variants[0] then wrap to variants[0] fallback', () => {
+  it('repeated ford encounters cycle through variants (no repeat-encounter is silent)', () => {
     const base = passageWithRepeatedSignature('ford', [1, 2])
     const first = passageAct(base, { kind: 'continue' })
     expect(first.pending).not.toBeNull()
@@ -242,8 +283,9 @@ describe('passage: signature encounters + choices', () => {
 
     const second = passageAct(afterFirst, { kind: 'continue' })
     expect(second.pending).not.toBeNull()
-    // ford has only one variant, so the second encounter falls back to variants[0].
-    expect(second.pending!.choices).toEqual(SIGNATURE_CHOICES.ford[0])
+    // ford now ships a second variant, so the repeat is re-told, not replayed.
+    expect(second.pending!.choices).toEqual(SIGNATURE_CHOICES.ford[1])
+    expect(second.pending!.choices).not.toEqual(SIGNATURE_CHOICES.ford[0])
   })
 
   it('repeated sand-wraith encounters cycle through variants', () => {

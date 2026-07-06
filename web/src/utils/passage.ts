@@ -128,7 +128,35 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Drive the camels across',
+        outcome: {
+          rationsDelta: -2,
+          risk: 'minor',
+          narrative:
+            'You send the rahab down the bank in a line, salt-slabs high on their humps. The brown water takes them to the belly and one slab works loose of its palm-rope and is gone. The party crosses, a slab of trade-salt poorer.',
+        },
+      },
+      {
+        label: 'Camp above the water and wait',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            'You pitch above the flood-line and let the foggara run itself empty. The water drops on the second morning and the ford reads true. Two days of it you will not get back.',
+        },
+      },
+      {
+        label: "Buy the foggara-keeper's line",
+        outcome: {
+          rationsDelta: -1,
+          risk: 'none',
+          narrative:
+            'The foggara-keeper runs a guide-rope for a fee in rock-salt and reads the current for you besides. You cross dry, a measure of salt lighter, and keep the day.',
+        },
+      },
+    ],
   ],
   bandits: [
     [
@@ -162,7 +190,37 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Buy off the riders',
+        outcome: {
+          rationsDelta: -3,
+          risk: 'none',
+          narrative:
+            'A second band works the same scrub-line, bolder for the last toll paid. You empty a third of the strongbox into their hands and they wave the caravan on without a word wasted.',
+        },
+      },
+      {
+        label: 'Hold the line',
+        outcome: {
+          rationsDelta: -1,
+          waterDelta: -2,
+          risk: 'grave',
+          narrative:
+            'This crew rides in tighter and means it. Steel meets steel again in the scrub and this time the wounded are yours to carry. Two more do not answer at the count and the water goes to the ones who can still walk.',
+        },
+      },
+      {
+        label: 'Talk terms',
+        outcome: {
+          rationsDelta: -1,
+          daysDelta: 1,
+          risk: 'minor',
+          narrative:
+            'You have talked to bandit-chiefs before and it shows. This one wants less blood and more time. A day of bargaining under a scrub tree buys the caravan through for a lighter tithe.',
+        },
+      },
+    ],
   ],
   fever: [
     [
@@ -194,7 +252,35 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Pay the Hakim',
+        outcome: {
+          rationsDelta: -2,
+          risk: 'none',
+          narrative:
+            'The Hakim reads the matula against the light and names it dune-fever. Cupping and a dose of hanzal cost two measures of the stores. The shivering breaks before the next watch.',
+        },
+      },
+      {
+        label: 'Push through',
+        outcome: {
+          waterDelta: -3,
+          risk: 'grave',
+          narrative:
+            'You lash the sick to the cart and keep the column moving. The fever calls for water the road will not spare, and the skins run thin faster than the miles fall away.',
+        },
+      },
+      {
+        label: 'Halt for the sick',
+        outcome: {
+          daysDelta: 2,
+          risk: 'minor',
+          narrative:
+            'You make camp and let the sun-debt burn itself out under blankets, not under a moving cart. Two days go to the cots. The party rises thin but every one of them rises.',
+        },
+      },
+    ],
   ],
   'dry-wadi': [
     [
@@ -217,7 +303,26 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: "Follow the Azmarāʔ down",
+        outcome: {
+          scarWater: 2,
+          risk: 'minor',
+          narrative:
+            'A different Azmarāʔ finds you a second wadi, drier and steeper than the first. She reads the salt-cracks without slowing and the floor holds. A cask slips its lashing on the last drop and cracks on the stone, and the party draws thinner at every well from here.',
+        },
+      },
+      {
+        label: 'Keep to the known road',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            "You thank her for the offer and keep to the road already walked. Every marked well on it still holds water. It also holds every mile the shortcut would have spared.",
+        },
+      },
+    ],
   ],
   'customs-raid': [
     [
@@ -249,7 +354,35 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Settle the seal-fee',
+        outcome: {
+          rationsDelta: -3,
+          risk: 'none',
+          narrative:
+            "A second Triple-Seal officer wants his own audit before the first one's ink is dry. You pay again in khatti and salt-weight both, and the manifest comes back stamped a third lighter still.",
+        },
+      },
+      {
+        label: 'Surrender a ledger-hand',
+        outcome: {
+          risk: 'none',
+          narrative:
+            'You give up the junior scribe this time, the one who keeps the water-count. He goes back to Tavakh-Qarat under guard and the caravan rolls on, one count short and no one quite sure who is keeping it now.',
+        },
+      },
+      {
+        label: 'Stand on the manifest',
+        outcome: {
+          daysDelta: 2,
+          waterDelta: -1,
+          risk: 'grave',
+          narrative:
+            'You refuse the seal a second time and the officers dig in for a magistrate again. Two days the standoff holds the road, and the casks pay for every hour of it before the seals finally break.',
+        },
+      },
+    ],
   ],
   'plague-quarantine': [
     [
@@ -282,7 +415,36 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Wait out the second cordon',
+        outcome: {
+          daysDelta: 12,
+          risk: 'none',
+          narrative:
+            "A second banner flies a day past the first, the sickness having outrun the outrider's count. You make camp again and wait the fortnight through. The stores do not care that this is the second wait.",
+        },
+      },
+      {
+        label: 'Pay for another seal',
+        outcome: {
+          rationsDelta: -4,
+          risk: 'grave',
+          narrative:
+            'A Khazadari clerk downroad sells a seal cheaper than the last, and worse made. The outrider here squints at it a long moment before waving the caravan through, and you do not look back to see if he changes his mind.',
+        },
+      },
+      {
+        label: 'Cut back onto the salt-track',
+        outcome: {
+          daysDelta: 3,
+          waterDelta: -2,
+          risk: 'minor',
+          narrative:
+            "You leave the road a second time for the azalai's old salt-track. It costs three more days and the flats give up no water, same as before. No banner flies out here either.",
+        },
+      },
+    ],
   ],
   'sabkha-sinkhole': [
     [
@@ -307,7 +469,28 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Let the second cart go',
+        outcome: {
+          rationsDelta: -2,
+          scarRations: 1,
+          risk: 'none',
+          narrative:
+            'The salt gives way under a second cart before the party has learned to read the crust. You cut the traces again and watch the stores go under with the axles. The party carries less, and hungrier, from here.',
+        },
+      },
+      {
+        label: 'Rope it out again',
+        outcome: {
+          daysDelta: 2,
+          waterDelta: -4,
+          risk: 'grave',
+          narrative:
+            'You rig the ropes a second time and the whole party hauls against the sabkha crust once more. It fights harder for having already had one cart. Two days and every water-skin pay for pulling the wheels free.',
+        },
+      },
+    ],
   ],
   switchback: [
     [
@@ -330,7 +513,26 @@ export const SIGNATURE_CHOICES: Record<string, EncounterChoice[][]> = {
         },
       },
     ],
-    // TODO: add variant prose for instance 1+
+    [
+      {
+        label: 'Empty the casks again',
+        outcome: {
+          scarWater: 2,
+          risk: 'none',
+          narrative:
+            'A second grade climbs sharper than the first past the Lam-Chen loops. You stave the casks again and roll them off the edge; the carts crest light. The water they held does not come back at the next well the way rations do.',
+        },
+      },
+      {
+        label: 'Haul the carts up in turns',
+        outcome: {
+          daysDelta: 2,
+          risk: 'none',
+          narrative:
+            'You split the party again, half on the ropes and half at the chocks, and take the carts up one loop at a time. Two more days the switchback costs. Nothing is lost this time either, only the hours.',
+        },
+      },
+    ],
   ],
   'sand-wraith': [
     [
