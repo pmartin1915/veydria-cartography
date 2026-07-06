@@ -406,7 +406,7 @@ to per-member health means a new data structure on top of `JourneyState`. Option
 **How to approach:** Opus spec + /orchestrate for the view layer. Architecture (per-member health
 model) stays on Opus before any implementation.
 
-## 2026-07-02 — hex-overlay fractional-zoom quantization (from coords-UI review)
+## 2026-07-02 — hex-overlay fractional-zoom quantization (from coords-UI review) — RESOLVED 2026-07-06
 
 **Idea:** `hex-overlay.ts` `reproject()` probes scale with 1-SVG-unit spans; `latLngToLayerPoint`
 returns integer-rounded points, so at the app's half-level zooms (zoomSnap/zoomDelta 0.5) the
@@ -415,6 +415,25 @@ hex grid's scale quantizes (1.414 → 1) and the grid misaligns ~41% until the n
 `graticule-overlay.ts` + `scale-control.ts` in PR #50 — copy it over, ~4 lines).
 **Why deferred:** hex-overlay was a frozen file during the orchestrated coords batch; fix belongs
 on its own small branch off master after PR #50 merges. Found via Playwright zoom probing 2026-07-02.
+
+**RESOLVED 2026-07-06 (`fix/overlay-fractional-zoom-quantization`).** Ported the PR #50 wide-span
+probe into `hex-overlay.ts`'s `reproject()` exactly as scoped. **Scope grew by one file during
+exploration:** `marginalia-overlay.ts` carried the identical 1-unit-probe bug (its figures/fauna
+scale with the chart, same `reproject()` shape) — not named in the original finding, but the same
+root cause, so fixed in the same pass rather than leaving a twin defect. `scale-control.ts` and
+`graticule-overlay.ts` were confirmed already fixed (PR #50) and left untouched.
+
+Verified via a controlled before/after in the live running app (Playwright/Chrome, `npm run dev`):
+stashed the fix, reloaded at a fractional zoom (`z=-0.5`), and read the DOM `transform` directly —
+`.hex-grid-group` showed `matrix(1,0,0,1,...)` (the predicted quantization: `2^-0.5≈0.7075` rounds
+to `1`) while the already-fixed `.graticule-group` showed the correct `matrix(0.7075,0,0,0.7075,...)`
+— a live, reproduced 41% mismatch. Popped the stash, reloaded: both groups (plus
+`.marginalia-group`) converged on the identical correct matrix. Re-checked at an integer zoom
+(`z=0.00`, `sx=1.0` exactly) to confirm no regression there. Visual confirmation at `z=0.50` with
+Hex Grid at 100% opacity: hex mesh sits flush on coastlines/chokepoints/basin outline, no drift.
+1146/1146 unit tests green (no test changes — the fix is runtime projection math only, and no
+`reproject()` unit test exists for either file, matching PR #50's own precedent), `tsc -b` clean,
+build clean, bundle within budget.
 
 ## 2026-07-02 — Trail feel-check follow-ups (from live-UI feel-check session)
 
