@@ -7,11 +7,12 @@ tags:
   - prompt
   - visual-spec
   - continental
-status: draft
+status: canonical
 provenance:
   source_ref: >-
-    geography/MAP-PROMPT.md — internal visual specification for continental map
-    generation
+    geography/MAP-PROMPT.md: internal visual specification for continental map
+    generation. Layout brought to geography/continents/veydria-climate-spine.md
+    (Rulings 6-7) and geography/veydria-schematic.svg on 2026-09-29.
   sections: []
   creative_additions:
     - Continental C-shape and orientation
@@ -25,288 +26,417 @@ section_flags:
   terrain_features: '[x]'
 ---
 
-# Veydria Continental Map — Definitive Visual Prompt
+# Veydria Continental Map: Visual Prompt
 
 ## Purpose
 
-This document is the single source of truth for any visual map of Veydria. It encodes every spatial relationship, elevation, coastline, water feature, and named location that has been established across the worldbuilder's geography, economy, religion, ecology, timeline, and peoples layers. The map it describes must be consistent with all those layers simultaneously.
+This document is the artist's prompt for any visual map of Veydria. It does not set the layout.
+The layout is fixed by `geography/continents/veydria-climate-spine.md` (Rulings 6 and 7 place the
+regions; its latitude table governs) and drawn in `geography/veydria-schematic.svg`. Where this file
+and those two disagree, they win and this file is stale.
 
-**Target output:** A hand-drawn-style fantasy continental map (parchment aesthetic, not satellite photo) at roughly 1:2,000,000 scale, showing terrain, political regions, trade routes, named cities/sites, chokepoints, and the Aethelian Basin with its four port zones.
+The schematic compresses the south by about 2 degrees: its wall sits about 2 degrees south of the
+lip in the spine's table, and its southeastern lobe reaches about 15 N. Draw bearings from the
+schematic, and quote latitudes from the spine.
+
+**Target output:** A hand-drawn-style fantasy continental map (parchment aesthetic, not satellite
+photo) showing terrain, the six regions, trade routes, named sites, chokepoints, and the Aethelian
+Basin with its four port zones.
 
 ---
 
 ## 1. Continental Shape and Orientation
 
-**Shape:** A C-shaped or horseshoe landmass, opening to the west. The continent wraps clockwise from north→northeast→east→south→southwest, enclosing a semi-enclosed inland sea (the Aethelian Basin) in its concavity. The western side is open ocean.
+**Shape:** A C open to the west. The land wraps from the north arm, across the east, to the south
+arm, around the Aethelian Basin, a small inland sea in the continent's western bight. West of the
+Basin mouth is open ocean.
 
-**Orientation:** Standard (north up). The map should be wider east-west than tall north-south — roughly a 3:2 aspect ratio.
+**Orientation:** North up. The schematic's frame is 3:2, wider east-west than tall.
 
-**Scale:** Mediterranean basin scale. The Basin itself is crossable in 3-5 days by fast ship. Overland travel between adjacent civilizations takes 1-3 weeks by caravan. Total continental extent is roughly 2,000-2,500 km north-south and 3,000 km east-west — comparable to the Mediterranean from Gibraltar to the Levant.
+**Latitude:** The mainland spans about 10 to 34 N, some 2,650 km north to south, in the northern
+hemisphere. Draw a latitude grid at 4-degree steps from 10 N to 34 N. The equator lies in open ocean
+south of the frame; say so in the margin.
 
-**Climate gradient:** Equatorial in the south (Ndjadi delta), arid interior (Irrah belt), continental steppe in the northeast (Kheshkai), Mediterranean along the Basin shores, cloud forest/alpine in the southwest (Qollari), and hypoxic alpine in the far north (Ngaru-Bon). Monsoon-affected ocean to the west (Oravan).
+**Scale:** The Basin is small: about three days' sail across, some 400,000 to 500,000 km2.
+Overland travel between neighbouring regions takes one to three weeks by caravan; the caravan run
+from Halani-Tamu to the frankincense coast takes 60 days.
 
----
+**Latitudes by region** (spine table; core biome latitudes, not borders): Qollari core 10-16 N, its
+northeastern foothills to about 23.5 N; Oravan 12-26 N; Ndjadi 16-24 N; Irrah 18-29 N; the Basin
+24-30 N; Kheshkai 24-34 N; Ngaru-Bon 28-34 N, with the tsetse foothills at 28-31 N.
 
-## 2. The Aethelian Basin (Central Feature)
+**Open water inside the C:** West of the Basin mouth is open ocean, and it runs in as a bight south
+of the Basin's south shore, between that shore and Qollari's north coast, as far as the neck. The
+Basin's south shore (Veyd-Kirrha, Ki-Mbuhari) is a strip of land between the Basin and that bight.
+Qollari and the Basin's shore meet only at the neck.
 
-The Basin is the map's focal point — a semi-enclosed shallow sea roughly the shape of a tilted teardrop or asymmetric oval, widest in its center, narrowing to a strait at its western mouth.
+**The northern arm:** North of the Basin and west of Ngaru-Bon, the C's northern arm (labelled
+"northern rim" on the schematic) is the Basin's north-shore country and carries Tavakh-Qarat. It is
+not Ngaru-Bon; do not stretch the plateau across the top of the map.
 
-**Key features:**
-- **Western mouth:** Halkar Straits — a narrow passage (maybe 10-20 km wide) opening to the open ocean. This is the chokepoint controlling all maritime access.
-- **South shore:** Where the Ndjadi delta's five distributaries fan out and enter the Basin. Ki-Mbuhari port sits here. Low-lying, marshy, with granary towers visible. Mangrove fringes on the warmer southern margin.
-- **North shore:** Tavakh-Qarat port — the oldest commercial quarter. Pale-gold limestone architecture. Salt pans visible on the flat, arid northeastern margin. Glass furnace smoke.
-- **East shore:** Halani-Tamu port — the monsoon switching point. Where Oravan sea-lanes arriving through the straits hand off to Irrah overland caravans departing eastward. Split personality: coral-stone dockside (Oravan) facing stone-cool caravansaries (Irrah).
-- **Southeast margin:** Dzong-Tamu port — smaller, fortified, heavy stone walls. The link where Ngaru-Bon metallurgical exports reach the Basin via a coastal route skirting the continent's southeastern edge.
-- **Center:** Qhabal-Ur (The Drowned Step) — a monumental partially submerged platform visible at low tide. Mark with a small symbol.
-- **Southern rim:** Veyd-Kirrha (Ash-Oracle) — a volcanic vent. Mark with a small smoke/steam symbol.
+**Edges of the known:** The country beyond Ngaru-Bon's crown (north) and Kheshkai's interior (east
+and northeast) is unmapped. Label it so; do not invent terrain there.
 
-**Basin water:** Pale blue-green, shallow. Islands are possible but not defined — keep it mostly open water.
-
----
-
-## 3. The Six Civilizations — Terrain and Position
-
-### Ngaru-Bon Plateau (NORTH — highest)
-
-**Position:** The northern wall of the continent. A massive highland plateau running roughly east-west across the top of the map.
-
-**Terrain:** Dramatically high — 4,000-6,000m. Deep river gorges cutting through the plateau (2,000-3,000m depth). Monastery-citadels (Dzongs) perched on cliff edges. Terraced gorge-farming on the narrow arable strips. Strip mines visible. Snow on the highest peaks.
-
-**Color/texture:** Cold grays and browns. Rocky, barren plateau surface with green gorge-bottoms. Possibly snow-capped along the northern edge.
-
-**Key feature:** Zang-Ri (Iron Mountain) — mark as a named peak with mining symbol.
-
-**Southern edge:** The plateau drops steeply via escarpment to the Irrah desert below. Only one pass breaks through: Lam-Chen Pass on the southern/southeastern edge, connecting down to the Kheshkai steppe.
-
-**Tsetse belt:** A band of scrubby woodland/savanna at the base of the Ngaru-Bon escarpment. Mark with a subtle dotted line or different vegetation color. This is the biological barrier that prevents horses from approaching the plateau.
-
-### Irrah Drylands (CENTRAL — trans-continental belt)
-
-**Position:** A wide horizontal band running east-west across the continent's midsection, between the Ngaru-Bon plateau (above) and the Ndjadi delta/Kheshkai steppe (below). Irrah is NOT a compact region in one corner — it's the continental interior, the space everyone must cross.
-
-**Terrain:** A gradient from north to south:
-- **Northern edge:** Gravel plains at the base of the Ngaru-Bon escarpment. Smith-Spring marked here as a named site (hot spring symbol) at the frontier.
-- **Central belt:** Sand seas with erg dune fields. The most classically "desert" part of the map. The Spine trunk corridor runs east-west through here, connecting oases.
-- **Southern edge:** Thorn-steppe transitioning to Ndjadi floodplain.
-- **Southeastern extension:** The terrain rises into limestone escarpments along the coast — this is the frankincense coast, Irrah's second outlet to the open ocean (not the Basin).
-
-**Color/texture:** Sandy yellows and tans. Erg dune fields in the center. Oases marked as green dots along fossil-aquifer lines.
-
-**Named oases (mark as settlement symbols along trunk corridors):**
-- **Qarat al-Fidda** (center — political capital, largest symbol)
-- **Ghadam-Thalla** (western edge, near Ngaru-Bon frontier)
-- **Tin Mashraq** (eastern edge, near Kheshkai border)
-- **Khulut** (southern, near Ndjadi transition)
-- **Zin-Iferis** (northern, salt-caravan staging)
-- **Ayn-Salqat** (along Scribal Ladder route)
-
-**Trunk corridors (mark as dotted caravan tracks):**
-- **Northern Thread:** Tin Mashraq → Qarat al-Fidda → Ghadam-Thalla (east-west, northern oasis line)
-- **Southern Thread:** Khulut → southward to Ndjadi
-- **The Spine:** East-west central route connecting the oasis chain
-
-**Rubat fort chain:** Small square symbols along trunk corridors (Qalibin enforcement lodges).
-
-### Kheshkai Steppe (NORTHEAST)
-
-**Position:** Northeast of the Basin, east of where the Irrah belt meets the coast. The steppe occupies the continent's northeastern quadrant, above the Ndjadi delta and east of the Irrah desert margin.
-
-**Terrain:** Rolling high grassland (1,500-2,500m). Treeless except along watercourses. Kurgan mounds (burial hills) dotting the landscape. Natural gas seep fields (mark one or two with a flame symbol). The southern edge is a dramatic cliff line descending to the Ndjadi delta far below.
-
-**Color/texture:** Olive-green to yellow-green grassland. No forest. Wide open spaces.
-
-**Key features:**
-- **A-Tzalan Ford:** Mark prominently on the southern cliff edge — the vital river crossing where steppe descends to delta. THE most contested point on the continent.
-- **Volata-Xal ("Shipyard in the Dust"):** Mark near A-Tzalan — the abandoned Oravan catamaran settlement from the Obsidian Blockade.
-- **Kha-Tepet (Blood Mountain):** A sacred peak, mark with a small symbol.
-
-**Northern border:** Lam-Chen Pass connects up to Ngaru-Bon plateau (mark pass with standard mountain-pass symbol).
-
-**Southwestern border:** The steppe transitions to cloud forest where Breath-of-Cloud sanctuary sits (mark with a special symbol — the only permanent cross-civ sacred site).
-
-### Ndjadi Floodplains (SOUTH)
-
-**Position:** The southern lowlands — the continent's bottom. A vast flat delta spreading from the continent's interior toward the Basin's south shore.
-
-**Terrain:** Dead flat (0-50m elevation). Five distributary channels braiding across the delta, fanning out as they approach the Basin. Stone barays (rectangular reservoirs) visible as geometric shapes across the landscape. Dense jungle away from the channels. Mangrove swamps at the Basin edge.
-
-**Color/texture:** Lush green. Rice paddies, dense vegetation. The channels should be prominent — they're the civilization's arteries.
-
-**Key features:**
-- **Five distributaries:** Draw as a river system splitting into five channels that enter the Basin at Ki-Mbuhari.
-- **Ki-Jenga:** Mark as a named city inland (site of Mbu-Bwana's famous baray from the Obsidian Blockade).
-- **Hassag-Nganin (Five-Confluence):** Where the five channels braid — mark as a named site (contested religious).
-- **A-Tzalan Ford (repeated):** The northern edge where Kheshkai cliffs descend — mark the transition clearly.
-
-**River sources:** Northern tributaries flow down from the Kheshkai escarpment (through A-Tzalan). Western tributaries flow down from Qollari cloud forest. Show these converging before the five-way split.
-
-### Qollari Highlands (SOUTHWEST)
-
-**Position:** Southwest of the Basin, below Oravan but above the open ocean. The southwestern mountain mass of the C-shape.
-
-**Terrain:** Dramatic vertical terrain. Cloud forest (2,500-4,500m) shrouded in fog. Terraced mountainsides — every ledge is agricultural. Carved cliff roads switchbacking down to the coast and to Ndjadi. Astronomical observatories on the highest peaks. Rope-suspension bridges spanning gorges.
-
-**Color/texture:** Dark greens (cloud forest) fading to gray-brown at the highest altitudes. Fog/cloud symbols at mid-altitude. The terraces should be visible as horizontal lines on the mountain faces.
-
-**Key features:**
-- **Apu-Yana (Black Mountain):** Active volcanic peak on the eastern border (near Kheshkai). Mark with a volcano symbol.
-- **Breath-of-Cloud sanctuary:** Mark at the northeastern border where cloud forest meets steppe (shared with Kheshkai).
-- **Cliff roads:** Draw 3 switchback routes descending from the highlands:
-  1. Western descent to Oravan coast
-  2. Southern descent through cloud forest to Ndjadi floodplains
-  3. Eastern border road toward Kheshkai steppe (mark as "dangerous, rarely used")
-- **Wasi-Puma ("House of the Lion"):** Mark as a fortified settlement (built during Obsidian Blockade).
-
-### Oravan Archipelago (WEST — ocean)
-
-**Position:** West of the Basin, beyond Halkar Straits, in the open ocean. A volcanic island chain scattered across the western sea.
-
-**Terrain:** Volcanic islands — varying sizes, largest having peaks to 3,000m. Lush tropical vegetation on lower slopes. Narrow coastal strips of flat arable land. Deep-ocean straits between islands. Coral reefs fringing the islands. One caldera visible (First Caldera — seawater-filled volcanic crater).
-
-**Color/texture:** Bright greens on islands against deep blue ocean. Volcanic peaks with wisps of smoke/steam on one or two. Reef patterns in the shallows.
-
-**Key features:**
-- **Halkar:** The main port island closest to the Straits. Mark as the primary settlement.
-- **First Caldera:** A seawater-filled caldera on one of the inner islands. Mark with pilgrimage symbol.
-- **Kelata:** An obsidian-source island. Mark with a mining/resource symbol.
-- **Halkar Straits:** The narrow passage between the outermost Oravan island(s) and the mainland coast, connecting open ocean to Basin. Draw clearly as a chokepoint.
+**Climate at a glance:** Tropical monsoon floodplain in the south (Ndjadi). Desert in two lobes
+(Irrah): a northern lobe east of the Basin, and a southeastern lobe on the frankincense coast. A high
+cold plateau in the east and northeast (Kheshkai), with a monsoon-watered wall on its south face. A
+wooded monsoon shelf under a hypoxic crown in the north (Ngaru-Bon). A winter-rain sea at the
+Mediterranean's hot margin (the Basin). Cloud forest and terraces in the southwest (Qollari). A
+volcanic archipelago under the western-ocean monsoon (Oravan).
 
 ---
 
-## 4. Trade Routes (Mark as colored paths)
+## 2. The Aethelian Basin
 
-Five routes, each in a distinct color or line style:
+A shallow sea, roughly oval, narrowing to a strait at its western mouth.
 
-1. **Copper-for-Steel Road** (solid line, earth-brown): Ndjadi delta → north through A-Tzalan Ford → across Kheshkai steppe → Lam-Chen Pass → Ngaru-Bon plateau. Runs roughly south-to-north.
+- **Western mouth:** the Halkar Straits, half a march wide at the narrowest. All maritime access to
+  the Basin passes here. Ocean water runs in at the surface and salty Basin water runs out along the
+  bottom, as at Gibraltar; an arrow pair at the mouth can show it.
+- **North shore:** Tavakh-Qarat, the oldest commercial quarter, on the C's northern arm. Pale-gold
+  limestone, salt pans on the arid margin, glass-furnace smoke.
+- **Just inside the mouth:** Tavakh-Rubat, a relay station, marked small.
+- **East shore:** Halani-Tamu, where cargo off the Oravan sea-lanes passes to the Irrah caravans.
+  Coral-stone docks facing stone caravansaries. The caravan terminus of the northern lobe.
+- **Southeast margin:** Dzong-Tamu. Smaller, fortified, heavy stone walls. The port where
+  Ngaru-Bon metal enters the Basin, by the southeastern route (porters through the tsetse foothills
+  to Smith-Spring, then Irrah caravans down the Southern Thread to Khulut), and where Qollari
+  cinchona reaches the Pacha-Urco warehouses. It sits
+  near Khulut and the delta's head, on the inner shore, not the outer coast.
+- **South shore:** Ki-Mbuhari, where the five Ndjadi distributaries enter. Low, marshy, granary
+  towers, mangrove fringe.
+- **Centre:** Qhabal-Ur (the Drowned Step), a partly submerged platform. Small symbol.
+- **South shore, west of Ki-Mbuhari:** Veyd-Kirrha (the Ash-Oracle), a volcanic vent reached by the
+  coastal road up from Ki-Mbuhari. Small smoke symbol. (Topology calls this the Basin's "southern
+  rim"; it is not the southern rim upland of section 3.)
 
-2. **Highland-Steppe Corridor** (dashed line, amber): L-shaped. Leg 1: Ngaru-Bon → south via Lam-Chen → Kheshkai steppe. Leg 2: Kheshkai steppe → southwest via Breath-of-Cloud → Qollari highlands.
+**Winds:** No monsoon arrows inside the Basin. It has westerly winter storms entering through the
+mouth and a predominantly northerly summer wind, with mixed winds near Halkar.
 
-3. **Highland Relay** (dotted line, green): Qollari highlands → cliff roads descending to Basin shores and Ndjadi lowlands.
-
-4. **Coastal Monsoon** (wavy line, blue): Oravan archipelago → Halkar Straits → Basin circuit (hitting all four port zones). Maritime route, stays on water.
-
-5. **Caravan Thread** (dotted line, gold): Three-hub network. Hub markers at Smith-Spring (Ngaru-Bon/Irrah frontier), Qarat al-Fidda (central oasis), and Halani-Tamu (Basin east shore). Tracks connect the hubs through the Irrah desert.
-
-Bonus — **Scribal Ladder pilgrimage** (thin dotted line, red): Ki-Mbuhari (south shore) → across Basin to Halani-Tamu (east shore) → overland into Irrah desert → to pyramid-necropolises.
+**Water:** Pale blue-green and shallow. Mostly open water.
 
 ---
 
-## 5. Chokepoints (Mark with special symbols)
+## 3. The Six Regions: Terrain and Position
 
-Six named chokepoints — mark each with a small gate/lock symbol:
+### Ngaru-Bon (NORTH, north-central)
 
-| Chokepoint | Location on Map | What it controls |
+**Position:** The north-central highland, north of Irrah's northern lobe and west of Kheshkai. It
+does not span the whole top of the map; Kheshkai holds the northeast.
+
+**Terrain:** Two tiers (ADR-0047 D1): an inhabited wooded shelf at 1,200-2,000 m under a hypoxic
+crown at 3,500-4,800 m, peaks to about 6,000 m. Deep gorges, dzongs on cliff edges, terraced gorge
+floors, strip mines, snow on the crown.
+
+**Colour:** Green-brown miombo shelf; grey, snow-capped crown.
+
+**Named:** Zang-Ri (Iron Mountain), a peak with a mining symbol.
+
+**South foot:** Below the shelf lies a hot, wet foothill belt, the tsetse foothills, like the old
+Terai at the foot of the Nepal hills. It closes the lower approaches to horses and oxen. Below it
+lie the gravel plains of Irrah's northern lobe. Draw the foothill belt as a band of scrubby
+woodland with a subtle stipple.
+
+**East edge:** Lam-Chen Pass, the plateau's only road out, down onto the Kheshkai steppe.
+
+### Irrah (TWO LOBES)
+
+Irrah is not one belt across the continent. Kheshkai and the floodplain lie between its two parts
+(spine Ruling 7). Do not draw a band from the Basin to the southeast coast.
+
+**Northern lobe:** East of the Basin, between Ngaru-Bon's tsetse foothills (north) and Kheshkai's
+west flank (east), reaching south to the delta at Khulut.
+- **North:** gravel plains under the foothills, with Smith-Spring (hot-spring symbol) at the
+  frontier in the northeast corner, between the foothills and Kheshkai's flank.
+- **Centre and west:** true desert, erg dune fields, toward the Basin.
+- **East:** a semiarid margin along Kheshkai's west flank, where the summer monsoon runs north in a
+  narrow corridor. Slightly less barren colouring.
+- **South:** the lobe narrows to Khulut at the delta's head.
+
+**Oases (settlement symbols):**
+- **Qarat al-Fidda:** centre of the lobe; the capital; largest symbol.
+- **Ghadam-Thalla:** northwest, on the Basin side of the northern line.
+- **Zin-Iferis:** north, on the northern line; salt-caravan staging.
+- **Tin Mashraq:** east, on the semiarid margin under Kheshkai's flank.
+- **Khulut:** south, at the delta's head; the jumping-off town for the frankincense crossing.
+- **Ayn-Salqat:** on the Scribal Ladder; not marked on the schematic.
+
+**Trunk corridors** (named in `geography/regions/irrah-drylands.yaml`; the schematic draws the
+Caravan Thread's tracks, section 4, but does not label the threads):
+- **Northern Thread:** Kheshkai steppe to the Basin, via Tin Mashraq.
+- **Southern Thread:** the Ngaru-Bon frontier to the Ndjadi delta, via Ghadam-Thalla and Khulut.
+- **The Spine:** Tin Mashraq, Qarat al-Fidda, Ghadam-Thalla.
+
+Rubat forts: small squares along the tracks.
+
+**Southeastern lobe:** Thorn-steppe and the frankincense coast, east of the floodplain beyond a low
+eastern divide, at about 16-19 N (spine table). Limestone escarpments rise to about 1,500 m along
+the coast. Tin-Aghiz is the port. In summer, fog and drizzle hang on the seaward escarpments off
+cold upwelled water, as in Dhofar; the frankincense trees grow just inland of the fog. The lobe
+faces the open ocean, not the Basin.
+
+**Colour:** Sandy yellows and tans, green oasis dots; the southeastern lobe greyer and scrubbier,
+with a fog band on its coast.
+
+### Kheshkai (EAST and NORTHEAST)
+
+**Position:** The largest region: the east and northeast of the continent, from Ngaru-Bon's east
+edge (where Lam-Chen comes down) to the unmapped interior. Its west flank faces Irrah's northern lobe; its south face is
+the wall above the Ndjadi floodplain.
+
+**Terrain:** A plateau rising northward: a southern lip at 2,000-2,500 m, climbing to 3,500-4,500 m
+in the interior. Treeless grassland with kurgans and gas-seep flames.
+
+**The wall:** Kheshkai's south face drops straight onto the floodplain, as Tibet's does onto Bengal,
+and runs the length of the floodplain. The upper face below the lip is fog-fed cloud forest; steppe
+begins a short way back from the edge. The wall proper, the high rain-catching face, ends at the
+floodplain's east edge. East of that, the margin above the southeastern lobe is lower and drier.
+Make the wall the sharpest colour break on the map.
+
+**Colour:** Olive to yellow-green grassland, a dark cloud-forest fringe along the wall's crest.
+
+**Named:**
+- **A-Tzalan Ford:** on the wall, where steppe comes down to delta. The most contested point on
+  the continent; mark it prominently.
+- **Volata-Xal** (Shipyard in the Dust): near A-Tzalan, the stranded Oravan catamarans.
+- **Zang-Kalli:** the mid-steppe caravanserai between A-Tzalan and Lam-Chen, on the Copper-for-Steel
+  treaty flow.
+- **Breath-of-Cloud:** at the wall's crest fringe near its western end, where the cloud forest gives
+  out into grass, above the neck. The one standing cross-civ sanctuary; give it a special symbol.
+- **Kha-Tepet** (Blood Mountain): a sacred peak; not marked on the schematic.
+
+### Ndjadi (SOUTH)
+
+**Position:** A long east-west alluvial trough along the foot of Kheshkai's wall, south and
+southeast of the Basin. It runs from the neck in the west to the low eastern divide against Irrah's
+southeastern lobe. Qollari is to its west, the southern rim to its south.
+
+**Terrain:** Dead flat, 0-50 m, falling about 50 m over roughly 1,000 km. Fans along the edges where
+the rivers come off the wall and off Qollari; channel belts, back-swamps and seasonal lakes between.
+Stone barays as geometric shapes. Rice and dense vegetation; mangrove at the delta.
+
+**Rivers:** Tributaries come off the wall (from the north), off Qollari (from the west) and off the
+southern rim's long landward face (from the south, flowing north). The trunk drains west along the
+wall's foot and north through the neck, then splits into five distributaries that fan northwest into
+the Basin at Ki-Mbuhari.
+
+**The neck:** Where the floodplain narrows against the wall near the delta's head, a day or two
+wide. Qollari's foothills face Kheshkai's lip across it. It floods every wet season.
+
+**Named:**
+- **Hassag-Nganin** (Five-Confluence): at the five braided mouths near the Basin shore, contested
+  religious site.
+- **Ki-Jenga:** an inland city, Mbu-Bwana's baray; not marked on the schematic.
+
+**Colour:** Lush green, with the channels prominent.
+
+### The southern rim
+
+A low, worn upland along the outer south and southeast coast, from Qollari's eastern foot to the
+frankincense escarpments: 300-900 m, rising to about 1,500 m at the escarpments. A short steep
+seaward face with quick rivers; a long gentle landward face draining north into the floodplain.
+Monsoon forest on the western seaward scarp; drier thorn and savanna in its lee.
+
+### Qollari (SOUTHWEST)
+
+**Position:** The C's southwestern arm, south of the Basin, between the western ocean and the
+floodplain. Its west coast faces Oravan's southern islands across open water. Its northeastern
+foothills run toward the neck and face Kheshkai's lip across it; the two uplands do not join.
+
+**Terrain:** Vertical. Cloud forest at 2,500-4,500 m in fog, every ledge terraced, carved cliff roads
+switchbacking down, observatories on the highest peaks, rope bridges over gorges.
+
+**Colour:** Dark cloud-forest greens fading to grey-brown high up; fog symbols at mid-altitude;
+terraces as horizontal lines.
+
+**Named:**
+- **Apu-Yana** (Black Mountain): an active volcano on Qollari's eastern flank, above the floodplain.
+- **Cliff roads**, three descents:
+  1. West, down to the ocean coast facing Oravan.
+  2. East, down through cloud forest to the floodplain and on to the Basin's south shore.
+  3. Northeast, past Apu-Yana toward the neck (dangerous, rarely used).
+- **Wasi-Puma** (House of the Lion): a fortified settlement from the Obsidian Blockade; not marked on
+  the schematic.
+
+### Oravan (WEST, ocean)
+
+**Position:** A volcanic chain in the western ocean, running north-south at about 12-26 N (spine
+table), from just off the Basin mouth down past Qollari's west coast. On the schematic its north end
+(Morina) sits a little north of the mouth. The schematic names Morina (north) and Arokar
+(south).
+
+**Terrain:** Volcanic islands with peaks to 3,000 m, lush lower slopes, narrow coastal strips, deep
+straits between islands, fringing reefs.
+
+**Named:**
+- **Halkar:** the port island nearest the straits; the main settlement.
+- **First Caldera:** a seawater-filled caldera on an inner island; pilgrimage symbol. Not marked on
+  the schematic.
+- **Kelata:** an obsidian-source island; resource symbol. Not marked on the schematic.
+
+**Colour:** Bright island greens on deep blue, smoke on one or two peaks, reef patterns.
+
+---
+
+## 4. Trade Routes (coloured paths)
+
+Five canonical routes (`economy/trade-routes.yaml`), each in its own colour or line style:
+
+1. **Aethelian Basin Hub** (thin white dashes): the clearing house. Ki-Mbuhari and the delta
+   distributaries to the rim ports, Tavakh-Qarat, Halani-Tamu and Dzong-Tamu.
+2. **Highland-Steppe Corridor** (dashed amber), an L. Leg 1: Ngaru-Bon down Lam-Chen onto the
+   steppe. Leg 2: across the steppe southwest along the lip, down off it at Breath-of-Cloud, across
+   the neck in the cool season, and up into Qollari's foothills.
+3. **Highland Relay** (dotted green): from the Qollari highlands down the cliff roads to Ki-Mbuhari,
+   with a branch along the southern shore to Veyd-Kirrha.
+4. **Coastal Monsoon** (wavy blue): Oravan through the Halkar Straits and round the Basin ports. On
+   water only.
+5. **Caravan Thread** (dotted gold): a three-hub network in the northern lobe. Hubs at Smith-Spring,
+   Qarat al-Fidda and Halani-Tamu, with tracks between.
+
+Two faint lines that are not routes:
+
+- **Copper-for-Steel treaty flow** (faint dashed brown): a treaty riding the Corridor's first leg.
+  Ngaru-Bon down Lam-Chen, across the steppe past Zang-Kalli, down the wall at A-Tzalan, and across
+  the floodplain toward the neck and the Basin's southeast margin.
+- **Frankincense crossing** (faint gold dots, labelled "cool season, 60 days"): Halani-Tamu south to
+  Khulut, then southeast across the floodplain on levee ground, over the eastern divide, into the
+  southeastern lobe to Tin-Aghiz, about 2,100-2,200 km. It never touches the Basin, it is not by
+  sea, and it does not run along the foot of the wall (wet, fly-ridden ground). Ndjadi ferries and
+  tolls on the channels it crosses give the Ndjadi a hand on it.
+
+Bonus: **Scribal Ladder pilgrimage** (thin dotted red): Ki-Mbuhari across the Basin to Halani-Tamu,
+then overland into Irrah to the necropolises.
+
+---
+
+## 5. Chokepoints (gate symbols)
+
+| Chokepoint | Where | What it controls |
 |---|---|---|
-| **Lam-Chen Pass** | Between Ngaru-Bon plateau and Kheshkai steppe (north-central) | Only exit from the plateau |
-| **A-Tzalan Ford** | Southern cliff edge of Kheshkai steppe, above Ndjadi delta | North-south overland spine |
-| **Qollari Cliff Roads** | Southwest — switchbacks descending from highlands | Highland-lowland access |
-| **Halkar Straits** | Western Basin mouth, between Oravan islands and mainland | All maritime Basin access |
-| **Smith-Spring** | Northern edge of Irrah desert, at base of Ngaru-Bon escarpment | Ngaru-Bon/Irrah frontier trade |
-| **Breath-of-Cloud** | Where Qollari cloud forest meets Kheshkai steppe (east of Qollari) | Kheshkai-Qollari border |
+| **Lam-Chen Pass** | East edge of Ngaru-Bon, down onto the Kheshkai steppe | The plateau's only road out |
+| **A-Tzalan Ford** | On Kheshkai's wall, where steppe comes down to the floodplain | The north-south overland crossing |
+| **Qollari Cliff Roads** | Qollari's northeastern and eastern descents toward the neck and floodplain | Highland-lowland access |
+| **Halkar Straits** | The Basin's western mouth | All maritime Basin access |
+| **Smith-Spring** | Northeast corner of Irrah's northern lobe, under the tsetse foothills | The Ngaru-Bon/Irrah frontier trade |
+| **Breath-of-Cloud** | Crest fringe of Kheshkai's wall above the neck, facing Qollari's foothills | The Kheshkai-Qollari crossing |
 
 ---
 
-## 6. Elevation Profile (mark with terrain shading)
+## 6. Elevation (terrain shading)
 
-The map should show elevation through terrain shading/coloring:
-
-| Zone | Elevation | Visual Treatment |
+| Zone | Elevation | Treatment |
 |---|---|---|
-| Ngaru-Bon | 4,000-6,000m | Snow-capped peaks, deep gorge shadows, cold gray-brown |
-| Qollari | 2,500-4,500m | Cloud forest greens, fog wisps, terraced slopes |
-| Kheshkai | 1,500-2,500m | Rolling grassland, olive-yellow, treeless |
-| Irrah | 0-1,500m | Sandy yellow, dune patterns, green oasis dots |
-| Oravan | 0-3,000m | Tropical island greens, volcanic peaks |
-| Ndjadi | 0-50m | Flat delta green, river channels, rice paddies |
-| Basin | 0 (sea level) | Pale blue-green water |
+| Ngaru-Bon | 1,200-2,000 m shelf / 3,500-4,800 m crown | Green-brown shelf; grey, snow-capped crown; gorge shadows |
+| Kheshkai | 2,000-2,500 m lip / 3,500-4,500 m interior | Olive-yellow grassland; cloud-forest fringe on the wall |
+| Qollari | 2,500-4,500 m | Cloud-forest greens, fog, terraces |
+| Oravan | 0-3,000 m | Tropical island greens, volcanic peaks |
+| Southern rim | 300-900 m, to about 1,500 m at the frankincense escarpments | Low worn hills; forest on the western scarp, thorn in the lee |
+| Irrah | 0-1,500 m | Sand and gravel, dune patterns, oasis dots |
+| Ndjadi | 0-50 m | Flat green, channels, paddies |
+| Basin | 0 | Pale blue-green |
 
-The dramatic cliff edge between Kheshkai steppe and Ndjadi delta should be visually obvious — a sharp color/elevation transition.
+The wall between Kheshkai and the floodplain must be the sharpest break on the map.
 
 ---
 
-## 7. Water Features
+## 7. Water and Wind
 
 **Rivers:**
-- Ndjadi river system: Multiple tributaries converging from north (Kheshkai escarpment) and west (Qollari cloud forest), then splitting into five distributaries that fan into the Basin at its south shore
-- Ngaru-Bon gorge rivers: Deep in the gorges, flowing south off the plateau
-- No major rivers in Irrah (wadis only — dry most of the year)
+- The Ndjadi system as in section 3: tributaries off the wall, off Qollari and off the rim, a trunk
+  draining west and north through the neck, five distributaries northwest into the Basin. It is a
+  Mekong-scale river, not a Ganges; do not draw it as the continent's giant. The tributaries crest
+  in high summer; the trunk and delta crest in mid-autumn.
+- Short, quick rivers down the southern rim's seaward face.
+- Ngaru-Bon gorge rivers, deep in their gorges, flowing south off the plateau.
+- No major rivers in Irrah; wadis only.
 
-**The Basin:** Semi-enclosed sea, pale blue-green. Wider in the center, narrowing to Halkar Straits at the western mouth.
+**Coasts and currents:** The frankincense coast is on the southeastern ocean, not the Basin. No
+cold current runs along Qollari's west face, so that windward coast is wet and green. A cool
+current runs south along the northern arm's outer coast.
 
-**Frankincense coast:** A separate coastline on the continent's southeastern edge, facing the open ocean (not the Basin). This is Irrah's second trade outlet.
-
-**Open ocean:** The entire western side of the map, beyond the Oravan archipelago. Mark with compass rose and wind/monsoon arrows (NW monsoon and SE trade winds).
-
----
-
-## 8. Legend Items
-
-The map legend should include:
-
-- **Civilization colors/borders** (6 colors, one per civ, with Irrah as a belt rather than a compact region)
-- **Basin port zones** (4 named: Ki-Mbuhari, Tavakh-Qarat, Halani-Tamu, Dzong-Tamu)
-- **Trade route types** (5 routes with distinct line styles)
-- **Chokepoint symbols** (6 named passes/straits/fords)
-- **Contested sacred sites** (Qhabal-Ur, Veyd-Kirrha, Smith-Spring, Hassag-Nganin, Breath-of-Cloud)
-- **Elevation bands** (color key from sea level to 6,000m)
-- **Tsetse belt** (biological barrier marker)
-- **Monsoon arrows** (seasonal wind directions)
-- **Oasis symbols** (for Irrah's 40+ oasis network)
-- **Mountain pass symbols** (for chokepoints)
-- **Scale bar** (in leagues or days-of-travel)
+**Wind arrows (open ocean and outer coasts only):**
+- Western ocean: southwest monsoon in summer, northeast monsoon in the cool season.
+- Southern and southeastern coasts: the summer monsoon onshore. Off the frankincense coast it runs
+  parallel to the shore toward the northeast, with a fog band.
+- None inside the Basin (see section 2).
 
 ---
 
-## 9. Spatial Relationships — Quick Reference Table
+## 8. Legend
 
-This table encodes every adjacency for artist reference:
+- Region colours (six; Irrah in two lobes)
+- Basin port zones (Ki-Mbuhari, Tavakh-Qarat, Halani-Tamu, Dzong-Tamu)
+- Trade routes (five), plus the Copper-for-Steel treaty flow and the frankincense crossing as faint
+  lines
+- Chokepoint symbols (six)
+- Contested sites (Qhabal-Ur, Veyd-Kirrha), the sacred confluence at Hassag-Nganin, and the
+  Breath-of-Cloud sanctuary
+- Elevation bands, sea level to 6,000 m
+- Tsetse foothills
+- Monsoon arrows (seasonal, open ocean and outer coasts)
+- Oasis symbols
+- Latitude grid, 10-34 N
+- Scale bar (km or days of travel)
 
-| From | Direction | To | Connection Type |
+---
+
+## 9. Spatial Relationships: Quick Reference
+
+| From | Direction | To | Connection |
 |---|---|---|---|
-| Ngaru-Bon | south | Irrah | Escarpment descent; Smith-Spring frontier |
-| Ngaru-Bon | south/southeast | Kheshkai | Lam-Chen Pass (only exit) |
-| Irrah | northeast | Kheshkai | Desert margin meets steppe grassland |
-| Irrah | south | Ndjadi | Thorn-steppe transitions to floodplain |
-| Irrah | west | Basin (east shore) | Caravan terminus at Halani-Tamu |
-| Irrah | southeast | Open ocean | Frankincense coast (second trade outlet) |
-| Kheshkai | south | Ndjadi | A-Tzalan Ford; cliff edge descends to delta |
-| Kheshkai | southwest | Qollari | Breath-of-Cloud sanctuary |
-| Ndjadi | south | Basin (south shore) | Delta mouth enters at Ki-Mbuhari |
-| Ndjadi | west | Qollari | Cliff roads descend to floodplains |
-| Qollari | west | Oravan coast | Cliff roads descend to coast |
-| Qollari | south/southeast | Basin (south rim) | Veyd-Kirrha (Ash-Oracle) |
-| Oravan | east | Basin | Halkar Straits (maritime) |
-| Basin | west | Open ocean | Mouth at Halkar Straits |
+| Ngaru-Bon | south | Irrah (northern lobe) | Tsetse foothills, then gravel plains; Smith-Spring |
+| Ngaru-Bon | east | Kheshkai | Lam-Chen Pass (only road out) |
+| Irrah (northern lobe) | east | Kheshkai (west flank) | Semiarid monsoon corridor; Tin Mashraq |
+| Irrah (northern lobe) | west | Basin (east shore) | Caravan terminus at Halani-Tamu |
+| Irrah (northern lobe) | south | Ndjadi | Reaches the delta's head at Khulut |
+| Kheshkai | south | Ndjadi | The wall; A-Tzalan Ford |
+| Kheshkai | southwest, across the neck | Qollari (foothills) | Breath-of-Cloud; the uplands do not join |
+| Kheshkai | south, east of the wall's end | Irrah (southeastern lobe) | A lower, drier margin |
+| Ndjadi | northwest | Basin (south shore) | Five distributaries at Ki-Mbuhari |
+| Ndjadi | east | Irrah (southeastern lobe) | Low eastern divide; the frankincense crossing |
+| Ndjadi | south | Southern rim, then ocean | Rim rivers drain north into the plain |
+| Ndjadi | west | Qollari | Cliff roads down to the floodplain |
+| Qollari | north, across the bight | Basin (south shore) | Open water; the coasts meet only at the neck |
+| Qollari | west | Open ocean, Oravan beyond | Cliff roads down to the coast |
+| Irrah (southeastern lobe) | southeast | Open ocean | Frankincense coast; Tin-Aghiz |
+| Oravan | east | Basin | Halkar Straits |
+| Basin | west | Open ocean | The mouth at Halkar |
 
 ---
 
-## 10. What This Map Does NOT Show
+## 10. What This Map Does Not Show
 
-- Individual buildings or city layouts (those are location-level, not continental)
-- Underground features (foggaras, mines) — except surface markers
-- Seasonal variations (the map shows the "average" state, not monsoon vs. dry season)
-- Political boundaries as hard lines (civ influence fades at edges; Irrah especially has no hard border — the desert grades into other terrain)
-- The lost fourth descendant shrine (location deliberately unspecified)
+- Buildings or city plans (location level, not continental)
+- Underground features (foggaras, mines), except surface markers
+- Seasonal states (the map shows an average, not flood or dry season)
+- Hard political borders (influence fades at the edges; Irrah especially has none)
+- The unmapped country north of Ngaru-Bon's crown and in Kheshkai's interior
+- The lost fourth descendant shrine (deliberately unplaced)
 
 ---
 
-## 11. Consistency Verification Checklist
+## 11. Consistency Checklist
 
-Before finalizing any map, verify:
-
-- [ ] Ngaru-Bon plateau is the highest terrain, visible at the north
-- [ ] Irrah desert belt runs east-west across the middle, not crammed into one corner
-- [ ] Kheshkai steppe is northeast, with clear cliff edge descending south to Ndjadi
-- [ ] Ndjadi delta is the lowest terrain (south), with five visible river channels entering Basin
-- [ ] Qollari highlands are southwest, with cliff roads visibly descending in 3 directions
-- [ ] Oravan archipelago is west of the Basin, beyond Halkar Straits, in open ocean
-- [ ] Basin has 4 port zones at south, north, east, and southeast shores
-- [ ] All 6 chokepoints are marked and spatially plausible
-- [ ] All 5 trade routes can be physically traced without crossing impossible terrain
-- [ ] Highland-Steppe Corridor forms an L-shape (not a straight east-west line)
-- [ ] Caravan Thread is a 3-hub network (not a single line)
-- [ ] Copper-for-Steel Road runs south-to-north through 2 chokepoints
-- [ ] Tsetse belt visible at base of Ngaru-Bon escarpment
-- [ ] Frankincense coast is on the SOUTHEAST, facing open ocean (not the Basin)
-- [ ] The C-shape opens westward; the Basin's mouth faces west
-- [ ] Scale feels Mediterranean, not planetary — civilizations are days/weeks apart, not months
+- [ ] North up; latitude grid 10-34 N; equator noted as south of the frame
+- [ ] The C opens west; the Basin is small and its mouth faces west
+- [ ] Ngaru-Bon is north-central, with the tsetse foothills at its south foot
+- [ ] Irrah is two lobes, not a belt: north lobe east of the Basin; southeastern lobe beyond the
+      eastern divide on the frankincense coast
+- [ ] Kheshkai holds the east and northeast; its wall runs the length of the floodplain and is the
+      sharpest break on the map; the wall proper ends at the floodplain's east edge
+- [ ] Ndjadi is a long trough under the wall, draining west and north through the neck, with five
+      distributaries into the Basin at Ki-Mbuhari
+- [ ] The neck is drawn, with Breath-of-Cloud above it and Qollari's foothills across it
+- [ ] The southern rim runs along the outer south coast
+- [ ] Qollari is the southwestern arm, south of the Basin across an ocean bight that reaches the
+      neck; Oravan lies west of it, not north
+- [ ] The northern arm carries Tavakh-Qarat and is not part of Ngaru-Bon
+- [ ] Oravan is a north-south chain in the western ocean, beyond the Halkar Straits
+- [ ] Four port zones at north, east, southeast and south shores
+- [ ] All six chokepoints are marked and plausible
+- [ ] Five routes traceable over possible terrain; the Corridor is an L crossing the neck; the Caravan
+      Thread is three hubs, not one line
+- [ ] Copper-for-Steel and the frankincense crossing are faint lines, not routes
+- [ ] The frankincense coast faces the southeastern ocean, not the Basin
+- [ ] No monsoon arrows inside the Basin

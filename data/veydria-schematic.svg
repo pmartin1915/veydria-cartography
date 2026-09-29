@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-  <title>Veydria Continental Schematic — Spatial Reference Map</title>
-  <desc>Geometrically accurate schematic derived from veydria-topology.yaml. Not a final art map — a reference for verifying spatial relationships. C-shaped continent, 6 civilizations, Aethelian Basin, 5 trade routes, 6 chokepoints.</desc>
+  <title>Veydria Continental Schematic: Spatial Reference Map</title>
+  <desc>Schematic derived from geography/continents/veydria-climate-spine.md, veydria-topology.yaml and geography/edges/. Not an art map: a reference for spatial relationships. C-shaped continent open to the west, six civilizations, the Aethelian Basin, five trade routes plus the Copper-for-Steel treaty flow.</desc>
 
   <defs>
     <!-- Terrain patterns -->
@@ -18,325 +18,221 @@
     <pattern id="forest" patternUnits="userSpaceOnUse" width="10" height="10">
       <circle cx="5" cy="5" r="2.5" fill="#2d6b3f" opacity="0.15"/>
     </pattern>
-
-    <!-- Route markers -->
-    <marker id="arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
-      <path d="M0 0 L6 2 L0 4 Z" fill="#555"/>
-    </marker>
+    <pattern id="tsetse" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#3f5a1f" stroke-width="1.2" opacity="0.7"/>
+    </pattern>
+    <pattern id="mountains2" patternUnits="userSpaceOnUse" width="14" height="11">
+      <path d="M0 11 L3.5 3 L7 11 M7 11 L10.5 2 L14 11" fill="none" stroke="#33281a" stroke-width="0.8" opacity="0.5"/>
+    </pattern>
+    <linearGradient id="crown" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="210">
+      <stop offset="0" stop-color="#4a3d2c"/>
+      <stop offset="0.4" stop-color="#6b5c46"/>
+      <stop offset="1" stop-color="#84745c"/>
+    </linearGradient>
+    <linearGradient id="fadeTop" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="92">
+      <stop offset="0" stop-color="#1a3a5c" stop-opacity="1"/>
+      <stop offset="0.35" stop-color="#1a3a5c" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#1a3a5c" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fadeEast" gradientUnits="userSpaceOnUse" x1="1030" y1="0" x2="1140" y2="0">
+      <stop offset="0" stop-color="#1a3a5c" stop-opacity="0"/>
+      <stop offset="1" stop-color="#1a3a5c" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="unmapped" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2534" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#1c2534" stop-opacity="0"/>
+    </linearGradient>
   </defs>
 
   <!-- Background: ocean -->
   <rect width="1200" height="800" fill="#1a3a5c"/>
+  <text x="62" y="300" fill="#2a5a8c" font-family="Georgia, serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.8">open ocean</text>
 
-  <!-- Open ocean label -->
-  <text x="120" y="400" fill="#2a5a8c" font-family="Georgia, serif" font-size="18" font-style="italic" opacity="0.6" transform="rotate(-90 120 400)">O P E N &#160; O C E A N</text>
+  <!-- ============ CONTINENTAL LANDMASS (C open to the west) ============ -->
+  <path d="M 268 255 C 258 240, 252 205, 252 165 C 253 130, 275 108, 330 104 C 420 98, 520 100, 600 96 L 600 90 C 612 60, 592 30, 604 0 L 1200 0 L 1200 400 L 1142 400 C 1142 440, 1132 470, 1105 500 C 1090 520, 1075 538, 1062 552 C 1045 572, 1018 588, 990 598 C 930 620, 850 640, 760 662 C 680 680, 560 696, 472 702 C 440 716, 380 722, 320 712 C 270 700, 235 668, 228 620 C 222 580, 240 552, 270 530 C 330 500, 390 455, 450 415 C 490 392, 530 384, 546 388 C 500 372, 430 355, 380 350 C 350 348, 325 335, 305 300 C 292 288, 280 282, 268 280 Z" fill="#c4a862" stroke="none"/>
+  <polygon points="268,255 300,254 318,246 328,218 362,207 400,197 460,194 520,197 575,199 601,218 600,210 600,96 520,100 420,98 330,106 288,116 264,138 254,165 256,215 264,242" fill="#9fae5a" opacity="0.4"/>
+  <text x="430" y="150" fill="#4e5a25" font-family="Georgia, serif" font-size="9" text-anchor="middle" font-style="italic">northern rim</text>
+  <path d="M 604 0 L 800 0 C 790 40, 812 80, 799 110 C 788 140, 810 165, 800 185 L 781 212 C 740 214, 660 206, 600 210 C 600 205, 596 195, 601 180 C 612 150, 590 120, 600 90 C 612 60, 592 30, 604 0 Z" fill="url(#crown)" opacity="0.92"/>
+  <path d="M 604 0 L 800 0 C 790 40, 812 80, 799 110 C 788 140, 810 165, 800 185 L 781 212 C 740 214, 660 206, 600 210 C 600 205, 596 195, 601 180 C 612 150, 590 120, 600 90 C 612 60, 592 30, 604 0 Z" fill="url(#mountains)" opacity="1"/>
+  <path d="M 604 0 L 800 0 C 790 40, 812 80, 799 110 C 788 140, 810 165, 800 185 L 781 212 C 740 214, 660 206, 600 210 C 600 205, 596 195, 601 180 C 612 150, 590 120, 600 90 C 612 60, 592 30, 604 0 Z" fill="url(#mountains2)" opacity="0.8"/>
+  <path d="M 604.0 0.0 L 599.4 -1.9 M 602.4 4.5 L 597.6 3.1 M 601.3 9.0 L 596.4 8.0 M 600.5 13.5 L 595.6 12.9 M 600.1 18.0 L 595.1 17.7 M 600.0 22.5 L 595.0 22.5 M 600.1 27.0 L 595.1 27.2 M 600.4 31.5 L 595.4 31.9 M 600.9 36.0 L 595.9 36.6 M 601.4 40.5 L 596.4 41.1 M 602.0 45.0 L 597.0 45.7 M 602.6 49.5 L 597.6 50.1 M 603.1 54.0 L 598.2 54.6 M 603.6 58.5 L 598.6 58.9 M 603.9 63.0 L 598.9 63.2 M 604.0 67.5 L 599.0 67.5 M 603.9 72.0 L 598.9 71.7 M 603.5 76.5 L 598.5 75.9 M 602.7 81.0 L 597.8 80.0 M 601.6 85.5 L 596.8 84.1 M 600.0 90.0 L 595.3 88.4 M 598.7 94.5 L 593.9 93.4 M 597.9 99.0 L 592.9 98.3 M 597.4 103.5 L 592.5 103.2 M 597.3 108.0 L 592.3 108.0 M 597.5 112.5 L 592.5 112.8 M 597.9 117.0 L 592.9 117.6 M 598.5 121.5 L 593.5 122.2 M 599.2 126.0 L 594.3 126.9 M 600.0 130.5 L 595.1 131.4 M 600.9 135.0 L 596.0 135.9 M 601.7 139.5 L 596.8 140.4 M 602.5 144.0 L 597.6 144.8 M 603.2 148.5 L 598.3 149.2 M 603.7 153.0 L 598.8 153.5 M 604.1 157.5 L 599.1 157.7 M 604.2 162.0 L 599.2 161.9 M 603.9 166.5 L 599.0 166.1 M 603.4 171.0 L 598.4 170.2 M 602.4 175.5 L 597.6 174.2 M 601.0 180.0 L 596.3 178.4 M 600.3 182.2 L 595.5 180.8 M 599.8 184.4 L 594.9 183.2 M 599.3 186.4 L 594.4 185.5 M 599.0 188.4 L 594.0 187.7 M 598.7 190.3 L 593.8 189.8 M 598.6 192.1 L 593.6 191.8 M 598.5 193.9 L 593.5 193.8 M 598.5 195.6 L 593.5 195.7 M 598.5 197.2 L 593.5 197.4 M 598.6 198.8 L 593.6 199.1 M 598.8 200.2 L 593.8 200.7 M 598.9 201.6 L 594.0 202.2 M 599.1 202.9 L 594.1 203.6 M 599.3 204.1 L 594.3 204.9 M 599.5 205.3 L 594.5 206.1 M 599.6 206.4 L 594.7 207.2 M 599.8 207.4 L 594.8 208.1 M 599.9 208.4 L 594.9 208.9 M 600.0 209.2 L 595.0 209.5" fill="none" stroke="#3a2e20" stroke-width="0.9" opacity="0.6"/>
+  <path d="M 604 0 C 592 30, 612 60, 600 90 C 590 120, 612 150, 601 180 C 596 195, 600 205, 600 210" fill="none" stroke="#3a2e20" stroke-width="1.1" opacity="0.7"/>
+  <path d="M 800 0 C 790 40, 812 80, 799 110 C 788 140, 810 165, 800 185" fill="none" stroke="#5a4a35" stroke-width="0.9" stroke-dasharray="5,2" opacity="0.7"/>
+  <path d="M 800 0 L 1142 0 L 1142 417 C 1050 422, 960 421, 905 418 L 850 413 L 780 410 L 700 405 L 640 395 L 577 384 L 605 361 L 660 330 L 745 262 L 800 185 C 810 165, 788 140, 799 110 C 812 80, 790 40, 800 0 Z" fill="#a8b86a" opacity="0.55"/>
+  <path d="M 800 0 L 1142 0 L 1142 417 C 1050 422, 960 421, 905 418 L 850 413 L 780 410 L 700 405 L 640 395 L 577 384 L 605 361 L 660 330 L 745 262 L 800 185 C 810 165, 788 140, 799 110 C 812 80, 790 40, 800 0 Z" fill="url(#steppe)"/>
+  <path d="M 800 0 L 1142 0 L 1142 417 C 1050 422, 960 421, 905 418 L 850 413 L 780 410 L 700 405 L 640 395 L 577 384 L 605 361 L 660 330 L 745 262 L 800 185 C 810 165, 788 140, 799 110 C 812 80, 790 40, 800 0 Z" fill="url(#mountains)" opacity="0.5"/>
+  <polygon points="600,210 781,212 745,262 660,330 606,361 600,338" fill="#d4a854" opacity="0.6"/>
+  <polygon points="600,210 781,212 745,262 660,330 606,361 600,338" fill="url(#dunes)"/>
+  <path d="M 905 418 C 960 421, 1050 422, 1142 417 C 1140 450, 1130 475, 1105 500 C 1090 520, 1075 538, 1062 552 C 1053.3 553.8, 1027.0 560.5, 1010 563 C 993.0 565.5, 975.8 567.5, 960 567 C 944.2 566.5, 925.5 564.5, 915 560 C 904.5 555.5, 899.5 550.0, 897 540 C 894.5 530.0, 898.7 515.0, 900 500 C 901.3 485.0, 904.2 463.7, 905 450 C 905.8 436.3, 905.0 423.3, 905 418 Z" fill="#dcc584" opacity="0.6"/>
+  <path d="M 905 418 C 960 421, 1050 422, 1142 417 C 1140 450, 1130 475, 1105 500 C 1090 520, 1075 538, 1062 552 C 1053.3 553.8, 1027.0 560.5, 1010 563 C 993.0 565.5, 975.8 567.5, 960 567 C 944.2 566.5, 925.5 564.5, 915 560 C 904.5 555.5, 899.5 550.0, 897 540 C 894.5 530.0, 898.7 515.0, 900 500 C 901.3 485.0, 904.2 463.7, 905 450 C 905.8 436.3, 905.0 423.3, 905 418 Z" fill="url(#dunes)" opacity="0.6"/>
+  <path d="M 905 418 C 960 421, 1050 422, 1142 417 C 1140 450, 1130 475, 1105 500 C 1090 520, 1075 538, 1062 552 C 1053.3 553.8, 1027.0 560.5, 1010 563 C 993.0 565.5, 975.8 567.5, 960 567 C 944.2 566.5, 925.5 564.5, 915 560 C 904.5 555.5, 899.5 550.0, 897 540 C 894.5 530.0, 898.7 515.0, 900 500 C 901.3 485.0, 904.2 463.7, 905 450 C 905.8 436.3, 905.0 423.3, 905 418 Z" fill="url(#steppe)" opacity="0.8"/>
+  <polygon points="468,596 520,593 600,597 700,597 800,592 880,580 895,545 910,562 960,568 1010,563 1062,552 1045,572 1018,588 990,598 930,620 850,640 760,662 680,680 560,696 472,702 470,650" fill="#8b7355" opacity="0.28"/>
+  <path d="M 418 338 L 580 332 L 600 338 L 606 361 L 577 384 L 640 395 L 700 405 L 780 410 C 791.7 410.5, 829.2 411.5, 850 413 C 870.8 414.5, 895.3 412.8, 905 419 C 914.7 425.2, 908.5 436.5, 908 450 C 907.5 463.5, 904.0 484.2, 902 500 C 900.0 515.8, 899.7 531.7, 896 545 C 892.3 558.3, 896.0 572.2, 880 580 C 864.0 587.8, 830.0 589.2, 800 592 C 770.0 594.8, 733.3 596.2, 700 597 C 666.7 597.8, 630.0 597.7, 600 597 C 570.0 596.3, 541.7 594.5, 520 593 C 498.3 591.5, 478.7 596.8, 470 588 C 461.3 579.2, 468.3 548.0, 468 540 L 482 490 L 505 445 L 522 418 L 535 402 L 546 388 C 500 372, 430 355, 418 352 Z" fill="#3a8a3a" opacity="0.55"/>
+  <path d="M 546 388 L 535 402 L 522 418 L 505 445 L 482 490 L 468 540 L 468 600 L 470 650 L 472 702 C 440 716, 380 722, 320 712 C 270 700, 235 668, 228 620 C 222 580, 240 552, 270 530 C 330 500, 390 455, 450 415 C 490 392, 530 384, 546 388 Z" fill="#2d6b3f" opacity="0.72"/>
+  <path d="M 546 388 L 535 402 L 522 418 L 505 445 L 482 490 L 468 540 L 468 600 L 470 650 L 472 702 C 440 716, 380 722, 320 712 C 270 700, 235 668, 228 620 C 222 580, 240 552, 270 530 C 330 500, 390 455, 450 415 C 490 392, 530 384, 546 388 Z" fill="url(#forest)" opacity="2"/>
+  <path d="M 546 388 L 535 402 L 522 418 L 505 445 L 482 490 L 468 540 L 468 600 L 470 650 L 472 702 C 440 716, 380 722, 320 712 C 270 700, 235 668, 228 620 C 222 580, 240 552, 270 530 C 330 500, 390 455, 450 415 C 490 392, 530 384, 546 388 Z" fill="url(#forest)"/>
+  <path d="M 268 255 C 258 240, 252 205, 252 165 C 253 130, 275 108, 330 104 C 420 98, 520 100, 600 96 L 600 90 C 612 60, 592 30, 604 0" fill="none" stroke="#8b7355" stroke-width="2"/>
+  <path d="M 1142 400 C 1142 440, 1132 470, 1105 500 C 1090 520, 1075 538, 1062 552 C 1045 572, 1018 588, 990 598 C 930 620, 850 640, 760 662 C 680 680, 560 696, 472 702 C 440 716, 380 722, 320 712 C 270 700, 235 668, 228 620 C 222 580, 240 552, 270 530 C 330 500, 390 455, 450 415 C 490 392, 530 384, 546 388 C 500 372, 430 355, 380 350 C 350 348, 325 335, 305 300 C 292 288, 280 282, 268 280" fill="none" stroke="#8b7355" stroke-width="2"/>
+  <!-- ============ AETHELIAN BASIN ============ -->
+  <path d="M 268 254 L 300 254 C 318 246, 328 218, 362 207 C 400 197, 460 194, 520 197 C 575 199, 601 218, 601 245 L 601 296 C 601 315, 592 326, 574 330 C 545 337, 500 339, 460 339 C 420 339, 390 337, 362 330 C 335 322, 320 292, 300 281 L 268 280 Z" fill="#3a7ca5" stroke="none"/>
+  <path d="M 268 255 L 300 254 C 318 246, 328 218, 362 207 C 400 197, 460 194, 520 197 C 575 199, 601 218, 601 245 L 601 296 C 601 315, 592 326, 574 330 C 545 337, 500 339, 460 339 C 420 339, 390 337, 362 330 C 335 322, 320 292, 300 281 L 268 280" fill="none" stroke="#2a5a8c" stroke-width="1.5"/>
+  <text x="392" y="293" fill="#d6ecfa" font-family="Georgia, serif" font-size="9" text-anchor="middle" font-style="italic" opacity="0.85">A E T H E L I A N</text>
+  <text x="392" y="305" fill="#d6ecfa" font-family="Georgia, serif" font-size="9" text-anchor="middle" font-style="italic" opacity="0.85">B A S I N</text>
+  <line x1="283" y1="255" x2="283" y2="280" stroke="#d6ecfa" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="296" y="304" fill="#fff" font-family="Georgia, serif" font-size="7" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Halkar Straits</text>
+  <polygon points="610,208 780,209 780,218 610,218" fill="url(#tsetse)"/>
+  <text x="695" y="205" fill="#c9d9a0" font-family="Georgia, serif" font-size="5.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">tsetse foothills</text>
+  <!-- ============ TERRAIN LABELS ============ -->
+  <text x="700" y="100" fill="#fff" font-family="Georgia, serif" font-size="13" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">N G A R U - B O N</text>
+  <text x="700" y="113" fill="#eee" font-family="Georgia, serif" font-size="8" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >shelf 1,200-2,000 m · crown to 4,800 m</text>
+  <rect x="585" y="0" width="615" height="92" fill="url(#fadeTop)"/>
+  <rect x="1030" y="0" width="170" height="420" fill="url(#fadeEast)"/>
+  <text x="700" y="64" fill="#aab4c4" font-family="Georgia, serif" font-size="8" text-anchor="middle" font-style="italic">unmapped</text>
+  <text x="1000" y="64" fill="#aab4c4" font-family="Georgia, serif" font-size="8" text-anchor="middle" font-style="italic">unmapped interior</text>
+  <text x="1168" y="240" fill="#aab4c4" font-family="Georgia, serif" font-size="8" font-style="italic" text-anchor="middle" transform="rotate(90 1168 240)">unmapped</text>
+  <text x="985" y="215" fill="#3f4d20" font-family="Georgia, serif" font-size="13" text-anchor="middle" font-weight="bold">KHESHKAI PLATEAU</text>
+  <text x="985" y="229" fill="#3f4d20" font-family="Georgia, serif" font-size="8" text-anchor="middle" >lip 2,000-2,500 m · interior 3,500-4,500 m</text>
+  <text x="646" y="300" fill="#7a5a10" font-family="Georgia, serif" font-size="12" text-anchor="middle" font-weight="bold">I R R A H</text>
+  <text x="1015" y="480" fill="#7a5a10" font-family="Georgia, serif" font-size="12" text-anchor="middle" font-weight="bold">IRRAH (south-east)</text>
+  <text x="1015" y="493" fill="#7a5a10" font-family="Georgia, serif" font-size="8" text-anchor="middle" font-style="italic">thorn-steppe</text>
+  <text x="680" y="545" fill="#0f4a0f" font-family="Georgia, serif" font-size="11" text-anchor="middle" font-weight="bold">N D J A D I&#160;&#160;&#160;F L O O D P L A I N</text>
+  <text x="680" y="558" fill="#0f4a0f" font-family="Georgia, serif" font-size="9" text-anchor="middle" >(0-50 m)</text>
+  <text x="345" y="634" fill="#fff" font-family="Georgia, serif" font-size="11" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">QOLLARI HIGHLANDS</text>
+  <text x="345" y="647" fill="#cfc" font-family="Georgia, serif" font-size="8" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >2,500-4,500 m</text>
+  <text x="732" y="640" fill="#4a3418" font-family="Georgia, serif" font-size="8" text-anchor="middle" font-style="italic" transform="rotate(-10 732 640)">southern rim (300-900 m)</text>
+  <text x="548" y="402" fill="#fff" font-family="Georgia, serif" font-size="5.5" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">the neck</text>
+  <polyline points="577,384 640,395 700,405 780,410 850,413 905,418" fill="none" stroke="#4a2e12" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 905 418 C 960 421, 1050 422, 1142 417" fill="none" stroke="#4a2e12" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 581.5 386.3 L 580.3 393.2 M 590.5 387.9 L 589.3 394.8 M 599.5 389.4 L 598.3 396.3 M 608.5 391.0 L 607.3 397.9 M 617.5 392.6 L 616.3 399.5 M 626.5 394.1 L 625.3 401.0 M 635.5 395.7 L 634.3 402.6 M 645.0 397.3 L 643.8 404.2 M 655.0 399.0 L 653.8 405.9 M 665.0 400.7 L 663.8 407.6 M 675.0 402.3 L 673.8 409.2 M 685.0 404.0 L 683.8 410.9 M 695.0 405.7 L 693.8 412.6 M 705.0 406.8 L 704.6 413.8 M 715.0 407.4 L 714.6 414.4 M 725.0 408.1 L 724.6 415.0 M 735.0 408.7 L 734.6 415.7 M 745.0 409.3 L 744.6 416.3 M 755.0 409.9 L 754.6 416.9 M 765.0 410.6 L 764.6 417.5 M 775.0 411.2 L 774.6 418.2 M 785.0 411.7 L 784.7 418.7 M 795.0 412.1 L 794.7 419.1 M 805.0 412.6 L 804.7 419.6 M 815.0 413.0 L 814.7 420.0 M 825.0 413.4 L 824.7 420.4 M 835.0 413.9 L 834.7 420.9 M 845.0 414.3 L 844.7 421.3 M 854.6 414.9 L 853.9 421.9 M 863.8 415.8 L 863.1 422.7 M 872.9 416.6 L 872.3 423.6 M 882.1 417.4 L 881.5 424.2 M 891.2 418.2 L 890.7 424.3 M 900.4 419.1 L 899.9 424.5" fill="none" stroke="#4a2e12" stroke-width="1.2"/>
+  <polyline points="470,655 560,646 640,637 700,628 780,617 850,605 940,581 1010,562" fill="none" stroke="#6b4c2a" stroke-width="1.4" opacity="0.8"/>
+  <path d="M 473.8 654.6 L 474.1 658.6 M 481.2 653.9 L 481.6 657.9 M 488.8 653.1 L 489.1 657.1 M 496.2 652.4 L 496.6 656.4 M 503.8 651.6 L 504.1 655.6 M 511.2 650.9 L 511.6 654.9 M 518.8 650.1 L 519.1 654.1 M 526.2 649.4 L 526.6 653.4 M 533.8 648.6 L 534.1 652.6 M 541.2 647.9 L 541.6 651.9 M 548.8 647.1 L 549.1 651.1 M 556.2 646.4 L 556.6 650.4 M 563.6 645.6 L 564.1 649.6 M 570.9 644.8 L 571.4 648.7 M 578.2 644.0 L 578.6 647.9 M 585.5 643.1 L 585.9 647.1 M 592.7 642.3 L 593.2 646.3 M 600.0 641.5 L 600.4 645.5 M 607.3 640.7 L 607.7 644.7 M 614.5 639.9 L 615.0 643.8 M 621.8 639.0 L 622.3 643.0 M 629.1 638.2 L 629.5 642.2 M 636.4 637.4 L 636.8 641.4 M 643.8 636.4 L 644.3 640.4 M 651.2 635.3 L 651.8 639.3 M 658.8 634.2 L 659.3 638.1 M 666.2 633.1 L 666.8 637.0 M 673.8 631.9 L 674.3 635.9 M 681.2 630.8 L 681.8 634.8 M 688.8 629.7 L 689.3 633.6 M 696.2 628.6 L 696.8 632.5 M 703.6 627.5 L 704.2 631.5 M 710.9 626.5 L 711.5 630.5 M 718.2 625.5 L 718.7 629.5 M 725.5 624.5 L 726.0 628.5 M 732.7 623.5 L 733.3 627.5 M 740.0 622.5 L 740.5 626.5 M 747.3 621.5 L 747.8 625.5 M 754.5 620.5 L 755.1 624.5 M 761.8 619.5 L 762.4 623.5 M 769.1 618.5 L 769.6 622.5 M 776.4 617.5 L 776.9 621.5 M 783.5 616.4 L 784.2 620.3 M 790.5 615.2 L 791.2 619.1 M 797.5 614.0 L 798.2 617.9 M 804.5 612.8 L 805.2 616.7 M 811.5 611.6 L 812.2 615.5 M 818.5 610.4 L 819.2 614.3 M 825.5 609.2 L 826.2 613.1 M 832.5 608.0 L 833.2 611.9 M 839.5 606.8 L 840.2 610.7 M 846.5 605.6 L 847.2 609.5 M 853.5 604.1 L 854.5 607.9 M 860.4 602.2 L 861.4 606.1 M 867.3 600.4 L 868.3 604.2 M 874.2 598.5 L 875.3 602.4 M 881.2 596.7 L 882.2 600.6 M 888.1 594.8 L 889.1 598.7 M 895.0 593.0 L 896.0 596.9 M 901.9 591.2 L 903.0 595.0 M 908.8 589.3 L 909.9 593.2 M 915.8 587.5 L 916.8 591.3 M 922.7 585.6 L 923.7 589.5 M 929.6 583.8 L 930.6 587.6 M 936.5 581.9 L 937.6 585.8 M 943.5 580.0 L 944.5 583.9 M 950.5 578.1 L 951.5 582.0 M 957.5 576.2 L 958.5 580.1 M 964.5 574.4 L 965.5 578.2 M 971.5 572.5 L 972.5 576.3 M 978.5 570.5 L 979.5 574.4 M 985.5 568.6 L 986.5 572.5 M 992.5 566.8 L 993.5 570.6 M 999.5 564.9 L 1000.5 568.7 M 1006.5 563.0 L 1007.5 566.8" fill="none" stroke="#6b4c2a" stroke-width="0.7" opacity="0.7"/>
+  <!-- ============ LATITUDE GRID ============ -->
+  <line x1="0" y1="80" x2="1200" y2="80" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="77" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">34N</text>
+  <line x1="0" y1="187" x2="1200" y2="187" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="184" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">30N</text>
+  <line x1="0" y1="294" x2="1200" y2="294" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="291" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">26N</text>
+  <line x1="0" y1="400" x2="1200" y2="400" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="397" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">22N</text>
+  <line x1="0" y1="507" x2="1200" y2="507" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="504" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">18N</text>
+  <line x1="0" y1="614" x2="1200" y2="614" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="611" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">14N</text>
+  <line x1="0" y1="721" x2="1200" y2="721" stroke="#fff" stroke-width="0.6" stroke-dasharray="3,5" opacity="0.14"/>
+  <text x="1194" y="718" fill="#9fc0dd" font-family="Georgia, serif" font-size="7" text-anchor="end" opacity="0.6">10N</text>
+  <!-- ============ NDJADI RIVERS (flow north to the neck, then five distributaries NW) ============ -->
+  <path d="M 468 505 C 520 500, 550 450, 558 388" fill="none" stroke="#4a8ab0" stroke-width="1.4" opacity="0.85"/>
+  <path d="M 520 592 C 520 520, 545 450, 556 388" fill="none" stroke="#4a8ab0" stroke-width="1.4" opacity="0.85"/>
+  <path d="M 800 592 C 790 520, 650 470, 572 392" fill="none" stroke="#4a8ab0" stroke-width="1.4" opacity="0.85"/>
+  <path d="M 700 405 C 690 440, 620 430, 566 390" fill="none" stroke="#4a8ab0" stroke-width="1.4" opacity="0.85"/>
+  <path d="M 830 413 C 800 460, 700 440, 640 428 C 610 420, 588 402, 574 388" fill="none" stroke="#4a8ab0" stroke-width="1.4" opacity="0.85"/>
+  <g transform="translate(533.8,461.4) rotate(-58.0)"><path d="M 4.5 0 L -4.5 -3.15 L -4.5 3.15 Z" fill="#9fd0ee" stroke="#0e1c2c" stroke-width="0.4"/></g>
+  <g transform="translate(536.2,476.0) rotate(-77.0)"><path d="M 4.5 0 L -4.5 -3.15 L -4.5 3.15 Z" fill="#9fd0ee" stroke="#0e1c2c" stroke-width="0.4"/></g>
+  <g transform="translate(697.5,484.8) rotate(-146.5)"><path d="M 4.5 0 L -4.5 -3.15 L -4.5 3.15 Z" fill="#9fd0ee" stroke="#0e1c2c" stroke-width="0.4"/></g>
+  <path d="M 560 380 C 550 364, 439 352, 425 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 472 352, 458 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 504 352, 490 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 539 352, 525 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 570 352, 556 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <circle cx="500" cy="352" r="1" fill="#e6f4ff"/>
+  <line x1="500" y1="352" x2="463" y2="376" stroke="#e6f4ff" stroke-width="0.5" opacity="0.8"/>
+  <text x="445" y="384" fill="#e6f4ff" font-family="Georgia, serif" font-size="5.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Hassag-Nganin</text>
+  <!-- ============ ORAVAN ARCHIPELAGO ============ -->
+  <path d="M 161.2 217.2 C 161.5 219.4, 161.8 223.6, 159.9 225.4 C 158.0 227.3, 153.2 228.3, 149.6 228.4 C 146.1 228.4, 140.7 227.4, 138.7 225.7 C 136.8 223.9, 137.3 220.3, 137.7 218.0 C 138.1 215.8, 139.4 213.8, 141.3 212.1 C 143.2 210.5, 146.5 208.2, 149.3 208.2 C 152.1 208.2, 156.1 210.7, 158.1 212.2 C 160.1 213.7, 160.9 215.0, 161.2 217.2 Z" fill="#6aba6a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 234.1 273.1 C 233.5 276.8, 228.5 280.1, 224.7 282.5 C 220.9 284.8, 215.9 287.2, 211.4 287.2 C 206.9 287.1, 200.7 285.0, 197.7 282.2 C 194.7 279.4, 193.5 274.1, 193.3 270.4 C 193.0 266.7, 192.6 262.9, 196.2 260.2 C 199.7 257.5, 209.3 254.3, 214.7 254.3 C 220.2 254.3, 225.5 257.0, 228.8 260.1 C 232.0 263.2, 234.8 269.3, 234.1 273.1 Z" fill="#4a9a4a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 183.5 329.5 C 183.4 332.4, 179.6 337.3, 176.7 339.3 C 173.9 341.2, 169.9 341.4, 166.3 341.1 C 162.7 340.8, 158.2 339.5, 155.2 337.5 C 152.1 335.6, 147.7 331.9, 147.9 329.4 C 148.0 326.9, 153.1 324.6, 156.0 322.5 C 158.8 320.3, 161.7 316.5, 165.2 316.4 C 168.7 316.3, 173.9 319.6, 177.0 321.8 C 180.0 324.0, 183.5 326.6, 183.5 329.5 Z" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 160.0 400.1 C 159.6 407.0, 154.6 413.5, 150.6 417.4 C 146.7 421.3, 140.6 423.4, 136.4 423.6 C 132.2 423.8, 128.9 421.9, 125.6 418.4 C 122.2 415.0, 116.4 408.4, 116.3 402.7 C 116.2 397.0, 121.8 388.9, 125.1 384.0 C 128.4 379.1, 131.5 374.7, 136.2 373.5 C 140.9 372.2, 149.4 372.0, 153.3 376.4 C 157.3 380.8, 160.5 393.3, 160.0 400.1 Z" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 198.9 472.7 C 198.6 480.3, 195.5 489.7, 190.6 495.2 C 185.6 500.7, 175.0 506.2, 169.1 505.6 C 163.3 505.0, 160.6 498.1, 155.6 491.8 C 150.5 485.4, 139.3 475.5, 138.9 467.6 C 138.4 459.6, 147.6 449.0, 152.8 444.0 C 158.0 439.0, 163.7 436.7, 170.2 437.6 C 176.8 438.5, 187.5 443.5, 192.2 449.4 C 197.0 455.2, 199.1 465.1, 198.9 472.7 Z" fill="#4a9a4a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 158.0 539.6 C 159.0 544.7, 159.5 551.6, 156.2 555.3 C 152.9 559.0, 143.9 561.4, 138.2 561.9 C 132.5 562.3, 124.7 561.6, 122.2 558.1 C 119.7 554.6, 122.6 546.9, 123.2 540.8 C 123.9 534.7, 123.0 525.6, 126.0 521.3 C 129.0 517.1, 136.9 514.9, 141.0 515.4 C 145.1 515.9, 147.6 520.3, 150.4 524.3 C 153.2 528.4, 157.0 534.4, 158.0 539.6 Z" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 193.5 598.1 C 193.4 600.7, 190.6 603.8, 188.0 606.2 C 185.3 608.5, 181.3 611.8, 177.9 612.1 C 174.4 612.3, 169.9 610.2, 167.3 607.6 C 164.7 605.0, 162.4 599.5, 162.1 596.4 C 161.9 593.4, 163.3 590.7, 165.7 589.2 C 168.1 587.7, 172.7 587.2, 176.6 587.4 C 180.5 587.6, 186.2 588.5, 189.0 590.3 C 191.8 592.1, 193.7 595.4, 193.5 598.1 Z" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <path d="M 159.0 634.6 C 159.2 636.6, 157.9 638.5, 155.9 639.7 C 154.0 640.9, 150.0 641.7, 147.2 641.6 C 144.4 641.5, 140.5 640.5, 139.1 639.2 C 137.7 638.0, 138.1 635.7, 138.5 633.9 C 139.0 632.0, 140.7 629.9, 142.1 628.3 C 143.4 626.8, 144.7 624.6, 146.8 624.4 C 148.9 624.3, 152.8 626.0, 154.8 627.7 C 156.9 629.4, 158.8 632.6, 159.0 634.6 Z" fill="#6aba6a" stroke="#3a7a3a" stroke-width="1.2"/>
+  <text x="92" y="440" fill="#dff5df" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle" transform="rotate(-90 92 440)" letter-spacing="1">ORAVAN ARCHIPELAGO</text>
+  <path d="M 167 462 L 172 450 L 177 462" fill="none" stroke="#c44" stroke-width="1.5"/>
+  <circle cx="172" cy="448" r="2" fill="#f84" opacity="0.7"/>
+  <path d="M 135 546 L 140 536 L 145 546" fill="none" stroke="#c44" stroke-width="1.2"/>
+  <circle cx="140" cy="534" r="1.6" fill="#f84" opacity="0.7"/>
+  <text x="150" y="203" fill="#dff5df" font-family="Georgia, serif" font-size="6" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Morina</text>
+  <text x="163" y="650" fill="#dff5df" font-family="Georgia, serif" font-size="6" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Arokar</text>
+  <!-- ============ TRADE ROUTES ============ -->
+  <!-- Copper-for-Steel treaty flow (faint) -->
+  <path d="M 540 362 C 570 395, 640 412, 700 405 C 760 398, 800 350, 790 300 C 785 260, 800 220, 800 185 C 780 165, 750 150, 715 142" fill="none" stroke="#8b5e3c" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.5"/>
+  <!-- Sea outlet (faint, unruled) -->
+  <path d="M 600 340 L 594 358 C 580 385, 590 420, 640 460 C 740 510, 920 520, 1060 548" fill="none" stroke="#d4a854" stroke-width="1" stroke-dasharray="1,3" opacity="0.6"/>
+  <text x="830" y="527" fill="#f0dca0" font-family="Georgia, serif" font-size="6" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">frankincense crossing, cool season, 60 days</text>
+  <!-- Highland-Steppe Corridor -->
+  <path d="M 700 160 C 745 165, 775 175, 800 185 C 830 200, 850 230, 860 260" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>
+  <path d="M 860 260 C 800 300, 720 350, 640 372 C 615 378, 600 380, 585 380 C 570 384, 555 392, 540 402 C 530 410, 525 415, 520 421" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>
+  <!-- Highland Relay -->
+  <path d="M 350 625 C 380 560, 420 500, 470 445 C 500 412, 520 395, 540 388 C 520 372, 495 352, 480 340" fill="none" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5" opacity="0.9"/>
+  <path d="M 485 344 C 455 348, 420 345, 395 335" fill="none" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5" opacity="0.9"/>
+  <!-- Coastal Monsoon -->
+  <path d="M 215 270 C 240 270, 260 269, 283 267 C 295 265, 305 263, 315 262 C 345 248, 375 225, 400 200 C 450 203, 520 208, 560 218 C 585 226, 598 245, 598 262 C 598 285, 588 305, 572 322 C 545 330, 510 336, 480 338" fill="none" stroke="#4a8ab0" stroke-width="2.5" stroke-dasharray="8,2,2,2" opacity="0.9"/>
+  <!-- Aethelian Basin Hub (NEW) -->
+  <path d="M 400 200 L 598 262 L 572 322 L 480 338 L 450 265 Z" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="3,3" opacity="0.85"/>
+  <path d="M 480 338 C 495 352, 520 366, 558 380" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="3,3" opacity="0.85"/>
+  <!-- Caravan Thread -->
+  <path d="M 735 222 L 618 222" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.9"/>
+  <path d="M 690 222 C 690 245, 675 258, 665 272" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.9"/>
+  <path d="M 618 222 C 625 245, 650 262, 665 272" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.9"/>
+  <path d="M 665 272 C 640 270, 620 266, 598 262" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.9"/>
+  <path d="M 725 265 L 665 272" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.9"/>
+  <!-- ============ BASIN PORT ZONES ============ -->
+  <circle cx="400" cy="200" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="400" y="188" fill="#e8c840" font-family="Georgia, serif" font-size="9" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Tavakh-Qarat</text>
+  <circle cx="598" cy="262" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="608" y="254" fill="#e8c840" font-family="Georgia, serif" font-size="9" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Halani-Tamu</text>
+  <circle cx="480" cy="338" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="470" y="326" fill="#e8c840" font-family="Georgia, serif" font-size="9" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Ki-Mbuhari</text>
+  <circle cx="572" cy="322" r="5" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="563" y="316" fill="#e8c840" font-family="Georgia, serif" font-size="8" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Dzong-Tamu</text>
+  <circle cx="1060" cy="548" r="4" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
+  <text x="1052" y="546" fill="#e8c840" font-family="Georgia, serif" font-size="8" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Tin-Aghiz</text>
+  <circle cx="315" cy="262" r="2.5" fill="#e8c840" stroke="#8b6914" stroke-width="1"/>
+  <text x="315" y="256" fill="#e8c840" font-family="Georgia, serif" font-size="5.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Tavakh-Rubat</text>
+  <circle cx="215" cy="270" r="4.5" fill="#e8c840" stroke="#fff" stroke-width="1.3"/>
+  <text x="215" y="254" fill="#fff" font-family="Georgia, serif" font-size="8" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-weight="bold">Halkar</text>
+  <rect x="446" y="261" width="8" height="8" fill="none" stroke="#fff" stroke-width="1" transform="rotate(45 450 265)"/>
+  <text x="462" y="268" fill="#adf" font-family="Georgia, serif" font-size="7" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Qhabal-Ur</text>
+  <path d="M 392 338 L 395 330 L 398 338" fill="none" stroke="#f84" stroke-width="1.2"/>
+  <line x1="394" y1="339" x2="388" y2="355" stroke="#f84" stroke-width="0.5" opacity="0.8"/>
+  <text x="388" y="363" fill="#f84" font-family="Georgia, serif" font-size="7" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Veyd-Kirrha</text>
+  <!-- ============ CHOKEPOINTS ============ -->
+  <circle cx="800" cy="185" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="796" y1="185" x2="804" y2="185" stroke="#f44" stroke-width="2"/>
+  <text x="809" y="178" fill="#ffb0b0" font-family="Georgia, serif" font-size="8" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Lam-Chen Pass</text>
+  <circle cx="735" cy="222" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="731" y1="222" x2="739" y2="222" stroke="#f44" stroke-width="2"/>
+  <text x="744" y="215" fill="#ffb0b0" font-family="Georgia, serif" font-size="8" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Smith-Spring</text>
+  <circle cx="700" cy="405" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="696" y1="405" x2="704" y2="405" stroke="#f44" stroke-width="2"/>
+  <text x="700" y="424" fill="#ffb0b0" font-family="Georgia, serif" font-size="8" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >A-Tzalan Ford</text>
+  <circle cx="585" cy="380" r="5" fill="none" stroke="#f44" stroke-width="2"/>
+  <line x1="581" y1="380" x2="589" y2="380" stroke="#f44" stroke-width="2"/>
+  <text x="594" y="373" fill="#ffb0b0" font-family="Georgia, serif" font-size="8" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Breath-of-Cloud</text>
+  <!-- ============ NAMED IRRAH OASES ============ -->
+  <circle cx="618" cy="222" r="3.5" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="606" y="234" fill="#d8f5c8" font-family="Georgia, serif" font-size="6.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Ghadam-Thalla</text>
+  <circle cx="690" cy="222" r="3.5" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="700" y="234" fill="#d8f5c8" font-family="Georgia, serif" font-size="6.5" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Zin-Iferis</text>
+  <circle cx="665" cy="272" r="4" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="665" y="284" fill="#d8f5c8" font-family="Georgia, serif" font-size="6.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Qarat al-Fidda</text>
+  <circle cx="725" cy="265" r="3.5" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="727" y="277" fill="#d8f5c8" font-family="Georgia, serif" font-size="6.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Tin Mashraq</text>
+  <circle cx="600" cy="340" r="3.5" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+  <text x="609" y="346" fill="#d8f5c8" font-family="Georgia, serif" font-size="6.5" text-anchor="start" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Khulut</text>
+  <!-- ============ NAMED FEATURES ============ -->
+  <path d="M 685 158 L 690 145 L 695 158" fill="none" stroke="#dcb" stroke-width="1.4"/>
+  <text x="690" y="169" fill="#dca" font-family="Georgia, serif" font-size="7" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Zang-Ri</text>
+  <path d="M 474 573 L 478 561 L 482 573" fill="none" stroke="#e08a6a" stroke-width="1.4"/>
+  <circle cx="478" cy="559" r="1.8" fill="#f84" opacity="0.8"/>
+  <text x="470" y="578" fill="#f0c0a8" font-family="Georgia, serif" font-size="6.5" text-anchor="end" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" >Apu-Yana</text>
+  <text x="735" y="391" fill="#fff" font-family="Georgia, serif" font-size="6.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Volata-Xal</text>
+  <text x="790" y="300" fill="#3f4d20" font-family="Georgia, serif" font-size="5.5" text-anchor="middle" >Zang-Kalli</text>
+  <text x="1110" y="532" fill="#c4a862" font-family="Georgia, serif" font-size="8" font-style="italic" text-anchor="middle" transform="rotate(-50 1110 532)">Frankincense Coast</text>
 
-  <!-- ============================================ -->
-  <!-- CONTINENTAL LANDMASS (C-shape) -->
-  <!-- ============================================ -->
-
-  <!-- Main C-shaped landmass -->
-  <path d="
-    M 380 80
-    C 500 60, 750 50, 900 80
-    C 1000 100, 1080 150, 1100 250
-    C 1120 350, 1100 430, 1050 500
-    C 1000 570, 920 620, 850 650
-    C 780 680, 700 700, 620 710
-    C 540 720, 460 710, 400 690
-    C 340 660, 300 620, 280 570
-    C 260 520, 270 460, 300 420
-    C 280 390, 270 360, 280 330
-    C 290 300, 310 260, 340 230
-    C 360 200, 370 160, 380 120
-    Z
-  " fill="#c4a862" stroke="#8b7355" stroke-width="2"/>
-
-  <!-- Frankincense coast (SE extension) -->
-  <path d="
-    M 1050 500
-    C 1080 540, 1120 570, 1140 620
-    C 1150 650, 1140 680, 1120 700
-    C 1100 690, 1070 660, 1050 630
-    C 1020 600, 980 580, 950 610
-    C 920 630, 880 650, 850 650
-  " fill="#c4a862" stroke="#8b7355" stroke-width="2"/>
-
-  <!-- ============================================ -->
-  <!-- AETHELIAN BASIN (central sea) -->
-  <!-- ============================================ -->
-
-  <path d="
-    M 340 330
-    C 360 310, 400 290, 460 280
-    C 540 260, 650 270, 750 300
-    C 830 330, 870 370, 880 420
-    C 890 480, 860 540, 800 580
-    C 740 620, 650 640, 560 650
-    C 480 660, 420 640, 380 600
-    C 340 560, 310 500, 300 450
-    C 290 400, 310 360, 340 330
-    Z
-  " fill="#3a7ca5" stroke="#2a5a8c" stroke-width="1.5" opacity="0.9"/>
-
-  <!-- Basin label -->
-  <text x="580" y="460" fill="#1a3a5c" font-family="Georgia, serif" font-size="14" font-style="italic" text-anchor="middle" opacity="0.7">A E T H E L I A N</text>
-  <text x="580" y="480" fill="#1a3a5c" font-family="Georgia, serif" font-size="14" font-style="italic" text-anchor="middle" opacity="0.7">B A S I N</text>
-
-  <!-- Halkar Straits (western mouth) -->
-  <line x1="320" y1="350" x2="320" y2="430" stroke="#2a5a8c" stroke-width="3" stroke-dasharray="4,3"/>
-  <text x="295" y="395" fill="#fff" font-family="Georgia, serif" font-size="8" text-anchor="middle" transform="rotate(-90 295 395)">Halkar Straits</text>
-
-  <!-- ============================================ -->
-  <!-- TERRAIN REGIONS -->
-  <!-- ============================================ -->
-
-  <!-- Ngaru-Bon Plateau (north) -->
-  <path d="
-    M 380 80
-    C 500 60, 750 50, 900 80
-    C 950 90, 980 110, 1000 140
-    C 940 170, 860 190, 780 200
-    C 680 220, 560 210, 460 200
-    C 400 190, 370 160, 380 120
-    Z
-  " fill="#7a6b55" opacity="0.7"/>
-  <rect x="380" y="60" width="620" height="140" fill="url(#mountains)" opacity="0.5"/>
-
-  <!-- Ngaru-Bon label -->
-  <text x="650" y="120" fill="#fff" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">N G A R U - B O N</text>
-  <text x="650" y="136" fill="#ddd" font-family="Georgia, serif" font-size="9" text-anchor="middle">P L A T E A U &#160; (4,000-6,000m)</text>
-
-  <!-- Tsetse belt (hatched line below Ngaru-Bon) -->
-  <path d="M 460 200 C 560 210, 680 220, 780 200 C 860 190, 940 170, 1000 140" fill="none" stroke="#556b2f" stroke-width="6" stroke-dasharray="2,4" opacity="0.5"/>
-  <text x="720" y="195" fill="#556b2f" font-family="Georgia, serif" font-size="7" text-anchor="middle" opacity="0.8">tsetse belt</text>
-
-  <!-- Irrah Desert Belt (central band) -->
-  <path d="
-    M 460 200
-    C 560 210, 680 220, 780 200
-    C 860 190, 940 170, 1000 140
-    C 1040 180, 1080 240, 1100 300
-    C 1080 350, 1050 400, 1000 440
-    C 940 380, 860 360, 780 340
-    C 680 310, 560 300, 460 290
-    C 400 280, 370 250, 380 220
-    C 400 210, 430 200, 460 200
-    Z
-  " fill="#d4a854" opacity="0.5"/>
-  <rect x="400" y="200" width="700" height="200" fill="url(#dunes)" opacity="0.6"/>
-
-  <!-- Irrah label -->
-  <text x="730" y="270" fill="#8b6914" font-family="Georgia, serif" font-size="13" font-weight="bold" text-anchor="middle">I R R A H &#160; D R Y L A N D S</text>
-
-  <!-- Kheshkai Steppe (northeast) -->
-  <path d="
-    M 1000 140
-    C 1040 180, 1080 240, 1100 300
-    C 1110 340, 1100 380, 1080 420
-    C 1050 460, 1000 490, 950 510
-    C 900 460, 870 400, 860 360
-    C 870 320, 900 280, 940 250
-    C 960 220, 980 180, 1000 140
-    Z
-  " fill="#a8b86a" opacity="0.5"/>
-  <rect x="900" y="140" width="220" height="380" fill="url(#steppe)"/>
-
-  <!-- Kheshkai label -->
-  <text x="1010" y="340" fill="#4a5a2a" font-family="Georgia, serif" font-size="12" font-weight="bold" text-anchor="middle">KHESHKAI</text>
-  <text x="1010" y="355" fill="#5a6a3a" font-family="Georgia, serif" font-size="9" text-anchor="middle">STEPPE</text>
-  <text x="1010" y="368" fill="#6a7a4a" font-family="Georgia, serif" font-size="8" text-anchor="middle">(1,500-2,500m)</text>
-
-  <!-- Ndjadi Floodplains (south) -->
-  <path d="
-    M 460 580
-    C 530 600, 620 620, 700 630
-    C 780 640, 840 630, 880 610
-    C 920 590, 950 560, 960 530
-    C 930 550, 900 570, 860 590
-    C 800 620, 700 640, 600 650
-    C 520 660, 450 650, 400 630
-    C 370 610, 360 590, 380 570
-    C 410 575, 440 580, 460 580
-    Z
-  " fill="#3a8a3a" opacity="0.5"/>
-
-  <!-- Ndjadi rivers (5 distributaries) -->
-  <path d="M 700 530 C 680 560, 660 590, 640 640" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
-  <path d="M 700 530 C 710 565, 700 600, 680 640" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
-  <path d="M 700 530 C 720 570, 730 610, 720 645" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
-  <path d="M 700 530 C 740 570, 760 610, 760 645" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
-  <path d="M 700 530 C 750 560, 790 600, 800 635" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.7"/>
-  <!-- Tributary from Kheshkai -->
-  <path d="M 960 510 C 900 520, 820 530, 700 530" fill="none" stroke="#4a8ab0" stroke-width="2" opacity="0.6"/>
-  <!-- Tributary from Qollari -->
-  <path d="M 440 480 C 500 500, 600 520, 700 530" fill="none" stroke="#4a8ab0" stroke-width="1.5" opacity="0.6"/>
-
-  <!-- Ndjadi label -->
-  <text x="680" y="610" fill="#1a5a1a" font-family="Georgia, serif" font-size="12" font-weight="bold" text-anchor="middle">N D J A D I</text>
-  <text x="680" y="625" fill="#2a6a2a" font-family="Georgia, serif" font-size="9" text-anchor="middle">FLOODPLAINS (0-50m)</text>
-
-  <!-- Qollari Highlands (southwest) -->
-  <path d="
-    M 340 330
-    C 330 370, 310 410, 300 450
-    C 290 490, 300 530, 330 560
-    C 360 580, 400 590, 440 580
-    C 430 560, 420 520, 400 480
-    C 380 440, 370 400, 360 360
-    C 350 340, 340 330, 340 330
-    Z
-  " fill="#2d6b3f" opacity="0.6"/>
-  <rect x="280" y="330" width="180" height="260" fill="url(#forest)"/>
-
-  <!-- Qollari label -->
-  <text x="365" y="470" fill="#fff" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">QOLLARI</text>
-  <text x="365" y="484" fill="#cfc" font-family="Georgia, serif" font-size="8" text-anchor="middle">HIGHLANDS</text>
-  <text x="365" y="496" fill="#cfc" font-family="Georgia, serif" font-size="7" text-anchor="middle">(2,500-4,500m)</text>
-
-  <!-- ============================================ -->
-  <!-- ORAVAN ARCHIPELAGO (west, in ocean) -->
-  <!-- ============================================ -->
-
-  <!-- Main island -->
-  <ellipse cx="220" cy="360" rx="45" ry="55" fill="#4a9a4a" stroke="#3a7a3a" stroke-width="1.5" transform="rotate(-15 220 360)"/>
-  <!-- Secondary islands -->
-  <ellipse cx="180" cy="300" rx="22" ry="18" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
-  <ellipse cx="160" cy="380" rx="18" ry="25" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
-  <ellipse cx="200" cy="440" rx="20" ry="15" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
-  <ellipse cx="250" cy="290" rx="15" ry="12" fill="#5aaa5a" stroke="#3a7a3a" stroke-width="1"/>
-  <!-- Small outliers -->
-  <circle cx="140" cy="340" r="8" fill="#6aba6a" stroke="#3a7a3a" stroke-width="0.5"/>
-  <circle cx="250" cy="430" r="6" fill="#6aba6a" stroke="#3a7a3a" stroke-width="0.5"/>
-
-  <!-- Oravan label -->
-  <text x="200" y="365" fill="#fff" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">ORAVAN</text>
-  <text x="200" y="378" fill="#cfc" font-family="Georgia, serif" font-size="8" text-anchor="middle">ARCHIPELAGO</text>
-
-  <!-- Volcano symbols on two islands -->
-  <path d="M 215 340 L 220 328 L 225 340" fill="none" stroke="#c44" stroke-width="1.5"/>
-  <circle cx="220" cy="326" r="2" fill="#f84" opacity="0.7"/>
-  <path d="M 157 370 L 160 362 L 163 370" fill="none" stroke="#c44" stroke-width="1"/>
-
-  <!-- ============================================ -->
-  <!-- BASIN PORT ZONES -->
-  <!-- ============================================ -->
-
-  <!-- Ki-Mbuhari (south shore) -->
-  <circle cx="650" cy="620" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
-  <text x="650" y="645" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="middle">Ki-Mbuhari</text>
-
-  <!-- Tavakh-Qarat (north shore) -->
-  <circle cx="600" cy="290" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
-  <text x="600" y="282" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="middle">Tavakh-Qarat</text>
-
-  <!-- Halani-Tamu (east shore) -->
-  <circle cx="860" cy="420" r="6" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
-  <text x="880" y="415" fill="#e8c840" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="start">Halani-Tamu</text>
-
-  <!-- Dzong-Tamu (SE margin) -->
-  <circle cx="830" cy="560" r="5" fill="#e8c840" stroke="#8b6914" stroke-width="1.5"/>
-  <text x="850" y="565" fill="#e8c840" font-family="Georgia, serif" font-size="8" font-weight="bold" text-anchor="start">Dzong-Tamu</text>
-
-  <!-- Qhabal-Ur (Basin center) -->
-  <rect x="595" y="440" width="8" height="8" fill="none" stroke="#fff" stroke-width="1" transform="rotate(45 599 444)"/>
-  <text x="615" y="445" fill="#adf" font-family="Georgia, serif" font-size="7" font-style="italic">Qhabal-Ur</text>
-
-  <!-- Veyd-Kirrha (south rim) -->
-  <path d="M 480 580 L 483 572 L 486 580" fill="none" stroke="#f84" stroke-width="1.2"/>
-  <text x="498" y="577" fill="#f84" font-family="Georgia, serif" font-size="7" font-style="italic">Veyd-Kirrha</text>
-
-  <!-- ============================================ -->
-  <!-- CHOKEPOINTS -->
-  <!-- ============================================ -->
-
-  <!-- Lam-Chen Pass -->
-  <circle cx="940" cy="168" r="5" fill="none" stroke="#f44" stroke-width="2"/>
-  <line x1="936" y1="168" x2="944" y2="168" stroke="#f44" stroke-width="2"/>
-  <text x="920" y="158" fill="#f88" font-family="Georgia, serif" font-size="8" text-anchor="end">Lam-Chen Pass</text>
-
-  <!-- A-Tzalan Ford -->
-  <circle cx="960" cy="510" r="5" fill="none" stroke="#f44" stroke-width="2"/>
-  <line x1="956" y1="510" x2="964" y2="510" stroke="#f44" stroke-width="2"/>
-  <text x="978" y="520" fill="#f88" font-family="Georgia, serif" font-size="8">A-Tzalan Ford</text>
-
-  <!-- Smith-Spring -->
-  <circle cx="880" cy="200" r="5" fill="none" stroke="#f44" stroke-width="2"/>
-  <line x1="876" y1="200" x2="884" y2="200" stroke="#f44" stroke-width="2"/>
-  <text x="862" y="218" fill="#f88" font-family="Georgia, serif" font-size="8" text-anchor="end">Smith-Spring</text>
-
-  <!-- Breath-of-Cloud -->
-  <circle cx="900" cy="440" r="5" fill="none" stroke="#f44" stroke-width="2"/>
-  <line x1="896" y1="440" x2="904" y2="440" stroke="#f44" stroke-width="2"/>
-  <text x="912" y="445" fill="#f88" font-family="Georgia, serif" font-size="7">Breath-of-Cloud</text>
-
-  <!-- ============================================ -->
-  <!-- TRADE ROUTES -->
-  <!-- ============================================ -->
-
-  <!-- Copper-for-Steel Road (south to north, brown) -->
-  <path d="M 650 620 C 750 590, 900 540, 960 510 C 970 470, 960 350, 950 280 C 945 230, 940 190, 940 168 C 940 150, 920 130, 860 110" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-dasharray="8,3" opacity="0.8"/>
-
-  <!-- Highland-Steppe Corridor Leg 1: Ngaru-Bon to Kheshkai (amber) -->
-  <path d="M 860 110 C 900 140, 940 160, 940 168 C 960 200, 980 260, 1000 320" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
-  <!-- Leg 2: Kheshkai to Qollari (amber) -->
-  <path d="M 1000 380 C 970 410, 940 430, 900 440 C 850 450, 750 470, 600 480 C 500 490, 430 490, 400 480" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
-
-  <!-- Highland Relay: Qollari to Basin (green dotted) -->
-  <path d="M 380 460 C 420 500, 460 530, 500 560 C 540 580, 600 600, 650 620" fill="none" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5" opacity="0.7"/>
-
-  <!-- Coastal Monsoon: Oravan through Basin (blue wavy) -->
-  <path d="M 220 360 C 260 360, 290 370, 320 380 C 360 390, 420 400, 500 410 C 580 420, 680 430, 780 440 C 830 445, 860 430, 860 420" fill="none" stroke="#4a8ab0" stroke-width="2.5" stroke-dasharray="8,2,2,2" opacity="0.7"/>
-
-  <!-- Caravan Thread: Irrah network (gold dotted) -->
-  <!-- Smith-Spring to Qarat al-Fidda -->
-  <path d="M 880 200 C 840 230, 790 250, 730 260" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.7"/>
-  <!-- Qarat al-Fidda to Halani-Tamu -->
-  <path d="M 730 260 C 770 300, 820 360, 860 420" fill="none" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="0.7"/>
-
-  <!-- ============================================ -->
-  <!-- NAMED IRRAH OASES -->
-  <!-- ============================================ -->
-
-  <circle cx="730" cy="260" r="4" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
-  <text x="730" y="252" fill="#4a9a3a" font-family="Georgia, serif" font-size="7" text-anchor="middle">Qarat al-Fidda</text>
-
-  <circle cx="590" cy="240" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
-  <text x="590" y="233" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Ghadam-Thalla</text>
-
-  <circle cx="950" cy="240" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
-  <text x="952" y="233" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="start">Tin Mashraq</text>
-
-  <circle cx="680" cy="320" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
-  <text x="680" y="334" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Khulut</text>
-
-  <circle cx="820" cy="230" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="0.8"/>
-  <text x="820" y="223" fill="#4a9a3a" font-family="Georgia, serif" font-size="6" text-anchor="middle">Zin-Iferis</text>
-
-  <!-- ============================================ -->
-  <!-- NAMED FEATURES -->
-  <!-- ============================================ -->
-
-  <!-- Zang-Ri (Iron Mountain) -->
-  <path d="M 550 85 L 555 72 L 560 85" fill="none" stroke="#a86" stroke-width="1.2"/>
-  <text x="555" y="70" fill="#dca" font-family="Georgia, serif" font-size="6" text-anchor="middle">Zang-Ri</text>
-
-  <!-- Apu-Yana (Black Mountain, Qollari east border) -->
-  <path d="M 410 420 L 414 408 L 418 420" fill="none" stroke="#644" stroke-width="1.2"/>
-  <text x="430" y="412" fill="#a88" font-family="Georgia, serif" font-size="6">Apu-Yana</text>
-
-  <!-- Volata-Xal near A-Tzalan -->
-  <text x="978" y="535" fill="#aaa" font-family="Georgia, serif" font-size="6" font-style="italic">Volata-Xal</text>
-
-  <!-- Frankincense coast label -->
-  <text x="1110" y="660" fill="#c4a862" font-family="Georgia, serif" font-size="8" font-style="italic" transform="rotate(-50 1110 660)">Frankincense Coast</text>
-
-  <!-- ============================================ -->
-  <!-- COMPASS + SCALE -->
-  <!-- ============================================ -->
-
-  <!-- Compass rose -->
-  <g transform="translate(80, 700)">
+  <!-- ============ COMPASS + SCALE ============ -->
+  <g transform="translate(75, 140)">
     <circle cx="0" cy="0" r="22" fill="none" stroke="#8b7355" stroke-width="1"/>
     <line x1="0" y1="-20" x2="0" y2="20" stroke="#8b7355" stroke-width="1"/>
     <line x1="-20" y1="0" x2="20" y2="0" stroke="#8b7355" stroke-width="1"/>
@@ -346,56 +242,42 @@
     <text x="-28" y="4" fill="#8b7355" font-family="Georgia, serif" font-size="8" text-anchor="middle">W</text>
   </g>
 
-  <!-- Scale bar -->
-  <g transform="translate(80, 750)">
+  <g transform="translate(900, 762)">
     <line x1="0" y1="0" x2="100" y2="0" stroke="#c4a862" stroke-width="2"/>
     <line x1="0" y1="-4" x2="0" y2="4" stroke="#c4a862" stroke-width="1.5"/>
     <line x1="50" y1="-3" x2="50" y2="3" stroke="#c4a862" stroke-width="1"/>
     <line x1="100" y1="-4" x2="100" y2="4" stroke="#c4a862" stroke-width="1.5"/>
-    <text x="50" y="14" fill="#c4a862" font-family="Georgia, serif" font-size="8" text-anchor="middle">~500 km (5-7 days by ship)</text>
+    <text x="50" y="15" fill="#c4a862" font-family="Georgia, serif" font-size="8" text-anchor="middle">~400 km</text>
+  </g>
+  <text x="600" y="788" fill="#7fa3c7" font-family="Georgia, serif" font-size="9" font-style="italic" text-anchor="middle">equator: open ocean, south of the map</text>
+
+  <!-- ============ LEGEND ============ -->
+  <g transform="translate(10, 662)">
+    <rect x="0" y="0" width="205" height="130" rx="4" fill="#1a2a3c" opacity="0.88" stroke="#8b7355" stroke-width="1"/>
+    <text x="102" y="13" fill="#c4a862" font-family="Georgia, serif" font-size="9" font-weight="bold" text-anchor="middle">LEGEND</text>
+    <line x1="8" y1="26" x2="36" y2="26" stroke="#4a8ab0" stroke-width="2.2" stroke-dasharray="8,2,2,2" opacity="1"/>
+    <text x="44" y="29" fill="#ccc" font-family="Georgia, serif" font-size="7">Coastal Monsoon</text>
+    <line x1="8" y1="38" x2="36" y2="38" stroke="#fff" stroke-width="1.2" stroke-dasharray="3,3" opacity="1"/>
+    <text x="44" y="41" fill="#ccc" font-family="Georgia, serif" font-size="7">Aethelian Basin Hub</text>
+    <line x1="8" y1="50" x2="36" y2="50" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5" opacity="1"/>
+    <text x="44" y="53" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland Relay</text>
+    <line x1="8" y1="62" x2="36" y2="62" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4" opacity="1"/>
+    <text x="44" y="65" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland-Steppe Corridor</text>
+    <line x1="8" y1="74" x2="36" y2="74" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4" opacity="1"/>
+    <text x="44" y="77" fill="#ccc" font-family="Georgia, serif" font-size="7">Caravan Thread</text>
+    <line x1="8" y1="86" x2="36" y2="86" stroke="#8b5e3c" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>
+    <text x="44" y="89" fill="#ccc" font-family="Georgia, serif" font-size="7">Copper-for-Steel treaty flow</text>
+    <circle cx="22" cy="98" r="4" fill="none" stroke="#f44" stroke-width="1.5"/>
+    <line x1="19" y1="98" x2="25" y2="98" stroke="#f44" stroke-width="1.5"/>
+    <text x="44" y="101" fill="#ccc" font-family="Georgia, serif" font-size="7">Chokepoint</text>
+    <circle cx="22" cy="110" r="3" fill="#e8c840" stroke="#8b6914" stroke-width="1"/>
+    <text x="44" y="113" fill="#ccc" font-family="Georgia, serif" font-size="7">Basin Port Zone</text>
+    <circle cx="22" cy="122" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
+    <text x="44" y="125" fill="#ccc" font-family="Georgia, serif" font-size="7">Irrah Oasis City</text>
   </g>
 
-  <!-- ============================================ -->
-  <!-- LEGEND -->
-  <!-- ============================================ -->
-
-  <g transform="translate(950, 650)">
-    <rect x="0" y="0" width="230" height="140" rx="4" fill="#1a2a3c" opacity="0.85" stroke="#8b7355" stroke-width="1"/>
-    <text x="115" y="18" fill="#c4a862" font-family="Georgia, serif" font-size="10" font-weight="bold" text-anchor="middle">LEGEND</text>
-
-    <!-- Trade routes -->
-    <line x1="10" y1="32" x2="40" y2="32" stroke="#8b5e3c" stroke-width="2" stroke-dasharray="8,3"/>
-    <text x="48" y="36" fill="#ccc" font-family="Georgia, serif" font-size="7">Copper-for-Steel Road</text>
-
-    <line x1="10" y1="46" x2="40" y2="46" stroke="#d4a017" stroke-width="2" stroke-dasharray="6,4"/>
-    <text x="48" y="50" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland-Steppe Corridor</text>
-
-    <line x1="10" y1="60" x2="40" y2="60" stroke="#3a8a3a" stroke-width="2" stroke-dasharray="3,5"/>
-    <text x="48" y="64" fill="#ccc" font-family="Georgia, serif" font-size="7">Highland Relay</text>
-
-    <line x1="10" y1="74" x2="40" y2="74" stroke="#4a8ab0" stroke-width="2" stroke-dasharray="8,2,2,2"/>
-    <text x="48" y="78" fill="#ccc" font-family="Georgia, serif" font-size="7">Coastal Monsoon</text>
-
-    <line x1="10" y1="88" x2="40" y2="88" stroke="#d4a854" stroke-width="2" stroke-dasharray="3,4"/>
-    <text x="48" y="92" fill="#ccc" font-family="Georgia, serif" font-size="7">Caravan Thread</text>
-
-    <!-- Symbols -->
-    <circle cx="20" cy="106" r="4" fill="none" stroke="#f44" stroke-width="1.5"/>
-    <line x1="17" y1="106" x2="23" y2="106" stroke="#f44" stroke-width="1.5"/>
-    <text x="48" y="110" fill="#ccc" font-family="Georgia, serif" font-size="7">Chokepoint</text>
-
-    <circle cx="20" cy="120" r="3" fill="#e8c840" stroke="#8b6914" stroke-width="1"/>
-    <text x="48" y="124" fill="#ccc" font-family="Georgia, serif" font-size="7">Basin Port Zone</text>
-
-    <circle cx="20" cy="132" r="3" fill="#4a9a3a" stroke="#2a6a1a" stroke-width="1"/>
-    <text x="48" y="136" fill="#ccc" font-family="Georgia, serif" font-size="7">Irrah Oasis City</text>
-  </g>
-
-  <!-- ============================================ -->
-  <!-- TITLE -->
-  <!-- ============================================ -->
-
+  <!-- ============ TITLE ============ -->
   <text x="600" y="30" fill="#c4a862" font-family="Georgia, serif" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="4">V E Y D R I A</text>
-  <text x="600" y="48" fill="#8b7355" font-family="Georgia, serif" font-size="10" text-anchor="middle" letter-spacing="2">Continental Schematic — Spatial Reference</text>
+  <text x="600" y="48" fill="#8b7355" font-family="Georgia, serif" font-size="10" text-anchor="middle" letter-spacing="2">Continental Schematic, Spatial Reference (2026-09-29)</text>
 
 </svg>
