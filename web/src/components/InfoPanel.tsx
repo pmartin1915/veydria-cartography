@@ -30,7 +30,12 @@ interface InfoPanelProps {
   onOpenSettings?: () => void
   starredIds?: string[]
   onToggleStar?: (featureId: string) => void
+  /** Player share link: hide GM-only strategic fields. */
+  shareMode?: boolean
 }
+
+// GM-only fields, never shown on a player share link (Tier 2b, D1).
+export const GM_ONLY_FIELDS = new Set(['strategic_value', 'bottleneck', 'consequence_if_closed'])
 
 // Fields to display for each category
 const CATEGORY_FIELDS: Record<string, string[]> = {
@@ -166,7 +171,7 @@ function LoreSection({ entries }: { entries: LoreEntry[] }) {
   )
 }
 
-export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare, onOpenSettings, starredIds = [], onToggleStar }: InfoPanelProps) {
+export default function InfoPanel({ feature, allFeatures, lore, open, onClose, onSelectFeature, annotations, onSelectAnnotation, onShare, onOpenSettings, starredIds = [], onToggleStar, shareMode = false }: InfoPanelProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [gmNote, setGmNote] = useState('')
   const gmNoteDebounceRef = useRef<number | null>(null)
@@ -238,7 +243,8 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
   const category = (props.category as string) || 'unknown'
   const name = (props.name as string) || 'Unknown'
   const etymology = props.etymology as string | undefined
-  const fields = CATEGORY_FIELDS[category] || Object.keys(props)
+  const allFields = CATEGORY_FIELDS[category] || Object.keys(props)
+  const fields = shareMode ? allFields.filter((k) => !GM_ONLY_FIELDS.has(k)) : allFields
 
   const toggleCollapse = (key: string) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -446,7 +452,7 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
         </div>
 
         {/* AI Lore */}
-        <AiLorePanel feature={feature} onOpenSettings={onOpenSettings} />
+        {!shareMode && <AiLorePanel feature={feature} onOpenSettings={onOpenSettings} />}
 
         {/* GM Notes */}
         <div className="info-field info-field--gm-notes" key="gm-notes">

@@ -44,3 +44,7 @@
 - Tier 2a fog of war shipped (3746c7f, e34e855) and Tier 2c multi-party shipped; ROADMAP Tier 2a heading was never marked.
 - Remaining spec'd tier is 2b player-view rigor, partly built (shareMode gates, `playerSafe` log). Gaps and four open decisions are in `ai/PLAYER-VIEW-SPEC.md`; awaiting Perry's approval, nothing built.
 - Checkout `fix/overlay-fractional-zoom-quantization` is LIVE: open PR #53, 1 commit ahead / 2 behind master, not merged.
+
+## 2026-09-30 player-view built (branch feat/player-view-rigor)
+- D1-D4 approved as proposed. InfoPanel `shareMode` hides strategic_value / bottleneck / consequence_if_closed and the AI Lore panel (it re-read those fields); MapViewer route tooltips drop bottleneck/consequence in share mode. D3 was already satisfied (Compare toggle is hidden in share mode and compareMode is not URL-driven).
+- Deliberately NOT changed (reviewer flagged, judged design intent per journey-export.ts:67 / campaign-log.ts:39): the route "Bottlenecks & Risks" list, journey-days text and Player MD still carry route bottleneck text; Adventure Hooks / GM Notes still render for players. Perry to decide if those should also be GM-only.

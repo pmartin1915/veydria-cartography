@@ -1714,6 +1714,7 @@ function App() {
         {geojson && (
           <MapViewer
             ref={mapRef}
+            shareMode={shareMode}
             geojson={geojson}
             layers={layers}
             opacities={opacities}
@@ -1826,6 +1827,7 @@ function App() {
         />
 
         <InfoPanel
+          shareMode={shareMode}
           feature={selectedFeature}
           allFeatures={geojson?.features}
           lore={loreIndex}

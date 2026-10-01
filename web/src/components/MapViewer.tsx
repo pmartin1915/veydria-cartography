@@ -77,6 +77,8 @@ interface LayerVisibility {
 }
 
 export interface MapViewerProps {
+  /** Player share link: omit GM-only bottleneck/consequence text from route tooltips. */
+  shareMode?: boolean
   geojson: GeoJSONCollection
   layers: LayerVisibility
   asterisms?: Asterism[]
@@ -240,7 +242,7 @@ function getTerrainCostColor(elev: number): string {
 
 
 const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
-  function MapViewer({ geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, onCursorMove, opacities, route, comparisonRoutes, passageMarkerNode, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
+  function MapViewer({ shareMode = false, geojson, layers, asterisms = [], onFeatureClick, onFeatureSelect, selectedFeatureId, isEditMode, onCoordinateUpdate, measureMode, pinMode, annotations, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete, initialViewport, onViewportChange, onMeasureUpdate, onCursorMove, opacities, route, comparisonRoutes, passageMarkerNode, onHoverHex, onSelectHex, hexSize, selectedHexLabel, hexMeasurePath, hexMeasureMode }, ref) {
     const mapRef = useRef<L.Map | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const layerGroupsRef = useRef<Map<string, LayerEntry>>(new Map())
@@ -1324,9 +1326,9 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
         const days = edge?.segmentDays?.toFixed(1) || '—'
         const typeLabel = edge ? (TYPE_LABELS[edge.type] || edge.type) : ''
         const warning = edge?.seasonal ? `<div class="journey-seg-warning">${iconWarningHtml()} ${edge.seasonal}</div>` : ''
-        const bottleneck = edge?.bottleneck ? `<div class="journey-seg-bottleneck">▲ ${edge.bottleneck}</div>` : ''
+        const bottleneck = !shareMode && edge?.bottleneck ? `<div class="journey-seg-bottleneck">▲ ${edge.bottleneck}</div>` : ''
         const commodities = edge?.commodities ? `<div class="journey-seg-lore">${iconBoxHtml()} ${edge.commodities}</div>` : ''
-        const consequence = edge?.consequenceIfClosed ? `<div class="journey-seg-consequence">${iconBoltHtml()} ${edge.consequenceIfClosed}</div>` : ''
+        const consequence = !shareMode && edge?.consequenceIfClosed ? `<div class="journey-seg-consequence">${iconBoltHtml()} ${edge.consequenceIfClosed}</div>` : ''
 
         poly.bindTooltip(
           `<div class="journey-seg-tooltip">
@@ -1414,7 +1416,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           journeyRouteLayerRef.current = null
         }
       }
-    }, [route])
+    }, [route, shareMode])
 
     // Render Passage-mode current-position marker on top of the route.
     // Uses the same svgToLatLng projection as the route polyline so it
