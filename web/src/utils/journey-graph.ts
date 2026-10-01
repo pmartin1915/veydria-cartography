@@ -205,6 +205,19 @@ export interface JourneyRoute {
   seasonalWarnings: string[]
 }
 
+/**
+ * The route as a player on a share link may see it: the GM-only edge fields
+ * (bottleneck, consequenceIfClosed) and the bottleneck list are removed.
+ * Display-only fields, so routing and timing are unchanged.
+ */
+export function playerSafeRoute(route: JourneyRoute): JourneyRoute {
+  return {
+    ...route,
+    edges: route.edges.map(({ bottleneck: _b, consequenceIfClosed: _c, ...edge }) => edge),
+    bottlenecks: [],
+  }
+}
+
 export interface Graph {
   nodes: Map<string, JourneyNode>
   adj: Map<string, Array<{ to: string; edge: JourneyEdge }>>

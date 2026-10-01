@@ -3,7 +3,7 @@ import type { GeoJSONCollection } from '../App'
 import { IconCompass, IconPin } from './icons'
 import TourOverlay from './TourOverlay'
 import { tourReducer, isTourCompleted, JOURNEY_TUTORIAL_KEY, MAIN_TOUR_KEY, PASSAGE_TUTORIAL_KEY, type TourStep, type TourState, type TourAction } from '../utils/tour'
-import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, isSeaLeg, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
+import { buildGraph, findRoute, findMultiStopRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, isSeaLeg, playerSafeRoute, DEFAULT_PARTY, type JourneyNode, type JourneyRoute, type Season, type RouteMode, type ComparisonRoutes, type PartyConfig } from '../utils/journey-graph'
 import { generateEncounters, type Encounter } from '../utils/encounters'
 import { resolveSighting } from '../utils/sea-sightings'
 import { loadSavedJourneys, addSavedJourney, deleteSavedJourney, renameSavedJourney, clearSavedJourneysForParty, listPartyNames, journeysForParty, sanitizePartyName, DEFAULT_PARTY_NAME, type SavedJourney } from '../utils/journey-saved'
@@ -88,7 +88,13 @@ function formatNodeCategory(n: JourneyNode): string {
 export default function JourneyPlanner({ geojson, active, defaultStartId, defaultEndId, onClose, onRouteComputed, annotations = [], onFlyToAnnotation, onSelectFeatureById, onExportAnnotations, shareMode = false, hexSize = DEFAULT_HEX_SIZE, selectedBiome = null, defaultSeason, onSeasonChange, defaultMode, onModeChange, onComparisonRoutesComputed, defaultParty, onPartyChange, defaultSupply, onSupplyChange, onMarkRouteExplored, defaultPartyName, mainTourActive = false, onPassageActiveChange, onPassagePositionChange, defaultTrailSeed }: JourneyPlannerProps) {
   const [startId, setStartId] = useState('')
   const [endId, setEndId] = useState('')
-  const [route, setRoute] = useState<JourneyRoute | null>(null)
+  const [computedRoute, setRoute] = useState<JourneyRoute | null>(null)
+  // A player on a share link never holds the GM-only route fields, so no
+  // panel, export, or saved journey downstream can show them.
+  const route = useMemo(
+    () => (shareMode && computedRoute ? playerSafeRoute(computedRoute) : computedRoute),
+    [shareMode, computedRoute]
+  )
   const [startSearch, setStartSearch] = useState('')
   const [endSearch, setEndSearch] = useState('')
   const [startOpen, setStartOpen] = useState(false)

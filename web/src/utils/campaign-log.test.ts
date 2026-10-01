@@ -18,6 +18,8 @@ function makeRoute(overrides: Partial<JourneyRoute> = {}): JourneyRoute {
         type: 'trade_route',
         name: 'Gold-Banner Route',
         segmentDays: 5,
+        bottleneck: 'Bandit-sign scratched into the pass wall',
+        consequenceIfClosed: 'Oravan starves by midwinter',
       },
     ],
     totalDistanceSvg: 120,
@@ -105,15 +107,19 @@ describe('campaign-log', () => {
       expect(player).not.toContain('GM-only feature note')
     })
 
-    it('keeps route facts (bottlenecks, seasonal, saved journeys) for players', () => {
+    it('keeps route facts (seasonal, saved journeys) for players but drops bottlenecks', () => {
       const input = {
         activeJourney: { route: makeRoute(), mode: 'direct' as RouteMode },
         savedJourneys: [makeSavedJourney()],
         annotations: [],
       }
+      const gm = generateCampaignLog({ ...input, playerSafe: false })
       const player = generateCampaignLog({ ...input, playerSafe: true })
+      expect(gm).toContain('Bandit-sign scratched into the pass wall')
+      expect(gm).toContain('Flooded pass')
       expect(player).toContain('Active Journey')
-      expect(player).toContain('Bandit-sign scratched into the pass wall')
+      expect(player).not.toContain('Bandit-sign scratched into the pass wall')
+      expect(player).not.toContain('Flooded pass')
       expect(player).toContain('Spring floods have washed out the ford')
       expect(player).toContain('Saved Journeys')
     })

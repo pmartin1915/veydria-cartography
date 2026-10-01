@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, straitAnnotation, isSeaLeg, DEFAULT_PARTY, type PartyConfig, type JourneyNode } from './journey-graph'
+import { buildGraph, findRoute, findRouteWithFallback, findComparisonRoutes, getJourneyNodes, straitAnnotation, isSeaLeg, DEFAULT_PARTY, playerSafeRoute, type PartyConfig, type JourneyNode, type JourneyRoute } from './journey-graph'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SPATIAL_PATH = resolve(__dirname, '../../public/veydria-spatial.geojson')
@@ -506,5 +506,24 @@ describe('isSeaLeg', () => {
   it('is false when an endpoint is missing', () => {
     expect(isSeaLeg(undefined, node('isle', 'oravan'))).toBe(false)
     expect(isSeaLeg(node('isle', 'oravan'), undefined)).toBe(false)
+  })
+})
+
+describe('playerSafeRoute', () => {
+  it('removes GM-only edge fields and the bottleneck list, keeps everything else', () => {
+    const route: JourneyRoute = {
+      nodes: [],
+      edges: [{ from: 'a', to: 'b', distanceSvg: 10, type: 'chokepoint', name: 'Pass', bottleneck: 'GM secret', consequenceIfClosed: 'GM consequence', seasonal: 'Snow', commodities: 'Salt' }],
+      totalDistanceSvg: 10,
+      totalKm: 25,
+      estimatedDays: 1,
+      bottlenecks: ['GM secret'],
+      seasonalWarnings: ['Snow'],
+    }
+    const safe = playerSafeRoute(route)
+    expect(JSON.stringify(safe)).not.toContain('GM ')
+    expect(safe.edges[0]).toMatchObject({ name: 'Pass', seasonal: 'Snow', commodities: 'Salt', distanceSvg: 10 })
+    expect(safe.seasonalWarnings).toEqual(['Snow'])
+    expect(route.bottlenecks).toEqual(['GM secret'])
   })
 })

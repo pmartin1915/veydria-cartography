@@ -67,12 +67,22 @@ describe('buildRouteMarkdown: shared structure', () => {
     }
   })
 
-  it('preserves route bottlenecks/seasonal warnings for players (factual route info)', () => {
+  it('preserves seasonal warnings for players (factual route info)', () => {
     const player = buildRouteMarkdown(opts(true))
-    const factual = [...route.bottlenecks, ...route.seasonalWarnings]
-    if (factual.length > 0) {
+    if (route.seasonalWarnings.length > 0) {
       expect(player).toContain('### Warnings')
-      for (const w of factual) expect(player).toContain(w)
+      for (const w of route.seasonalWarnings) expect(player).toContain(w)
+    }
+  })
+
+  it('drops GM-only bottleneck text for players and keeps it for the GM', () => {
+    const texts = route.edges.map(e => e.bottleneck).filter((b): b is string => !!b)
+    expect(texts.length).toBeGreaterThan(0)
+    const gm = buildRouteMarkdown(opts(false))
+    const player = buildRouteMarkdown(opts(true))
+    for (const t of texts) {
+      expect(gm).toContain(t)
+      expect(player).not.toContain(t)
     }
   })
 })
