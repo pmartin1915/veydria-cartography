@@ -417,7 +417,7 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
         <LoreSection entries={featureLore} />
 
         {/* Adventure Hooks */}
-        <div className="info-field info-field--hooks" key="adventure-hooks">
+        {!shareMode && <div className="info-field info-field--hooks" key="adventure-hooks">
           <div className="info-field-header">
             <div className="info-field-label">Adventure Hooks</div>
             <button
@@ -449,13 +449,13 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* AI Lore */}
         {!shareMode && <AiLorePanel feature={feature} onOpenSettings={onOpenSettings} />}
 
         {/* GM Notes */}
-        <div className="info-field info-field--gm-notes" key="gm-notes">
+        {!shareMode && <div className="info-field info-field--gm-notes" key="gm-notes">
           <div className="info-field-header">
             <div className="info-field-label">GM Notes</div>
           </div>
@@ -466,7 +466,7 @@ export default function InfoPanel({ feature, allFeatures, lore, open, onClose, o
             placeholder="Add private notes about this location..."
             rows={3}
           />
-        </div>
+        </div>}
       </div>
     </div>
   )

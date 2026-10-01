@@ -47,4 +47,4 @@
 
 ## 2026-09-30 player-view built (branch feat/player-view-rigor)
 - D1-D4 approved as proposed. InfoPanel `shareMode` hides strategic_value / bottleneck / consequence_if_closed and the AI Lore panel (it re-read those fields); MapViewer route tooltips drop bottleneck/consequence in share mode. D3 was already satisfied (Compare toggle is hidden in share mode and compareMode is not URL-driven).
-- Deliberately NOT changed (reviewer flagged, judged design intent per journey-export.ts:67 / campaign-log.ts:39): the route "Bottlenecks & Risks" list, journey-days text and Player MD still carry route bottleneck text; Adventure Hooks / GM Notes still render for players. Perry to decide if those should also be GM-only.
+- Perry decided 2026-09-30: Adventure Hooks and GM Notes are also hidden in share mode (built). The route bottleneck text (Bottlenecks & Risks list, journey-days, Player MD) stays visible to players on purpose. No open items.

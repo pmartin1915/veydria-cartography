@@ -28,6 +28,15 @@ describe('InfoPanel share mode', () => {
     expect(b).not.toContain('GM-BOTTLENECK')
     expect(b).not.toContain('GM-CLOSED')
   })
+  it('hides Adventure Hooks and GM Notes from players, shows them to the GM', () => {
+    const p = html(CHOKE, true)
+    expect(p).not.toContain('Adventure Hooks')
+    expect(p).not.toContain('GM Notes')
+    cleanup()
+    const g = html(CHOKE, false)
+    expect(g).toContain('Adventure Hooks')
+    expect(g).toContain('GM Notes')
+  })
   it('shows them to the GM', () => {
     expect(html(CHOKE, false)).toContain('GM-STRATEGIC')
     cleanup()
