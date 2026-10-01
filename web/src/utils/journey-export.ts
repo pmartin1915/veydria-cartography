@@ -12,6 +12,7 @@ import {
   isDefaultParty,
   describeParty,
   straitAnnotation,
+  playerSafeRoute,
   type JourneyRoute,
   type Season,
   type RouteMode,
@@ -64,7 +65,8 @@ export interface BuildRouteMarkdownOptions {
   sourceUrl: string
   /**
    * When true, strip GM-only sections (encounters, mode-risk/density warnings,
-   * per-day encounters, GM notes). Route, bottlenecks, seasonal warnings,
+   * per-day encounters, GM notes) and the GM-only route fields (bottlenecks,
+   * consequence if closed; see playerSafeRoute). Route, seasonal warnings,
    * supply pressure, and the day-by-day breakdown stay — they are the same
    * facts a player sees in the share-mode UI.
    */
@@ -74,7 +76,7 @@ export interface BuildRouteMarkdownOptions {
 /** Assemble the markdown for a single route. Pure — no DOM/clipboard access. */
 export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
   const {
-    route,
+    route: rawRoute,
     season,
     mode,
     edgeBiomes,
@@ -85,6 +87,7 @@ export function buildRouteMarkdown(opts: BuildRouteMarkdownOptions): string {
     sourceUrl,
     playerSafe = false,
   } = opts
+  const route = playerSafe ? playerSafeRoute(rawRoute) : rawRoute
 
   const fromName = route.nodes[0]?.name || 'Unknown'
   const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'

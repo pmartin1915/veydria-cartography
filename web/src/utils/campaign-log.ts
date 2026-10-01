@@ -6,7 +6,7 @@
  */
 
 import type { JourneyRoute, Season, RouteMode, PartyConfig, JourneyEdge } from './journey-graph'
-import { getRouteDifficulty, isDefaultParty, describeParty } from './journey-graph'
+import { getRouteDifficulty, isDefaultParty, describeParty, playerSafeRoute } from './journey-graph'
 import { buildDailyBreakdown, resupplyByDayForRoute } from './journey-days'
 import { generateEncounters, encounterTypeIcon, encounterSeverityLabel } from './encounters'
 import { listPartyNames, journeysForParty, type SavedJourney } from './journey-saved'
@@ -36,7 +36,8 @@ export interface CampaignLogInput {
   /**
    * When true, produce a player-safe log: strips encounters, per-day encounters,
    * crisis-leverage refs, and all GM annotations (campaign-note pins, feature
-   * notes, hex notes). Route facts, bottlenecks, seasonal warnings, supply
+   * notes, hex notes) and the GM-only route fields (bottlenecks, consequence
+   * if closed; see playerSafeRoute). Route facts, seasonal warnings, supply
    * pressure, and the day-by-day breakdown remain.
    */
   playerSafe?: boolean
@@ -68,7 +69,7 @@ function baseUrl(): string {
  * if they want it.
  */
 export function exportJourneyMarkdown(
-  route: JourneyRoute,
+  rawRoute: JourneyRoute,
   season?: Season,
   mode: RouteMode = 'direct',
   edgeBiomes?: (string | undefined)[],
@@ -76,6 +77,7 @@ export function exportJourneyMarkdown(
   supply?: SupplyConfig,
   playerSafe = false
 ): string {
+  const route = playerSafe ? playerSafeRoute(rawRoute) : rawRoute
   const fromName = route.nodes[0]?.name || 'Unknown'
   const toName = route.nodes[route.nodes.length - 1]?.name || 'Unknown'
   const wpNames = route.nodes.slice(1, -1).map(n => n.name)
@@ -232,7 +234,7 @@ export function generateCampaignLog(input: CampaignLogInput): string {
         } else {
           md += `- **Path:** ${sj.fromName} → ${sj.toName}\n`
         }
-        if (sj.bottlenecks.length > 0) {
+        if (!playerSafe && sj.bottlenecks.length > 0) {
           md += `- **Bottlenecks:** ${sj.bottlenecks.join('; ')}\n`
         }
         if (sj.seasonalWarnings.length > 0) {
