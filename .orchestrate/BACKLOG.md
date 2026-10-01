@@ -34,8 +34,8 @@ symbol/function name** and re-verify file:line against the current code before e
 
 | ID | Task | Status | Spec |
 |---|---|---|---|
-| V3 | Tier-4 polish (3 sub-items: export trim, tooltip, time-of-day) | **OPEN** | [V3.md](specs/V3.md) |
-| V4 | Passage per-instance variation + new signature keys | **OPEN** | [V4.md](specs/V4.md) |
+| V3 | Tier-4 polish (3 sub-items: export trim, tooltip, time-of-day) | **DONE on master (a04fb28, 65db8df)** | [V3.md](specs/V3.md) |
+| V4 | Passage per-instance variation + new signature keys | **DONE on master (e0df2fd)** | [V4.md](specs/V4.md) |
 
 **Build order:** V3 first (smaller, well-bounded, lower risk). V4 can start after V3 is
 reviewed and merged — it touches `passage.ts` which V3 does not.

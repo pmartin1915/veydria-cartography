@@ -38,3 +38,9 @@
 ## Open loops
 - ROADMAP.md still lists Tier 2 (fog of war, player-view rigor), Tier 3 architectural debt, Tier 4 polish — none are blockers.
 - No active claims.
+
+## 2026-09-30 worklist item 18 (next roadmap tier)
+- V3 (Tier-4 polish: a04fb28, 65db8df) and V4 (Passage variation + sand-wraith: e0df2fd) are already on master; `.orchestrate/BACKLOG.md` still lists them OPEN (stale).
+- Tier 2a fog of war shipped (3746c7f, e34e855) and Tier 2c multi-party shipped; ROADMAP Tier 2a heading was never marked.
+- Remaining spec'd tier is 2b player-view rigor, partly built (shareMode gates, `playerSafe` log). Gaps and four open decisions are in `ai/PLAYER-VIEW-SPEC.md`; awaiting Perry's approval, nothing built.
+- Checkout `fix/overlay-fractional-zoom-quantization` is LIVE: open PR #53, 1 commit ahead / 2 behind master, not merged.
