@@ -527,3 +527,13 @@ describe('playerSafeRoute', () => {
     expect(route.bottlenecks).toEqual(['GM secret'])
   })
 })
+
+describe('off-map routes are display-only (ADR-0045 Western Route)', () => {
+  it('draws the Western Route but adds no routable edge for it', () => {
+    const western = geojson.features.find(f => f.properties.id === 'western_route')
+    expect(western?.properties.off_map_terminus).toBe('vaucresne')
+    for (const edges of graph.adj.values()) {
+      for (const { edge } of edges) expect(edge.name).not.toBe('Western Route')
+    }
+  })
+})

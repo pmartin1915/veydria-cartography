@@ -153207,6 +153207,79 @@
         "type": "LineString",
         "coordinates": [
           [
+            0,
+            350
+          ],
+          [
+            70,
+            354
+          ],
+          [
+            126,
+            360
+          ],
+          [
+            175,
+            322
+          ],
+          [
+            230,
+            302
+          ],
+          [
+            265,
+            320
+          ],
+          [
+            292,
+            362
+          ],
+          [
+            320,
+            390
+          ],
+          [
+            370,
+            360
+          ],
+          [
+            440,
+            322
+          ],
+          [
+            520,
+            300
+          ],
+          [
+            600,
+            290
+          ]
+        ]
+      },
+      "properties": {
+        "id": "western_route",
+        "name": "Western Route",
+        "category": "trade_route",
+        "endpoints": [
+          "oravan",
+          "basin"
+        ],
+        "path_description": "Vaucresne (off-map, west across the open ocean) → Oravan archipelago (Halanimoa clearing-station) → Halkar Straits → Basin ports (Tavakh-Qarat certification)",
+        "commodities": "Fine paper and other Vaucresne goods inbound, festival-grade powder among them in growing lots; Basin goods outbound",
+        "bottleneck": "Two necks: Oravan pilot-houses (Halkar Straits) and the Vaucresne rutter",
+        "consequence_if_closed": "A dozen keels' cargoes a season, and the western gunpowder vector with them (ADR-0044 D1)",
+        "off_map_terminus": "vaucresne",
+        "stroke": "#5a6e9a",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "10,3,2,3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
             650,
             620
           ],

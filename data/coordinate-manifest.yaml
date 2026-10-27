@@ -676,6 +676,33 @@ trade_routes:
       dash_array: "2,5"
       label: "Scribal Ladder (pilgrimage)"
 
+  western_route:
+    # ADR-0045. Enters off the west edge from Vaucresne (off-map). Halanimoa's
+    # anchorage is placed on the archipelago's western shore; canon fixes the
+    # order (Halanimoa, Halkar Straits, Tavakh-Qarat), not exact coordinates.
+    path:
+      # Open ocean from Vaucresne
+      - [0, 350]
+      - [70, 354]
+      # Halanimoa clearing-station (landfall)
+      - [126, 360]
+      # Through the archipelago, past Halkar
+      - [175, 322]
+      - [230, 302]
+      - [265, 320]
+      # Halkar Straits
+      - [292, 362]
+      - [320, 390]
+      # Across the Basin to Tavakh-Qarat
+      - [370, 360]
+      - [440, 322]
+      - [520, 300]
+      - [600, 290]
+    style:
+      color: "#5a6e9a"
+      dash_array: "10,3,2,3"
+      label: "Western Route"
+
 # --- Metadata ---
 metadata:
   version: "1.0.0"

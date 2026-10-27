@@ -437,6 +437,7 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     let best: { routeId: string; tArc: number; perpDist: number } | null = null
     for (const f of geojson.features) {
       if (f.properties.category !== 'trade_route') continue
+      if (f.properties.off_map_terminus) continue
       if (f.geometry.type !== 'LineString') continue
       const routeId = (f.properties.id as string) || (f.properties.name as string) || ''
       if (!routeId) continue
@@ -464,6 +465,10 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   // fallback).
   for (const f of geojson.features) {
     if (f.properties.category !== 'trade_route') continue
+    // Off-map routes (ADR-0045 Western Route) are display-only: their sea lane
+    // has no authored travel durations (ADR-0018), and routing them would
+    // steal port snaps from the Coastal Monsoon.
+    if (f.properties.off_map_terminus) continue
     const endpoints = f.properties.endpoints as string[] | undefined
     if (!endpoints || endpoints.length < 2) continue
 

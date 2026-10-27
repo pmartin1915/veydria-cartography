@@ -25,6 +25,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "check:size": "node ../scripts/check-bundle-size.mjs",
+    "check:data": "node ../scripts/check-data.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
