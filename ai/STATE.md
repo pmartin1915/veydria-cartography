@@ -14,7 +14,7 @@
 
 ## Playwright smoke tests
 - Status: **IMPLEMENTED**.
-- `web/e2e/smoke.spec.ts` has 13 smoke tests covering map load, route compute, party mount, save/reload, share link, player MD, multi-party, map key, marginalia, travel vignette, Passage mode.
+- `web/e2e/smoke.spec.ts` has 18 smoke tests (counted 2026-10-26) covering map load, route compute, party mount, save/reload, share link, player MD, multi-party, map key, marginalia, travel vignette, Passage mode.
 - `web/package.json` has `test:e2e` / `test:e2e:ui` scripts.
 - CI `.github/workflows/ci.yml` already has a separate `e2e` job installing Chromium and running `npm run test:e2e`.
 
