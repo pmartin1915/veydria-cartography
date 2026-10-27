@@ -48,3 +48,6 @@
 ## 2026-09-30 player-view built (branch feat/player-view-rigor)
 - D1-D4 approved as proposed. InfoPanel `shareMode` hides strategic_value / bottleneck / consequence_if_closed and the AI Lore panel (it re-read those fields); MapViewer route tooltips drop bottleneck/consequence in share mode. D3 was already satisfied (Compare toggle is hidden in share mode and compareMode is not URL-driven).
 - Perry decided 2026-09-30: Adventure Hooks and GM Notes are also hidden in share mode (built). REVERSED 2026-10-01 (Perry, D5): bottleneck and consequence-if-closed text is now hidden from players everywhere, via `playerSafeRoute` (journey-graph.ts): the planner holds the stripped route in share mode (Route tab, Days tab, JSON copy, saved journeys), and every playerSafe export (Player MD, share-mode campaign log, saved-journey list) strips it too. The earlier partial hide left the same strings visible in the Route tab and handout. D1-D4 confirmed by Perry the same day.
+
+## 2026-10-26 worklist item 16 (IDEAS note)
+- ai/IDEAS.md now records that the Passage onboarding branch was merged to master as ed71396 (2026-06-24); the old "NOT merged" heading is kept as history. No code changed.
