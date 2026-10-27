@@ -245,16 +245,20 @@ def validate_topology(data: dict[str, Any]) -> list[str]:
         errors.append(f"Missing expected port zones: {sorted(missing)}")
 
     expected_routes = {
-        "copper_for_steel_road",
         "highland_steppe_corridor",
         "highland_relay",
         "coastal_monsoon",
         "caravan_thread",
+        "western_route",
     }
     actual_routes = set(data.get("trade_routes", {}).keys())
     if not expected_routes.issubset(actual_routes):
         missing = expected_routes - actual_routes
         errors.append(f"Missing expected trade routes: {sorted(missing)}")
+
+    # ADR-0047 D2: Copper-for-Steel is a treaty riding the routes, not a route
+    if "copper_for_steel_road" not in data.get("treaty_flows", {}):
+        errors.append("Missing expected treaty flow: copper_for_steel_road")
 
     bands = data.get("elevation_profile", {}).get("bands", [])
     band_regions = {b.get("region") for b in bands if isinstance(b, dict)}

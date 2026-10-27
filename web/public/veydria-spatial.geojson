@@ -120,7 +120,7 @@
         "id": "aethelian_basin",
         "name": "Aethelian Basin",
         "category": "water",
-        "description": "A three-day sail across. Six port cities stand on its shores. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried.",
+        "description": "A three-day sail across. Six port cities stand on its shores, four great free ports and two lesser harbours. They do not make war on one another, and they do not trust one another. The Basin grows no grain, mines no metal, swears no oath of its own; it certifies. The triple-seal excommunication, by which a captain's name is read aloud at each of the six customs-houses, has in the memory of the older clerks brought four houses to ruin and one master to suicide. The water is shallow and forgiving. The credit is long-memoried. The rim ports lie about a day's coasting apart: Tavakh-Qarat to Halani-Tamu is a single day along the north-east shore, the short hop the cool-season credit traffic makes between settlements, against the three days of the open sail straight across.",
         "opening": "The Basin's mouth faces west toward the open ocean. Halkar Straits is the narrow passage at the mouth. The Oravan archipelago lies beyond (west of) the straits in the open ocean. Ships entering the Basin from Oravan pass through Halkar Straits eastward into the enclosed sea",
         "fill": "#3a7ca5",
         "fillOpacity": 0.6
@@ -208,9 +208,9 @@
         "name": "Ngaru Bon",
         "category": "civilization",
         "cardinal": "North",
-        "elevation": "4000-6000m (gorges 2000-3000m)",
-        "terrain": "Hypoxic mountain plateau with deep river gorges",
-        "basin_access": "Indirect — via Lam-Chen Pass to steppe, then overland to Basin; or via Kilwa-analog southeastern Basin margin",
+        "elevation": "Vertically zoned (ADR-0047 D1): inhabited miombo shelf 1200-2000m; hypoxic crown 3500-4800m (peaks to ~6000m, no habitation above ~5000m)",
+        "terrain": "Wooded highveld shelf, where the people, fields, forges and copperbelt lie, walled above by a cold hypoxic crown of dzongs, sacred lakes and the Lam-Chen crossing. Tsetse belts close the lower approaches",
+        "basin_access": "Indirect — via Lam-Chen Pass to steppe, then overland to Basin; or via the southeastern route: porters through the tsetse foothills to Smith-Spring, Irrah caravans down the Southern Thread to Khulut, then Dzong-Tamu on the Basin's southeastern margin (Kilwa analog; a bypass of the Lam-Chen/A-Tzalan corridor)",
         "borders": [
           "irrah (south, via Smith-Spring frontier)",
           "kheshkai (south, via Lam-Chen Pass — singular exit)"
@@ -336,15 +336,15 @@
         "id": "irrah",
         "name": "Irrah",
         "category": "civilization",
-        "cardinal": "Central (trans-continental east-west belt between the highland north and the lowland south)",
+        "cardinal": "Two lobes (climate spine Ruling 7): a northern lobe east of the Basin, between Ngaru-Bon and Kheshkai's west flank; a southeastern lobe on the frankincense coast, east of the Ndjadi floodplain",
         "elevation": "Variable — sabkha flats near sea level, oasis valleys 200-800m, frankincense escarpments to 1500m",
-        "terrain": "Arid desert belt spanning the continent's interior. Not a compact region but a horizontal swathe: Ngaru-Bon plateau rises above it to the north, Kheshkai steppe flanks it to the northeast, Ndjadi delta lies below it to the south, and the Basin's eastern shore forms its western edge. Three trunk corridors (Northern Thread, Southern Thread, The Spine) connect 40+ oases",
+        "terrain": "Arid desert in two lobes, parted by Kheshkai's wall and the Ndjadi floodplain. Northern lobe: gravel plains under Ngaru-Bon's tsetse foothills, erg toward the Basin, a semiarid margin along Kheshkai's west flank, narrowing south to the delta's head at Khulut. Southeastern lobe: thorn-steppe and the frankincense escarpments, beyond a low eastern divide from the floodplain. Three trunk corridors (Northern Thread, Southern Thread, The Spine) connect 40+ oases in the northern lobe; the frankincense crossing joins the lobes (veydria-climate-spine.md)",
         "basin_access": "Via caravan routes westward to Basin's eastern shore (Halani-Tamu port); Scribal Ladder pilgrimage route connects south to Ndjadi delta via Basin transit",
         "borders": [
-          "ngaru_bon (north, at Smith-Spring frontier — escarpment rises from desert floor)",
-          "kheshkai (northeast, desert margin meets steppe grassland)",
-          "ndjadi (south, thorn-steppe transitions to floodplain)",
-          "aethelian_basin (west, caravan terminus at Halani-Tamu)"
+          "ngaru_bon (north of the northern lobe, at the Smith-Spring frontier below the tsetse foothills)",
+          "kheshkai (east of the northern lobe, along the west flank; north of the southeastern lobe, a lower, drier margin beyond the wall's end)",
+          "ndjadi (the northern lobe reaches the delta's head at Khulut; the southeastern lobe lies over the low eastern divide)",
+          "aethelian_basin (west of the northern lobe, caravan terminus at Halani-Tamu)"
         ],
         "fill": "#d4a854",
         "fillOpacity": 0.35,
@@ -444,12 +444,12 @@
         "name": "Kheshkai",
         "category": "civilization",
         "cardinal": "East to northeast",
-        "elevation": "1500-2500m",
-        "terrain": "High-altitude grassland steppe with cliff edges overlooking Ndjadi delta to south",
+        "elevation": "Rising plateau (ADR-0048 D4): southern lip 2000-2500m over the Ndjadi floodplain, climbing to 3500-4500m in the interior",
+        "terrain": "High-altitude grassland steppe with cliff edges overlooking Ndjadi delta to south. The dzud and the deep winters belong to the high interior, in the rain shadow of the southern wall",
         "basin_access": "Overland to eastern Basin ports; also via A-Tzalan Ford to Ndjadi delta",
         "borders": [
           "ngaru_bon (north, via Lam-Chen Pass)",
-          "irrah (south/southeast, desert margin)",
+          "irrah (west, the northern lobe along the flank; south, the southeastern lobe beyond the wall's end)",
           "ndjadi (south, via A-Tzalan Ford — cliff edge descends to delta)",
           "qollari (southwest, at Breath-of-Cloud sanctuary — cloud forest meets steppe)"
         ],
@@ -576,12 +576,12 @@
         "category": "civilization",
         "cardinal": "South",
         "elevation": "Near sea level, flat alluvial",
-        "terrain": "Equatorial monsoon river delta with five distributaries, stone barays, mangrove swamps",
+        "terrain": "Tropical monsoon river delta at Bengal latitude (ADR-0048 D6) with five distributaries, stone barays, mangrove swamps",
         "basin_access": "Direct — delta mouth enters Basin's south shore (Ki-Mbuhari port zone)",
         "borders": [
           "kheshkai (north, via A-Tzalan Ford)",
           "qollari (west, Qollari cliff roads descend to floodplains)",
-          "irrah (north/northeast, across desert — Scribal Ladder route)"
+          "irrah (north, the northern lobe at Khulut; east, the southeastern lobe over the low eastern divide)"
         ],
         "fill": "#3a8a3a",
         "fillOpacity": 0.35,
@@ -152666,7 +152666,7 @@
           "kheshkai"
         ],
         "description": "One road. Three days under cliff and a day in scree, with no shelter that a determined Council cannot find. Ngaru-Bon depends on the pass for the trade that feeds the plateau; Kheshkai prospers on the traffic that crosses it. The pass has changed hands six times in living memory, and never for long. The first thaw belongs to whoever wintered above, and the wintering above kills men. The widow-tax at the Smith-Spring side is collected by a Khen-Po whose name is not written in the register.",
-        "strategic_value": "Closure creates existential famine for Ngaru-Bon within one growing season",
+        "strategic_value": "Closure creates existential famine on the Ngaru-Bon crown (dzongs, councils, pass-garrisons) within one growing season. The shelf feeds itself but cannot lift bulk grain onto the crown without pack animals, which the tsetse belts deny it (ADR-0047 D1)",
         "marker-color": "#f44",
         "marker-symbol": "roadblock",
         "civ": "ngaru_bon"
@@ -152691,7 +152691,7 @@
           "ndjadi"
         ],
         "description": "Where the Kheshkai cliff edge descends to the Ndjadi delta. The ford is two pole-lengths deep at low water and impassable at flood, and for two of the four seasons the only crossing is the seizure of one bank by whichever clan-lord can hold it. Kosh-Taka held it once and held the upstream weirs with it; the delta starved through three growing seasons. The toll is paid in unminted copper, weighed at the ford by a Kheshkai factor who answers to no court the delta recognizes.",
-        "strategic_value": "Seizure controls north-south overland trade. Ndjadi can weaponize via upstream river diversion",
+        "strategic_value": "Seizure controls north-south overland trade. The weirs just above the ford stand in Ki-Njia, a Ndjadi treaty water-precinct on steppe ground: a weir release can drown the crossing against a hostile holder, and whoever seizes ford and precinct together can starve the delta. Below the ford, the Ki-Jenga cut can take the dry-season flow off the flood-flats at the escarpment foot (ADR-0047 D3)",
         "marker-color": "#f44",
         "marker-symbol": "roadblock"
       }
@@ -152921,74 +152921,6 @@
         "description": "The Ash-Oracle. A volcanic vent on the Basin's southern rim that vents on no schedule the calendar-keepers have been able to resolve. Oravan, Kheshkai, Qollari, and Irrah scholars come to it in rotation, each reading the ash by the lights of his own tradition, and the four readings on a single venting have never agreed. The local Tongue-Guild factor charges by the cycle for the translation work and does not endorse any reading.",
         "marker-color": "#adf",
         "marker-symbol": "religious-christian"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            650,
-            620
-          ],
-          [
-            750,
-            590
-          ],
-          [
-            900,
-            540
-          ],
-          [
-            960,
-            510
-          ],
-          [
-            970,
-            470
-          ],
-          [
-            960,
-            350
-          ],
-          [
-            950,
-            280
-          ],
-          [
-            945,
-            230
-          ],
-          [
-            940,
-            190
-          ],
-          [
-            940,
-            168
-          ],
-          [
-            860,
-            110
-          ]
-        ]
-      },
-      "properties": {
-        "id": "copper_for_steel_road",
-        "name": "Copper-for-Steel Road",
-        "category": "trade_route",
-        "endpoints": [
-          "ndjadi",
-          "ngaru_bon"
-        ],
-        "path_description": "Ndjadi delta → A-Tzalan Ford → across Kheshkai steppe → Lam-Chen Pass → Ngaru-Bon plateau",
-        "commodities": "Copper northbound; finished steel/iron southbound",
-        "bottleneck": "A-Tzalan Ford (Kheshkai can toll/seize) and Lam-Chen Pass (singular exit)",
-        "consequence_if_closed": "The defining bilateral dependency. Closure creates existential crises for both sides",
-        "stroke": "#8b5e3c",
-        "stroke-width": 2.5,
-        "stroke-dasharray": "8,3"
       }
     },
     {
@@ -153267,6 +153199,74 @@
         "stroke": "#d4a854",
         "stroke-width": 2.5,
         "stroke-dasharray": "3,4"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            650,
+            620
+          ],
+          [
+            750,
+            590
+          ],
+          [
+            900,
+            540
+          ],
+          [
+            960,
+            510
+          ],
+          [
+            970,
+            470
+          ],
+          [
+            960,
+            350
+          ],
+          [
+            950,
+            280
+          ],
+          [
+            945,
+            230
+          ],
+          [
+            940,
+            190
+          ],
+          [
+            940,
+            168
+          ],
+          [
+            860,
+            110
+          ]
+        ]
+      },
+      "properties": {
+        "id": "copper_for_steel_road",
+        "name": "Copper-for-Steel Road",
+        "category": "trade_route",
+        "endpoints": [
+          "ndjadi",
+          "ngaru_bon"
+        ],
+        "path_description": "Ndjadi delta → A-Tzalan Ford → across Kheshkai steppe → Lam-Chen Pass → Ngaru-Bon plateau",
+        "commodities": "Copper northbound; finished steel/iron southbound",
+        "bottleneck": "A-Tzalan Ford (Kheshkai can toll/seize) and Lam-Chen Pass (singular exit)",
+        "consequence_if_closed": "Stopping the treaty is a quarrel over a minority copper share, the steel that rides south under it, and a right the delta has held since before the copperbelt opened. Closing the ford or the pass is another matter: that shuts the first leg of the Highland-Steppe Corridor and threatens the crown's grain (see chokepoints.lam_chen_pass)",
+        "stroke": "#8b5e3c",
+        "stroke-width": 2.5,
+        "stroke-dasharray": "8,3"
       }
     },
     {

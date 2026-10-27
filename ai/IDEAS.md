@@ -801,3 +801,8 @@ worldbuilder authoring needed. New tests lock the invariant: every key ships ≥
 variants, no two variants of a key share identical prose, no em-dash (VOICE-SPEC
 Option B), and cost vectors match across variants except the documented sand-wraith
 exception. 1146 unit tests green, tsc/build clean.
+
+---
+
+## Western Route not drawn on the map (2026-10-27, decision for Perry)
+`western_route` (ADR-0045) synced into topology but has no `coordinate-manifest.yaml` path, so the exporter skips it. Needs: where the line enters from the west edge (off-map Vaucresne), the Halanimoa → Halkar Straits → Tavakh-Qarat polyline, and a style distinct from the five on-map routes (perhaps a fading/arrowed sea-lane). Also add it to `rasterize.py` ROUTE_COLORS/ROUTE_DASHES. Deferred because it is a cartographic choice, not a mechanical one.

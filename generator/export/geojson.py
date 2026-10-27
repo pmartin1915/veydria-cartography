@@ -235,7 +235,7 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
 
     # --- Trade routes (from YAML + manifest) ---
     yaml_route_ids = set()
-    for route_key in data.route_names:
+    for route_key in [*data.route_names, *data.treaty_flows]:
         route = data.get_route(route_key)
         route_manifest = manifest.get_route(route_key)
         path = route_manifest.get("path")

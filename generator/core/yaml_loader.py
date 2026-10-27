@@ -39,6 +39,8 @@ class TopologyData:
         self.chokepoints = raw.get("chokepoints", {})
         self.basin = raw.get("aethelian_basin", {})
         self.trade_routes = raw.get("trade_routes", {})
+        # Named bilateral flows that ride the canonical routes (ADR-0047 D2)
+        self.treaty_flows = raw.get("treaty_flows", {})
         self.elevation_profile = raw.get("elevation_profile", {})
         self.biological_barriers = raw.get("biological_barriers", {})
         self.biomes = raw.get("biomes", {})
@@ -77,8 +79,8 @@ class TopologyData:
         return self.chokepoints.get(name, {})
 
     def get_route(self, name: str) -> dict[str, Any]:
-        """Get a specific trade route's data."""
-        return self.trade_routes.get(name, {})
+        """Get a specific trade route's (or treaty flow's) data."""
+        return self.trade_routes.get(name) or self.treaty_flows.get(name, {})
 
     def get_biome(self, civ_name: str) -> dict[str, Any]:
         """Get a specific civilization's biome data."""

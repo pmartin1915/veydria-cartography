@@ -51,3 +51,10 @@
 
 ## 2026-10-26 worklist item 16 (IDEAS note)
 - ai/IDEAS.md now records that the Passage onboarding branch was merged to master as ed71396 (2026-06-24); the old "NOT merged" heading is kept as history. No code changed.
+
+## 2026-10-27 worldbuilder sync 2853c0c + generator fixes (branch chore/sync-worldbuilder-2026-10-27)
+- Synced 6 stale files (topology, MAP-PROMPT, canon, search-index, encounters, travel-graph). New in topology: `western_route` (ADR-0045, sixth canonical route, off-map terminus Vaucresne).
+- `pipeline.py validate` had been failing on master since the 09-29 sync: ADR-0047 D2 moved `copper_for_steel_road` to `treaty_flows`. Validator now expects it there and requires `western_route`. Validate is not in CI, which is why it went unnoticed.
+- Exporter: `TopologyData.get_route` falls back to `treaty_flows` and the export loop includes them, so Copper-for-Steel keeps its lore. Regenerated GeoJSON: properties-only refresh (4 civs, 2 chokepoints, Basin, Copper consequence text), zero geometry change.
+- `western_route` is NOT drawn: no manifest path, and an off-map route's entry point/styling is Perry's call (IDEAS).
+- Verified: validate OK, persistence round-trip OK, tsc clean, 1151 unit, build, size (34 KiB headroom), e2e 20/20, sync --check 8/9 (calendar optional).

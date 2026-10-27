@@ -1,6 +1,5 @@
 # ============================================================
 # Veydria Continental Topology — Spatial Source of Truth
-# AUTHOR: Claude Opus 4.6 (laptop) on 2026-04-21
 # SOURCE: Synthesized from region files, religion layer (58 files),
 #   ecology flow_table.md, and economy deep research
 # STATUS: canonical — ratified by Perry 2026-06-08; economy layer may build on this
@@ -91,7 +90,7 @@ chokepoints:
     description: "The carved descent from the cloud forest takes four days for a loaded llama and six for a sick one. The roads narrow at the upper switchbacks to a man's reach plus a finger, which is the width the calendar-keepers want; the load cap is twenty-five to thirty kilo by ordinance and by what the animal will bear. The cliff-engineers' guild at the Apu-Yana waystation can collapse a half-stade of switchback by removing four wedge-stones, and have done so twice in the memory of the living roadmasters."
     strategic_value: "Qollari monopoly on highland-lowland access. Llama 25-30 kg load cap forces dense waystation networks"
     sub_routes:
-      - "Western descent to Oravan coast (steep switchbacks)"
+      - "Western descent to Oravan coast (steep switchbacks; the Oravan call it the Gold-Banner Route)"
       - "Delta descent to Ndjadi floodplains (through cloud forest into jungle)"
       - "Eastern border road toward steppe (passes near Apu-Yana; dangerous, rarely used)"
 
@@ -191,6 +190,15 @@ trade_routes:
     bottleneck: "Qalībin path-finders (only legally recognized desert escorts for the Basin leg); Smith-Spring buffer zone (neutral contact point for the Ngaru-Bon leg)"
     consequence_if_closed: "Salt supply to southern continent collapses. Irrah iron imports cease. Continental banking network (khatti letters of credit) breaks — Qalībin oath-binders are the de facto banking infrastructure"
     sea_outlet: "Frankincense Coast, the southeastern oceanic outlet at the far end of the desert belt. Frankincense, myrrh and resin-gums clear by sea to destinations beyond the modeled map under the Frankincense Syndic oath-court at Tin-Aghīz. Irrah's only Basin-independent exit; the sea leg reaches open ocean and is not gated by the Basin straits or the wave-tithe. An export outlet, not a Basin route (see economy/trade-routes.yaml caravan_thread.sea_outlet)"
+
+  western_route:
+    endpoints: ["oravan", "basin"]
+    off_map_terminus: "vaucresne"
+    description: "The sixth canonical route (ADR-0045), and the only one whose primary axis runs off the map. Western keels cross the open ocean from Vaucresne, make first landfall in the Oravan archipelago at the Halanimoa clearing-station, and are piloted through the Halkar Straits to the Basin, where the Triple-Seal Courts at Tavakh-Qarat certify their cargo as outland goods. The route is young and has ramped to an artery: two or three keels a season in its first years, seven, then twelve in the latest, throttled by the sailing directions. Two necks gate it and neither can subsume the other, the Oravan pilot-houses at the strait and the Vaucresne masters' guarded sailing directions. Vaucresne is relay and intermediary, not a civilization of the map, and what lies beyond it is unnamed."
+    path: "Vaucresne (off-map, west across the open ocean) → Oravan archipelago (Halanimoa clearing-station) → Halkar Straits → Basin ports (Tavakh-Qarat certification)"
+    commodities: "Fine paper and other Vaucresne goods inbound, festival-grade powder among them in growing lots; Basin goods outbound"
+    bottleneck: "Two necks: Oravan pilot-houses (Halkar Straits) and the Vaucresne rutter"
+    consequence_if_closed: "A dozen keels' cargoes a season, and the western gunpowder vector with them (ADR-0044 D1)"
 
 # Treaty flows: named bilateral flows that ride the canonical routes above but
 # are not routes themselves. ADR-0006 names the Copper-for-Steel Road as a trade

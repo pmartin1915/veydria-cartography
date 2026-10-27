@@ -280,7 +280,7 @@ straits between islands, fringing reefs.
 
 ## 4. Trade Routes (coloured paths)
 
-Five canonical routes (`economy/trade-routes.yaml`), each in its own colour or line style:
+Six canonical routes (`economy/trade-routes.yaml`), each in its own colour or line style:
 
 1. **Aethelian Basin Hub** (thin white dashes): the clearing house. Ki-Mbuhari and the delta
    distributaries to the rim ports, Tavakh-Qarat, Halani-Tamu and Dzong-Tamu.
@@ -293,6 +293,10 @@ Five canonical routes (`economy/trade-routes.yaml`), each in its own colour or l
    water only.
 5. **Caravan Thread** (dotted gold): a three-hub network in the northern lobe. Hubs at Smith-Spring,
    Qarat al-Fidda and Halani-Tamu, with tracks between.
+6. **Western Route** (thin long dashes, pale grey): enters from the map's western edge out of the
+   open ocean, makes landfall in the Oravan chain, and follows the Coastal Monsoon's line through the
+   Halkar Straits to Tavakh-Qarat. On water only, and drawn thinner than the Coastal Monsoon: the
+   route is the youngest artery, a dozen keels a season, and still throttled (ADR-0045). Its far end is off the map and is not labelled.
 
 Two faint lines that are not routes:
 
@@ -367,7 +371,7 @@ current runs south along the northern arm's outer coast.
 
 - Region colours (six; Irrah in two lobes)
 - Basin port zones (Ki-Mbuhari, Tavakh-Qarat, Halani-Tamu, Dzong-Tamu)
-- Trade routes (five), plus the Copper-for-Steel treaty flow and the frankincense crossing as faint
+- Trade routes (six), plus the Copper-for-Steel treaty flow and the frankincense crossing as faint
   lines
 - Chokepoint symbols (six)
 - Contested sites (Qhabal-Ur, Veyd-Kirrha), the sacred confluence at Hassag-Nganin, and the
@@ -435,7 +439,8 @@ current runs south along the northern arm's outer coast.
 - [ ] Oravan is a north-south chain in the western ocean, beyond the Halkar Straits
 - [ ] Four port zones at north, east, southeast and south shores
 - [ ] All six chokepoints are marked and plausible
-- [ ] Five routes traceable over possible terrain; the Corridor is an L crossing the neck; the Caravan
+- [ ] Six routes traceable over possible terrain; the Western Route enters from the western edge,
+      unlabelled at its far end; the Corridor is an L crossing the neck; the Caravan
       Thread is three hubs, not one line
 - [ ] Copper-for-Steel and the frankincense crossing are faint lines, not routes
 - [ ] The frankincense coast faces the southeastern ocean, not the Basin
