@@ -52,3 +52,6 @@
 
 ## 2026-10-26 worklist item 16 (IDEAS note)
 - ai/IDEAS.md now records that the Passage onboarding branch was merged to master as ed71396 (2026-06-24); the old "NOT merged" heading is kept as history. No code changed.
+
+## 2026-10-28 worklist item 4 (test count)
+- `web/src/utils/journey-supply.test.ts` now has 40 tests, all green (vitest, 2026-10-28); line 12's "36" is the count when that section was written.
