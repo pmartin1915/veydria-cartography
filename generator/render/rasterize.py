@@ -86,6 +86,7 @@ ROUTE_COLORS: dict[str, str] = {
     'coastal_monsoon': '#4a7aa0',
     'caravan_thread': '#9a7a40',
     'scribal_ladder': '#a04040',
+    'western_route': '#5a6e9a',
 }
 
 # Route dash patterns (on, off)
@@ -96,6 +97,7 @@ ROUTE_DASHES: dict[str, tuple[float, ...]] = {
     'coastal_monsoon': (8, 2, 2, 2),
     'caravan_thread': (3, 4),
     'scribal_ladder': (2, 5),
+    'western_route': (10, 3, 2, 3),
 }
 
 # Marker shapes for categories

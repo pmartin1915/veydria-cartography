@@ -235,7 +235,7 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
 
     # --- Trade routes (from YAML + manifest) ---
     yaml_route_ids = set()
-    for route_key in data.route_names:
+    for route_key in [*data.route_names, *data.treaty_flows]:
         route = data.get_route(route_key)
         route_manifest = manifest.get_route(route_key)
         path = route_manifest.get("path")
@@ -254,6 +254,7 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
                     "commodities": route.get("commodities", ""),
                     "bottleneck": route.get("bottleneck", ""),
                     "consequence_if_closed": route.get("consequence_if_closed", ""),
+                    **({"off_map_terminus": route["off_map_terminus"]} if route.get("off_map_terminus") else {}),
                     "stroke": style.get("color", "#888"),
                     "stroke-width": 2.5,
                     "stroke-dasharray": style.get("dash_array", ""),
