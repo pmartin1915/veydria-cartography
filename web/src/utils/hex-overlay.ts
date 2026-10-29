@@ -156,13 +156,17 @@ export function initHexOverlay(
   // Y-flip, an authored coord (x, svgY(y)) maps to latLngToLayerPoint(svgToLatLng
   // (x, y)) under a POSITIVE-scale affine — exactly the per-point projection
   // d3-overlay.ts computes, so the group lands pixel-identical to the routes.
-  // Derived from three probes; scales are positive so no glyph mirroring.
+  // Probe across the FULL map extent, not 1 unit: latLngToLayerPoint returns
+  // integer-rounded points, so a 1-unit probe quantizes the scale (1.414 → 1
+  // at the zoom control's half-level steps), misaligning the grid ~41% until the
+  // next integer zoom. Wide-span probes make the rounding error negligible
+  // (≤0.5px over 1200 units). Same fix as graticule-overlay.ts / scale-control.ts (PR #50).
   function reproject() {
     const p00 = map.latLngToLayerPoint(L.latLng(0, 0))
-    const p10 = map.latLngToLayerPoint(L.latLng(0, 1))
-    const p01 = map.latLngToLayerPoint(L.latLng(1, 0))
-    const sx = p10.x - p00.x // > 0
-    const sy = p00.y - p01.y // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
+    const pE = map.latLngToLayerPoint(L.latLng(0, SVG_WIDTH))
+    const pN = map.latLngToLayerPoint(L.latLng(SVG_HEIGHT, 0))
+    const sx = (pE.x - p00.x) / SVG_WIDTH // > 0
+    const sy = (p00.y - pN.y) / SVG_HEIGHT // > 0 (Y-flip is in svgY, not here — keeps glyphs upright)
     hexGroup.attr('transform', `matrix(${sx},0,0,${sy},${p00.x},${p00.y})`)
     // Hex coordinate labels are a functional readout — keep them a constant
     // screen size by counter-scaling the font against the matrix (sx == sy ==

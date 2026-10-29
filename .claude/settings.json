@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "env": {
+    "GIT_AUTHOR_NAME": "PerryHMartin",
+    "GIT_AUTHOR_EMAIL": "pmartin1915@gmail.com",
+    "GIT_COMMITTER_NAME": "PerryHMartin",
+    "GIT_COMMITTER_EMAIL": "pmartin1915@gmail.com"
+  }
+}

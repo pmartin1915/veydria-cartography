@@ -44,6 +44,7 @@
 - Tier 2a fog of war shipped (3746c7f, e34e855) and Tier 2c multi-party shipped; ROADMAP Tier 2a heading was never marked.
 - Remaining spec'd tier is 2b player-view rigor, partly built (shareMode gates, `playerSafe` log). Gaps and four open decisions are in `ai/PLAYER-VIEW-SPEC.md`; awaiting Perry's approval, nothing built.
 - Checkout `fix/overlay-fractional-zoom-quantization` is LIVE: open PR #53, 1 commit ahead / 2 behind master, not merged.
+- 2026-10-28: PR #53 is CLOSED unmerged (gh pr view 53); the overlay misalignment fix landed instead as 3d56053 (#57). The branch is left as it is.
 
 ## 2026-09-30 player-view built (branch feat/player-view-rigor)
 - D1-D4 approved as proposed. InfoPanel `shareMode` hides strategic_value / bottleneck / consequence_if_closed and the AI Lore panel (it re-read those fields); MapViewer route tooltips drop bottleneck/consequence in share mode. D3 was already satisfied (Compare toggle is hidden in share mode and compareMode is not URL-driven).
@@ -60,3 +61,6 @@
 - UPDATE same day (Perry: "add all that as you see fit"): drawn. Manifest path enters off the west edge, Halanimoa placed on Oravan's western shore (canon fixes order, not coords), Halkar Straits, NE across the Basin to Tavakh-Qarat. Style `#5a6e9a`, dash `10,3,2,3`. DISPLAY-ONLY: `journey-graph.ts` skips trade routes carrying `off_map_terminus` (exporter now emits it) in both port-snap and edge building, so journeys and sim baselines are unchanged; test locks it. Making it routable needs authored sea-lane durations (ADR-0018) first.
 - CI CORRECTION: `.github/workflows/ci.yml` was deleted 2026-06-29 (`a072da8`, Actions drain); only `deploy.yml` (build only) remains. The "CI runs check:size / e2e" lines above are stale. New local gate: `npm run check:data` (sync --check + topology validate, prefers generator/.venv).
 - Verified: validate OK, persistence round-trip OK, tsc clean, 1151 unit, build, size (34 KiB headroom), e2e 20/20, sync --check 8/9 (calendar optional).
+
+## 2026-10-28 worklist item 4 (test count)
+- `web/src/utils/journey-supply.test.ts` now has 40 tests, all green (vitest, 2026-10-28); line 12's "36" is the count when that section was written.
