@@ -64,3 +64,7 @@
 
 ## 2026-10-28 worklist item 4 (test count)
 - `web/src/utils/journey-supply.test.ts` now has 40 tests, all green (vitest, 2026-10-28); line 12's "36" is the count when that section was written.
+
+## 2026-11-03 worklist item 1 (ROADMAP 2a marked)
+- ROADMAP.md "### 2a. Fog of war / explored hexes" now reads "— ✅ SHIPPED 2026-05-22" (shipped in 3746c7f and e34e855). This resolves the 09-30 note that the heading was never marked.
+- `.orchestrate/BACKLOG.md` already marks V3 and V4 DONE (a04fb28, 65db8df, e0df2fd), so the 09-30 "still lists them OPEN" note is resolved too. No code changed.
