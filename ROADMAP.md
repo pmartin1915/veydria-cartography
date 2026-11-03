@@ -90,7 +90,7 @@ export function computeSupplyTimeline(
 
 These are the features that make the tool feel *essential* rather than nice-to-have. Pick one per cycle.
 
-### 2a. Fog of war / explored hexes
+### 2a. Fog of war / explored hexes — ✅ SHIPPED 2026-05-22
 
 **Why:** Campaign progress made visible. Right now the map is static; the world doesn't reflect what the party has discovered. Persistent "we've been here" state is the single highest-leverage feature for a session-to-session campaign aid.
 
