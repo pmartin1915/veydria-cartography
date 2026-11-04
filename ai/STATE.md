@@ -36,7 +36,7 @@
 - `node scripts/sync-world-data.mjs --check` → all up to date
 
 ## Open loops
-- ROADMAP.md still lists Tier 2 (fog of war, player-view rigor), Tier 3 architectural debt, Tier 4 polish — none are blockers.
+- ROADMAP.md still lists Tier 2 (2b player-view rigor; 2a fog of war and 2c multi-party shipped), Tier 3 architectural debt, Tier 4 polish — none are blockers.
 - No active claims.
 
 ## 2026-09-30 worklist item 18 (next roadmap tier)
