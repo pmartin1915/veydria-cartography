@@ -16,12 +16,12 @@
 - Status: **IMPLEMENTED**.
 - `web/e2e/smoke.spec.ts` has 18 smoke tests (counted 2026-10-26) covering map load, route compute, party mount, save/reload, share link, player MD, multi-party, map key, marginalia, travel vignette, Passage mode.
 - `web/package.json` has `test:e2e` / `test:e2e:ui` scripts.
-- CI `.github/workflows/ci.yml` already has a separate `e2e` job installing Chromium and running `npm run test:e2e`.
+- e2e: run `npm run test:e2e` locally; there is no CI e2e job (ci.yml was deleted in `a072da8`, see the CI CORRECTION below).
 
 ## Bundle-size budget
 - Status: **IMPLEMENTED**.
 - `scripts/check-bundle-size.mjs` gates the gzipped app `index-*.js` chunk at 200 KiB.
-- CI runs `npm run check:size` after build.
+- Size check: run `npm run check:size` locally after build; no CI runs it (see the CI CORRECTION below).
 - Current build: app chunk ~161.95 KiB gzip, 38 KiB headroom.
 
 ## Data sync with worldbuilder
