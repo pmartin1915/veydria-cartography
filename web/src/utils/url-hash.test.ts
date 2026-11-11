@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildHash, buildShareUrl, parseHash } from './url-hash'
+import { MAP_LAYOUT } from './world-coords'
+
+const LAYOUT_PARAM = `layout=${MAP_LAYOUT}`
 
 describe('url-hash', () => {
   describe('hex deep-link', () => {
@@ -21,7 +24,7 @@ describe('url-hash', () => {
     })
 
     it('builds a hash with hex label', () => {
-      expect(buildHash({ hexLabel: 'G7' })).toBe('#hex=G7')
+      expect(buildHash({ hexLabel: 'G7' })).toBe(`#${LAYOUT_PARAM}&hex=G7`)
     })
 
     it('round-trips hex alongside zoom/center', () => {
@@ -40,7 +43,7 @@ describe('url-hash', () => {
     })
 
     it('builds a hash with hexNote', () => {
-      expect(buildHash({ hexNote: 'G7' })).toBe('#hexNote=G7')
+      expect(buildHash({ hexNote: 'G7' })).toBe(`#${LAYOUT_PARAM}&hexNote=G7`)
     })
 
     it('round-trips hexNote alongside zoom/center', () => {
@@ -103,12 +106,12 @@ describe('url-hash', () => {
         { featureId: 'f1', zoom: 1.5, centerX: 600, centerY: 400 },
         'https://example.com/map'
       )
-      expect(url).toBe('https://example.com/map#feature=f1&z=1.50&cx=600.0&cy=400.0')
+      expect(url).toBe(`https://example.com/map#${LAYOUT_PARAM}&feature=f1&z=1.50&cx=600.0&cy=400.0`)
     })
 
     it('returns only hash in node environment when baseUrl is omitted', () => {
       const url = buildShareUrl({ hexLabel: 'G7' })
-      expect(url).toBe('#hex=G7')
+      expect(url).toBe(`#${LAYOUT_PARAM}&hex=G7`)
     })
 
     it('includes share=1 for player view', () => {
@@ -116,7 +119,7 @@ describe('url-hash', () => {
         { featureId: 'f1', share: true },
         'https://example.com/map'
       )
-      expect(url).toBe('https://example.com/map#feature=f1&share=1')
+      expect(url).toBe(`https://example.com/map#${LAYOUT_PARAM}&feature=f1&share=1`)
     })
 
     it('composes all parameters into a single URL', () => {
@@ -147,9 +150,9 @@ describe('url-hash', () => {
       expect(parsed.centerY).toBe(200)
     })
 
-    it('returns baseUrl unchanged when state is empty', () => {
+    it('always stamps the current layout, even when state is empty', () => {
       const url = buildShareUrl({}, 'https://example.com/map')
-      expect(url).toBe('https://example.com/map')
+      expect(url).toBe(`https://example.com/map#${LAYOUT_PARAM}`)
     })
 
     it('round-trips through parseHash correctly', () => {
@@ -228,6 +231,56 @@ describe('url-hash', () => {
       const parsed = parseHash('#share=1')
       expect(parsed.share).toBe(true)
       expect(parsed.fog).toBeUndefined()
+    })
+  })
+
+  describe('map layout gating (P1b)', () => {
+    it('buildHash always writes layout=MAP_LAYOUT', () => {
+      expect(buildHash({})).toBe(`#${LAYOUT_PARAM}`)
+      expect(buildHash({ featureId: 'f1' })).toContain(LAYOUT_PARAM)
+    })
+
+    it('keeps z/cx/cy when the layout matches the current one', () => {
+      const parsed = parseHash(`#${LAYOUT_PARAM}&z=1.5&cx=600&cy=400`)
+      expect(parsed.zoom).toBe(1.5)
+      expect(parsed.centerX).toBe(600)
+      expect(parsed.centerY).toBe(400)
+    })
+
+    it('drops z/cx/cy when the layout param is absent (old map link)', () => {
+      const parsed = parseHash('#z=1.5&cx=600&cy=400')
+      expect(parsed.zoom).toBeUndefined()
+      expect(parsed.centerX).toBeUndefined()
+      expect(parsed.centerY).toBeUndefined()
+    })
+
+    it('drops z/cx/cy when the layout is stale (different map layout)', () => {
+      const parsed = parseHash('#layout=april-pre-phase1&z=1.5&cx=600&cy=400')
+      expect(parsed.zoom).toBeUndefined()
+      expect(parsed.centerX).toBeUndefined()
+      expect(parsed.centerY).toBeUndefined()
+    })
+
+    it('keeps all non-viewport params when dropping a stale viewport', () => {
+      const parsed = parseHash(
+        '#z=1.5&cx=600&cy=400&feature=port_a&hex=G7&journeyFrom=a&journeyTo=b&season=summer&mode=safest&share=1'
+      )
+      expect(parsed.zoom).toBeUndefined()
+      expect(parsed.featureId).toBe('port_a')
+      expect(parsed.hexLabel).toBe('G7')
+      expect(parsed.journeyFrom).toBe('a')
+      expect(parsed.journeyTo).toBe('b')
+      expect(parsed.season).toBe('summer')
+      expect(parsed.mode).toBe('safest')
+      expect(parsed.share).toBe(true)
+    })
+
+    it('round-trips viewport params written by buildHash (layout present)', () => {
+      const original = { zoom: -1.25, centerX: 0, centerY: 800 }
+      const parsed = parseHash(buildHash(original))
+      expect(parsed.zoom).toBe(-1.25)
+      expect(parsed.centerX).toBe(0)
+      expect(parsed.centerY).toBe(800)
     })
   })
 
