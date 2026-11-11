@@ -424,3 +424,14 @@ describe('campaign-log', () => {
     })
   })
 })
+
+describe('generateCampaignLog stale journeys (review fix)', () => {
+  it('omits obsolete totals for a journey that needs replanning', () => {
+    const md = generateCampaignLog({
+      savedJourneys: [makeSavedJourney({ stale: true, totalKm: 1234, estimatedDays: 9 })],
+      annotations: [],
+    })
+    expect(md).toContain('Route needs replanning')
+    expect(md).not.toContain('1234 km')
+  })
+})

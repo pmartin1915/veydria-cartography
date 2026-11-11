@@ -525,8 +525,13 @@ function App() {
         // leaves the data untouched and the absent marker re-runs it next
         // boot. The annotations state initializer above may have read
         // pre-migration data during the loading screen, so reload it here.
+        // An aborted or thrown migration must NOT open the editable map: new
+        // pins/journeys saved now would be overwritten when a later boot
+        // recomputes from the April backups. Stop on the error screen instead;
+        // the absent marker retries the migration on the next load.
+        let migration: Awaited<ReturnType<typeof migrateMapLayout>> | 'threw'
         try {
-          await migrateMapLayout(kvStore, {
+          migration = await migrateMapLayout(kvStore, {
             april: {
               points: aprilLayoutPositions.points as unknown as Record<string, [number, number]>,
               centroids: aprilLayoutPositions.centroids as unknown as Record<string, [number, number]>,
@@ -535,7 +540,16 @@ function App() {
             graph: buildGraph(data),
           })
         } catch {
-          // Migration is recoverable by design — never block the map on it.
+          migration = 'threw'
+        }
+        if (migration === 'aborted' || migration === 'threw') {
+          setError(
+            'Your saved pins and journeys could not be moved to the new map layout. ' +
+            'Nothing was changed. Reload to try again; if this keeps happening, ' +
+            'export your campaign from a backup before editing.',
+          )
+          setLoading(false)
+          return
         }
         setAnnotations(loadAnnotations())
         setGeojson(data)

@@ -370,3 +370,21 @@ describe('migrateMapLayout', () => {
     expect(adapter.keys().sort()).toEqual([MAP_LAYOUT_KEY, 'veydria.stars.v1'].sort())
   })
 })
+
+describe('collectCurrentPositions (review fix)', () => {
+  it('honors an authored centroid on a MultiPolygon instead of the vertex mean', () => {
+    const geo = {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { id: 'irrah', category: 'civilization', centroid: [646, 300] },
+        geometry: {
+          type: 'MultiPolygon',
+          coordinates: [[[[900, 400], [1000, 400], [1000, 600], [900, 400]]]],
+        },
+      }],
+    }
+    const pos = collectCurrentPositions(geo as never)
+    expect(pos.irrah).toEqual([646, 300])
+  })
+})

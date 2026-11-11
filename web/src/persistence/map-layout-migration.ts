@@ -216,6 +216,14 @@ export function collectCurrentPositions(
       const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
       put(id, [cx, cy] as [number, number])
     } else if (f.geometry.type === 'MultiPolygon') {
+      const explicit = f.properties.centroid as [number, number] | undefined
+      if (
+        Array.isArray(explicit) && explicit.length === 2 &&
+        typeof explicit[0] === 'number' && typeof explicit[1] === 'number'
+      ) {
+        put(id, [explicit[0], explicit[1]] as [number, number])
+        continue
+      }
       let cx = 0, cy = 0, n = 0
       for (const poly of coords as unknown as number[][][][]) {
         for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
