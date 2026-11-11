@@ -20,10 +20,13 @@ import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
 import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
+import { buildGraph } from './utils/journey-graph'
 import { formatDistance, estimateMeasureDays, svgDistanceToKm, type MeasureStats } from './utils/measure'
 import { formatDays } from './utils/format-measure'
 import { svgToWorldKm, MAP_LAYOUT } from './utils/world-coords'
 import { parsePatchYaml, applyPatches, parsePatchLayout } from './utils/patch-parser'
+import { migrateMapLayout, collectCurrentPositions } from './persistence/map-layout-migration'
+import aprilLayoutPositions from './generated/layout-april-positions.json'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation, markRouteExplored, saveAnnotations } from './utils/annotations'
@@ -515,7 +518,26 @@ function App() {
         const text = new TextDecoder().decode(all)
         return JSON.parse(text) as GeoJSONCollection
       })
-      .then((data: GeoJSONCollection) => {
+      .then(async (data: GeoJSONCollection) => {
+        // P1b: one-time persisted-data migration. Runs after kv hydration
+        // (Tauri boot) and geojson load, and before the first render that
+        // reads annotations or journeys. Marker written last; a failure
+        // leaves the data untouched and the absent marker re-runs it next
+        // boot. The annotations state initializer above may have read
+        // pre-migration data during the loading screen, so reload it here.
+        try {
+          await migrateMapLayout(kvStore, {
+            april: {
+              points: aprilLayoutPositions.points as unknown as Record<string, [number, number]>,
+              centroids: aprilLayoutPositions.centroids as unknown as Record<string, [number, number]>,
+            },
+            currentPositions: collectCurrentPositions(data),
+            graph: buildGraph(data),
+          })
+        } catch {
+          // Migration is recoverable by design — never block the map on it.
+        }
+        setAnnotations(loadAnnotations())
         setGeojson(data)
         setLoading(false)
         // Handle deep-linking after data loads
