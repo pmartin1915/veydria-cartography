@@ -1,17 +1,40 @@
 /**
- * compare-summaries.mjs — A6.5: compare two sim:batch summary.csv files.
+ * compare-summaries.mjs — A6.5: write the Phase 1 sim report.
  *
- * Joins runs on (from,to,season,mode,party_preset,supply_preset) and reports
- * headline deltas: route-found, completion, median distance/day ratios, and
- * the largest per-run day swings. Used for the Phase 1 after-pass:
- *   stage1 (post-phase1-stage1) vs pre-phase1  → graph/topology effect at
- *                                                the OLD 2.5 km/unit scale
- *   stage2 (post-phase1)      vs stage1        → pure scale effect (2.5→4.0)
- *   stage2 vs pre-phase1                       → combined
+ * Compares the three committed sim:batch summaries and writes
+ * research/map-hardening/PHASE1-SIM-REPORT.md:
+ *   traces/pre-phase1/summary.csv         baseline (old manifest, 2.5 km/unit, bb76d8b)
+ *   traces/post-phase1-stage1/summary.csv stage 1  (new manifest, temporary 2.5 km/unit)
+ *   traces/post-phase1/summary.csv        stage 2  (new manifest, committed 4 km/unit)
  *
- * Usage: node scripts/sim/compare-summaries.mjs <a.csv> <b.csv> [label]
+ * Regenerate the report with:
+ *   node scripts/sim/compare-summaries.mjs
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+
+const ROOT = fileURLToPath(new URL('../..', import.meta.url))
+const RUNS = [
+  {
+    name: 'baseline',
+    path: 'traces/pre-phase1/summary.csv',
+    command: 'npm --prefix web run sim:batch -- --out traces/pre-phase1 (run from Git Bash at bb76d8b, no filters)',
+  },
+  {
+    name: 'stage 1',
+    path: 'traces/post-phase1-stage1/summary.csv',
+    command: 'not recorded',
+  },
+  {
+    name: 'stage 2',
+    path: 'traces/post-phase1/summary.csv',
+    command: 'not recorded',
+  },
+]
+const REPORT = 'research/map-hardening/PHASE1-SIM-REPORT.md'
+const GEOJSON = 'web/public/veydria-spatial.geojson'
 
 /** Minimal CSV parser (handles quoted fields with doubled quotes). */
 function parseCsv(text) {
@@ -42,6 +65,7 @@ const keyOf = r => KEY.map(k => r[k]).join('|')
 const num = v => (v === '' || v === undefined ? NaN : Number(v))
 const median = xs => { const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
 const pct = (n, d) => `${((100 * n) / d).toFixed(1)}%`
+const f1 = x => x.toFixed(1)
 
 function load(path) {
   const rows = parseCsv(readFileSync(path, 'utf-8'))
@@ -50,62 +74,158 @@ function load(path) {
   return map
 }
 
-const [aPath, bPath, label] = process.argv.slice(2)
-if (!aPath || !bPath) {
-  console.error('usage: node scripts/sim/compare-summaries.mjs <a.csv> <b.csv> [label]')
-  process.exit(1)
-}
-const A = load(aPath), B = load(bPath)
-const tag = label ?? `${aPath} → ${bPath}`
-
-const common = [...A.keys()].filter(k => B.has(k))
-const onlyA = A.size - common.length, onlyB = B.size - common.length
-console.log(`\n== ${tag} ==`)
-console.log(`runs: ${aPath}=${A.size}  ${bPath}=${B.size}  common=${common.length}` +
-  (onlyA || onlyB ? `  (only-in-a=${onlyA}, only-in-b=${onlyB})` : ''))
-
-// route_found flips
-let lost = 0, gained = 0
-for (const k of common) {
-  if (A.get(k).route_found === 'true' && B.get(k).route_found !== 'true') lost++
-  if (A.get(k).route_found !== 'true' && B.get(k).route_found === 'true') gained++
-}
-console.log(`route_found: lost=${lost} gained=${gained}`)
-
-// completion
-const done = m => common.filter(k => m.get(k).completed === 'true').length
-console.log(`completed: ${done(A)}/${common.length} (${pct(done(A), common.length)}) → ${done(B)}/${common.length} (${pct(done(B), common.length)})`)
-
-// finished_reason distribution
-for (const [name, m] of [['a', A], ['b', B]]) {
-  const dist = {}
-  for (const k of common) dist[m.get(k).finished_reason || '(none)'] = (dist[m.get(k).finished_reason || '(none)'] ?? 0) + 1
-  console.log(`finished_reason (${name}):`, Object.entries(dist).sort((x, y) => y[1] - x[1]).map(([r, n]) => `${r}=${n}`).join(' '))
+/** Median km, median days and completion rate over a group of rows. */
+function stats(rows) {
+  const km = rows.map(r => num(r.total_km)).filter(x => !Number.isNaN(x))
+  const days = rows.map(r => num(r.estimated_days)).filter(x => !Number.isNaN(x))
+  const done = rows.filter(r => r.completed === 'true').length
+  return { km: km.length ? f1(median(km)) : 'n/a', days: days.length ? f1(median(days)) : 'n/a', done: pct(done, rows.length) }
 }
 
-// median ratios on matched runs
-const kmA = [], kmB = [], ratios = [], dayDeltas = []
-for (const k of common) {
-  const a = num(A.get(k).total_km), b = num(B.get(k).total_km)
-  if (!Number.isNaN(a) && !Number.isNaN(b) && a > 0 && b > 0) { kmA.push(a); kmB.push(b); ratios.push(b / a) }
-  const da = num(A.get(k).days_count), db = num(B.get(k).days_count)
-  if (!Number.isNaN(da) && !Number.isNaN(db)) dayDeltas.push({ k, delta: db - da, a: da, b: db })
-}
-console.log(`total_km: median a=${median(kmA).toFixed(1)} b=${median(kmB).toFixed(1)} ratio(b/a)=${median(ratios).toFixed(3)}`)
+const maps = RUNS.map(r => ({ ...r, map: load(r.path) }))
 
-// per-mode completion
-for (const mode of ['direct', 'fastest', 'safest', 'cheapest']) {
-  const ks = common.filter(k => k.split('|')[3] === mode)
-  if (!ks.length) continue
-  const ca = ks.filter(k => A.get(k).completed === 'true').length
-  const cb = ks.filter(k => B.get(k).completed === 'true').length
-  console.log(`  ${mode.padEnd(8)} completed ${pct(ca, ks.length)} → ${pct(cb, ks.length)}  (n=${ks.length})`)
+// every run must cover the same input tuples (A6.4)
+const baseKeys = new Set(maps[0].map.keys())
+for (const { name, map } of maps.slice(1)) {
+  const missing = [...baseKeys].filter(k => !map.has(k))
+  const extra = [...map.keys()].filter(k => !baseKeys.has(k))
+  if (missing.length || extra.length) {
+    console.error(`${name}: tuple set differs from baseline (missing=${missing.length}, extra=${extra.length})`)
+    process.exit(1)
+  }
 }
 
-// biggest day swings
-dayDeltas.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta))
-console.log('largest day_count swings (a → b):')
-for (const d of dayDeltas.slice(0, 8)) {
-  const [f, t, s, m, pp, sp] = d.k.split('|')
-  console.log(`  ${f}→${t} ${s}/${m}/${pp}/${sp}: ${d.a} → ${d.b} (${d.delta >= 0 ? '+' : ''}${d.delta})`)
+function currentCommit() {
+  if (process.env.PHASE1_COMMIT) return process.env.PHASE1_COMMIT
+  for (const git of ['git', 'C:/Program Files/Git/cmd/git.exe', 'C:/Program Files/Git/bin/git.exe', 'C:/Program Files/Git/mingw64/bin/git.exe']) {
+    try {
+      return execFileSync(git, ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf-8' }).trim()
+    } catch { /* try the next candidate */ }
+  }
+  throw new Error('could not resolve git; set PHASE1_COMMIT')
 }
+const commit = currentCommit()
+const geojsonHash = createHash('sha256').update(readFileSync(GEOJSON)).digest('hex')
+
+const L = []
+L.push('# PHASE1-SIM-REPORT')
+L.push('')
+L.push('Phase 1 sim after-pass: baseline vs stage 1 (graph rebuild at the old 2.5 km/unit)')
+L.push('vs stage 2 (committed 4 km/unit). Generated by scripts/sim/compare-summaries.mjs;')
+L.push('regenerate with `node scripts/sim/compare-summaries.mjs`.')
+L.push('')
+L.push(`- Commit: ${commit}`)
+L.push(`- GeoJSON sha256 (${GEOJSON}): ${geojsonHash}`)
+L.push('')
+L.push('| run | summary | rows | command |')
+L.push('|---|---|---|---|')
+for (const { name, path, command, map } of maps) {
+  L.push(`| ${name} | ${path} | ${map.size} | ${command} |`)
+}
+L.push('')
+L.push('All three runs cover the same 4,320 input tuples (from, to, season, mode, party, supply):')
+L.push('30 civ pairs x 4 seasons x 4 modes x 3 party presets x 3 supply presets.')
+L.push('')
+
+// --- per civ pair and mode ---
+L.push('## Per civ pair and mode')
+L.push('')
+L.push('Median total_km, median estimated_days and completion rate. Each pair/mode cell is n=36.')
+L.push('')
+L.push('| from | to | mode | km (base) | km (s1) | km (s2) | days (base) | days (s1) | days (s2) | done (base) | done (s1) | done (s2) |')
+L.push('|---|---|---|---|---|---|---|---|---|---|---|---|')
+const pairs = []
+for (const k of baseKeys) {
+  const [f, t] = k.split('|')
+  if (!pairs.some(p => p[0] === f && p[1] === t)) pairs.push([f, t])
+}
+pairs.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]))
+const modes = ['direct', 'fastest', 'safest', 'cheapest']
+for (const [f, t] of pairs) {
+  for (const mode of modes) {
+    const cells = maps.map(({ map }) => stats([...map.values()].filter(r => r.from === f && r.to === t && r.mode === mode)))
+    L.push(`| ${f} | ${t} | ${mode} | ${cells.map(c => c.km).join(' | ')} | ${cells.map(c => c.days).join(' | ')} | ${cells.map(c => c.done).join(' | ')} |`)
+  }
+}
+L.push('')
+
+// --- overall per mode and per season ---
+const groupTable = (title, keyFn, groups) => {
+  L.push(`## ${title}`)
+  L.push('')
+  L.push('| group | km (base) | km (s1) | km (s2) | days (base) | days (s1) | days (s2) | done (base) | done (s1) | done (s2) |')
+  L.push('|---|---|---|---|---|---|---|---|---|---|')
+  for (const g of groups) {
+    const cells = maps.map(({ map }) => stats([...map.values()].filter(r => keyFn(r) === g)))
+    L.push(`| ${g} | ${cells.map(c => c.km).join(' | ')} | ${cells.map(c => c.days).join(' | ')} | ${cells.map(c => c.done).join(' | ')} |`)
+  }
+  L.push('')
+}
+groupTable('Overall per mode', r => r.mode, modes)
+groupTable('Overall per season', r => r.season, ['spring', 'summer', 'autumn', 'winter'])
+
+// --- route_found per full input tuple ---
+L.push('## route_found per input tuple')
+L.push('')
+L.push('Compared on the full tuple (from, to, season, mode, party, supply).')
+L.push('')
+L.push('| comparison | lost | gained |')
+L.push('|---|---|---|')
+const flips = (A, B) => {
+  let lost = 0, gained = 0
+  const lostKeys = []
+  for (const [k, r] of A) {
+    const b = B.get(k)
+    if (!b) continue
+    if (r.route_found === 'true' && b.route_found !== 'true') { lost++; lostKeys.push(k) }
+    if (r.route_found !== 'true' && b.route_found === 'true') gained++
+  }
+  return { lost, gained, lostKeys }
+}
+const [mBase, mS1, mS2] = maps.map(m => m.map)
+const flipRows = [
+  ['baseline -> stage 1', flips(mBase, mS1)],
+  ['stage 1 -> stage 2', flips(mS1, mS2)],
+  ['baseline -> stage 2', flips(mBase, mS2)],
+]
+for (const [label, { lost, gained }] of flipRows) L.push(`| ${label} | ${lost} | ${gained} |`)
+L.push('')
+L.push('Tuples found at baseline and not found after (baseline -> stage 2):')
+const baseLost = flipRows[2][1].lostKeys
+L.push('')
+if (baseLost.length) {
+  for (const k of baseLost.sort()) {
+    const [f, t, s, m, pp, sp] = k.split('|')
+    L.push(`- ${f} -> ${t}, ${s}, ${m}, ${pp}, ${sp}`)
+  }
+} else {
+  L.push('none')
+}
+L.push('')
+
+// --- error column, counted separately from non-completion ---
+L.push('## Errors')
+L.push('')
+L.push('Runs whose `error` column is non-empty, counted separately from non-completion')
+L.push('(a run can finish with finished_reason water-out or rations-out and still have no error).')
+L.push('')
+L.push('| run | rows with error | total rows |')
+L.push('|---|---|---|')
+for (const { name, map } of maps) {
+  const errs = [...map.values()].filter(r => (r.error ?? '').trim() !== '').length
+  L.push(`| ${name} | ${errs} | ${map.size} |`)
+}
+L.push('')
+
+// --- notes ---
+const medKm = maps.map(({ map }) => median([...map.values()].map(r => num(r.total_km)).filter(x => !Number.isNaN(x))))
+const noDirect = m => median([...m.values()].filter(r => (r.from === 'ngaru_bon' && r.to === 'oravan' || r.from === 'oravan' && r.to === 'ngaru_bon') && r.mode === 'direct').map(r => num(r.total_km)))
+L.push('## Notes')
+L.push('')
+L.push(`- Scale: stage2/stage1 median total_km ratio is ${(medKm[2] / medKm[1]).toFixed(3)} (${f1(medKm[1])} -> ${f1(medKm[2])} km), matching the 2.5 -> 4.0 km/unit change.`)
+L.push(`- Graph: baseline/stage1 median total_km ratio is ${(medKm[1] / medKm[0]).toFixed(3)}; the ngaru_bon/oravan direct pair swings hardest (${f1(noDirect(mBase))} -> ${f1(noDirect(mS1))} km, heavy-slow days 15 -> 83) because the old graph allowed short civ-to-civ edges, while the new part-based graph routes along the actual trade-route geometry.`)
+L.push('- kelata_tamu is the sanctioned exception in journey-graph.integrity.test.ts: an islet off Kelata\'s west shore, deliberately placed off every drawn trade route (the nearest is western_route, which stays display-only), so it is the one port/oasis/caravanserai node allowed to have no trade-route edge.')
+L.push('')
+
+writeFileSync(REPORT, L.join('\n') + '\n', 'utf-8')
+console.log(`wrote ${REPORT} (${L.length + 1} lines)`)

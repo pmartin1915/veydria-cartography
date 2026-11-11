@@ -54,8 +54,9 @@ world-scale realism pass).
 - `post-phase1-stage1/summary.csv` — same grid after the Phase 1 graph
   rebuild, still at the temporary 2.5 km/unit (isolates graph effects).
 - `post-phase1/summary.csv` — same grid at the committed 4 km/unit scale.
-- `compare-*.log` — output of `scripts/sim/compare-summaries.mjs` for the
-  three pairwise diffs (graph-only, scale-only, combined).
+- The three-run comparison lives in `research/map-hardening/PHASE1-SIM-REPORT.md`,
+  generated from these summaries by `node scripts/sim/compare-summaries.mjs`
+  (the old `compare-*.log` pairwise dumps were removed in favor of the report).
 - `traces.jsonl` per run dir is gitignored (`.gitignore`); only
   `summary.csv` snapshots are tracked.
 
