@@ -6,6 +6,7 @@
 
 import { CAMPAIGN_SECTIONS } from './section-registry'
 import { CURRENT_CAMPAIGN_VERSION, type CampaignEnvelope } from './campaign-schema'
+import { MAP_LAYOUT } from '../utils/world-coords'
 
 export function exportCampaign(): CampaignEnvelope {
   const content: Record<string, unknown> = {}
@@ -25,6 +26,7 @@ export function exportCampaign(): CampaignEnvelope {
     schema: 'veydria-campaign',
     version: CURRENT_CAMPAIGN_VERSION,
     savedAt: Date.now(),
+    layout: MAP_LAYOUT,
     content,
   }
 

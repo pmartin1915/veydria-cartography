@@ -3,8 +3,9 @@ import { migrateCampaign, type CampaignEnvelope } from './campaign-schema'
 
 const VALID_ENVELOPE: CampaignEnvelope = {
   schema: 'veydria-campaign',
-  version: 1,
+  version: 2,
   savedAt: 0,
+  layout: 'canon-2026-09-29',
   content: {},
 }
 
@@ -13,8 +14,12 @@ describe('migrateCampaign', () => {
     expect(migrateCampaign(VALID_ENVELOPE)).toEqual(VALID_ENVELOPE)
   })
 
-  it('rejects version 2', () => {
-    expect(() => migrateCampaign({ ...VALID_ENVELOPE, version: 2 })).toThrow()
+  it('accepts a legacy version 1 envelope (layout transform runs at import)', () => {
+    expect(migrateCampaign({ ...VALID_ENVELOPE, version: 1, layout: undefined })).toBeDefined()
+  })
+
+  it('rejects version 3', () => {
+    expect(() => migrateCampaign({ ...VALID_ENVELOPE, version: 3 })).toThrow()
   })
 
   it('rejects version 0', () => {

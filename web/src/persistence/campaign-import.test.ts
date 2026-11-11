@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { importCampaign } from './campaign-import'
 import { exportCampaign } from './campaign-export'
 import type { CampaignEnvelope } from './campaign-schema'
+import type { LayoutTransformContext } from './map-layout-migration'
+import { buildGraph } from '../utils/journey-graph'
+import { MAP_LAYOUT } from '../utils/world-coords'
 import { saveAnnotations, loadAnnotations, type MapAnnotation } from '../utils/annotations'
 import { saveJourneys, loadSavedJourneys, type SavedJourney } from '../utils/journey-saved'
 import { saveFeatureNotes, loadFeatureNotes } from '../utils/feature-notes'
@@ -289,5 +292,108 @@ describe('importCampaign', () => {
     expect(() => importCampaign(env, 'merge')).not.toThrow()
     expect(loadAnnotations()).toEqual([a1])
     expect(loadFeatureNotes()).toEqual({ f9: 'ok' })
+  })
+
+  it('rejects version 3 envelopes and leaves existing data untouched', () => {
+    saveAnnotations([makeAnnotation('keep', 'Keep')])
+    const env = {
+      schema: 'veydria-campaign',
+      version: 3,
+      savedAt: 1,
+      layout: MAP_LAYOUT,
+      content: { annotations: [makeAnnotation('nope', 'Nope')] },
+    }
+    expect(() => importCampaign(env, 'replace')).toThrow(/Unsupported campaign version/)
+    expect(loadAnnotations()[0].id).toBe('keep')
+  })
+
+  it('version 2 (current layout) is accepted as-is', () => {
+    const env: CampaignEnvelope = {
+      schema: 'veydria-campaign',
+      version: 2,
+      savedAt: 1,
+      layout: MAP_LAYOUT,
+      content: { annotations: [makeAnnotation('v2pin', 'V2 Pin')] },
+    }
+    expect(() => importCampaign(env, 'replace')).not.toThrow()
+    expect(loadAnnotations()[0].id).toBe('v2pin')
+  })
+
+  describe('version 1 → current layout import', () => {
+    // Tiny two-civ graph: port_a moved +10,+8 between April and now.
+    const graph = buildGraph({
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature', id: 'civA',
+          properties: { id: 'civA', name: 'Civ A', category: 'civilization', centroid: [0, 0] },
+          geometry: { type: 'Point', coordinates: [0, 0] },
+        },
+        {
+          type: 'Feature', id: 'civB',
+          properties: { id: 'civB', name: 'Civ B', category: 'civilization', centroid: [100, 0] },
+          geometry: { type: 'Point', coordinates: [100, 0] },
+        },
+        {
+          type: 'Feature', id: 'route1',
+          properties: { id: 'route1', name: 'Route 1', category: 'trade_route', endpoints: ['civA', 'civB'] },
+          geometry: { type: 'LineString', coordinates: [[0, 0], [100, 0]] },
+        },
+      ],
+    } as never)
+    const ctx: LayoutTransformContext = {
+      april: { points: { port_a: [40, 32] }, centroids: {} },
+      currentPositions: { port_a: [50, 40] },
+      graph,
+    }
+
+    it('runs the layout transform on v1 content before saving', () => {
+      const linked = { ...makeAnnotation('linked', 'Linked'), x: 45, y: 36, featureId: 'port_a', featureName: 'Port A' }
+      const journey = {
+        ...makeJourney('j1'),
+        nodeIds: ['civA', 'civB'],
+        totalKm: 10,
+        estimatedDays: 1,
+        edgeCount: 1,
+      }
+      const env: CampaignEnvelope = {
+        schema: 'veydria-campaign',
+        version: 1,
+        savedAt: 1,
+        content: { annotations: [linked], journeys: [journey] },
+      }
+
+      importCampaign(env, 'replace', ctx)
+
+      const anns = loadAnnotations()
+      expect(anns).toHaveLength(1)
+      expect(anns[0].x).toBeCloseTo(55)
+      expect(anns[0].y).toBeCloseTo(44)
+      expect(anns[0].needsReview).toBeUndefined()
+
+      const journeys = loadSavedJourneys()
+      expect(journeys[0].stale).toBe(false)
+      expect(journeys[0].totalKm).toBeCloseTo(400)
+      expect(journeys[0].edgeCount).toBe(1)
+    })
+
+    it('flags what it cannot re-anchor and marks unresolvable journeys stale', () => {
+      const free = makeAnnotation('free', 'Free')
+      const journey = { ...makeJourney('jstale'), nodeIds: ['civA', 'ghost'] }
+      const env: CampaignEnvelope = {
+        schema: 'veydria-campaign',
+        version: 1,
+        savedAt: 1,
+        content: { annotations: [free], journeys: [journey] },
+      }
+
+      importCampaign(env, 'replace', ctx)
+
+      const anns = loadAnnotations()
+      expect(anns[0].needsReview).toBe(true)
+      const journeys = loadSavedJourneys()
+      expect(journeys[0].stale).toBe(true)
+      expect(journeys[0].nodeIds).toEqual(['civA', 'ghost'])
+    })
   })
 })

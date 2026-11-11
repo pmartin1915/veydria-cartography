@@ -1413,7 +1413,7 @@ function App() {
             </button>
           )}
           {!shareMode && (
-            <CampaignMenu onToast={showLogToast} />
+            <CampaignMenu onToast={showLogToast} geojson={geojson} />
           )}
           {!shareMode && (
             <div className="share-menu" ref={shareMenuRef}>

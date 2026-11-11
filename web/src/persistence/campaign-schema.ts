@@ -3,14 +3,24 @@
  *
  * Phase 4 defines the schema and the `migrateCampaign` read-side guard.
  * Import orchestration is Phase 5.
+ *
+ * Version history:
+ *   1 — pre-Phase-1 layout; coordinates refer to the April map. Import runs
+ *       the layout transform (map-layout-migration.ts) on the content before
+ *       saving, when the caller supplies a LayoutTransformContext.
+ *   2 — current; `layout` carries MAP_LAYOUT and content is accepted as-is.
  */
 
-export const CURRENT_CAMPAIGN_VERSION = 1
+import { MAP_LAYOUT } from '../utils/world-coords'
+
+export const CURRENT_CAMPAIGN_VERSION = 2
 
 export interface CampaignEnvelope {
   schema: 'veydria-campaign'
   version: number
   savedAt: number
+  /** v2+: the map layout the persisted coordinates refer to. */
+  layout?: string
   content: Record<string, unknown>
   preferences?: Record<string, unknown>
 }
@@ -30,7 +40,10 @@ export function migrateCampaign(json: unknown): CampaignEnvelope {
     throw new Error(`Unexpected campaign schema: ${String(envelope.schema)}.`)
   }
 
-  if (envelope.version !== CURRENT_CAMPAIGN_VERSION) {
+  if (
+    envelope.version !== 1 &&
+    envelope.version !== CURRENT_CAMPAIGN_VERSION
+  ) {
     throw new Error(`Unsupported campaign version: ${String(envelope.version)}.`)
   }
 
