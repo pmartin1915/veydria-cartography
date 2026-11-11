@@ -109,7 +109,7 @@ and Kheshkai facing across the neck, and six Basin ports.
 
 ### Phase 4: render, tile, integrate
 
-- Renderer from the prototype (`render_v3.py`), at the palette Perry picks (Q1).
+- Renderer from the prototype (`render_v3.py`), in palette B (D6).
 - Tiler: `generator/render/tiler.py` is a GDAL stub; slice XYZ tiles for Leaflet CRS.Simple with
   PIL. Set a max zoom and a tile-weight budget for GitHub Pages and the Tauri bundle (the 200 KiB
   gate covers JS only).
