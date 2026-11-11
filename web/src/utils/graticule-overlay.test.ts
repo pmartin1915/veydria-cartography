@@ -30,14 +30,14 @@ describe('graticuleLines', () => {
   it('labels verticals with easting kilometres', () => {
     const { verticals } = graticuleLines()
     expect(verticals[0].label).toBe('0')
-    expect(verticals[verticals.length - 1].label).toBe('3000')
-    expect(verticals.find((l) => l.x1 === 600)?.label).toBe('1500')
+    expect(verticals[verticals.length - 1].label).toBe('4800')
+    expect(verticals.find((l) => l.x1 === 600)?.label).toBe('2400')
   })
 
   it('labels horizontals with northing kilometres, flipped for SVG Y-down', () => {
     const { horizontals } = graticuleLines()
-    expect(horizontals[0].label).toBe('2000')
+    expect(horizontals[0].label).toBe('3200')
     expect(horizontals[horizontals.length - 1].label).toBe('0')
-    expect(horizontals.find((l) => l.y1 === 400)?.label).toBe('1000')
+    expect(horizontals.find((l) => l.y1 === 400)?.label).toBe('1600')
   })
 })

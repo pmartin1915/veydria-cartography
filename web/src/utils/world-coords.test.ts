@@ -13,7 +13,7 @@ describe('world-coords', () => {
   describe('worldScale', () => {
     it('locks the canonical scale constants', () => {
       // measure.ts re-exports these; changing them recalibrates the whole map
-      expect(worldScale.kmPerSvgUnit).toBe(2.5)
+      expect(worldScale.kmPerSvgUnit).toBe(4)
       expect(worldScale.leaguesPerKm).toBe(0.25)
       expect(worldScale.svgWidth).toBe(1200)
       expect(worldScale.svgHeight).toBe(800)
@@ -26,7 +26,7 @@ describe('world-coords', () => {
     })
 
     it('maps the NE corner (SVG top-right) to the world extent', () => {
-      expect(svgToWorldKm({ x: 1200, y: 0 })).toEqual({ eastKm: 3000, northKm: 2000 })
+      expect(svgToWorldKm({ x: 1200, y: 0 })).toEqual({ eastKm: 4800, northKm: 3200 })
     })
 
     it('flips Y: smaller SVG y is further north', () => {
@@ -53,15 +53,15 @@ describe('world-coords', () => {
   })
 
   describe('svgDistanceKm', () => {
-    it('scales a horizontal segment by 2.5 km/unit', () => {
-      expect(svgDistanceKm({ x: 0, y: 0 }, { x: 100, y: 0 })).toBe(250)
+    it('scales a horizontal segment by 4 km/unit', () => {
+      expect(svgDistanceKm({ x: 0, y: 0 }, { x: 100, y: 0 })).toBe(400)
     })
 
     it('is symmetric and handles diagonals', () => {
       const a = { x: 0, y: 0 }
-      const b = { x: 30, y: 40 } // 3-4-5 triangle → 50 SVG units → 125 km
-      expect(svgDistanceKm(a, b)).toBe(125)
-      expect(svgDistanceKm(b, a)).toBe(125)
+      const b = { x: 30, y: 40 } // 3-4-5 triangle → 50 SVG units → 200 km
+      expect(svgDistanceKm(a, b)).toBe(200)
+      expect(svgDistanceKm(b, a)).toBe(200)
     })
   })
 

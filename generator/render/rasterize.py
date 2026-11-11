@@ -180,8 +180,7 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
     # Collect all polygon points to create a rough continental hull
     all_points = []
     for feat in civ_polygons:
-        coords = feat['geometry']['coordinates'][0]
-        all_points.extend(coords)
+        all_points.extend(_polygon_rings(feat)[0])
 
     if not all_points:
         return
@@ -189,23 +188,23 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
     if layer_filter is not None and not layer_filter.get('civilization', True):
         return
 
-    # Draw each civ polygon as land fill
+    # Draw each civ polygon lobe as land fill
     for feat in civ_polygons:
         props = feat['properties']
         civ_id = props.get('id', '')
-        coords = feat['geometry']['coordinates'][0]
         fill = CIV_FILLS.get(civ_id, PARCHMENT_BG)
 
-        # Jitter for hand-drawn feel
-        jittered = _jitter_polygon(coords, rng, amplitude=4.0)
-        xs = [p[0] for p in jittered]
-        ys = [SVG_HEIGHT - p[1] for p in jittered]  # Y-invert
+        for ring in _polygon_rings(feat):
+            # Jitter for hand-drawn feel
+            jittered = _jitter_polygon(ring, rng, amplitude=4.0)
+            xs = [p[0] for p in jittered]
+            ys = [SVG_HEIGHT - p[1] for p in jittered]  # Y-invert
 
-        # Ink bleed — subtle dark outline for coastline effect
-        ax.fill(xs, ys, facecolor=fill, edgecolor='#5a4535',
-                linewidth=2.5, alpha=0.12, zorder=2)
-        ax.fill(xs, ys, facecolor=fill, edgecolor=BORDER_COLOR,
-                linewidth=1.2, alpha=0.15, zorder=3)
+            # Ink bleed — subtle dark outline for coastline effect
+            ax.fill(xs, ys, facecolor=fill, edgecolor='#5a4535',
+                    linewidth=2.5, alpha=0.12, zorder=2)
+            ax.fill(xs, ys, facecolor=fill, edgecolor=BORDER_COLOR,
+                    linewidth=1.2, alpha=0.15, zorder=3)
 
         # Region label at centroid (with optional override)
         civ_id = props.get('id', '')
@@ -215,8 +214,9 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
         elif centroid := props.get('centroid'):
             cx, cy = centroid[0], SVG_HEIGHT - centroid[1]
         else:
-            cx = sum(xs) / len(xs)
-            cy = sum(ys) / len(ys)
+            first_ring = _polygon_rings(feat)[0]
+            cx = sum(p[0] for p in first_ring) / len(first_ring)
+            cy = sum(SVG_HEIGHT - p[1] for p in first_ring) / len(first_ring)
 
         name = props.get('name', '')
         ax.text(cx, cy, name.upper(),
@@ -226,6 +226,16 @@ def _draw_continent_outline(ax: plt.Axes, civ_polygons: list[dict], rng: np.rand
                 path_effects=[
                     pe.withStroke(linewidth=3, foreground=PARCHMENT_BG, alpha=0.85),
                 ])
+
+
+def _polygon_rings(feat: dict) -> list[list]:
+    """Exterior rings of a Polygon or MultiPolygon feature."""
+    geom = feat['geometry']
+    if geom['type'] == 'Polygon':
+        return [geom['coordinates'][0]]
+    if geom['type'] == 'MultiPolygon':
+        return [poly[0] for poly in geom['coordinates']]
+    return []
 
 
 def _elevation_color(elev: float, min_elev: float = -500, max_elev: float = 6000) -> str:
@@ -314,7 +324,7 @@ def _draw_trade_routes(ax: plt.Axes, routes: list[dict], layer_filter: dict[str,
         return
     for feat in routes:
         props = feat['properties']
-        route_id = props.get('id', '')
+        route_id = props.get('route_id') or props.get('id', '')
         coords = feat['geometry']['coordinates']
         xs = [p[0] for p in coords]
         ys = [SVG_HEIGHT - p[1] for p in coords]
@@ -398,7 +408,7 @@ def _draw_scale_bar(ax: plt.Axes) -> None:
     """Draw a scale bar."""
     # Position: bottom-left area
     bx, by = 80, 60
-    bar_width = 120  # ~300 km at continental scale
+    bar_width = 100  # 100 svg units × 4 km/unit = 400 km
     bar_height = 3
 
     ax.add_patch(plt.Rectangle((bx, by), bar_width, bar_height,
@@ -407,10 +417,10 @@ def _draw_scale_bar(ax: plt.Axes) -> None:
                                facecolor=PARCHMENT_BG, edgecolor=TEXT_COLOR,
                                linewidth=0.5, zorder=25))
 
-    ax.text(bx + bar_width / 2, by - 6, '~300 km',
+    ax.text(bx + bar_width / 2, by - 6, '400 km',
             fontsize=5, color=TEXT_MUTED, ha='center', va='top',
             fontfamily='serif', zorder=25)
-    ax.text(bx + bar_width / 2, by - 13, '(5–7 days by ship)',
+    ax.text(bx + bar_width / 2, by - 13, '(~2–3 days by ship)',
             fontsize=4, color=TEXT_MUTED, ha='center', va='top',
             fontfamily='serif', style='italic', zorder=25)
 
@@ -473,11 +483,15 @@ def _draw_legend(ax: plt.Axes, routes: list[dict], points: list[dict], layer_fil
     if not has_routes and not has_points:
         return
 
-    # Trade routes
+    # Trade routes — one legend entry per route (parts share their route_id)
     if has_routes:
+      seen: set[str] = set()
       for feat in routes:
         props = feat['properties']
-        route_id = props.get('id', '')
+        route_id = props.get('route_id') or props.get('id', '')
+        if route_id in seen:
+            continue
+        seen.add(route_id)
         name = props.get('name', route_id)
         color = ROUTE_COLORS.get(route_id, '#888')
         dashes = ROUTE_DASHES.get(route_id, (5, 3))

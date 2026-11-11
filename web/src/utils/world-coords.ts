@@ -10,17 +10,17 @@
  *   feature/marker position in the app is stored.
  * - World space: kilometres, origin bottom-left (SW corner), Y-UP (northKm
  *   increases northward). Display-only convention for readouts and labels.
- * - Scale is UNIFORM at the E-W calibration (1200 units ≈ 3000 km → 2.5 km/unit).
- *   MAP-PROMPT.md states ~2500 km N-S over 800 units (3.125 km/unit), so N-S
- *   distances carry a ~20–25% approximation. Kept uniform deliberately: a
- *   non-uniform scale would make bearings direction-dependent and break every
- *   existing Euclidean consumer (journey-graph.ts, travel-time.ts, measure.ts).
+ * - Scale is UNIFORM at the E-W calibration (1200 units = 4800 km → 4 km/unit).
+ *   MAP-PROMPT.md states ~3200 km N-S over 800 units (also 4 km/unit), so the
+ *   calibration is uniform in both axes. A non-uniform scale would make
+ *   bearings direction-dependent and break every existing Euclidean consumer
+ *   (journey-graph.ts, travel-time.ts, measure.ts).
  */
 
 export const worldScale = {
   svgWidth: 1200,
   svgHeight: 800,
-  kmPerSvgUnit: 3000 / 1200, // 2.5 — E-W calibrated, applied uniformly
+  kmPerSvgUnit: 4800 / 1200, // 4 — E-W calibrated (1200 units = 4800 km), applied uniformly
   leaguesPerKm: 1 / 4, // 1 league ≈ 4 km
   canonSource: 'data/MAP-PROMPT.md',
 } as const
