@@ -68,3 +68,9 @@
 ## 2026-11-03 worklist item 1 (ROADMAP 2a marked)
 - ROADMAP.md "### 2a. Fog of war / explored hexes" now reads "— ✅ SHIPPED 2026-05-22" (shipped in 3746c7f and e34e855). This resolves the 09-30 note that the heading was never marked.
 - `.orchestrate/BACKLOG.md` already marks V3 and V4 DONE (a04fb28, 65db8df, e0df2fd), so the 09-30 "still lists them OPEN" note is resolved too. No code changed.
+
+
+## Map hardening (2026-11-10)
+- Plan: `research/map-hardening/PLAN.md` (decisions D1-D7, phases, lanes). Evidence: `GEOGRAPHY-AUDIT-2026-11-10.md`.
+- Perry ruled to converge cartography onto the canonical spine/schematic layout (supersedes 2026-09-29).
+- **Next: Phase 1** (manifest re-derived from worldbuilder positions.yaml, saved-data inventory, 4 km/unit scale, sim before/after gate). Land or rebase `fix/overlay-fractional-zoom-quantization`, `feat/player-view-rigor`, `feat/draggable-planner` first.
