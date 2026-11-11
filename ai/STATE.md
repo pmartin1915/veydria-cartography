@@ -74,3 +74,10 @@
 - Plan: `research/map-hardening/PLAN.md` (decisions D1-D7, phases, lanes). Evidence: `GEOGRAPHY-AUDIT-2026-11-10.md`.
 - Perry ruled to converge cartography onto the canonical spine/schematic layout (supersedes 2026-09-29).
 - **Next: Phase 1** (manifest re-derived from worldbuilder positions.yaml, saved-data inventory, 4 km/unit scale, sim before/after gate). Land or rebase `fix/overlay-fractional-zoom-quantization`, `feat/player-view-rigor`, `feat/draggable-planner` first.
+
+## 2026-11-11 map hardening Phase 1 started (branch feat/map-phase1-converge)
+- Branch coordination resolved, no rebase needed: `feat/player-view-rigor` landed as #55; `fix/overlay-fractional-zoom-quantization` landed as 3d56053 (#57). `feat/draggable-planner` (0ea4dfa) is unmerged but UI-only, so it does not block Phase 1.
+- Worldbuilder #396 (303d96f) adds `authored_places` to positions.yaml: 20 off-schematic places plus 2 undrawn routes, 7 marked `review: true` for Perry.
+- Perry decided Q3 (saved data): re-anchor linked pins, reset fog, version links and campaign files (v2), recompute saved journeys.
+- Baseline sim at bb76d8b: `traces/pre-phase1/summary.csv`. Full 30-pair matrix, 4320 runs, deterministic (two byte-identical runs). Command: `npm --prefix web run sim:batch` from Git Bash.
+- Spec `research/map-hardening/PHASE1-SPEC.md`, reviewed by Sol (7 findings folded in: graph contract for multi-part routes, legend `<line>` exclusion, recoverable migration, sim controls). P1a goes to Kimi via /orchestrate, then P1b.
