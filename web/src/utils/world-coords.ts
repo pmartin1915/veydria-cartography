@@ -17,6 +17,15 @@
  *   (journey-graph.ts, travel-time.ts, measure.ts).
  */
 
+/**
+ * Canonical map-layout tag for persisted data (pins, saved journeys, share
+ * URLs, campaign exports, edit-mode patches). Bumped whenever the feature
+ * geometry changes incompatibly; consumers compare against it to decide
+ * whether persisted coordinates are still trustworthy. See
+ * persistence/map-layout-migration.ts for the one-time local migration.
+ */
+export const MAP_LAYOUT = 'canon-2026-09-29'
+
 export const worldScale = {
   svgWidth: 1200,
   svgHeight: 800,

@@ -6599,6 +6599,19 @@ body.app-desktop .toast-notification.exiting {
   color: var(--text-accent) !important;
 }
 
+/* Layout-migration review notice in the pin popup */
+.annotation-popup-review {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-ruin, #c06040);
+}
+
+/* Stale saved journey in the My-journeys list */
+.journey-history-stale {
+  color: var(--color-ruin, #c06040);
+}
+
 /* Linked-note items in InfoPanel */
 .linked-note-item {
   align-items: center;

@@ -179,11 +179,15 @@ function buildAnnotationPopupContent(ann: MapAnnotation): string {
       : `<div class="annotation-popup-link">
            <button type="button" class="annotation-popup-link-nearest">Link to nearest feature</button>
          </div>`
+  const reviewRow = ann.needsReview
+    ? `<div class="annotation-popup-review">Placed on the old map: check its position</div>`
+    : ''
   return `
     <div class="annotation-popup" data-id="${escapeHtml(ann.id)}">
       <input class="annotation-popup-label" type="text" value="${escapeHtml(ann.label)}" placeholder="Label..." />
       <textarea class="annotation-popup-body" rows="3" placeholder="Notes...">${escapeHtml(ann.body)}</textarea>
       <div class="annotation-popup-colors">${colorsHtml}</div>
+      ${reviewRow}
       ${linkRow}
       <div class="annotation-popup-actions">
         <button class="annotation-popup-save" type="button">Save</button>
