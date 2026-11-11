@@ -6,6 +6,15 @@ Format: `idea — why deferred — where it applies`.
 
 ---
 
+## map hardening — tilted 3D world view (2026-11-10)
+
+A Skyrim-style tilted, rotatable 3D view of the continent built from the same heightmap the
+relief basemap uses (three.js or Babylon terrain mesh, draped with the rendered relief, live labels).
+Deferred: Perry chose top-down relief first (`research/map-hardening/PLAN.md` D1) because the hex
+grid, measuring and the journey planner assume a flat top-down view; the 3D mode would be a
+look-at-the-world mode without planner tools. Applies after Phase 3 of the map-hardening plan;
+the engine export (D4) is its natural input.
+
 ## experience-polish — deferred axes (2026-06-21)
 
 The experience-polish arc has three axes; slice 1 (**branding chrome** — favicon, custom Tauri icons, About/version) is being built on `feat/branding-chrome`. The other two are scoped but deferred at Perry's direction:
