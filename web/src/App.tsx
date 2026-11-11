@@ -22,8 +22,8 @@ import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
 import { formatDistance, estimateMeasureDays, svgDistanceToKm, type MeasureStats } from './utils/measure'
 import { formatDays } from './utils/format-measure'
-import { svgToWorldKm } from './utils/world-coords'
-import { parsePatchYaml, applyPatches } from './utils/patch-parser'
+import { svgToWorldKm, MAP_LAYOUT } from './utils/world-coords'
+import { parsePatchYaml, applyPatches, parsePatchLayout } from './utils/patch-parser'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation, markRouteExplored, saveAnnotations } from './utils/annotations'
@@ -698,7 +698,7 @@ function App() {
       `  - id: ${id}\n    category: ${data.category}\n    coords: [${data.coords[0].toFixed(1)}, ${data.coords[1].toFixed(1)}]`
     ).join('\n')
 
-    const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n`
+    const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n  layout: ${MAP_LAYOUT}\n`
 
     void saveTextFile(
       `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`,
@@ -711,6 +711,13 @@ function App() {
   const handleApplyPatch = useCallback(async (file: File) => {
     if (!geojson) return
     const text = await file.text()
+    // Patches are raw SVG coordinates — a patch captured on a different map
+    // layout would silently move features to wrong places. Refuse anything
+    // not stamped with the current layout and apply nothing.
+    if (parsePatchLayout(text) !== MAP_LAYOUT) {
+      showPatchToast('This patch was made on the old map layout and cannot be applied')
+      return
+    }
     const patches = parsePatchYaml(text)
     if (patches.length === 0) {
       showPatchToast('No valid patches found in file')

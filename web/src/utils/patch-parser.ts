@@ -4,6 +4,22 @@ export interface CoordinatePatch {
   coords: [number, number]
 }
 
+/**
+ * Extract `metadata.layout` from an edit-mode patch export (written by
+ * App.tsx alongside `source`/`generated`). Returns null when the file has no
+ * layout line — i.e. it was made on the pre-Phase-1 map and must be refused.
+ */
+export function parsePatchLayout(yaml: string): string | null {
+  for (const line of yaml.split('\n')) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('layout:')) {
+      const value = trimmed.slice('layout:'.length).trim()
+      return value || null
+    }
+  }
+  return null
+}
+
 // Route parts resolve to the parent route ID, so an edit-mode patch keyed by
 // `caravan_thread` still matches the exported part features.
 function featureIdOf(f: { properties: Record<string, unknown> }): string {
