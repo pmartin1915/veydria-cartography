@@ -17,6 +17,8 @@ use one terrain, so they match.
 | D2 | **Refine outlines.** The generator may add real coastlines, bays and island detail. (Given when we still assumed the April points stayed put; D5 supersedes the "points stay put" part. Named points now take their canonical positions.) |
 | D3 | **Parchment stays as a toggle.** Relief becomes the default basemap. |
 | D4 | **All three outputs:** the interactive web/desktop map, a static high-res poster, and a heightmap/biome export for the engines. "We want things to match." |
+| D6 | **Palette B, "biome relief"** (2026-11-10): Skyrim's light and restraint, Veydria's climates legible but muted. Samples `samples/canon_B_biome*.jpg`. |
+| D7 | **Terrain to the frame.** The schematic's "unmapped" north and east get plausible, unlabelled terrain to the edge; no fade or fog over land. |
 | D5 | **Converge on the canonical layout now.** This supersedes the 2026-09-29 ruling that kept cartography on the April layout (worldbuilder `ai/IDEAS.md`). See the evidence in `GEOGRAPHY-AUDIT-2026-11-10.md`. |
 
 Settled by canon precedence, not re-asked: the spine and schematic govern (worldbuilder
@@ -137,9 +139,5 @@ and Kheshkai facing across the neck, and six Basin ports.
 
 ## Open questions for Perry
 
-- **Q1 palette.** A "Skyrim-literal" (cool, desaturated, stone) or B "biome relief" (the same light,
-  Veydria's climates legible but muted). Samples: `samples/canon_A_skyrim*.jpg`,
-  `samples/canon_B_biome*.jpg`. Judge colour only; the straight edges come from the prototype's input.
-- **Q2 unmapped edges.** The schematic fades the north and east as "unmapped". Draw plausible terrain
-  to the frame edge, or fade it in a way that isn't atmosphere over known land?
+- Q1 palette: decided (D6). Q2 unmapped edges: decided (D7).
 - **Q3 saved data.** Per the Phase 1 inventory, once it exists.
