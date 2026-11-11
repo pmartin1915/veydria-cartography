@@ -20,4 +20,5 @@ function run(cmd, args, cwd) {
 }
 
 run(process.execPath, [join(ROOT, 'scripts', 'sync-world-data.mjs'), '--check'], ROOT)
+run(process.execPath, [join(ROOT, 'scripts', 'derive-manifest.mjs'), '--check'], ROOT)
 run(python, ['pipeline.py', 'validate'], GEN)
