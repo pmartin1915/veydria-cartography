@@ -14,24 +14,34 @@ from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 import noise
 
-def generate_voronoi(civ_polygons_dict: dict[str, list[list[float]]], num_points: int = 4000, seed: int = 42) -> list[dict]:
+def generate_voronoi(civ_polygons_dict: dict[str, list], num_points: int = 4000, seed: int = 42) -> list[dict]:
     """
     Generate Voronoi tessellation bounded by the civilization polygons.
     Returns a list of cell dictionaries:
       - 'polygon': list of [x, y] coordinates
       - 'civ': which civilization it primarily falls into
       - 'elevation': computed height value
+
+    Each dict value is either a single ring (list of [x, y]) or a list of
+    rings (civilization with extra_polygons) — rings are unioned so every
+    lobe gets terrain cells.
     """
     rng = np.random.default_rng(seed)
-    
+
     # 1. Create civilization shapely polygons and the master continental mask
     civ_shapes = {}
     for civ_id, coords in civ_polygons_dict.items():
-        if len(coords) >= 3:
-            poly = Polygon(coords)
-            if not poly.is_valid:
-                poly = poly.buffer(0)
-            civ_shapes[civ_id] = poly
+        # Accept a single ring or a list of rings (MultiPolygon civ)
+        rings = coords if coords and isinstance(coords[0][0], (list, tuple)) else [coords]
+        polys = []
+        for ring in rings:
+            if len(ring) >= 3:
+                poly = Polygon(ring)
+                if not poly.is_valid:
+                    poly = poly.buffer(0)
+                polys.append(poly)
+        if polys:
+            civ_shapes[civ_id] = unary_union(polys) if len(polys) > 1 else polys[0]
             
     if not civ_shapes:
         return []

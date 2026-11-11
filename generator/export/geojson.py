@@ -67,6 +67,70 @@ def _display_name(key: str) -> str:
     return key.replace("_", " ").title().replace("Al ", "al-").replace("Of ", "of ")
 
 
+def _emit_trade_route(
+    features: list[dict[str, Any]],
+    route_key: str,
+    route: dict[str, Any] | None,
+    route_manifest: dict[str, Any],
+) -> bool:
+    """Emit one LineString feature per route part.
+
+    Single-path routes keep one feature keyed by the route ID (today's
+    shape; no route_id property). Multi-part routes (manifest `paths`)
+    emit one feature per part: part 1 keeps the route ID, parts 2+ get
+    `<route>__p<n>`. Every part carries `route_id` and `part`, its own
+    `endpoints` pair (from the manifest's `part_endpoints`), and never
+    inherits the parent route's civilization endpoints — those travel
+    separately as `route_endpoints` for the graph's civ-attachment rule.
+    Returns True when at least one feature was emitted.
+    """
+    style = route_manifest.get("style", {})
+    lore: dict[str, Any] = {
+        "id": route_key,
+        "name": style.get("label", _display_name(route_key)),
+        "category": "trade_route",
+        "stroke": style.get("color", "#888"),
+        "stroke-width": 2.5,
+        "stroke-dasharray": style.get("dash_array", ""),
+    }
+    if route:
+        lore.update({
+            "path_description": route.get("path", ""),
+            "commodities": route.get("commodities", ""),
+            "bottleneck": route.get("bottleneck", ""),
+            "consequence_if_closed": route.get("consequence_if_closed", ""),
+        })
+        if route.get("off_map_terminus"):
+            lore["off_map_terminus"] = route["off_map_terminus"]
+
+    paths = route_manifest.get("paths")
+    if paths:
+        part_endpoints = route_manifest.get("part_endpoints", [])
+        parent_endpoints = route.get("endpoints", []) if route else []
+        for i, part in enumerate(paths):
+            # `id` must come AFTER `**lore` (which carries the parent route
+            # key) so parts 2+ keep their `<route>__p<n>` id.
+            props = {
+                **lore,
+                "id": route_key if i == 0 else f"{route_key}__p{i + 1}",
+                "route_id": route_key,
+                "part": i + 1,
+                "endpoints": part_endpoints[i] if i < len(part_endpoints) else [],
+                "route_endpoints": parent_endpoints,
+            }
+            features.append(_make_feature("LineString", part, props))
+        return True
+
+    path = route_manifest.get("path")
+    if not path:
+        return False
+    props = dict(lore)
+    if route:
+        props["endpoints"] = route.get("endpoints", [])
+    features.append(_make_feature("LineString", path, props))
+    return True
+
+
 def _normalize_numbers(obj: Any) -> Any:
     """Render integer-valued floats as plain ints (e.g. 455.0 -> 455) so the
     serialized coordinate output is stable across numpy/scipy versions and
@@ -116,18 +180,26 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
         ))
 
     # --- Civilization regions ---
-    civ_polygons: dict[str, list[list[float]]] = {}
+    civ_polygons: dict[str, list] = {}
     for civ_key in data.civ_names:
         civ = data.get_civ(civ_key)
         civ_manifest = manifest.get_civ(civ_key)
         polygon = civ_manifest.get("polygon")
         centroid = civ_manifest.get("centroid")
         fill = civ_manifest.get("fill", "#888")
+        extra_polygons = civ_manifest.get("extra_polygons") or []
         if polygon:
-            civ_polygons[civ_key] = polygon
+            # Terrain generation sees every lobe (single ring or list of rings)
+            civ_polygons[civ_key] = [polygon, *extra_polygons]
+            geometry_type = "MultiPolygon" if extra_polygons else "Polygon"
+            coordinates = (
+                [[polygon], *[[ring] for ring in extra_polygons]]
+                if extra_polygons
+                else [polygon]
+            )
             features.append(_make_feature(
-                "Polygon",
-                [polygon],
+                geometry_type,
+                coordinates,
                 {
                     "id": civ_key,
                     "name": _display_name(civ_key),
@@ -238,49 +310,15 @@ def export_geojson(data: TopologyData, output_path: Path | str | None = None) ->
     for route_key in [*data.route_names, *data.treaty_flows]:
         route = data.get_route(route_key)
         route_manifest = manifest.get_route(route_key)
-        path = route_manifest.get("path")
-        style = route_manifest.get("style", {})
-        if path:
+        if _emit_trade_route(features, route_key, route, route_manifest):
             yaml_route_ids.add(route_key)
-            features.append(_make_feature(
-                "LineString",
-                path,
-                {
-                    "id": route_key,
-                    "name": style.get("label", _display_name(route_key)),
-                    "category": "trade_route",
-                    "endpoints": route.get("endpoints", []),
-                    "path_description": route.get("path", ""),
-                    "commodities": route.get("commodities", ""),
-                    "bottleneck": route.get("bottleneck", ""),
-                    "consequence_if_closed": route.get("consequence_if_closed", ""),
-                    **({"off_map_terminus": route["off_map_terminus"]} if route.get("off_map_terminus") else {}),
-                    "stroke": style.get("color", "#888"),
-                    "stroke-width": 2.5,
-                    "stroke-dasharray": style.get("dash_array", ""),
-                },
-            ))
 
     # --- Extra routes (defined in manifest only, e.g. Scribal Ladder) ---
     for route_key in manifest.route_names:
         if route_key in yaml_route_ids:
             continue
         route_manifest = manifest.get_route(route_key)
-        path = route_manifest.get("path")
-        style = route_manifest.get("style", {})
-        if path:
-            features.append(_make_feature(
-                "LineString",
-                path,
-                {
-                    "id": route_key,
-                    "name": style.get("label", _display_name(route_key)),
-                    "category": "trade_route",
-                    "stroke": style.get("color", "#888"),
-                    "stroke-width": 2.5,
-                    "stroke-dasharray": style.get("dash_array", ""),
-                },
-            ))
+        _emit_trade_route(features, route_key, None, route_manifest)
 
     # --- Irrah oases ---
     for oasis_key in manifest.oasis_names:
