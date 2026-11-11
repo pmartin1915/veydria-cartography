@@ -96,7 +96,7 @@ function fullPartLength(partId: string): number {
  * two endpoint nodes through its snapped nodes, and their summed length
  * must match the part's drawn geometry. Returns path length + node ids.
  */
-function partChainLength(partId: string): number {
+function partChainLength(partId: string): { length: number; path: string[] } {
   const f = featureById(partId)
   const endpoints = ((f.properties.endpoints as string[]) ?? []).map(e => (e === 'basin' ? 'aethelian_basin' : e))
   expect(endpoints.length).toBe(2)
