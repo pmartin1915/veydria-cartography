@@ -10,14 +10,15 @@
  */
 
 import { kvStore } from '../persistence/kv-store'
+import { featureIdOf } from './feature-id'
 
 const STORAGE_KEY_V1 = 'veydria-annotations-v1'
 const STORAGE_KEY = 'veydria-annotations-v2'
 
 // SVG-unit radius for "near a feature" auto-binding. The map is 1200x800;
-// 40 units ≈ 100 km on the canonical 2.5 km/unit scale, which feels right
+// 25 units ≈ 100 km on the canonical 4 km/unit scale, which feels right
 // for "I dropped a pin on the port".
-export const FEATURE_LINK_MAX_DISTANCE = 40
+export const FEATURE_LINK_MAX_DISTANCE = 25
 
 export type AnnotationKind = 'pin' | 'hex-note' | 'explored'
 
@@ -270,6 +271,14 @@ function getFeatureCentroid(feature: FeatureLike): [number, number] | null {
     const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
     return [cx, cy]
   }
+  if (type === 'MultiPolygon') {
+    let cx = 0, cy = 0, n = 0
+    for (const poly of coords as unknown as number[][][][]) {
+      for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
+    }
+    if (n === 0) return null
+    return [cx / n, cy / n]
+  }
   if (type === 'LineString') {
     const pts = coords as number[][]
     if (!pts || pts.length === 0) return null
@@ -280,7 +289,8 @@ function getFeatureCentroid(feature: FeatureLike): [number, number] | null {
 }
 
 function getFeatureId(f: FeatureLike): string {
-  return ((f as unknown as Record<string, unknown>).id as string) ||
+  return (f.properties.route_id as string) ||
+    ((f as unknown as Record<string, unknown>).id as string) ||
     (f.properties.id as string) || ''
 }
 

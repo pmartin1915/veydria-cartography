@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react'
 import type { GeoJSONFeature } from '../App'
+import { featureIdOf } from '../utils/feature-id'
 
 interface SessionHudProps {
   features: GeoJSONFeature[]
@@ -10,7 +11,7 @@ interface SessionHudProps {
 }
 
 function getFeatureId(f: GeoJSONFeature): string {
-  return ((f as unknown as Record<string, unknown>).id as string) || (f.properties.id as string) || ''
+  return featureIdOf(f)
 }
 
 function getFeatureName(f: GeoJSONFeature): string {

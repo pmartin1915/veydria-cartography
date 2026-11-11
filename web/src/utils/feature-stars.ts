@@ -7,6 +7,7 @@
  */
 
 import { kvStore } from '../persistence/kv-store'
+import { featureIdOf } from './feature-id'
 
 const STORAGE_KEY = 'veydria.stars.v1'
 const MAX_STARS = 50
@@ -103,7 +104,7 @@ export function resolveStarredFeatures(
 ): StarredFeature[] {
   const map = new Map<string, GeoJSONFeature>()
   for (const f of features) {
-    const fid = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+    const fid = featureIdOf(f)
     if (fid) map.set(fid, f)
   }
   const out: StarredFeature[] = []

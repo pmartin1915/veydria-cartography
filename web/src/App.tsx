@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
 import { kvStore } from './persistence/kv-store'
+import { featureIdOf } from './utils/feature-id'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -346,7 +347,7 @@ function App() {
             || geojson.features.find((f) => f.properties.category === 'civilization')
             || geojson.features[0]
           if (fallback) {
-            const id = (fallback as unknown as Record<string, unknown>).id as string || (fallback.properties.id as string)
+            const id = featureIdOf(fallback)
             if (id) {
               setSelectedFeature(fallback)
               setPanelOpen(true)
@@ -525,7 +526,7 @@ function App() {
         if (featureId) {
           flyToTimeoutRef.current = window.setTimeout(() => {
             const found = data.features.find((f) => {
-              const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+              const id = featureIdOf(f)
               return id === featureId
             })
             if (found) {
@@ -608,7 +609,7 @@ function App() {
     setSelectedHex(null)
     // Update URL hash for deep-linking. Feature and hex selections are
     // mutually exclusive in the URL — same rule as the bottom sheet.
-    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    const id = featureIdOf(feature)
     if (id) {
       viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
@@ -658,7 +659,7 @@ function App() {
     closeSearch()
     setSelectedHex(null)
     mapRef.current?.flyToFeature(feature)
-    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    const id = featureIdOf(feature)
     if (id) {
       viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
@@ -669,7 +670,7 @@ function App() {
   const handleSelectFeatureById = useCallback((featureId: string): boolean => {
     if (!geojson) return false
     const feature = geojson.features.find((f) => {
-      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const id = featureIdOf(f)
       return id === featureId
     })
     if (!feature) return false
@@ -719,7 +720,7 @@ function App() {
     // Imperatively update marker positions to avoid a full 3000-layer rebuild
     for (const idx of result.mutatedFeatures) {
       const feature = result.newFeatures[idx]
-      const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+      const id = featureIdOf(feature as GeoJSONFeature)
       if (id && feature.geometry.type === 'Point') {
         mapRef.current?.updateFeaturePosition(id, feature.geometry.coordinates as [number, number])
       }
@@ -853,7 +854,7 @@ function App() {
     window.setTimeout(() => {
       if (starredIds.length > 0 && geojson) {
         const features = geojson.features.filter((f) => {
-          const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+          const id = featureIdOf(f)
           return id && starredIds.includes(id)
         })
         if (features.length > 0) {
@@ -1668,7 +1669,7 @@ function App() {
             setSelectedHex(null)
             viewportRef.current = {
               ...viewportRef.current,
-              featureId: ((feature as unknown as Record<string, unknown>).id as string) || (feature.properties.id as string),
+              featureId: featureIdOf(feature),
               hexLabel: undefined,
               hexNote: undefined,
               journeyFrom: undefined,
@@ -1838,7 +1839,7 @@ function App() {
             setPanelOpen(true)
             setSelectedHex(null)
             mapRef.current?.flyToFeature(f)
-            const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+            const id = featureIdOf(f)
             if (id) {
               viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)
@@ -2126,7 +2127,7 @@ function App() {
             setPanelOpen(true)
             setSelectedHex(null)
             mapRef.current?.flyToFeature(f)
-            const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+            const id = featureIdOf(f)
             if (id) {
               viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)

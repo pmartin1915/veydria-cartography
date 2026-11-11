@@ -11,6 +11,7 @@
 
 import { kvStore } from '../persistence/kv-store'
 import { djb2Hash, mulberry32 } from './encounters'
+import { featureIdOf } from './feature-id'
 import type { GeoJSONFeature } from '../App'
 
 export type AiLoreType = 'orientation' | 'rumors' | 'npcs' | 'tensions'
@@ -174,7 +175,7 @@ export async function fetchAiLore(
   type: AiLoreType,
   settings: AiLoreSettings,
 ): Promise<AiLoreResult> {
-  const id = (feature.properties.id as string) || (feature as unknown as Record<string, unknown>).id as string || 'unknown'
+  const id = featureIdOf(feature) || 'unknown'
 
   const cached = getCachedLore(id, type)
   if (cached) return { content: cached, cached: true }
@@ -396,7 +397,7 @@ export function generateMockLore(feature: GeoJSONFeature, type: AiLoreType): str
   // stays faithful to the data rather than inventing.
   if (type === 'orientation') return generateMockOrientation(feature)
 
-  const id = (feature.properties.id as string) || (feature as unknown as Record<string, unknown>).id as string || 'unknown'
+  const id = featureIdOf(feature) || 'unknown'
   const name = (feature.properties.name as string) || 'this place'
   const category = (feature.properties.category as string) || 'default'
 

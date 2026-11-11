@@ -187,6 +187,15 @@ export interface JourneyEdge {
   segmentDays?: number
   commodities?: string
   consequenceIfClosed?: string
+  /** Source feature id for trade-route edges (a multi-part route's part id,
+   *  or the route id for single-path routes) — set at graph build time so
+   *  consumers/tests can attribute an edge to its part exactly. */
+  routePart?: string
+  /** Set on civilization-attachment beelines (parent `route_endpoints` civ →
+   *  the part endpoint feature belonging to that civ): attributed to the
+   *  part but NOT part of its arc chain — consumers measuring part geometry
+   *  must skip these. */
+  civAttach?: boolean
   /** Routing-preference multiplier (e.g. chokepoint difficulty). Applied to
    *  routing cost only — kept separate from distanceSvg so reported
    *  distance/days reflect physical geography, not routing friction.
@@ -231,9 +240,9 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }): number 
 }
 
 // Perpendicular distance threshold (svg units) for snapping an oasis/port
-// onto a trade-route polyline. 10 svg ≈ 25 km — wide enough to catch the
-// 7 authored on-route features (max 19 km), tight enough to exclude the 3
-// genuinely off-route ones (Khulut/Tavakh-Qarat/Ghadam Thalla at 194–354 km).
+// onto a trade-route polyline. 10 svg ≈ 40 km at the canonical 4 km/unit
+// scale — wide enough to catch the authored on-route features, tight enough
+// to exclude the genuinely off-route ones (which sit 100+ km away).
 const SNAP_THRESHOLD_SVG = 10
 const SNAPPABLE_CATEGORIES = new Set(['oasis', 'port', 'caravanserai'])
 
@@ -324,16 +333,24 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     if (b) b.push({ to: e.from, edge: { ...e, from: e.to, to: e.from } })
   }
 
-  // Compute centroid for a polygon feature
-  function polygonCentroid(rings: number[][][]): [number, number] {
-    const ring = rings[0]
-    let cx = 0, cy = 0
-    for (const [x, y] of ring) { cx += x; cy += y }
-    return [cx / ring.length, cy / ring.length]
+  // Compute a centroid for a Polygon ([ring]) or MultiPolygon ([[ring], ...])
+  // feature — the vertex-weighted mean of every polygon's outer ring.
+  function polygonCentroid(input: number[][][] | number[][][][]): [number, number] {
+    const isMulti = typeof (input as number[][][])[0][0][0] !== 'number'
+    const polys: number[][][][] = isMulti ? (input as number[][][][]) : [input as number[][][]]
+    let cx = 0, cy = 0, n = 0
+    for (const poly of polys) {
+      for (const [x, y] of poly[0]) { cx += x; cy += y; n++ }
+    }
+    return n > 0 ? [cx / n, cy / n] : [0, 0]
   }
 
   // ── 1. Civilization centroids + key polygon features ──
   const civNodes: JourneyNode[] = []
+  // Parent-route civilization endpoints attach once per (civ, feature) pair
+  // across the WHOLE route — a junction feature that terminates several parts
+  // still gets exactly one attach edge.
+  const attachedCivPairs = new Set<string>()
   for (const f of geojson.features) {
     const cat = f.properties.category as string
     if (cat !== 'civilization' && cat !== 'water') continue
@@ -341,8 +358,8 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     if (!id) continue
 
     let centroid: [number, number] | undefined = f.properties.centroid as [number, number] | undefined
-    if (!centroid && f.geometry.type === 'Polygon') {
-      centroid = polygonCentroid(f.geometry.coordinates as number[][][])
+    if (!centroid && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')) {
+      centroid = polygonCentroid(f.geometry.coordinates as number[][][] | number[][][][])
     }
     if (!centroid) continue
 
@@ -365,6 +382,7 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
 
   // ── 2. Point features (ports, oases, landmarks, chokepoints, contested sites) ──
   const pointFeatures: Array<{ feature: GeoJSONFeature; node: JourneyNode }> = []
+  const pointFeatureById = new Map<string, GeoJSONFeature>()
   for (const f of geojson.features) {
     if (f.geometry.type !== 'Point') continue
     const cat = f.properties.category as string
@@ -382,6 +400,7 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     }
     addNode(node)
     pointFeatures.push({ feature: f, node })
+    pointFeatureById.set(id, f)
   }
 
   // ── 3. Link each point to its nearest civilization ──
@@ -424,14 +443,21 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   }
 
   // ── 3.5. Pre-compute oasis/port snap assignments ──
-  // Each oasis/port snaps to its single nearest trade-route polyline (by
-  // perpendicular distance), if within SNAP_THRESHOLD_SVG. This lets the
-  // worldbuilder-authored intent ("Qarat al-Fidda sits on the caravan_thread")
-  // become routable graph topology in section 4 below — without inventing
-  // any new geography. The 3 off-route features (Khulut/Tavakh-Qarat/
-  // Ghadam Thalla) exceed the threshold and stay reachable only via their
-  // existing intra_civ link.
+  // Single-path routes: each oasis/port snaps to its ONE best trade-route
+  // polyline (by perpendicular distance), if within SNAP_THRESHOLD_SVG —
+  // today's behaviour, unchanged. Multi-part routes (features carrying
+  // `route_id`): a node within the threshold attaches to EVERY such part,
+  // so junction oases/ports are routable along each leg that touches them.
+  // This lets the worldbuilder-authored intent ("Qarat al-Fidda sits on the
+  // caravan_thread") become routable graph topology in section 4 below —
+  // without inventing any new geography. Off-route features exceed the
+  // threshold and stay reachable only via their existing intra_civ link.
   const routeSnaps = new Map<string, Array<{ node: JourneyNode; tArc: number }>>()
+  const attachSnap = (routeId: string, node: JourneyNode, tArc: number) => {
+    const bucket = routeSnaps.get(routeId) || []
+    bucket.push({ node, tArc })
+    routeSnaps.set(routeId, bucket)
+  }
   for (const { node } of pointFeatures) {
     if (!SNAPPABLE_CATEGORIES.has(node.category)) continue
     let best: { routeId: string; tArc: number; perpDist: number } | null = null
@@ -439,20 +465,19 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
       if (f.properties.category !== 'trade_route') continue
       if (f.properties.off_map_terminus) continue
       if (f.geometry.type !== 'LineString') continue
+      const isPart = typeof f.properties.route_id === 'string'
       const routeId = (f.properties.id as string) || (f.properties.name as string) || ''
       if (!routeId) continue
       const proj = projectPointOnPolyline(node, f.geometry.coordinates as number[][])
       if (!proj) continue
       if (proj.perpDist > SNAP_THRESHOLD_SVG) continue
-      if (!best || proj.perpDist < best.perpDist) {
+      if (isPart) {
+        attachSnap(routeId, node, proj.tArc)
+      } else if (!best || proj.perpDist < best.perpDist) {
         best = { routeId, tArc: proj.tArc, perpDist: proj.perpDist }
       }
     }
-    if (best) {
-      const bucket = routeSnaps.get(best.routeId) || []
-      bucket.push({ node, tArc: best.tArc })
-      routeSnaps.set(best.routeId, bucket)
-    }
+    if (best) attachSnap(best.routeId, node, best.tArc)
   }
 
   // ── 4. Trade routes as edges between civilizations ──
@@ -463,6 +488,15 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
   // sub-edge = arc-length along the polyline (was: full polyline length
   // for every endpoint pair — preserved here only for the no-geometry
   // fallback).
+  //
+  // Multi-part routes: the exporter emits each part as its own LineString
+  // feature (`route_id` + `part`; parts 2+ id'd `<route>__p<n>`). A part's
+  // `endpoints` pair is anchored onto ITS polyline (first → tArc 0, last →
+  // tArc routeLen) and its edges run only between nodes on that part: the
+  // two endpoint nodes plus the nodes snapped onto it. A part never
+  // inherits the parent route's civilization endpoint list — those attach
+  // separately below, and only to the part whose endpoint feature belongs
+  // to that civilization.
   for (const f of geojson.features) {
     if (f.properties.category !== 'trade_route') continue
     // Off-map routes (ADR-0045 Western Route) are display-only: their sea lane
@@ -473,19 +507,40 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
     if (!endpoints || endpoints.length < 2) continue
 
     const resolved = endpoints.map(resolveId)
-    const routeKey = (f.properties.id as string || '').toLowerCase()
+    // Route-level lookups (seasonal restrictions, snaps on single-path
+    // routes) resolve `route_id` when present so every part of a multi-part
+    // route shares the parent's identity.
+    const routeKey = (((f.properties.route_id as string) || (f.properties.id as string)) || '').toLowerCase()
     const routeSeasonalInfo = SEASONAL_DATA[routeKey]
     const routeName = f.properties.name as string || 'Trade Route'
-    const routeId = (f.properties.id as string) || routeName
+    const featureKey = (f.properties.id as string) || routeName
 
     const edgeMeta = {
       type: 'trade_route' as const,
       name: routeName,
+      routePart: featureKey,
       bottleneck: f.properties.bottleneck as string | undefined,
       seasonal: routeSeasonalInfo?.warning,
       seasonalKey: routeSeasonalInfo ? routeKey : undefined,
       commodities: f.properties.commodities as string | undefined,
       consequenceIfClosed: f.properties.consequence_if_closed as string | undefined,
+    }
+
+    // An endpoint feature that is not already a graph node (e.g. a landmark
+    // like the_neck used as a part endpoint) is added as a node.
+    for (const id of resolved) {
+      if (nodes.has(id)) continue
+      const feat = pointFeatureById.get(id)
+      if (!feat || feat.geometry.type !== 'Point') continue
+      const [x, y] = feat.geometry.coordinates as number[]
+      addNode({
+        id,
+        name: feat.properties.name as string || id,
+        category: feat.properties.category as string || 'landmark',
+        x,
+        y,
+        civ: (feat.properties.civ as string) || undefined,
+      })
     }
 
     // Polyline coordinates + total length (for fallback)
@@ -501,7 +556,7 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
       }
     }
 
-    const snaps = routeSnaps.get(routeId) || []
+    const snaps = routeSnaps.get(featureKey) || []
 
     // Compute the arc-length parameter for each resolved endpoint along the
     // polyline. Civ centroids generally do NOT lie on the route's polyline
@@ -542,16 +597,23 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
       const hi = Math.max(tA, tB)
       const direction = tA <= tB ? 1 : -1
 
+      // Endpoint nodes are anchored to lo/hi by construction — an interior
+      // snap of an endpoint feature (its nearest projection landing mid-part,
+      // e.g. a polyline that doubles back away from the endpoint city) must
+      // not re-enter the chain and split the path.
       const between = snaps
-        .filter(s => s.tArc > lo && s.tArc < hi)
+        .filter(s => s.node.id !== aId && s.node.id !== bId && s.tArc > lo && s.tArc < hi)
         .sort((p, q) => direction * (p.tArc - q.tArc))
 
-      // Chain: A → (snapped waypoints in travel order) → B
+      // Collapse consecutive duplicate ids (a junction endpoint feature
+      // also snaps to the part it terminates — multi-attach, section 3.5)
+      // so no segment of the part is dropped: the surviving edge spans the
+      // full arc between its neighbours.
       const chain: Array<{ id: string; tArc: number }> = [
         { id: aId, tArc: tA },
         ...between.map(s => ({ id: s.node.id, tArc: s.tArc })),
         { id: bId, tArc: tB },
-      ]
+      ].filter((c, idx, arr) => idx === 0 || c.id !== arr[idx - 1].id)
 
       // If the segment between endpoints collapses (intermediate projection
       // landed on top of an adjacent endpoint), fall back to civ-civ distance.
@@ -566,6 +628,27 @@ export function buildGraph(geojson: GeoJSONCollection): Graph {
         const segDist = Math.abs(y.tArc - x.tArc)
         if (segDist <= 0) continue
         addEdge({ from: x.id, to: y.id, distanceSvg: segDist, ...edgeMeta })
+      }
+    }
+
+    // Parent-route civilization endpoints (topology `route_endpoints`,
+    // carried on every part): attach each civ ONLY to the part whose
+    // endpoint feature belongs to that civilization — never to every part.
+    const parentCivEndpoints = (f.properties.route_endpoints as string[] | undefined) ?? []
+    if (parentCivEndpoints.length > 0) {
+      for (const rawCiv of parentCivEndpoints) {
+        const civId = resolveId(rawCiv)
+        if (!nodes.has(civId)) continue
+        const civNode = nodes.get(civId)!
+        for (const id of resolved) {
+          if (id === civId || !nodes.has(id)) continue
+          const feat = pointFeatureById.get(id)
+          if ((feat?.properties?.civ as string | undefined) !== civId) continue
+          const pairKey = `${civId}|${id}`
+          if (attachedCivPairs.has(pairKey)) continue
+          attachedCivPairs.add(pairKey)
+          addEdge({ from: civId, to: id, distanceSvg: dist(civNode, nodes.get(id)!), ...edgeMeta, civAttach: true })
+        }
       }
     }
   }

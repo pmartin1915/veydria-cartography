@@ -4,6 +4,14 @@ export interface CoordinatePatch {
   coords: [number, number]
 }
 
+// Route parts resolve to the parent route ID, so an edit-mode patch keyed by
+// `caravan_thread` still matches the exported part features.
+function featureIdOf(f: { properties: Record<string, unknown> }): string {
+  return (f.properties.route_id as string) ||
+    ((f as unknown as Record<string, unknown>).id as string) ||
+    (f.properties.id as string) || ''
+}
+
 export function parsePatchYaml(yaml: string): CoordinatePatch[] {
   const patches: CoordinatePatch[] = []
   const lines = yaml.split('\n')
@@ -82,7 +90,7 @@ export function applyPatches(
 
   for (const patch of patches) {
     const idx = newFeatures.findIndex((f) => {
-      const fid = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const fid = featureIdOf(f)
       return fid === patch.id
     })
 

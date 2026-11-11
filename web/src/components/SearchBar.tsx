@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useDeferredValue } from 'react'
 import { NodeIcon } from './icons'
 import { loadRecentItems, pushRecentItem, type RecentItem } from '../utils/search-recent'
 import type { MapAnnotation } from '../utils/annotations'
+import { featureIdOf } from '../utils/feature-id'
 
 interface GeoJSONFeature {
   type: 'Feature'
@@ -34,9 +35,13 @@ export default function SearchBar({ features, annotations = [], starredIds = [],
     inputRef.current?.focus()
   }, [])
 
-  // Pre-built search index for fast filtering
+  // Pre-built search index for fast filtering. Multi-part trade routes are
+  // indexed once under part 1 (which keeps the route ID) so a route doesn't
+  // appear once per part.
   const searchIndex = useMemo(() => {
-    return features.map((f) => ({
+    return features
+      .filter((f) => !((f.properties.part as number) > 1))
+      .map((f) => ({
       feature: f,
       name: ((f.properties.name as string) || '').toLowerCase(),
       category: ((f.properties.category as string) || '').toLowerCase(),
@@ -57,7 +62,7 @@ export default function SearchBar({ features, annotations = [], starredIds = [],
   const linkedPins = useMemo(() => {
     const featureMap = new Map<string, GeoJSONFeature>()
     for (const f of features) {
-      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const id = featureIdOf(f)
       if (id) featureMap.set(id, f)
     }
     const pins: { annotation: MapAnnotation; feature: GeoJSONFeature }[] = []
@@ -75,7 +80,7 @@ export default function SearchBar({ features, annotations = [], starredIds = [],
     if (starredIds.length === 0) return []
     const featureMap = new Map<string, GeoJSONFeature>()
     for (const f of features) {
-      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const id = featureIdOf(f)
       if (id) featureMap.set(id, f)
     }
     const out: GeoJSONFeature[] = []
@@ -90,7 +95,7 @@ export default function SearchBar({ features, annotations = [], starredIds = [],
   const recentFeatures = useMemo(() => {
     const featureMap = new Map<string, GeoJSONFeature>()
     for (const f of features) {
-      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const id = featureIdOf(f)
       if (id) featureMap.set(id, f)
     }
     const out: GeoJSONFeature[] = []
@@ -108,7 +113,7 @@ export default function SearchBar({ features, annotations = [], starredIds = [],
       // When empty, we show sections (Recent, Linked pins, All features).
       // Return the full browsable list as the "all features" section.
       return features
-        .filter((f) => f.properties.name)
+        .filter((f) => f.properties.name && !((f.properties.part as number) > 1))
         .sort((a, b) => {
           const catOrder: Record<string, number> = {
             port: 0, chokepoint: 1, landmark: 2, oasis: 3,

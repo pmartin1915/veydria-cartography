@@ -4,6 +4,7 @@ import { getFeatureNote } from '../utils/feature-notes'
 import { getStoredHooks } from '../utils/feature-hooks'
 import { downloadPrepList, type PrepItem, type HexPrepItem } from '../utils/session-prep'
 import type { GeoJSONFeature } from '../App'
+import { featureIdOf } from '../utils/feature-id'
 import type { MapAnnotation } from '../utils/annotations'
 
 interface SessionPrepPanelProps {
@@ -23,7 +24,7 @@ interface SessionPrepPanelProps {
 }
 
 function getFeatureId(f: GeoJSONFeature): string {
-  return ((f as unknown as Record<string, unknown>).id as string) || (f.properties.id as string) || ''
+  return featureIdOf(f)
 }
 
 function getFeatureName(f: GeoJSONFeature): string {

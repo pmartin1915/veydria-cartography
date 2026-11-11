@@ -588,6 +588,15 @@ function getCentroidOfFeature(f: GeoJSONFeature): [number, number] | null {
     const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
     return [cx, cy]
   }
+  if (g.type === 'MultiPolygon') {
+    // Vertex-weighted mean of each polygon's outer ring
+    let cx = 0, cy = 0, n = 0
+    for (const poly of g.coordinates as unknown as number[][][][]) {
+      for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
+    }
+    if (n === 0) return null
+    return [cx / n, cy / n]
+  }
   return null
 }
 

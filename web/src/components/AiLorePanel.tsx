@@ -39,7 +39,9 @@ interface TabState {
 }
 
 function getFeatureId(feature: GeoJSONFeature): string {
-  return (feature.properties.id as string) || (feature as unknown as Record<string, unknown>).id as string || ''
+  return (feature.properties.route_id as string) ||
+    (feature.properties.id as string) ||
+    ((feature as unknown as Record<string, unknown>).id as string) || ''
 }
 
 export default function AiLorePanel({ feature, onOpenSettings }: AiLorePanelProps) {

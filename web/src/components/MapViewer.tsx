@@ -12,6 +12,7 @@ interface GeoJSONFeature {
 }
 
 import { initD3Overlay } from '../utils/d3-overlay'
+import { featureIdOf } from '../utils/feature-id'
 import { initHexOverlay, type HexOverlay } from '../utils/hex-overlay'
 import { initGraticuleOverlay, type GraticuleOverlay } from '../utils/graticule-overlay'
 import { initScaleControl } from '../utils/scale-control'
@@ -211,6 +212,14 @@ function getCentroid(coords: number[] | number[][] | number[][][], geomType: str
     const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
     return [cx, cy]
   }
+  if (geomType === 'MultiPolygon') {
+    // Vertex-weighted mean of each polygon's outer ring
+    let cx = 0, cy = 0, n = 0
+    for (const poly of coords as unknown as number[][][][]) {
+      for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
+    }
+    if (n > 0) return [cx / n, cy / n]
+  }
   return [600, 400]
 }
 
@@ -308,7 +317,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       },
       flyToFeatureById(featureId: string) {
         const feature = geojsonRef.current.features.find((f) => {
-          const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+          const id = featureIdOf(f)
           return id === featureId
         })
         if (!feature || !mapRef.current) return false
@@ -592,9 +601,17 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
           const props = feature.properties
           const geomType = feature.geometry.type
 
-          if (geomType === 'Polygon') {
-            const coords = feature.geometry.coordinates as number[][][]
-            const latlngs = coords[0].map(([x, y]) => svgToLatLng(x, y))
+          if (geomType === 'Polygon' || geomType === 'MultiPolygon') {
+            // A civilization with extra_polygons (irrah) arrives as a
+            // MultiPolygon; each lobe's outer ring becomes its own Leaflet
+            // ring (wrapped so lobes don't render as holes).
+            const rings = geomType === 'Polygon'
+              ? [(feature.geometry.coordinates as number[][][])[0]]
+              : (feature.geometry.coordinates as unknown as number[][][][]).map(p => p[0])
+            const ringLatLngs = rings.map(ring => ring.map(([x, y]) => svgToLatLng(x, y)))
+            const latlngs = geomType === 'MultiPolygon'
+              ? ringLatLngs.map(r => [r])
+              : ringLatLngs
 
             let fillColor = (props.fill as string) || '#888'
             let fillOpacity = 0.2
@@ -1130,7 +1147,7 @@ const MapViewer = forwardRef<MapViewerHandle, MapViewerProps>(
       if (!selectedFeatureId || !mapRef.current) return
       if (window.innerWidth > 768) return
       const feature = geojsonRef.current.features.find((f) => {
-        const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+        const id = featureIdOf(f)
         return id === selectedFeatureId
       })
       if (!feature) return

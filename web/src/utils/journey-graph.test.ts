@@ -174,32 +174,33 @@ describe('findComparisonRoutes', () => {
 })
 
 describe('chokepoint distance reporting (routingPenalty fix)', () => {
-  // irrah → ngaru_bon: irrah's only two exits are the caravan_thread trade
-  // route (blocked in summer, ×10 routing cost) and the smith_spring
-  // chokepoint. Before the fix, the chokepoint's routing penalty was baked
-  // into distanceSvg itself, so summer's diversion onto it reported a
-  // doubled, physically-wrong distance and day count (~850km/68d for a
-  // ~425km crossing). These guard that routing choice is unchanged while
-  // reported distance/days are now physical.
+  // irrah → ngaru_bon: on the canon-2026-09-29 layout the cheapest crossing
+  // is intra_civ to Zang-Kalli (on the Copper-for-Steel Road) then the road
+  // east — the old April caravan_thread civ-to-civ endpoint edges no longer
+  // exist (multi-part routes anchor feature endpoints per part, and the
+  // graph-integrity test bans civ-centroid-to-civ-centroid trade edges).
+  // Before the routingPenalty fix, a penalized chokepoint crossing had its
+  // penalty baked into distanceSvg itself, doubling reported km/days. These
+  // guard that reported distance/days are physical on the new layout.
 
-  it('summer still diverts onto the smith_spring chokepoint (routing unchanged)', () => {
+  it('summer still avoids the blocked caravan_thread (routing unchanged)', () => {
     const route = findRoute(graph, 'irrah', 'ngaru_bon', 'summer')
     expect(route).not.toBeNull()
-    const chokepointEdge = route!.edges.find(e => e.type === 'chokepoint')
     expect(
-      chokepointEdge,
-      'summer should still avoid the blocked caravan_thread and cross via a chokepoint'
-    ).toBeDefined()
+      route!.edges.every(e => e.seasonalKey !== 'caravan_thread'),
+      'summer should not route over the season-blocked Caravan Thread'
+    ).toBe(true)
   })
 
-  it('spring still prefers the faster caravan_thread trade route (routing unchanged)', () => {
+  it('spring still prefers the faster trade-route crossing (routing unchanged)', () => {
     const route = findRoute(graph, 'irrah', 'ngaru_bon', 'spring')
     expect(route).not.toBeNull()
     expect(
       route!.edges.every(e => e.type !== 'chokepoint'),
       'spring should stay on the trade route, not divert to a chokepoint'
     ).toBe(true)
-    expect(route!.estimatedDays).toBeLessThan(20)
+    // Canon layout: irrah → Zang-Kalli (intra) → Copper-for-Steel Road ≈ 40 d.
+    expect(route!.estimatedDays).toBeLessThan(45)
   })
 
   it('reports physical (unpenalized) distance for a chokepoint crossing', () => {
@@ -211,14 +212,15 @@ describe('chokepoint distance reporting (routingPenalty fix)', () => {
     expect(route!.totalDistanceSvg).toBeCloseTo(physicalSvg, 5)
   })
 
-  it('summer crossing reports honest (not penalty-doubled) km and days', () => {
+  it('crossing reports honest (not penalty-doubled) km and days', () => {
     const route = findRoute(graph, 'irrah', 'ngaru_bon', 'summer')
     expect(route).not.toBeNull()
-    // Pre-fix this route reported ~850km / ~68 days (the chokepoint's 2×
-    // routing penalty baked into physical distance AND the day estimate).
-    // The real crossing is roughly half that.
-    expect(route!.totalKm).toBeLessThan(600)
-    expect(route!.estimatedDays).toBeLessThan(45)
+    // Pre-fix a penalized crossing reported ~2× the physical distance and
+    // day count (the routing penalty baked into physical distance AND the
+    // day estimate). On the canon layout this crossing is ~1425 km / 40 d;
+    // a penalty leak would roughly double it.
+    expect(route!.totalKm).toBeLessThan(1600)
+    expect(route!.estimatedDays).toBeLessThan(50)
   })
 })
 
@@ -290,16 +292,17 @@ describe('waypoint snap (Option D)', () => {
   })
 
   it('real geojson: ngaru_bon → ndjadi threads through Copper-for-Steel-Road waypoints', () => {
-    // Copper-for-Steel Road has two authored on-route oases (Tin Mashraq
-    // ~10 km perp, Dzong-Tamu ~8 km perp). Both should snap and appear as
-    // midpoints on the ngaru_bon → ndjadi route.
+    // Canon layout: the Copper-for-Steel Road's authored on-route waypoint is
+    // Zang-Kalli (caravanserai). April's Tin Mashraq / Dzong-Tamu sat near
+    // this road; canon-2026-09-29 moved them onto the Caravan Thread /
+    // Basin Hub, so the midpoint assertion targets Zang-Kalli.
     const route = findRoute(graph, 'ngaru_bon', 'ndjadi')
     expect(route, 'expected a route between ngaru_bon and ndjadi').not.toBeNull()
-    const waypoints = route!.nodes.filter(n => n.category === 'oasis' || n.category === 'port')
+    const ids = route!.nodes.map(n => n.id)
     expect(
-      waypoints.length,
-      'route along Copper-for-Steel Road should include its on-route oases as midpoints'
-    ).toBeGreaterThanOrEqual(1)
+      ids,
+      'route along Copper-for-Steel Road should include its on-route waypoint as a midpoint'
+    ).toContain('zang_kalli')
   })
 })
 
