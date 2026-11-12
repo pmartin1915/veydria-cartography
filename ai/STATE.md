@@ -82,11 +82,8 @@
 - Baseline sim at bb76d8b: `traces/pre-phase1/summary.csv`. Full 30-pair matrix, 4320 runs, deterministic (two byte-identical runs). Command: `npm --prefix web run sim:batch` from Git Bash.
 - Spec `research/map-hardening/PHASE1-SPEC.md`, reviewed by Sol (7 findings folded in: graph contract for multi-part routes, legend `<line>` exclusion, recoverable migration, sim controls). P1a goes to Kimi via /orchestrate, then P1b.
 
-## 2026-11-12 map hardening Phase 2 Q5: the five unplaced features placed (branch map/wire-five-unplaced)
-- Worldbuilder PR #413 adds Ngon-Tso, Lha-Drak, Xal-Tzintla, the great white sabkha and the central erg to `authored_places`, `review: true`. This branch syncs it, wires the five into `derive-manifest.mjs` as landmarks (a `name:` override keeps the hyphenated canon spelling), regenerates the manifest and the GeoJSON (+5 features, no other churn), and moves the five from `unplaced` into contract `points:`, keeping `kind`, `relation` and `extent_u` for Phase 3.
+## 2026-11-12 map hardening Phase 2 Q5: the five unplaced features placed (PR #62)
+- Worldbuilder #413 (0b35f36) adds Ngon-Tso, Lha-Drak, Xal-Tzintla, the great white sabkha and the central erg to `authored_places`; Perry approved all five 2026-11-12. This branch syncs it, wires the five into `derive-manifest.mjs` as landmarks (a `name:` override keeps the hyphenated canon spelling), regenerates the manifest and the GeoJSON (+5 features, no other churn), and moves the five from `unplaced` into contract `points:`, keeping `kind`, `relation` and `extent_u` for Phase 3.
 - Picture: `research/map-hardening/phase2-q5-placements.png`. All five sit inside their civ polygons; so do the sabkha (r 16 u) and erg (r 18 u) footprints.
 - Not run: the full validator against the prototype bundle (it is not on disk; rebuild per `research/map-hardening/prototype/README.md`). All 44 contract points resolve through `resolve_point`; terrain pytest 71/71.
 - Sync trap: `sync-world-data.mjs` copies only when the source mtime is newer, so a fresh worktree checkout skips a real change. `touch` the worldbuilder file first.
-
-### Waiting on Perry
-1. Approve or move the five placements: worldbuilder PR #413 (table and reasons) and the picture above. On approval, drop `review: true` in worldbuilder and re-sync.

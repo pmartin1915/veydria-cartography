@@ -439,8 +439,8 @@ authored_places:
   # the session and approved by Perry on 2026-11-11 (cartography Phase 1 merge gate).
   # Route-bound waystations sit exactly on the schematic's styled route path.
   # Omitted on purpose: ayn-salqat (canon: it has no marker on the merchant schematic).
-  # review: true marks a placement canon leaves open, chosen by the session for Perry's review
-  # rather than read from a source (Phase 2 decision Q5, 2026-11-12). name: overrides the
+  # Ngon-Tso, Lha-Drak, Xal-Tzintla, iferis-sabkha and central-erg were placed by the session
+  # (Phase 2 decision Q5) and approved by Perry on 2026-11-12. name: overrides the
   # title-cased slug where the slug would misspell the canon name. Areal features (the sabkha,
   # the erg) are a centroid point, like the-neck; their footprint lives in the cartography
   # terrain constraints, not here.
@@ -608,7 +608,6 @@ authored_places:
       kind: landmark:sacred_site
       civ: ngaru_bon
       name: Ngon-Tso
-      review: true
       rule: "frozen sacred lake high on the crown, north of the schematic's region title, clear of every route"
       cite: "geography/regions/ngaru-bon-range.yaml:56; edges/ngaru_bon_edges.md:130"
     lha-drak:
@@ -618,7 +617,6 @@ authored_places:
       kind: landmark:sacred_site
       civ: ngaru_bon
       name: Lha-Drak
-      review: true
       rule: "sky-burial cliff at the crown's south lip, where the crown breaks down to the shelf; ~40 u north of the Zang-Ri to Lam-Chen road"
       cite: "geography/regions/ngaru-bon-range.yaml:64; edges/ngaru_bon_edges.md:131"
     xal-tzintla:
@@ -628,7 +626,6 @@ authored_places:
       kind: landmark:seasonal_camp
       civ: kheshkai
       name: Xal-Tzintla
-      review: true
       rule: "winter-storm herd shelter in the mid plateau, below the high interior and still within grass, clear of the Copper-for-Steel road"
       cite: "geography/regions/kheshkai-steppe.yaml:40; edges/kheshkai_edges.md:68"
     iferis-sabkha:
@@ -638,7 +635,6 @@ authored_places:
       kind: landmark:region
       civ: irrah
       name: Great White Sabkha
-      review: true
       rule: "centroid of the great white sabkha, downslope (south-west) of Zin-Iferis, which sits on its rim; the Iferis upslope refuge lies above it to the north-east"
       cite: "geography/locations/zin-iferis.md:76; ruins.iferis-upslope-of-zin-iferis"
     central-erg:
@@ -648,7 +644,6 @@ authored_places:
       kind: landmark:region
       civ: irrah
       name: Central Erg
-      review: true
       rule: "centroid of the deep-erg sand sea on the Spine between Qarat al-Fidda and Tin Mashraq; holds the Tamis-Iferis refuge"
       cite: "geography/locations/thalli-ruins.md:44,133"
   routes:
