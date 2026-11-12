@@ -19,6 +19,9 @@ defaults:
   route_end_tol_u: 4
   river_tol_u: 6
   river_head_skip_u: 8
+  max_fill_m: 10
+  max_uphill_m: 3
+  bank_u: 2
 
 water_bodies:
   basin: { manifest: water.aethelian_basin }
@@ -80,7 +83,7 @@ points:
   halkar_port:         { class: island, cite: "AUDIT: Oravan capital, the island nearest the straits" }
   kelata:              { class: island, cite: "AUDIT: Oravan obsidian island" }
   kelata_tamu:         { class: island, distinct_from: kelata, cite: "AUDIT: outer sister-island across a tidal channel" }
-  first_caldera:       { class: island, cite: "AUDIT: seawater-filled caldera on an inner Oravan island" }
+  first_caldera:       { class: island, caldera: true, radius_u: 4, cite: "AUDIT: seawater-filled caldera on an inner Oravan island" }
   morina:              { class: island, cite: "AUDIT new features: north end of the chain" }
   arokar:              { class: island, cite: "AUDIT new features: south end of the chain" }
 
@@ -108,20 +111,20 @@ lines:
     geometry: southern_rim_crest
     x_range: [0, 900]
     on_line: { stat: max, elevation_m: [250, 1000] }
-    water_within_u: { toward: S, max_u: 30 }
-    cite: "SPINE The southern rim: 300-900 m, short steep seaward face, rivers reach the sea in a day or two"
+    water_within_u: { toward: S, max_u: 60 }
+    cite: "SPINE The southern rim: 300-900 m, short steep seaward face. max_u from the schematic (crest ~47 u from the coast), not from prose; Sol review"
   southern_rim_east:
     geometry: southern_rim_crest
     x_range: [900, 1200]
     on_line: { stat: max, elevation_m: [250, 1600] }
-    water_within_u: { toward: S, max_u: 30 }
+    water_within_u: { toward: S, max_u: 60 }
     cite: "SPINE The southern rim: rising to ~1500 m at the frankincense escarpments"
 
 rivers:
   # Manifest rivers are stored source first. Tributaries meet at the neck; the distributaries
   # fan NW from the apex to the Basin (MP Ndjadi Rivers; AUDIT Ndjadi).
-  ndjadi_tributary_north:         { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "off the wall, west along its foot" }
-  ndjadi_tributary_wall_east:     { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "off the wall, west along its foot" }
+  ndjadi_tributary_north:         { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, entry_min_area_km2: 2000, cite: "entry is A-Tzalan Ford at the wall foot; flows west along it. entry area proves an upland catchment" }
+  ndjadi_tributary_wall_east:     { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, entry_min_area_km2: 1000, cite: "off the wall, west along its foot" }
   ndjadi_trunk_east:              { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, min_area_km2: 20000, cite: "drains west along the wall's foot then north through the neck" }
   ndjadi_tributary_west:          { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "western tributaries off Qollari" }
   ndjadi_tributary_qollari_south: { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "southern rivers turned north by the rim" }
@@ -130,6 +133,27 @@ rivers:
   ndjadi_dist_3: { kind: distributary, cite: "as above" }
   ndjadi_dist_4: { kind: distributary, cite: "as above" }
   ndjadi_dist_5: { kind: distributary, cite: "as above" }
+
+# C8: water topology and coast agreement (spec C8).
+coast:
+  mouth_cut: { point: halkar_straits, r_u: 15 }
+  basin_area_tol: 0.15
+  coast_band_u: 6
+  min_agree: 0.97
+free_zones:
+  # D7: terrain to the frame. The canon mask asserts nothing here.
+  - { name: unmapped_east, x_range: [1130, 1200], y_range: [0, 430] }
+
+# C9: coarse relief on eroded cores (political edges carry no weight).
+region_cores:
+  kheshkai_interior: { shape: civilizations.kheshkai, erode_u: 20, y_range: [0, 250], p10: [2000, 4800], p50: [3000, 4800], cite: "SPINE Rulings 4: interior 3500-4500 m" }
+  ngaru_bon:         { shape: civilizations.ngaru_bon, erode_u: 15, p10: [1000, 4800], p90: [3500, 4800], cite: "SPINE: shelf 1200-2000, crown 3500-4800" }
+  ndjadi:            { shape: civilizations.ndjadi, erode_u: 20, p50: [0, 50], p90: [0, 80], cite: "SPINE: 0-50 m trough" }
+  qollari:           { shape: civilizations.qollari, erode_u: 20, p75: [2500, 4800], cite: "SPINE: 2500-4500 m" }
+  irrah_north:       { shape: civilizations.irrah, erode_u: 15, p90: [0, 1500], cite: "SPINE: Irrah 0-1500 m" }
+  irrah_se:          { shape: "civilizations.irrah.extra_polygons[0]", erode_u: 15, p90: [0, 1600], cite: "SPINE: frankincense escarpments ~1500 m" }
+  southern_rim:      { shape: land.southern_rim, erode_u: 8, p90: [250, 1600], cite: "SPINE The southern rim" }
+  north_arm:         { shape: land.north_arm, erode_u: 10, p90: [0, 1200], cite: "session band" }
 
 ndjadi_outlet:
   floodplain: civilizations.ndjadi
