@@ -87,3 +87,8 @@
 - Picture: `research/map-hardening/phase2-q5-placements.png`. All five sit inside their civ polygons; so do the sabkha (r 16 u) and erg (r 18 u) footprints.
 - Not run: the full validator against the prototype bundle (it is not on disk; rebuild per `research/map-hardening/prototype/README.md`). All 44 contract points resolve through `resolve_point`; terrain pytest 71/71.
 - Sync trap: `sync-world-data.mjs` copies only when the source mtime is newer, so a fresh worktree checkout skips a real change. `touch` the worldbuilder file first.
+
+## 2026-11-12 map hardening Phase 3 spec frozen
+- `research/map-hardening/PHASE3-SPEC.md`: terrain synthesis, 13 stages, each with a gate that runs the validator's own code. Written by Fable, reviewed by Sol (Codex, pmartin1913) in three rounds; all findings folded in.
+- Next: milestone M1 (protection sets, land mask, build runner; Gate S2), via `/orchestrate`. Then M2 (hydro skeleton and floodplain on a flat upland), which is the first machine check of the routing design.
+- Session readings Perry may move are listed in the spec's section 13. None blocks the build.
