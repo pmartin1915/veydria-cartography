@@ -1,15 +1,15 @@
 /**
  * measure.ts — Distance calculation utilities for CRS.Simple measurement mode
  *
- * Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent).
- * The canonical scale config lives in world-coords.ts; these are re-exports
- * kept for existing consumers.
+ * Scale: 1200 SVG units = 4800 km → 4 km/unit (per MAP-PROMPT.md continental
+ * extent). The canonical scale config lives in world-coords.ts; these are
+ * re-exports kept for existing consumers.
  */
 
 import { worldScale } from './world-coords'
 
 // Scale constants (canonical values in world-coords.ts worldScale)
-export const KM_PER_SVG_UNIT = worldScale.kmPerSvgUnit // 2.5 km per SVG unit
+export const KM_PER_SVG_UNIT = worldScale.kmPerSvgUnit // 4 km per SVG unit
 export const LEAGUES_PER_KM = worldScale.leaguesPerKm // 1 league ≈ 4 km
 
 // Freehand ruler segments have no route category, so travel-time.ts's

@@ -35,8 +35,8 @@ describe('travel-time', () => {
     })
 
     it('estimates a trade_route LineString', () => {
-      // 40 svg units = 100 km; at 30 km/day → 3.33 days
-      const f = makeFeature('trade_route', 'LineString', [[0, 0], [40, 0]])
+      // 25 svg units = 100 km; at 30 km/day → 3.33 days
+      const f = makeFeature('trade_route', 'LineString', [[0, 0], [25, 0]])
       const est = estimateTravelTime(f)
       expect(est).not.toBeNull()
       expect(est!.km).toBeCloseTo(100, 5)
@@ -47,7 +47,7 @@ describe('travel-time', () => {
 
     it('estimates a river LineString', () => {
       // 100 km at 50 km/day → 2 days
-      const f = makeFeature('river', 'LineString', [[0, 0], [40, 0]])
+      const f = makeFeature('river', 'LineString', [[0, 0], [25, 0]])
       const est = estimateTravelTime(f)
       expect(est).not.toBeNull()
       expect(est!.km).toBeCloseTo(100, 5)
@@ -56,8 +56,8 @@ describe('travel-time', () => {
     })
 
     it('estimates a water Polygon (perimeter)', () => {
-      // Square 10×10 svg → perimeter 40 svg = 100 km; at 80 km/day → 1.25 days
-      const ring = [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]
+      // Square 6.25×6.25 svg → perimeter 25 svg = 100 km; at 80 km/day → 1.25 days
+      const ring = [[0, 0], [6.25, 0], [6.25, 6.25], [0, 6.25], [0, 0]]
       const f = makeFeature('water', 'Polygon', [ring])
       const est = estimateTravelTime(f)
       expect(est).not.toBeNull()
@@ -67,10 +67,10 @@ describe('travel-time', () => {
     })
 
     it('estimates a MultiLineString by summing all lines', () => {
-      // Two segments: 40 svg + 30 svg = 70 svg = 175 km; at 50 km/day → 3.5 days
+      // Two segments: 25 svg + 18.75 svg = 43.75 svg = 175 km; at 50 km/day → 3.5 days
       const f = makeFeature('river', 'MultiLineString', [
-        [[0, 0], [40, 0]],
-        [[0, 0], [30, 0]],
+        [[0, 0], [25, 0]],
+        [[0, 0], [18.75, 0]],
       ])
       const est = estimateTravelTime(f)
       expect(est).not.toBeNull()

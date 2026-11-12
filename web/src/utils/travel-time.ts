@@ -1,7 +1,7 @@
 /**
  * travel-time.ts — Estimate travel duration from GeoJSON feature geometry
  *
- * Scale: 1200 SVG units ≈ 3000 km (per MAP-PROMPT.md continental extent)
+ * Scale: 1200 SVG units = 4800 km → 4 km/unit (per MAP-PROMPT.md continental extent)
  * Speeds are grounded-fantasy averages, not modern transit.
  */
 
@@ -14,7 +14,8 @@ export interface TravelEstimate {
   method: string
 }
 
-// Speeds in km/day by broad terrain / transport mode
+// Speeds in km/day by broad terrain / transport mode (canon day counts still
+// win where worldbuilder attests them — see journey-days.ts / journey-graph.ts)
 const SPEED_TABLE: Record<string, { speed: number; method: string }> = {
   trade_route: { speed: 30, method: 'mixed caravan & coastal shipping' },
   river: { speed: 50, method: 'riverboat (downstream)' },
@@ -55,6 +56,13 @@ function featureLengthKm(feature: {
   }
   if (type === 'Polygon') {
     return polygonPerimeterKm(coords as number[][][])
+  }
+  if (type === 'MultiPolygon') {
+    let total = 0
+    for (const poly of coords as number[][][][]) {
+      total += polygonPerimeterKm(poly)
+    }
+    return total
   }
   if (type === 'MultiLineString') {
     let total = 0

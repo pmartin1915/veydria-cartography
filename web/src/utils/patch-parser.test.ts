@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   parsePatchYaml,
+  parsePatchLayout,
   applyPatches,
   type CoordinatePatch,
   type PatchableFeature,
 } from './patch-parser'
+import { MAP_LAYOUT } from './world-coords'
 
 function makeFeature(
   id: string,
@@ -122,6 +124,47 @@ metadata:
   - id: malformed
     coords: 1, 2`
     expect(parsePatchYaml(yaml)).toEqual([])
+  })
+})
+
+describe('parsePatchLayout', () => {
+  it('reads the layout from the metadata section', () => {
+    const yaml = `patches:
+  - id: a
+    category: port
+    coords: [1, 2]
+metadata:
+  source: web-edit-mode
+  generated: 2026-05-15T00:00:00.000Z
+  layout: ${MAP_LAYOUT}`
+    expect(parsePatchLayout(yaml)).toBe(MAP_LAYOUT)
+  })
+
+  it('returns null when the layout line is absent (old patch)', () => {
+    const yaml = `patches:
+  - id: a
+    category: port
+    coords: [1, 2]
+metadata:
+  source: web-edit-mode
+  generated: 2026-05-15T00:00:00.000Z`
+    expect(parsePatchLayout(yaml)).toBeNull()
+  })
+
+  it('returns null for an empty layout value', () => {
+    expect(parsePatchLayout('metadata:\n  layout:')).toBeNull()
+  })
+
+  it('returns null for a file with no layout at all', () => {
+    expect(parsePatchLayout('patches:\n  - id: a\n    coords: [1, 2]')).toBeNull()
+  })
+
+  it('does not confuse patch fields with the layout line', () => {
+    const yaml = `patches:
+  - id: layout:trick
+    category: port
+    coords: [1, 2]`
+    expect(parsePatchLayout(yaml)).toBeNull()
   })
 })
 

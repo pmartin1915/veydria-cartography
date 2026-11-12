@@ -1,6 +1,6 @@
 # Map hardening: a Skyrim-grade relief map of the canonical continent
 
-Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **plan; Phase 1 not started.**
+Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **Phase 1 in progress (spec frozen 2026-11-11: PHASE1-SPEC.md).**
 
 ## Goal
 
@@ -140,4 +140,4 @@ and Kheshkai facing across the neck, and six Basin ports.
 ## Open questions for Perry
 
 - Q1 palette: decided (D6). Q2 unmapped edges: decided (D7).
-- **Q3 saved data.** Per the Phase 1 inventory, once it exists.
+- Q3 saved data: decided 2026-11-11 (PHASE1-SPEC.md, "Perry's decisions").

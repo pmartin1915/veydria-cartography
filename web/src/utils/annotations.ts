@@ -10,14 +10,15 @@
  */
 
 import { kvStore } from '../persistence/kv-store'
+import { featureIdOf } from './feature-id'
 
 const STORAGE_KEY_V1 = 'veydria-annotations-v1'
 const STORAGE_KEY = 'veydria-annotations-v2'
 
 // SVG-unit radius for "near a feature" auto-binding. The map is 1200x800;
-// 40 units ≈ 100 km on the canonical 2.5 km/unit scale, which feels right
+// 25 units ≈ 100 km on the canonical 4 km/unit scale, which feels right
 // for "I dropped a pin on the port".
-export const FEATURE_LINK_MAX_DISTANCE = 40
+export const FEATURE_LINK_MAX_DISTANCE = 25
 
 export type AnnotationKind = 'pin' | 'hex-note' | 'explored'
 
@@ -35,6 +36,10 @@ export interface MapAnnotation {
   // Optional. Absent = legacy 'pin'. Explored annotations are hex-keyed
   // bookkeeping for fog-of-war and skipped by markdown exports.
   kind?: AnnotationKind
+  // Set by the map-layout migration when a pin could not be re-anchored to a
+  // feature that exists in both the April and current layouts. Surfaced in the
+  // pin popup as "Placed on the old map: check its position".
+  needsReview?: boolean
 }
 
 const VALID_KINDS: ReadonlySet<string> = new Set(['pin', 'hex-note', 'explored'])
@@ -76,19 +81,30 @@ export function loadAnnotations(): MapAnnotation[] {
   }
 }
 
-function migrateV1ToV2(): void {
+interface AnnotationStore {
+  getString(key: string): string | null
+  setString(key: string, value: string): void
+  remove(key: string): void
+}
+
+/**
+ * One-time annotations v1 → v2 migration. Parameterized over the store so the
+ * map-layout migration (map-layout-migration.ts) can run it against its kv
+ * adapter during boot; defaults to the kvStore singleton for the lazy path.
+ */
+export function migrateV1ToV2(store: AnnotationStore = kvStore): void {
   try {
-    if (kvStore.getString(STORAGE_KEY) !== null) return
-    const legacy = kvStore.getString(STORAGE_KEY_V1)
+    if (store.getString(STORAGE_KEY) !== null) return
+    const legacy = store.getString(STORAGE_KEY_V1)
     if (!legacy) return
     const parsed = JSON.parse(legacy)
     if (!Array.isArray(parsed)) {
-      kvStore.remove(STORAGE_KEY_V1)
+      store.remove(STORAGE_KEY_V1)
       return
     }
     const migrated = parsed.filter(isValidAnnotation)
-    kvStore.setString(STORAGE_KEY, JSON.stringify(migrated))
-    kvStore.remove(STORAGE_KEY_V1)
+    store.setString(STORAGE_KEY, JSON.stringify(migrated))
+    store.remove(STORAGE_KEY_V1)
   } catch {
     // localStorage unavailable or corrupt — leave v1 in place silently
   }
@@ -102,7 +118,7 @@ export function saveAnnotations(annotations: MapAnnotation[]): void {
   }
 }
 
-function isValidAnnotation(a: unknown): a is MapAnnotation {
+export function isValidAnnotation(a: unknown): a is MapAnnotation {
   if (!a || typeof a !== 'object') return false
   const o = a as Record<string, unknown>
   if (
@@ -118,6 +134,7 @@ function isValidAnnotation(a: unknown): a is MapAnnotation {
   if (o.featureName !== undefined && typeof o.featureName !== 'string') return false
   if (o.hexLabel !== undefined && typeof o.hexLabel !== 'string') return false
   if (o.kind !== undefined && (typeof o.kind !== 'string' || !VALID_KINDS.has(o.kind))) return false
+  if (o.needsReview !== undefined && typeof o.needsReview !== 'boolean') return false
   return true
 }
 
@@ -270,6 +287,14 @@ function getFeatureCentroid(feature: FeatureLike): [number, number] | null {
     const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
     return [cx, cy]
   }
+  if (type === 'MultiPolygon') {
+    let cx = 0, cy = 0, n = 0
+    for (const poly of coords as unknown as number[][][][]) {
+      for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
+    }
+    if (n === 0) return null
+    return [cx / n, cy / n]
+  }
   if (type === 'LineString') {
     const pts = coords as number[][]
     if (!pts || pts.length === 0) return null
@@ -280,7 +305,8 @@ function getFeatureCentroid(feature: FeatureLike): [number, number] | null {
 }
 
 function getFeatureId(f: FeatureLike): string {
-  return ((f as unknown as Record<string, unknown>).id as string) ||
+  return (f.properties.route_id as string) ||
+    ((f as unknown as Record<string, unknown>).id as string) ||
     (f.properties.id as string) || ''
 }
 

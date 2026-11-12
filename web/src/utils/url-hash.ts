@@ -1,8 +1,13 @@
 /**
  * url-hash.ts — Viewport-aware URL hash serialization
  *
- * Format: #feature=<id>&hex=<label>&hexA=<label>&hexB=<label>&z=<zoom>&cx=<center-x>&cy=<center-y>
+ * Format: #layout=<tag>&feature=<id>&hex=<label>&hexA=<label>&hexB=<label>&z=<zoom>&cx=<center-x>&cy=<center-y>
  * All params optional. cx/cy are in SVG coordinate space (0–1200, 0–800).
+ *
+ * `layout` pins the viewport params (z/cx/cy) to the map layout they were
+ * captured on. A hash carrying z/cx/cy without the CURRENT `layout` tag is
+ * from an older map — those params are dropped on parse so the default view
+ * applies. All other params (feature/hex/journey/party/...) are kept.
  *
  * `hex` selects a single hex (info panel). `hexA`/`hexB` describe the two
  * endpoints of a hex distance measurement; both must be present for the
@@ -10,6 +15,7 @@
  * exclusive at the App level (single bottom sheet rule).
  */
 
+import { MAP_LAYOUT } from './world-coords'
 import { DEFAULT_SUPPLY } from './journey-supply'
 import { DEFAULT_PARTY_NAME } from './journey-saved'
 import type { Season, RouteMode } from './journey-graph'
@@ -100,21 +106,26 @@ export function parseHash(hash: string): ViewportState {
   }
 
   const z = params.get('z')
-  if (z !== null) {
-    const zoom = parseFloat(z)
-    if (!isNaN(zoom)) result.zoom = zoom
-  }
-
   const cx = params.get('cx')
-  if (cx !== null) {
-    const x = parseFloat(cx)
-    if (!isNaN(x)) result.centerX = x
-  }
-
   const cy = params.get('cy')
-  if (cy !== null) {
-    const y = parseFloat(cy)
-    if (!isNaN(y)) result.centerY = y
+  // Viewport params only apply when the hash was captured on the current map
+  // layout; an old-layout (or layout-less) hash drops them for the default view.
+  const layoutCurrent = params.get('layout') === MAP_LAYOUT
+  if (layoutCurrent) {
+    if (z !== null) {
+      const zoom = parseFloat(z)
+      if (!isNaN(zoom)) result.zoom = zoom
+    }
+
+    if (cx !== null) {
+      const x = parseFloat(cx)
+      if (!isNaN(x)) result.centerX = x
+    }
+
+    if (cy !== null) {
+      const y = parseFloat(cy)
+      if (!isNaN(y)) result.centerY = y
+    }
   }
 
   if (params.get('share') === '1') result.share = true
@@ -170,6 +181,7 @@ export function parseHash(hash: string): ViewportState {
 
 export function buildHash(state: ViewportState): string {
   const params = new URLSearchParams()
+  params.set('layout', MAP_LAYOUT)
   if (state.featureId) params.set('feature', state.featureId)
   if (state.hexLabel) params.set('hex', state.hexLabel)
   if (state.hexNote) params.set('hexNote', state.hexNote)

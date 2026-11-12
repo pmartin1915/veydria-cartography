@@ -17,7 +17,7 @@ const VALID_SIZES: PartySize[] = ['small', 'medium', 'large']
 const VALID_ENCUMBRANCE: Encumbrance[] = ['light', 'normal', 'heavy']
 const VALID_PACK_ANIMALS: PackAnimals[] = ['none', 'few', 'caravan']
 
-function sanitizeParty(raw: unknown): PartyConfig {
+export function sanitizeParty(raw: unknown): PartyConfig {
   if (!raw || typeof raw !== 'object') return DEFAULT_PARTY
   const r = raw as Record<string, unknown>
   return {
@@ -95,6 +95,9 @@ export interface SavedJourney {
   supply?: SupplyConfig
   /** Multi-party tracking (Tier 2c). Backfills to "Main party" on load. */
   partyName?: string
+  /** Set by the map-layout migration when the saved node IDs no longer resolve
+   *  through the current journey graph. The list shows "Route needs replanning". */
+  stale?: boolean
 }
 
 function makeDefaultName(from: string, to: string, waypoints: string[]): string {
@@ -102,9 +105,22 @@ function makeDefaultName(from: string, to: string, waypoints: string[]): string 
   return `${from} → ${to}`
 }
 
-function migrateFromLegacy(): SavedJourney[] | null {
+interface JourneyStore {
+  getString(key: string): string | null
+  setString(key: string, value: string): void
+  remove(key: string): void
+}
+
+/**
+ * One-time `veydria-journey-history` → `veydria.journeys.v1` migration.
+ * Parameterized over the store so the map-layout migration
+ * (map-layout-migration.ts) can run it against its kv adapter during boot;
+ * defaults to the kvStore singleton for the lazy path in loadSavedJourneys.
+ */
+export function migrateJourneyHistory(store: JourneyStore = kvStore): SavedJourney[] | null {
   try {
-    const raw = kvStore.getString(LEGACY_KEY)
+    if (store.getString(STORAGE_KEY) !== null) return null
+    const raw = store.getString(LEGACY_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Array<Partial<SavedJourney> & Record<string, unknown>>
     if (!Array.isArray(parsed)) return null
@@ -147,6 +163,7 @@ function migrateFromLegacy(): SavedJourney[] | null {
         supply: sanitizeSupply(e.supply),
         partyName: sanitizePartyName(e.partyName),
       }))
+    store.setString(STORAGE_KEY, JSON.stringify(migrated))
     return migrated
   } catch {
     return null
@@ -168,10 +185,7 @@ export function loadSavedJourneys(): SavedJourney[] {
       }))
     }
     // No v1 data — attempt one-time migration from legacy key
-    const migrated = migrateFromLegacy()
-    if (migrated) {
-      try { kvStore.setString(STORAGE_KEY, JSON.stringify(migrated)) } catch { /* quota */ }
-    }
+    const migrated = migrateJourneyHistory()
     return migrated ?? []
   } catch {
     return []

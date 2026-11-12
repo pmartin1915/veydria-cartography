@@ -1,714 +1,2216 @@
 # ============================================================
 # Veydria Coordinate Manifest — Spatial Feature Positions
 # ============================================================
-# This file is the single source of truth for all feature
-# coordinates used in map generation. It is derived from
-# veydria-schematic.svg (1200x800 viewBox).
+# GENERATED FILE — do not edit by hand. This manifest is derived
+# from data/positions.yaml (worldbuilder canonical positions) and
+# data/veydria-schematic.svg (canonical schematic shapes) by
+# scripts/derive-manifest.mjs.
 #
-# EDITING: Coordinates can be adjusted via the web map's
-# edit mode (drag markers). Use the "Export Patch" button
-# to generate a YAML patch, then apply it with:
-#   python -m generator.tools.apply_patch <patch.yaml>
+# Re-generate with:  node scripts/derive-manifest.mjs
+# Verify with:       node scripts/derive-manifest.mjs --check
 # ============================================================
-
 coordinate_system:
   type: svg_viewbox
   width: 1200
   height: 800
-  description: "All coordinates in SVG viewBox space. The web frontend inverts Y for Leaflet CRS.Simple."
-  source_svg: "veydria-schematic.svg"
-
-# --- Civilization Regions ---
+  description: All coordinates in SVG viewBox space. The web frontend inverts Y
+    for Leaflet CRS.Simple.
+  source_svg: veydria-schematic.svg
 civilizations:
   ngaru_bon:
     polygon:
-      - [380, 80]
-      - [500, 60]
-      - [750, 50]
-      - [900, 80]
-      - [950, 90]
-      - [980, 110]
-      - [1000, 140]
-      - [940, 170]
-      - [860, 190]
-      - [780, 200]
-      - [680, 220]
-      - [560, 210]
-      - [460, 200]
-      - [400, 190]
-      - [370, 160]
-      - [380, 120]
-      - [380, 80]
-    centroid: [650, 120]
+      - - 604
+        - 0
+      - - 800
+        - 0
+      - - 797.6
+        - 15
+      - - 797.5
+        - 29.8
+      - - 798.7
+        - 44.5
+      - - 800.6
+        - 58.8
+      - - 802.4
+        - 72.6
+      - - 803.2
+        - 85.8
+      - - 802.4
+        - 98.3
+      - - 799
+        - 110
+      - - 796.3
+        - 121
+      - - 795.9
+        - 131.6
+      - - 797.1
+        - 141.6
+      - - 799.1
+        - 151.3
+      - - 801.2
+        - 160.4
+      - - 802.5
+        - 169.1
+      - - 802.4
+        - 177.3
+      - - 800
+        - 185
+      - - 781
+        - 212
+      - - 763.9
+        - 212.3
+      - - 743.9
+        - 212
+      - - 721.5
+        - 211.2
+      - - 697.6
+        - 210.3
+      - - 672.8
+        - 209.4
+      - - 647.8
+        - 208.9
+      - - 623.3
+        - 209
+      - - 600
+        - 210
+      - - 599.8
+        - 207.9
+      - - 599.5
+        - 205.3
+      - - 599
+        - 202.3
+      - - 598.6
+        - 198.8
+      - - 598.5
+        - 194.8
+      - - 598.7
+        - 190.3
+      - - 599.5
+        - 185.4
+      - - 601
+        - 180
+      - - 603.7
+        - 168.8
+      - - 604.1
+        - 157.5
+      - - 602.9
+        - 146.3
+      - - 600.9
+        - 135
+      - - 598.8
+        - 123.8
+      - - 597.5
+        - 112.5
+      - - 597.6
+        - 101.3
+      - - 600
+        - 90
+      - - 603.1
+        - 78.8
+      - - 604
+        - 67.5
+      - - 603.4
+        - 56.3
+      - - 602
+        - 45
+      - - 600.6
+        - 33.8
+      - - 600
+        - 22.5
+      - - 600.9
+        - 11.3
+      - - 604
+        - 0
+      - - 604
+        - 0
+    centroid:
+      - 700
+      - 100
     fill: "#7a6b55"
-
   irrah:
     polygon:
-      - [460, 200]
-      - [560, 210]
-      - [680, 220]
-      - [780, 200]
-      - [860, 190]
-      - [940, 170]
-      - [1000, 140]
-      - [1040, 180]
-      - [1080, 240]
-      - [1100, 300]
-      - [1080, 350]
-      - [1050, 400]
-      - [1000, 440]
-      - [940, 380]
-      - [860, 360]
-      - [780, 340]
-      - [680, 310]
-      - [560, 300]
-      - [460, 290]
-      - [400, 280]
-      - [370, 250]
-      - [380, 220]
-      - [400, 210]
-      - [430, 200]
-      - [460, 200]
-    centroid: [730, 270]
+      - - 600
+        - 210
+      - - 781
+        - 212
+      - - 745
+        - 262
+      - - 660
+        - 330
+      - - 606
+        - 361
+      - - 600
+        - 338
+    extra_polygons:
+      - - - 905
+          - 418
+        - - 927.2
+          - 419
+        - - 952.3
+          - 419.8
+        - - 979.9
+          - 420.3
+        - - 1009.6
+          - 420.5
+        - - 1041.1
+          - 420.3
+        - - 1073.9
+          - 419.7
+        - - 1107.7
+          - 418.6
+        - - 1142
+          - 417
+        - - 1140.9
+          - 429
+        - - 1138.9
+          - 440.4
+        - - 1136
+          - 451.2
+        - - 1132.1
+          - 461.5
+        - - 1127.2
+          - 471.5
+        - - 1121
+          - 481.1
+        - - 1113.7
+          - 490.6
+        - - 1105
+          - 500
+        - - 1099.4
+          - 507.4
+        - - 1093.8
+          - 514.6
+        - - 1088.2
+          - 521.6
+        - - 1082.8
+          - 528.3
+        - - 1077.4
+          - 534.7
+        - - 1072.1
+          - 540.8
+        - - 1067
+          - 546.6
+        - - 1062
+          - 552
+        - - 1058
+          - 552.9
+        - - 1052.6
+          - 554.1
+        - - 1046.2
+          - 555.6
+        - - 1039.1
+          - 557.2
+        - - 1031.6
+          - 558.9
+        - - 1024.1
+          - 560.5
+        - - 1016.8
+          - 561.9
+        - - 1010
+          - 563
+        - - 1003.6
+          - 563.9
+        - - 997.2
+          - 564.8
+        - - 990.9
+          - 565.5
+        - - 984.6
+          - 566.1
+        - - 978.3
+          - 566.6
+        - - 972.1
+          - 566.9
+        - - 966
+          - 567.1
+        - - 960
+          - 567
+        - - 954
+          - 566.7
+        - - 947.8
+          - 566.3
+        - - 941.6
+          - 565.8
+        - - 935.5
+          - 565
+        - - 929.7
+          - 564.1
+        - - 924.2
+          - 562.9
+        - - 919.3
+          - 561.6
+        - - 915
+          - 560
+        - - 911.3
+          - 558.3
+        - - 908.1
+          - 556.4
+        - - 905.3
+          - 554.3
+        - - 903
+          - 552.1
+        - - 901
+          - 549.5
+        - - 899.4
+          - 546.7
+        - - 898.1
+          - 543.5
+        - - 897
+          - 540
+        - - 896.4
+          - 536
+        - - 896.2
+          - 531.6
+        - - 896.5
+          - 526.9
+        - - 897.1
+          - 521.9
+        - - 897.8
+          - 516.6
+        - - 898.6
+          - 511.2
+        - - 899.4
+          - 505.6
+        - - 900
+          - 500
+        - - 900.6
+          - 494.1
+        - - 901.2
+          - 487.8
+        - - 901.9
+          - 481.2
+        - - 902.7
+          - 474.5
+        - - 903.4
+          - 467.9
+        - - 904.1
+          - 461.5
+        - - 904.6
+          - 455.5
+        - - 905
+          - 450
+        - - 905.2
+          - 444.9
+        - - 905.3
+          - 440
+        - - 905.4
+          - 435.3
+        - - 905.3
+          - 430.9
+        - - 905.2
+          - 426.8
+        - - 905.1
+          - 423.3
+        - - 905
+          - 420.3
+        - - 905
+          - 418
+        - - 905
+          - 418
+    centroid:
+      - 646
+      - 300
     fill: "#d4a854"
-
   kheshkai:
     polygon:
-      - [1000, 140]
-      - [1040, 180]
-      - [1080, 240]
-      - [1100, 300]
-      - [1110, 340]
-      - [1100, 380]
-      - [1080, 420]
-      - [1050, 460]
-      - [1000, 490]
-      - [950, 510]
-      - [900, 460]
-      - [870, 400]
-      - [860, 360]
-      - [870, 320]
-      - [900, 280]
-      - [940, 250]
-      - [960, 220]
-      - [980, 180]
-      - [1000, 140]
-    centroid: [1010, 340]
+      - - 800
+        - 0
+      - - 1142
+        - 0
+      - - 1142
+        - 417
+      - - 1107.7
+        - 418.6
+      - - 1073.9
+        - 419.7
+      - - 1041.1
+        - 420.3
+      - - 1009.6
+        - 420.5
+      - - 979.9
+        - 420.3
+      - - 952.3
+        - 419.8
+      - - 927.2
+        - 419
+      - - 905
+        - 418
+      - - 850
+        - 413
+      - - 780
+        - 410
+      - - 700
+        - 405
+      - - 640
+        - 395
+      - - 577
+        - 384
+      - - 605
+        - 361
+      - - 660
+        - 330
+      - - 745
+        - 262
+      - - 800
+        - 185
+      - - 802.4
+        - 177.3
+      - - 802.5
+        - 169.1
+      - - 801.2
+        - 160.4
+      - - 799.1
+        - 151.3
+      - - 797.1
+        - 141.6
+      - - 795.9
+        - 131.6
+      - - 796.3
+        - 121
+      - - 799
+        - 110
+      - - 802.4
+        - 98.3
+      - - 803.2
+        - 85.8
+      - - 802.4
+        - 72.6
+      - - 800.6
+        - 58.8
+      - - 798.7
+        - 44.5
+      - - 797.5
+        - 29.8
+      - - 797.6
+        - 15
+      - - 800
+        - 0
+      - - 800
+        - 0
+    centroid:
+      - 985
+      - 215
     fill: "#a8b86a"
-
   ndjadi:
     polygon:
-      - [460, 580]
-      - [530, 600]
-      - [620, 620]
-      - [700, 630]
-      - [780, 640]
-      - [840, 630]
-      - [880, 610]
-      - [920, 590]
-      - [950, 560]
-      - [960, 530]
-      - [930, 550]
-      - [900, 570]
-      - [860, 590]
-      - [800, 620]
-      - [700, 640]
-      - [600, 650]
-      - [520, 660]
-      - [450, 650]
-      - [400, 630]
-      - [370, 610]
-      - [360, 590]
-      - [380, 570]
-      - [410, 575]
-      - [440, 580]
-      - [460, 580]
-    centroid: [680, 610]
+      - - 418
+        - 338
+      - - 580
+        - 332
+      - - 600
+        - 338
+      - - 606
+        - 361
+      - - 577
+        - 384
+      - - 640
+        - 395
+      - - 700
+        - 405
+      - - 780
+        - 410
+      - - 785.5
+        - 410.2
+      - - 792.9
+        - 410.5
+      - - 801.8
+        - 410.8
+      - - 811.6
+        - 411.1
+      - - 821.8
+        - 411.5
+      - - 831.9
+        - 412
+      - - 841.5
+        - 412.5
+      - - 850
+        - 413
+      - - 857.9
+        - 413.4
+      - - 866
+        - 413.7
+      - - 874
+        - 413.9
+      - - 881.7
+        - 414.2
+      - - 888.8
+        - 414.8
+      - - 895.2
+        - 415.7
+      - - 900.7
+        - 417
+      - - 905
+        - 419
+      - - 907.9
+        - 421.6
+      - - 909.6
+        - 424.6
+      - - 910.3
+        - 428
+      - - 910.3
+        - 431.8
+      - - 909.8
+        - 435.9
+      - - 909.1
+        - 440.3
+      - - 908.4
+        - 445
+      - - 908
+        - 450
+      - - 907.7
+        - 455.4
+      - - 907.1
+        - 461.3
+      - - 906.4
+        - 467.6
+      - - 905.6
+        - 474.1
+      - - 904.6
+        - 480.8
+      - - 903.7
+        - 487.4
+      - - 902.8
+        - 493.9
+      - - 902
+        - 500
+      - - 901.3
+        - 505.9
+      - - 900.7
+        - 511.8
+      - - 900.2
+        - 517.7
+      - - 899.6
+        - 523.4
+      - - 899
+        - 529.1
+      - - 898.2
+        - 534.6
+      - - 897.2
+        - 539.9
+      - - 896
+        - 545
+      - - 894.9
+        - 550
+      - - 894.2
+        - 555
+      - - 893.5
+        - 559.9
+      - - 892.6
+        - 564.6
+      - - 891.1
+        - 569
+      - - 888.7
+        - 573.1
+      - - 885.1
+        - 576.8
+      - - 880
+        - 580
+      - - 873.2
+        - 582.6
+      - - 865
+        - 584.8
+      - - 855.6
+        - 586.5
+      - - 845.3
+        - 587.9
+      - - 834.3
+        - 589
+      - - 822.9
+        - 590
+      - - 811.4
+        - 591
+      - - 800
+        - 592
+      - - 788.5
+        - 593
+      - - 776.4
+        - 593.9
+      - - 764
+        - 594.6
+      - - 751.2
+        - 595.3
+      - - 738.4
+        - 595.8
+      - - 725.5
+        - 596.3
+      - - 712.6
+        - 596.7
+      - - 700
+        - 597
+      - - 687.4
+        - 597.3
+      - - 674.5
+        - 597.4
+      - - 661.6
+        - 597.5
+      - - 648.8
+        - 597.6
+      - - 636
+        - 597.5
+      - - 623.6
+        - 597.4
+      - - 611.5
+        - 597.2
+      - - 600
+        - 597
+      - - 588.8
+        - 596.7
+      - - 577.9
+        - 596.3
+      - - 567.2
+        - 595.8
+      - - 556.9
+        - 595.3
+      - - 546.9
+        - 594.7
+      - - 537.4
+        - 594.2
+      - - 528.4
+        - 593.6
+      - - 520
+        - 593
+      - - 512
+        - 592.7
+      - - 504.3
+        - 592.8
+      - - 496.9
+        - 593.1
+      - - 490.1
+        - 593.2
+      - - 483.9
+        - 593.1
+      - - 478.4
+        - 592.3
+      - - 473.8
+        - 590.7
+      - - 470
+        - 588
+      - - 467.4
+        - 583.7
+      - - 466.1
+        - 577.9
+      - - 465.6
+        - 571.1
+      - - 465.9
+        - 563.7
+      - - 466.5
+        - 556.4
+      - - 467.2
+        - 549.6
+      - - 467.8
+        - 544
+      - - 468
+        - 540
+      - - 482
+        - 490
+      - - 505
+        - 445
+      - - 522
+        - 418
+      - - 535
+        - 402
+      - - 546
+        - 388
+      - - 527.8
+        - 382
+      - - 508.3
+        - 376
+      - - 488.4
+        - 370.4
+      - - 469.3
+        - 365.1
+      - - 451.6
+        - 360.5
+      - - 436.6
+        - 356.6
+      - - 425.1
+        - 353.8
+      - - 418
+        - 352
+      - - 418
+        - 338
+    centroid:
+      - 680
+      - 545
     fill: "#3a8a3a"
-
   qollari:
     polygon:
-      - [340, 330]
-      - [330, 370]
-      - [310, 410]
-      - [300, 450]
-      - [290, 490]
-      - [300, 530]
-      - [330, 560]
-      - [360, 580]
-      - [400, 590]
-      - [440, 580]
-      - [430, 560]
-      - [420, 520]
-      - [400, 480]
-      - [380, 440]
-      - [370, 400]
-      - [360, 360]
-      - [350, 340]
-      - [340, 330]
-    centroid: [365, 470]
+      - - 546
+        - 388
+      - - 535
+        - 402
+      - - 522
+        - 418
+      - - 505
+        - 445
+      - - 482
+        - 490
+      - - 468
+        - 540
+      - - 468
+        - 600
+      - - 470
+        - 650
+      - - 472
+        - 702
+      - - 458.7
+        - 706.9
+      - - 443.2
+        - 710.9
+      - - 425.7
+        - 714
+      - - 406.5
+        - 716
+      - - 386
+        - 716.9
+      - - 364.6
+        - 716.6
+      - - 342.4
+        - 715
+      - - 320
+        - 712
+      - - 302
+        - 706.6
+      - - 285.5
+        - 699.3
+      - - 270.8
+        - 690.3
+      - - 257.9
+        - 679.5
+      - - 247
+        - 667
+      - - 238.3
+        - 652.9
+      - - 231.9
+        - 637.2
+      - - 228
+        - 620
+      - - 226.9
+        - 605.6
+      - - 227.8
+        - 592.2
+      - - 230.7
+        - 579.7
+      - - 235.5
+        - 568.3
+      - - 241.9
+        - 557.6
+      - - 249.9
+        - 547.7
+      - - 259.3
+        - 538.5
+      - - 270
+        - 530
+      - - 292.5
+        - 518.1
+      - - 315
+        - 505
+      - - 337.5
+        - 491
+      - - 360
+        - 476.3
+      - - 382.5
+        - 461.1
+      - - 405
+        - 445.6
+      - - 427.5
+        - 430.2
+      - - 450
+        - 415
+      - - 465
+        - 407.1
+      - - 479.6
+        - 400.5
+      - - 493.7
+        - 395.3
+      - - 507
+        - 391.4
+      - - 519.1
+        - 388.7
+      - - 529.9
+        - 387.3
+      - - 538.9
+        - 387.1
+      - - 546
+        - 388
+      - - 546
+        - 388
+    centroid:
+      - 345
+      - 634
     fill: "#2d6b3f"
-
   oravan:
     polygon:
-      - [140, 290]
-      - [180, 270]
-      - [250, 278]
-      - [270, 310]
-      - [270, 380]
-      - [250, 430]
-      - [220, 455]
-      - [190, 455]
-      - [150, 420]
-      - [130, 380]
-      - [130, 340]
-      - [140, 290]
-    centroid: [200, 365]
+      - - 116.3
+        - 402.7
+      - - 116.5
+        - 400.5
+      - - 137.4
+        - 219.9
+      - - 137.6
+        - 218.9
+      - - 137.7
+        - 218
+      - - 137.9
+        - 217.2
+      - - 138.2
+        - 216.4
+      - - 138.5
+        - 215.6
+      - - 138.9
+        - 214.9
+      - - 139.4
+        - 214.1
+      - - 140
+        - 213.4
+      - - 140.6
+        - 212.8
+      - - 141.3
+        - 212.1
+      - - 142.1
+        - 211.5
+      - - 143
+        - 210.8
+      - - 143.9
+        - 210.2
+      - - 145
+        - 209.6
+      - - 146
+        - 209
+      - - 147.1
+        - 208.6
+      - - 148.2
+        - 208.3
+      - - 149.3
+        - 208.2
+      - - 150.4
+        - 208.3
+      - - 151.6
+        - 208.6
+      - - 152.8
+        - 209.1
+      - - 154
+        - 209.6
+      - - 155.2
+        - 210.3
+      - - 156.3
+        - 210.9
+      - - 157.3
+        - 211.6
+      - - 226
+        - 257.9
+      - - 227.5
+        - 259
+      - - 228.8
+        - 260.1
+      - - 230
+        - 261.4
+      - - 231.1
+        - 262.9
+      - - 232.1
+        - 264.6
+      - - 232.9
+        - 266.3
+      - - 233.6
+        - 268.1
+      - - 234
+        - 269.9
+      - - 234.2
+        - 271.6
+      - - 234.1
+        - 273.1
+      - - 193.5
+        - 598.1
+      - - 193.3
+        - 599.1
+      - - 193
+        - 600.1
+      - - 192.4
+        - 601.2
+      - - 191.7
+        - 602.2
+      - - 190.9
+        - 603.3
+      - - 189.9
+        - 604.3
+      - - 157.3
+        - 638.7
+      - - 156.6
+        - 639.2
+      - - 155.9
+        - 639.7
+      - - 155.1
+        - 640.1
+      - - 154.1
+        - 640.5
+      - - 153.1
+        - 640.9
+      - - 151.9
+        - 641.1
+      - - 150.7
+        - 641.4
+      - - 149.5
+        - 641.5
+      - - 148.3
+        - 641.6
+      - - 147.2
+        - 641.6
+      - - 146.1
+        - 641.5
+      - - 145
+        - 641.4
+      - - 143.8
+        - 641.1
+      - - 142.6
+        - 640.9
+      - - 141.5
+        - 640.5
+      - - 140.6
+        - 640.1
+      - - 139.7
+        - 639.7
+      - - 139.1
+        - 639.2
+      - - 138.7
+        - 638.7
+      - - 138.4
+        - 638.1
+      - - 138.2
+        - 637.5
+      - - 121.5
+        - 556.6
+      - - 121.2
+        - 554.8
+      - - 116.3
+        - 402.7
+    centroid:
+      - 92
+      - 440
     fill: "#4a9a4a"
-
-# --- Water Bodies ---
 water:
   aethelian_basin:
     polygon:
-      - [340, 330]
-      - [360, 310]
-      - [400, 290]
-      - [460, 280]
-      - [540, 260]
-      - [650, 270]
-      - [750, 300]
-      - [830, 330]
-      - [870, 370]
-      - [880, 420]
-      - [890, 480]
-      - [860, 540]
-      - [800, 580]
-      - [740, 620]
-      - [650, 640]
-      - [560, 650]
-      - [480, 660]
-      - [420, 640]
-      - [380, 600]
-      - [340, 560]
-      - [310, 500]
-      - [300, 450]
-      - [290, 400]
-      - [310, 360]
-      - [340, 330]
+      - - 268
+        - 254
+      - - 300
+        - 254
+      - - 306.4
+        - 250.1
+      - - 312.5
+        - 244.8
+      - - 318.6
+        - 238.5
+      - - 325
+        - 231.6
+      - - 332.2
+        - 224.6
+      - - 340.5
+        - 217.9
+      - - 350.3
+        - 211.8
+      - - 362
+        - 207
+      - - 377.2
+        - 203.6
+      - - 394.3
+        - 200.8
+      - - 412.9
+        - 198.7
+      - - 432.8
+        - 197.1
+      - - 453.7
+        - 196.2
+      - - 475.3
+        - 195.9
+      - - 497.5
+        - 196.2
+      - - 520
+        - 197
+      - - 539.3
+        - 198.5
+      - - 555.9
+        - 201.5
+      - - 569.8
+        - 205.9
+      - - 581.1
+        - 211.6
+      - - 589.9
+        - 218.5
+      - - 596.1
+        - 226.4
+      - - 599.8
+        - 235.3
+      - - 601
+        - 245
+      - - 601
+        - 296
+      - - 600.6
+        - 302.8
+      - - 599.3
+        - 308.8
+      - - 597.2
+        - 314.1
+      - - 594.3
+        - 318.6
+      - - 590.5
+        - 322.5
+      - - 585.8
+        - 325.7
+      - - 580.3
+        - 328.2
+      - - 574
+        - 330
+      - - 562.4
+        - 332.4
+      - - 549.6
+        - 334.4
+      - - 535.7
+        - 335.9
+      - - 521.1
+        - 337.1
+      - - 506
+        - 338
+      - - 490.6
+        - 338.6
+      - - 475.2
+        - 338.9
+      - - 460
+        - 339
+      - - 445.5
+        - 338.9
+      - - 431.8
+        - 338.6
+      - - 418.8
+        - 338
+      - - 406.5
+        - 337.1
+      - - 394.8
+        - 335.9
+      - - 383.5
+        - 334.4
+      - - 372.6
+        - 332.4
+      - - 362
+        - 330
+      - - 352.4
+        - 326
+      - - 343.7
+        - 320.5
+      - - 335.8
+        - 313.9
+      - - 328.4
+        - 306.6
+      - - 321.3
+        - 299.2
+      - - 314.3
+        - 292.2
+      - - 307.3
+        - 285.9
+      - - 300
+        - 281
+      - - 268
+        - 280
+      - - 268
+        - 254
     fill: "#3a7ca5"
     fillOpacity: 0.6
-
-# --- Chokepoints ---
 chokepoints:
   lam_chen_pass:
-    coords: [940, 168]
+    coords:
+      - 800
+      - 185
     marker_color: "#f44"
-    marker_symbol: "roadblock"
+    marker_symbol: roadblock
     civ: ngaru_bon
-
   a_tzalan_ford:
-    coords: [960, 510]
+    coords:
+      - 700
+      - 405
     marker_color: "#f44"
-    marker_symbol: "roadblock"
-
+    marker_symbol: roadblock
   smith_spring:
-    coords: [880, 200]
+    coords:
+      - 735
+      - 222
     marker_color: "#f44"
-    marker_symbol: "roadblock"
+    marker_symbol: roadblock
     civ: irrah
-
   breath_of_cloud:
-    coords: [900, 440]
+    coords:
+      - 585
+      - 380
     marker_color: "#f44"
-    marker_symbol: "roadblock"
+    marker_symbol: roadblock
     civ: kheshkai
-
   qollari_cliff_roads:
-    coords: [370, 520]
+    coords:
+      - 470
+      - 440
     marker_color: "#f44"
-    marker_symbol: "roadblock"
+    marker_symbol: roadblock
     civ: qollari
-
   halkar_straits:
-    coords: [320, 390]
+    coords:
+      - 285
+      - 268
     marker_color: "#f44"
-    marker_symbol: "roadblock"
+    marker_symbol: roadblock
     civ: oravan
-
-# --- Basin Port Zones ---
 ports:
   ki_mbuhari:
-    coords: [650, 620]
+    coords:
+      - 480
+      - 338
     marker_color: "#e8c840"
-    marker_symbol: "harbor"
+    marker_symbol: harbor
     civ: ndjadi
-
   tavakh_qarat:
-    coords: [600, 290]
+    coords:
+      - 400
+      - 200
     marker_color: "#e8c840"
-    marker_symbol: "harbor"
+    marker_symbol: harbor
     civ: irrah
-
   halani_tamu:
-    coords: [860, 420]
+    coords:
+      - 598
+      - 262
     marker_color: "#e8c840"
-    marker_symbol: "harbor"
+    marker_symbol: harbor
     civ: oravan
-
   dzong_tamu:
-    coords: [830, 560]
+    coords:
+      - 572
+      - 322
     marker_color: "#e8c840"
-    marker_symbol: "harbor"
+    marker_symbol: harbor
     civ: ngaru_bon
-
-# --- Contested Sacred Sites ---
 contested_sites:
   qhabal_ur:
-    coords: [599, 444]
+    coords:
+      - 450
+      - 265
     marker_color: "#adf"
-    marker_symbol: "religious-christian"
-
+    marker_symbol: religious-christian
   veyd_kirrha:
-    coords: [483, 576]
+    coords:
+      - 395
+      - 334
     marker_color: "#adf"
-    marker_symbol: "religious-christian"
-
-# --- Irrah Oasis Cities ---
+    marker_symbol: religious-christian
 oases:
   qarat_al_fidda:
-    coords: [730, 260]
+    coords:
+      - 665
+      - 272
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
-
   ghadam_thalla:
-    coords: [590, 240]
+    coords:
+      - 618
+      - 222
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
-
   tin_mashraq:
-    coords: [950, 240]
+    coords:
+      - 725
+      - 265
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
-
   khulut:
-    coords: [680, 320]
+    coords:
+      - 600
+      - 340
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
-
   zin_iferis:
-    coords: [820, 230]
+    coords:
+      - 690
+      - 222
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
-
-  ayn_salqat:
-    coords: [780, 290]
-    marker_color: "#4a9a3a"
-    marker_symbol: "garden"
-    civ: irrah
-
-# --- Named Landmarks ---
 landmarks:
   - id: zang_ri
-    name: "Zang-Ri (Iron Mountain)"
-    coords: [555, 78]
+    name: Zang-Ri (Iron Mountain)
+    coords:
+      - 690
+      - 151.5
     type: mountain
-    description: "Named peak in the Ngaru-Bon plateau. Primary mining site for iron ore; source of the Ngaru-Bon iron and steel monopoly."
+    description: Named peak in the Ngaru-Bon plateau. Primary mining site for iron
+      ore; source of the Ngaru-Bon iron and steel monopoly.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: ngaru_bon
-
   - id: apu_yana
-    name: "Apu-Yana (Black Mountain)"
-    coords: [414, 414]
+    name: Apu-Yana (Black Mountain)
+    coords:
+      - 478
+      - 567
     type: volcano
-    description: "Active volcanic peak on the Qollari eastern border, near Kheshkai. Sacred site."
+    description: Active volcanic peak on the Qollari eastern border, near Kheshkai.
+      Sacred site.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: qollari
-
+  - id: volata_xal
+    name: Volata-Xal ("Shipyard in the Dust")
+    coords:
+      - 735
+      - 391
+    type: ruin
+    description: Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the
+      Obsidian Blockade.
+    marker_color: "#c4a862"
+    marker_symbol: star
+    civ: oravan
+  - id: halkar_port
+    name: Halkar
+    coords:
+      - 215
+      - 270
+    type: port_city
+    description: Main Oravan port island closest to Halkar Straits. Primary settlement.
+    marker_color: "#c4a862"
+    marker_symbol: star
+    civ: oravan
   - id: kha_tepet
-    name: "Kha-Tepet (Blood Mountain)"
-    coords: [1040, 290]
+    name: Kha-Tepet (Blood Mountain)
+    coords:
+      - 980
+      - 330
     type: mountain
-    description: "Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans."
+    description: Sacred peak on the Kheshkai steppe. Site of ancestral burial kurgans.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: kheshkai
-
   - id: ki_jenga
-    name: "Ki-Jenga"
-    coords: [720, 580]
+    name: Ki-Jenga
+    coords:
+      - 690
+      - 440
     type: city
-    description: "Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the Obsidian Blockade."
+    description: Inland Ndjadi city. Site of Mbu-Bwana's famous baray from the
+      Obsidian Blockade.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: ndjadi
-
   - id: hassag_nganin
-    name: "Hassag-Nganin (Five-Confluence)"
-    coords: [700, 540]
+    name: Hassag-Nganin (Five-Confluence)
+    coords:
+      - 500
+      - 352
     type: sacred_site
-    description: "Where the five Ndjadi channels braid together. Contested religious site."
+    description: Where the five Ndjadi channels braid together. Contested religious site.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: ndjadi
-
-  - id: volata_xal
-    name: 'Volata-Xal ("Shipyard in the Dust")'
-    coords: [978, 530]
-    type: ruin
-    description: "Abandoned Oravan catamaran settlement near A-Tzalan Ford, from the Obsidian Blockade."
-    marker_color: "#c4a862"
-    marker_symbol: star
-    civ: oravan
-
   - id: wasi_puma
-    name: 'Wasi-Puma ("House of the Lion")'
-    coords: [330, 550]
+    name: Wasi-Puma ("House of the Lion")
+    coords:
+      - 450
+      - 560
     type: fortress
-    description: "Fortified Qollari settlement built during the Obsidian Blockade."
+    description: Fortified Qollari settlement built during the Obsidian Blockade.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: qollari
-
-  - id: halkar_port
-    name: "Halkar"
-    coords: [255, 310]
-    type: port_city
-    description: "Main Oravan port island closest to Halkar Straits. Primary settlement."
-    marker_color: "#c4a862"
-    marker_symbol: star
-    civ: oravan
-
   - id: first_caldera
-    name: "First Caldera"
-    coords: [190, 370]
+    name: First Caldera
+    coords:
+      - 180
+      - 484
     type: sacred_site
-    description: "Seawater-filled volcanic caldera on an inner Oravan island. Major pilgrimage site."
+    description: Seawater-filled volcanic caldera on an inner Oravan island. Major
+      pilgrimage site.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: oravan
-
   - id: kelata
-    name: "Kelata"
-    coords: [155, 340]
+    name: Kelata
+    coords:
+      - 165
+      - 328
     type: resource
-    description: "Obsidian-source island. Key strategic resource for Oravan naval power."
+    description: Obsidian-source island. Key strategic resource for Oravan naval power.
     marker_color: "#c4a862"
     marker_symbol: star
     civ: oravan
-
-# --- On-route Waystations (hand-authored trade-route stops, appended after rivers in the
-#     GeoJSON feature order). Each carries category: port | oasis | caravanserai. Optional
-#     no_intra_civ: true opts a waystation out of the auto intra_civ edge to its nearest
-#     civ centroid (see journey-graph.ts buildGraph section 3) — needed only when the
-#     waystation sits deep in a corridor where a straight-line "shortcut" back to a civ
-#     centroid would be shorter in raw distance than the intended trade-route path, letting
-#     'direct'-mode Dijkstra bypass the waypoint chain the waystation was placed to create. ---
+  - id: morina
+    name: Morina
+    coords:
+      - 148
+      - 218
+    type: island
+    description: Northernmost island of the Oravan chain.
+    marker_color: "#c4a862"
+    marker_symbol: star
+    civ: oravan
+  - id: arokar
+    name: Arokar
+    coords:
+      - 148
+      - 632
+    type: island
+    description: Southernmost island of the Oravan chain.
+    marker_color: "#c4a862"
+    marker_symbol: star
+    civ: oravan
+  - id: the_neck
+    name: The Neck
+    coords:
+      - 555
+      - 395
+    type: region
+    description: The lowland gap between Qollari's north-east foothills and the west
+      end of Kheshkai's wall, where the Ndjadi drains north to the Basin.
+    marker_color: "#c4a862"
+    marker_symbol: star
+    civ: ndjadi
 waystations:
   tavakh_rubat:
     category: port
-    coords: [360, 390]
-    in_world_name: "Tavakh-Rubāṭ"
-    etymology: "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') + rubāṭ (Irrah 'fortified caravanserai/relay-station'). The Exchange Caravanserai"
-    real_world_parallel: "Mediterranean entrepôt analog"
-    location: "Mid-route sandbar between Basin north shore and Oravan archipelago"
-    function: "Bonded grain and obsidian transshipment; monsoon-season crew exchange under queen-church factor"
+    coords:
+      - 315
+      - 262
+    in_world_name: Tavakh-Rubāṭ
+    etymology: "Mixed Basin pidgin: tavakh (Irrah-derived 'exchange, balance') +
+      rubāṭ (Irrah 'fortified caravanserai/relay-station'). The Exchange
+      Caravanserai"
+    real_world_parallel: Mediterranean entrepôt analog
+    location: Mid-route sandbar between Basin north shore and Oravan archipelago
+    function: Bonded grain and obsidian transshipment; monsoon-season crew exchange
+      under queen-church factor
     marker_color: "#e8c840"
-    marker_symbol: "harbor"
-
+    marker_symbol: harbor
   kelata_tamu:
     category: oasis
-    coords: [630, 425]
-    in_world_name: "Kelata-Tamu"
-    etymology: "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The Sweetwater of Kelata"
-    description: "Outer Kelata sister-island with a freshwater spring chambered into the lava rock. Obsidian-route pilgrims rest here on the way to First Caldera."
+    coords:
+      - 140
+      - 332
+    in_world_name: Kelata-Tamu
+    etymology: "Oravan: Kelata (obsidian-source island) + tamu 'sweetwater'. The
+      Sweetwater of Kelata"
+    description: Outer Kelata sister-island with a freshwater spring chambered into
+      the lava rock. Obsidian-route pilgrims rest here on the way to First
+      Caldera.
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: oravan
-
   wasi_pukya:
     category: oasis
-    coords: [540, 580]
-    in_world_name: "Wasi-Pukya"
+    coords:
+      - 453.8
+      - 463.5
+    in_world_name: Wasi-Pukya
     etymology: "Qollari: wasi 'house, lineage' + pukya 'spring'. The Spring-House"
-    description: "Calendar-keeper waystation midway up the Qollari cliff road. Cistern carved into the rockface; oath-runners change here under calendar-keeper blessing."
+    description: Calendar-keeper waystation midway up the Qollari cliff road.
+      Cistern carved into the rockface; oath-runners change here under
+      calendar-keeper blessing.
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: qollari
-
   dzong_kha:
     category: oasis
-    coords: [980, 260]
-    in_world_name: "Dzong-Kha"
-    etymology: "Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The Fortress of the Blood-Oath"
-    description: "Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai clan-lord."
+    coords:
+      - 825.9
+      - 203.9
+    in_world_name: Dzong-Kha
+    etymology: Ngaru-Bon dzong 'fortress-monastery' + Kheshkai kha 'blood'. The
+      Fortress of the Blood-Oath
+    description: Clan-toll waystation at the foot of Lam-Chen Pass. Stone corrals
+      and ice-cellar cisterns; tariff-rolls kept by the closest Kheshkai
+      clan-lord.
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
-
+    marker_symbol: garden
   tepet_apu:
     category: oasis
-    coords: [500, 490]
-    in_world_name: "Tepet-Apu"
-    etymology: "Cross-cultural: Kheshkai tepet 'mountain' + Qollari apu 'lord/mountain'. The Mountain-of-Mountains — the two mountain peoples name the truce site each in their own register"
-    description: "Mixed-clan waystation on the Breath-of-Cloud descent. Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari oath."
+    coords:
+      - 544.3
+      - 399.2
+    in_world_name: Tepet-Apu
+    etymology: "Cross-cultural: Kheshkai tepet 'mountain' + Qollari apu
+      'lord/mountain'. The Mountain-of-Mountains — the two mountain peoples name
+      the truce site each in their own register"
+    description: Mixed-clan waystation on the Breath-of-Cloud descent.
+      Grazing-rights neutral ground; clan-feud truce site under Kheshkai-Qollari
+      oath.
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
-
+    marker_symbol: garden
   kalli_xal:
     category: caravanserai
-    coords: [600, 480]
-    in_world_name: "Kalli-Xal"
-    etymology: "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a Kheshkai-attested compound for a steppe relay station"
-    description: "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and corralled mounts kept under a single Kheshkai clan-lord's seal; the grazing toll is settled here before the run to Tepet-Apu. Rations-only resupply: the station hauls grain off the route but cannot offer reliable water beyond what travellers already carry."
+    coords:
+      - 649.7
+      - 368.9
+    in_world_name: Kalli-Xal
+    etymology: "Kheshkai: kalli 'house' + xal 'sand'. The Sand-House — a
+      Kheshkai-attested compound for a steppe relay station"
+    description: "Clan-run relay on the Breath-of-Cloud crossing. Grain-pits and
+      corralled mounts kept under a single Kheshkai clan-lord's seal; the
+      grazing toll is settled here before the run to Tepet-Apu. Rations-only
+      resupply: the station hauls grain off the route but cannot offer reliable
+      water beyond what travellers already carry."
     marker_color: "#b87333"
-    marker_symbol: "lodging"
+    marker_symbol: lodging
     civ: kheshkai
-
   zang_kalli:
     category: caravanserai
-    coords: [960, 350]
-    in_world_name: "Zang-Kalli"
-    etymology: "Cross-cultural: Ngaru-Bon zang 'iron' + Kheshkai kalli 'house'. The Iron-House — named in both clients' registers for the southbound steel-and-iron leg of the Copper-for-Steel Road (the Ngaru-Bon half of the bilateral trade)"
-    description: "Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass. Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers reconcile copper bars northbound against finished steel southbound. Grain stores deep but water carted in."
+    coords:
+      - 790
+      - 300
+    in_world_name: Zang-Kalli
+    etymology: "Cross-cultural: Ngaru-Bon zang 'iron' + Kheshkai kalli 'house'. The
+      Iron-House — named in both clients' registers for the southbound
+      steel-and-iron leg of the Copper-for-Steel Road (the Ngaru-Bon half of the
+      bilateral trade)"
+    description: Mid-steppe caravanserai between A-Tzalan Ford and Lam-Chen Pass.
+      Run by a Kheshkai sub-clan under Ngaru-Bon factor oversight; ledgers
+      reconcile copper bars northbound against finished steel southbound. Grain
+      stores deep but water carted in.
     marker_color: "#b87333"
-    marker_symbol: "lodging"
+    marker_symbol: lodging
     civ: kheshkai
-
   rubat_al_darb:
     category: caravanserai
-    coords: [826, 368]
-    in_world_name: "Rubāṭ al-Darb"
-    etymology: "Irrah: rubāṭ 'fortified relay-station' (canon architecture term: mudbrick enclosure, central well/cistern, Qalībin garrison) + al-darb (√d-r-b 'road, path'; institution-naming pattern, cf. Sharīf al-Darb). The Waystation of the Road"
-    description: "A single rubāṭ fort on the open desert crossing of the Caravan Thread, between Aethelian Basin's eastern ports and the Ngaru-Bon frontier: the only provisioning stop on an otherwise unsupported multi-day traverse. Central cistern, goods storage, and an arcaded animal yard for grain and mounts; Qalībin water-scholar militia (15-25, defensive only) maintain both the stores and the semaphore relay (smoke by day, fire by night)."
+    coords:
+      - 930.8
+      - 526.7
+    in_world_name: Rubāṭ al-Darb
+    etymology: "Irrah: rubāṭ 'fortified relay-station' (canon architecture term:
+      mudbrick enclosure, central well/cistern, Qalībin garrison) + al-darb
+      (√d-r-b 'road, path'; institution-naming pattern, cf. Sharīf al-Darb). The
+      Waystation of the Road"
+    description: "A single rubāṭ fort on the open desert crossing of the Caravan
+      Thread, between Aethelian Basin's eastern ports and the Ngaru-Bon
+      frontier: the only provisioning stop on an otherwise unsupported multi-day
+      traverse. Central cistern, goods storage, and an arcaded animal yard for
+      grain and mounts; Qalībin water-scholar militia (15-25, defensive only)
+      maintain both the stores and the semaphore relay (smoke by day, fire by
+      night)."
     marker_color: "#4a9a3a"
-    marker_symbol: "garden"
+    marker_symbol: garden
     civ: irrah
     no_intra_civ: true
-
-# --- River Systems ---
+  tin_aghiz:
+    category: port
+    coords:
+      - 1060
+      - 548
+    in_world_name: Tin-Aghiz
+    description: Frankincense port on Irrah's south-east coast, the southern
+      terminus of the frankincense crossing.
+    marker_color: "#e8c840"
+    marker_symbol: harbor
+    civ: irrah
 rivers:
   ndjadi_tributary_north:
-    name: "Northern Tributary (from Kheshkai)"
+    name: Northern Tributary (from Kheshkai)
     path:
-      - [960, 510]
-      - [900, 520]
-      - [820, 530]
-      - [700, 530]
-    description: "Descends from the Kheshkai escarpment through A-Tzalan Ford."
-
+      - - 700
+        - 405
+      - - 693.6
+        - 416
+      - - 682.4
+        - 423
+      - - 667.4
+        - 426.2
+      - - 649.5
+        - 425.6
+      - - 629.5
+        - 421.6
+      - - 608.3
+        - 414.1
+      - - 586.9
+        - 403.6
+      - - 566
+        - 390
+    description: Descends from the Kheshkai escarpment through A-Tzalan Ford.
   ndjadi_tributary_west:
-    name: "Western Tributary (from Qollari)"
+    name: Western Tributary (from Qollari)
     path:
-      - [440, 480]
-      - [500, 500]
-      - [600, 520]
-      - [700, 530]
-    description: "Flows from Qollari cloud forest into the delta system."
-
+      - - 468
+        - 505
+      - - 486.5
+        - 501.1
+      - - 502.9
+        - 493.3
+      - - 517.2
+        - 482.1
+      - - 529.5
+        - 467.9
+      - - 539.7
+        - 450.9
+      - - 547.9
+        - 431.7
+      - - 554
+        - 410.6
+      - - 558
+        - 388
+    description: Flows from Qollari cloud forest into the delta system.
+  ndjadi_tributary_qollari_south:
+    name: Southern Tributary (from Qollari)
+    description: Flows from the southern Qollari foothills north into the trunk channel.
+    path:
+      - - 520
+        - 592
+      - - 521.1
+        - 565.1
+      - - 524.1
+        - 538.5
+      - - 528.5
+        - 512.2
+      - - 533.9
+        - 486.3
+      - - 539.8
+        - 460.8
+      - - 545.7
+        - 435.9
+      - - 551.3
+        - 411.6
+      - - 556
+        - 388
+  ndjadi_trunk_east:
+    name: Eastern Trunk
+    description: Eastern trunk channel gathering the southern tributaries before the
+      distributary fan.
+    path:
+      - - 800
+        - 592
+      - - 790.5
+        - 565.9
+      - - 771.1
+        - 541.3
+      - - 744
+        - 517.6
+      - - 711.5
+        - 494.3
+      - - 675.8
+        - 470.6
+      - - 639.1
+        - 446
+      - - 603.8
+        - 420
+      - - 572
+        - 392
+  ndjadi_tributary_wall_east:
+    name: Eastern Wall Tributary (from Kheshkai)
+    description: Descends from the eastern Kheshkai wall into the trunk channel.
+    path:
+      - - 830
+        - 413
+      - - 815.7
+        - 427.6
+      - - 796.1
+        - 436.9
+      - - 772.5
+        - 441.6
+      - - 746.3
+        - 442.6
+      - - 718.6
+        - 440.9
+      - - 690.8
+        - 437.3
+      - - 664.2
+        - 432.7
+      - - 640
+        - 428
+      - - 629.1
+        - 424.6
+      - - 619
+        - 420.3
+      - - 609.6
+        - 415.5
+      - - 601
+        - 410.3
+      - - 593.1
+        - 404.7
+      - - 586
+        - 399
+      - - 579.6
+        - 393.4
+      - - 574
+        - 388
   ndjadi_dist_1:
-    name: "First Distributary"
+    name: First Distributary
     path:
-      - [700, 530]
-      - [680, 560]
-      - [660, 590]
-      - [640, 640]
-    description: "Westernmost channel of the five-distributary fan delta."
-
+      - - 560
+        - 380
+      - - 551.9
+        - 374.2
+      - - 536.7
+        - 368.7
+      - - 516.6
+        - 363.4
+      - - 494
+        - 358.3
+      - - 471.2
+        - 353.2
+      - - 450.6
+        - 348.2
+      - - 434.4
+        - 343.2
+      - - 425
+        - 338
+    description: Westernmost channel of the five-distributary fan delta.
   ndjadi_dist_2:
-    name: "Second Distributary"
+    name: Second Distributary
     path:
-      - [700, 530]
-      - [710, 565]
-      - [700, 600]
-      - [680, 640]
-    description: "Second channel, passing near Ki-Jenga."
-
+      - - 560
+        - 380
+      - - 553.3
+        - 374.2
+      - - 541.8
+        - 368.7
+      - - 527
+        - 363.4
+      - - 510.5
+        - 358.3
+      - - 493.8
+        - 353.2
+      - - 478.4
+        - 348.2
+      - - 466
+        - 343.2
+      - - 458
+        - 338
+    description: Second channel, passing near Ki-Jenga.
   ndjadi_dist_3:
-    name: "Third Distributary (Central)"
+    name: Third Distributary (Central)
     path:
-      - [700, 530]
-      - [720, 570]
-      - [730, 610]
-      - [720, 645]
-    description: "Central channel — the main navigable waterway."
-
+      - - 560
+        - 380
+      - - 554.7
+        - 374.2
+      - - 546.8
+        - 368.7
+      - - 537.1
+        - 363.4
+      - - 526.5
+        - 358.3
+      - - 515.7
+        - 353.2
+      - - 505.4
+        - 348.2
+      - - 496.6
+        - 343.2
+      - - 490
+        - 338
+    description: Central channel — the main navigable waterway.
   ndjadi_dist_4:
-    name: "Fourth Distributary"
+    name: Fourth Distributary
     path:
-      - [700, 530]
-      - [740, 570]
-      - [760, 610]
-      - [760, 645]
-    description: "Fourth channel, serving the eastern granary districts."
-
+      - - 560
+        - 380
+      - - 556.2
+        - 374.2
+      - - 552.3
+        - 368.7
+      - - 548.2
+        - 363.4
+      - - 544
+        - 358.3
+      - - 539.6
+        - 353.2
+      - - 535
+        - 348.2
+      - - 530.1
+        - 343.2
+      - - 525
+        - 338
+    description: Fourth channel, serving the eastern granary districts.
   ndjadi_dist_5:
-    name: "Fifth Distributary"
+    name: Fifth Distributary
     path:
-      - [700, 530]
-      - [750, 560]
-      - [790, 600]
-      - [800, 635]
-    description: "Easternmost channel, entering the Basin near Dzong-Tamu."
-
-# --- Trade Routes ---
+      - - 560
+        - 380
+      - - 557.5
+        - 374.2
+      - - 557.1
+        - 368.7
+      - - 558
+        - 363.4
+      - - 559.5
+        - 358.3
+      - - 560.8
+        - 353.2
+      - - 561.1
+        - 348.2
+      - - 559.8
+        - 343.2
+      - - 556
+        - 338
+    description: Easternmost channel, entering the Basin near Dzong-Tamu.
 trade_routes:
   copper_for_steel_road:
     path:
-      - [650, 620]
-      - [750, 590]
-      - [900, 540]
-      - [960, 510]
-      - [970, 470]
-      - [960, 350]
-      - [950, 280]
-      - [945, 230]
-      - [940, 190]
-      - [940, 168]
-      - [860, 110]
+      - - 540
+        - 362
+      - - 553
+        - 373.6
+      - - 569.2
+        - 383.6
+      - - 588
+        - 392
+      - - 608.8
+        - 398.5
+      - - 630.9
+        - 403.2
+      - - 653.9
+        - 405.9
+      - - 677.1
+        - 406.5
+      - - 700
+        - 405
+      - - 721.5
+        - 400.5
+      - - 740.8
+        - 392.7
+      - - 757.5
+        - 381.9
+      - - 771.3
+        - 368.6
+      - - 781.7
+        - 353.3
+      - - 788.6
+        - 336.5
+      - - 791.5
+        - 318.6
+      - - 790
+        - 300
+      - - 789
+        - 285
+      - - 789.5
+        - 270.1
+      - - 791
+        - 255.3
+      - - 793.1
+        - 240.6
+      - - 795.5
+        - 226.2
+      - - 797.7
+        - 212.1
+      - - 799.4
+        - 198.3
+      - - 800
+        - 185
+      - - 792
+        - 177.7
+      - - 783.2
+        - 171
+      - - 773.5
+        - 164.7
+      - - 763.1
+        - 159
+      - - 752
+        - 153.8
+      - - 740.2
+        - 149.3
+      - - 727.9
+        - 145.3
+      - - 715
+        - 142
     style:
       color: "#8b5e3c"
-      dash_array: "8,3"
-      label: "Copper-for-Steel Road"
-
+      dash_array: 8,3
+      label: Copper-for-Steel Road
   highland_steppe_corridor:
     path:
-      # Leg 1: Ngaru-Bon → Kheshkai
-      - [860, 110]
-      - [900, 140]
-      - [940, 160]
-      - [940, 168]
-      - [960, 200]
-      - [980, 260]
-      - [1000, 320]
-      # Leg 2: Kheshkai → Qollari
-      - [1000, 380]
-      - [970, 410]
-      - [940, 430]
-      - [900, 440]
-      - [850, 450]
-      - [750, 470]
-      - [600, 480]
-      - [500, 490]
-      - [430, 490]
-      - [400, 480]
+      - - 700
+        - 160
+      - - 716.2
+        - 162.1
+      - - 731.1
+        - 164.6
+      - - 744.8
+        - 167.5
+      - - 757.5
+        - 170.6
+      - - 769.2
+        - 174
+      - - 780.2
+        - 177.6
+      - - 790.4
+        - 181.3
+      - - 800
+        - 185
+      - - 810.8
+        - 191.3
+      - - 820.6
+        - 198.8
+      - - 829.5
+        - 207.4
+      - - 837.5
+        - 216.9
+      - - 844.5
+        - 227
+      - - 850.6
+        - 237.7
+      - - 855.8
+        - 248.8
+      - - 860
+        - 260
+      - - 836.6
+        - 275.4
+      - - 811.6
+        - 291.3
+      - - 785.1
+        - 307.2
+      - - 757.5
+        - 322.8
+      - - 728.9
+        - 337.4
+      - - 699.7
+        - 350.8
+      - - 670
+        - 362.5
+      - - 640
+        - 372
+      - - 631.1
+        - 374.1
+      - - 623
+        - 375.8
+      - - 615.6
+        - 377.2
+      - - 608.8
+        - 378.3
+      - - 602.4
+        - 379.1
+      - - 596.4
+        - 379.6
+      - - 590.6
+        - 379.9
+      - - 585
+        - 380
+      - - 579.4
+        - 381.7
+      - - 573.8
+        - 383.7
+      - - 568.1
+        - 386.1
+      - - 562.5
+        - 388.8
+      - - 556.9
+        - 391.7
+      - - 551.3
+        - 394.9
+      - - 545.6
+        - 398.3
+      - - 540
+        - 402
+      - - 536.5
+        - 404.9
+      - - 533.4
+        - 407.5
+      - - 530.6
+        - 409.9
+      - - 528.1
+        - 412.3
+      - - 525.9
+        - 414.5
+      - - 523.8
+        - 416.6
+      - - 521.9
+        - 418.8
+      - - 520
+        - 421
     style:
       color: "#d4a017"
-      dash_array: "6,4"
-      label: "Highland-Steppe Corridor"
-
-  highland_relay:
-    path:
-      - [380, 460]
-      - [420, 500]
-      - [460, 530]
-      - [500, 560]
-      - [540, 580]
-      - [600, 600]
-      - [650, 620]
-    style:
-      color: "#3a8a3a"
-      dash_array: "3,5"
-      label: "Highland Relay"
-
+      dash_array: 6,4
+      label: Highland-Steppe Corridor
   coastal_monsoon:
     path:
-      - [220, 360]
-      - [260, 360]
-      - [290, 370]
-      - [320, 380]
-      - [360, 390]
-      - [420, 400]
-      - [500, 410]
-      - [580, 420]
-      - [680, 430]
-      - [780, 440]
-      - [830, 445]
-      - [860, 430]
-      - [860, 420]
+      - - 215
+        - 270
+      - - 224.2
+        - 270
+      - - 232.9
+        - 269.8
+      - - 241.4
+        - 269.6
+      - - 249.8
+        - 269.3
+      - - 258
+        - 268.8
+      - - 266.2
+        - 268.3
+      - - 274.5
+        - 267.7
+      - - 283
+        - 267
+      - - 287.4
+        - 266.3
+      - - 291.7
+        - 265.5
+      - - 295.8
+        - 264.8
+      - - 299.8
+        - 264.1
+      - - 303.6
+        - 263.5
+      - - 307.5
+        - 262.9
+      - - 311.2
+        - 262.4
+      - - 315
+        - 262
+      - - 326.2
+        - 256.3
+      - - 337.4
+        - 249.9
+      - - 348.5
+        - 242.8
+      - - 359.4
+        - 235.1
+      - - 370
+        - 226.9
+      - - 380.4
+        - 218.3
+      - - 390.4
+        - 209.3
+      - - 400
+        - 200
+      - - 419.6
+        - 201.2
+      - - 440.5
+        - 202.7
+      - - 462.1
+        - 204.4
+      - - 483.8
+        - 206.4
+      - - 505
+        - 208.7
+      - - 525.2
+        - 211.4
+      - - 543.7
+        - 214.5
+      - - 560
+        - 218
+      - - 568.8
+        - 221.5
+      - - 576.5
+        - 225.9
+      - - 583
+        - 231
+      - - 588.4
+        - 236.6
+      - - 592.6
+        - 242.7
+      - - 595.6
+        - 249.1
+      - - 597.4
+        - 255.6
+      - - 598
+        - 262
+      - - 597.5
+        - 270.5
+      - - 596.2
+        - 278.7
+      - - 594
+        - 286.6
+      - - 591
+        - 294.3
+      - - 587.3
+        - 301.6
+      - - 582.8
+        - 308.7
+      - - 577.7
+        - 315.5
+      - - 572
+        - 322
+      - - 561.5
+        - 324.9
+      - - 550.5
+        - 327.6
+      - - 538.9
+        - 330.1
+      - - 527.1
+        - 332.3
+      - - 515.2
+        - 334.2
+      - - 503.2
+        - 335.8
+      - - 491.5
+        - 337.1
+      - - 480
+        - 338
     style:
       color: "#4a8ab0"
-      dash_array: "8,2,2,2"
-      label: "Coastal Monsoon"
-
-  caravan_thread:
-    path:
-      # Smith-Spring → Qarat al-Fidda
-      - [880, 200]
-      - [840, 230]
-      - [790, 250]
-      - [730, 260]
-      # Qarat al-Fidda → Halani-Tamu
-      - [730, 260]
-      - [770, 300]
-      - [820, 360]
-      - [860, 420]
-    style:
-      color: "#d4a854"
-      dash_array: "3,4"
-      label: "Caravan Thread"
-
+      dash_array: 8,2,2,2
+      label: Coastal Monsoon
   scribal_ladder:
     path:
-      # Ki-Mbuhari → Halani-Tamu via Basin
-      - [650, 620]
-      - [680, 560]
-      - [720, 500]
-      - [780, 460]
-      - [830, 440]
-      - [860, 420]
-      # Overland into Irrah
-      - [860, 420]
-      - [840, 380]
-      - [820, 340]
-      - [790, 290]
-      # To pyramid-necropolises
-      - [790, 290]
-      - [770, 310]
-      - [760, 340]
+      - - 480
+        - 338
+      - - 450
+        - 265
+      - - 598
+        - 262
+      - - 665
+        - 272
     style:
       color: "#e05555"
-      dash_array: "2,5"
-      label: "Scribal Ladder (pilgrimage)"
-
+      dash_array: 2,5
+      label: Scribal Ladder (pilgrimage)
   western_route:
-    # ADR-0045. Enters off the west edge from Vaucresne (off-map). Halanimoa's
-    # anchorage is placed on the archipelago's western shore; canon fixes the
-    # order (Halanimoa, Halkar Straits, Tavakh-Qarat), not exact coordinates.
     path:
-      # Open ocean from Vaucresne
-      - [0, 350]
-      - [70, 354]
-      # Halanimoa clearing-station (landfall)
-      - [126, 360]
-      # Through the archipelago, past Halkar
-      - [175, 322]
-      - [230, 302]
-      - [265, 320]
-      # Halkar Straits
-      - [292, 362]
-      - [320, 390]
-      # Across the Basin to Tavakh-Qarat
-      - [370, 360]
-      - [440, 322]
-      - [520, 300]
-      - [600, 290]
+      - - 0
+        - 262
+      - - 130
+        - 262
+      - - 215
+        - 270
+      - - 285
+        - 268
+      - - 400
+        - 200
     style:
       color: "#5a6e9a"
-      dash_array: "10,3,2,3"
-      label: "Western Route"
-
-# --- Metadata ---
+      dash_array: 10,3,2,3
+      label: Western Route
+  aethelian_basin_hub:
+    paths:
+      - - - 400
+          - 200
+        - - 598
+          - 262
+        - - 572
+          - 322
+        - - 480
+          - 338
+        - - 450
+          - 265
+        - - 400
+          - 200
+      - - - 480
+          - 338
+        - - 486.1
+          - 343.3
+        - - 493.2
+          - 348.5
+        - - 501.3
+          - 353.8
+        - - 510.4
+          - 359
+        - - 520.6
+          - 364.3
+        - - 531.9
+          - 369.5
+        - - 544.4
+          - 374.8
+        - - 558
+          - 380
+    part_endpoints:
+      - - tavakh_qarat
+        - tavakh_qarat
+      - - ki_mbuhari
+        - the_neck
+    style:
+      color: "#ffffff"
+      dash_array: 3,3
+      label: Aethelian Basin Hub
+  highland_relay:
+    paths:
+      - - - 350
+          - 625
+        - - 361.7
+          - 600.9
+        - - 374.4
+          - 577.2
+        - - 388
+          - 554
+        - - 402.5
+          - 531.3
+        - - 418
+          - 509
+        - - 434.4
+          - 487.2
+        - - 451.7
+          - 465.9
+        - - 470
+          - 445
+        - - 480.8
+          - 433.4
+        - - 490.8
+          - 423.2
+        - - 500.1
+          - 414.3
+        - - 508.8
+          - 406.8
+        - - 517
+          - 400.4
+        - - 524.8
+          - 395.2
+        - - 532.5
+          - 391.1
+        - - 540
+          - 388
+        - - 532.3
+          - 381.8
+        - - 524.3
+          - 375.4
+        - - 516.2
+          - 368.9
+        - - 508.1
+          - 362.5
+        - - 500.3
+          - 356.2
+        - - 492.9
+          - 350.3
+        - - 486.1
+          - 344.9
+        - - 480
+          - 340
+      - - - 485
+          - 344
+        - - 473.5
+          - 345.2
+        - - 461.8
+          - 345.7
+        - - 449.9
+          - 345.5
+        - - 438.1
+          - 344.8
+        - - 426.6
+          - 343.3
+        - - 415.4
+          - 341.2
+        - - 404.8
+          - 338.4
+        - - 395
+          - 335
+    part_endpoints:
+      - - qollari
+        - ki_mbuhari
+      - - ki_mbuhari
+        - veyd_kirrha
+    style:
+      color: "#3a8a3a"
+      dash_array: 3,5
+      label: Highland Relay
+  caravan_thread:
+    paths:
+      - - - 735
+          - 222
+        - - 618
+          - 222
+      - - - 690
+          - 222
+        - - 689.3
+          - 230.2
+        - - 687.5
+          - 237.5
+        - - 684.7
+          - 244.2
+        - - 681.3
+          - 250.4
+        - - 677.3
+          - 256.1
+        - - 673.1
+          - 261.5
+        - - 668.9
+          - 266.8
+        - - 665
+          - 272
+      - - - 618
+          - 222
+        - - 621.4
+          - 230.3
+        - - 626.2
+          - 238.1
+        - - 632
+          - 245.3
+        - - 638.5
+          - 251.9
+        - - 645.4
+          - 257.8
+        - - 652.3
+          - 263.2
+        - - 659
+          - 267.9
+        - - 665
+          - 272
+      - - - 665
+          - 272
+        - - 655.8
+          - 271.2
+        - - 647.1
+          - 270.2
+        - - 638.6
+          - 269
+        - - 630.4
+          - 267.8
+        - - 622.3
+          - 266.4
+        - - 614.2
+          - 265
+        - - 606.2
+          - 263.5
+        - - 598
+          - 262
+      - - - 725
+          - 265
+        - - 665
+          - 272
+      - - - 600
+          - 340
+        - - 594
+          - 358
+        - - 589.9
+          - 368.5
+        - - 588.3
+          - 379.7
+        - - 589.2
+          - 391.6
+        - - 593
+          - 404.1
+        - - 599.8
+          - 417.3
+        - - 609.8
+          - 431
+        - - 623.1
+          - 445.2
+        - - 640
+          - 460
+        - - 681
+          - 477
+        - - 728.1
+          - 490.9
+        - - 779.9
+          - 502.4
+        - - 835
+          - 512.3
+        - - 892
+          - 521
+        - - 949.4
+          - 529.5
+        - - 1005.9
+          - 538.2
+        - - 1060
+          - 548
+    part_endpoints:
+      - - smith_spring
+        - ghadam_thalla
+      - - zin_iferis
+        - qarat_al_fidda
+      - - ghadam_thalla
+        - qarat_al_fidda
+      - - qarat_al_fidda
+        - halani_tamu
+      - - tin_mashraq
+        - qarat_al_fidda
+      - - khulut
+        - tin_aghiz
+    style:
+      color: "#d4a854"
+      dash_array: 3,4
+      label: Caravan Thread
 metadata:
-  version: "1.0.0"
-  last_updated: "2026-04-23"
-  author: "veydria-cartography pipeline"
-  note: >
-    Coordinate values are in SVG viewBox units (0-1200 x 0-800).
-    The web map inverts the Y axis for Leaflet CRS.Simple compatibility.
-    To regenerate from SVG source: python -m generator.tools.extract_from_svg
+  version: 2.0.0
+  author: veydria-cartography pipeline
+  layout: canon-2026-09-29
+  note: Generated by scripts/derive-manifest.mjs from data/positions.yaml and
+    data/veydria-schematic.svg. Do not edit by hand; re-run the derive script.
+  last_updated: 2026-11-11

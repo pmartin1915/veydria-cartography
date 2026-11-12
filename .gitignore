@@ -50,3 +50,6 @@ SCOPING-*.md
 .orchestrate/wt/
 # Claude local settings
 .claude/settings.local.json
+
+# Sim traces are large; commit summary.csv only (map-hardening Phase 1)
+traces/**/traces.jsonl

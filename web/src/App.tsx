@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useReducer, useMemo, lazy, Suspense, type MouseEvent as ReactMouseEvent } from 'react'
 import { kvStore } from './persistence/kv-store'
+import { featureIdOf } from './utils/feature-id'
 import MapViewer, { type MapViewerHandle } from './components/MapViewer'
 import InfoPanel from './components/InfoPanel'
 import SearchBar from './components/SearchBar'
@@ -19,10 +20,13 @@ import { axialDistance, hexLineBetween, labelHex, parseHexLabel } from './utils/
 import { parseHash, buildHash, buildShareUrl, clampZoom } from './utils/url-hash'
 import { consumeFocusParam } from './utils/focus-param'
 import type { JourneyRoute, Season, RouteMode, ComparisonRoutes } from './utils/journey-graph'
+import { buildGraph } from './utils/journey-graph'
 import { formatDistance, estimateMeasureDays, svgDistanceToKm, type MeasureStats } from './utils/measure'
 import { formatDays } from './utils/format-measure'
-import { svgToWorldKm } from './utils/world-coords'
-import { parsePatchYaml, applyPatches } from './utils/patch-parser'
+import { svgToWorldKm, MAP_LAYOUT } from './utils/world-coords'
+import { parsePatchYaml, applyPatches, parsePatchLayout } from './utils/patch-parser'
+import { migrateMapLayout, collectCurrentPositions } from './persistence/map-layout-migration'
+import aprilLayoutPositions from './generated/layout-april-positions.json'
 import { BUILT_IN_PRESETS } from './utils/layer-presets'
 import type { MapAnnotation } from './utils/annotations'
 import { loadAnnotations, addAnnotation, updateAnnotation, deleteAnnotation, exportAnnotationsMarkdown, createHexAnnotation, markRouteExplored, saveAnnotations } from './utils/annotations'
@@ -346,7 +350,7 @@ function App() {
             || geojson.features.find((f) => f.properties.category === 'civilization')
             || geojson.features[0]
           if (fallback) {
-            const id = (fallback as unknown as Record<string, unknown>).id as string || (fallback.properties.id as string)
+            const id = featureIdOf(fallback)
             if (id) {
               setSelectedFeature(fallback)
               setPanelOpen(true)
@@ -514,7 +518,40 @@ function App() {
         const text = new TextDecoder().decode(all)
         return JSON.parse(text) as GeoJSONCollection
       })
-      .then((data: GeoJSONCollection) => {
+      .then(async (data: GeoJSONCollection) => {
+        // P1b: one-time persisted-data migration. Runs after kv hydration
+        // (Tauri boot) and geojson load, and before the first render that
+        // reads annotations or journeys. Marker written last; a failure
+        // leaves the data untouched and the absent marker re-runs it next
+        // boot. The annotations state initializer above may have read
+        // pre-migration data during the loading screen, so reload it here.
+        // An aborted or thrown migration must NOT open the editable map: new
+        // pins/journeys saved now would be overwritten when a later boot
+        // recomputes from the April backups. Stop on the error screen instead;
+        // the absent marker retries the migration on the next load.
+        let migration: Awaited<ReturnType<typeof migrateMapLayout>> | 'threw'
+        try {
+          migration = await migrateMapLayout(kvStore, {
+            april: {
+              points: aprilLayoutPositions.points as unknown as Record<string, [number, number]>,
+              centroids: aprilLayoutPositions.centroids as unknown as Record<string, [number, number]>,
+            },
+            currentPositions: collectCurrentPositions(data),
+            graph: buildGraph(data),
+          })
+        } catch {
+          migration = 'threw'
+        }
+        if (migration === 'aborted' || migration === 'threw') {
+          setError(
+            'Your saved pins and journeys could not be moved to the new map layout. ' +
+            'Nothing was changed. Reload to try again; if this keeps happening, ' +
+            'export your campaign from a backup before editing.',
+          )
+          setLoading(false)
+          return
+        }
+        setAnnotations(loadAnnotations())
         setGeojson(data)
         setLoading(false)
         // Handle deep-linking after data loads
@@ -525,7 +562,7 @@ function App() {
         if (featureId) {
           flyToTimeoutRef.current = window.setTimeout(() => {
             const found = data.features.find((f) => {
-              const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+              const id = featureIdOf(f)
               return id === featureId
             })
             if (found) {
@@ -608,7 +645,7 @@ function App() {
     setSelectedHex(null)
     // Update URL hash for deep-linking. Feature and hex selections are
     // mutually exclusive in the URL — same rule as the bottom sheet.
-    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    const id = featureIdOf(feature)
     if (id) {
       viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
@@ -658,7 +695,7 @@ function App() {
     closeSearch()
     setSelectedHex(null)
     mapRef.current?.flyToFeature(feature)
-    const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+    const id = featureIdOf(feature)
     if (id) {
       viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
       const hash = buildHash(viewportRef.current)
@@ -669,7 +706,7 @@ function App() {
   const handleSelectFeatureById = useCallback((featureId: string): boolean => {
     if (!geojson) return false
     const feature = geojson.features.find((f) => {
-      const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+      const id = featureIdOf(f)
       return id === featureId
     })
     if (!feature) return false
@@ -697,7 +734,7 @@ function App() {
       `  - id: ${id}\n    category: ${data.category}\n    coords: [${data.coords[0].toFixed(1)}, ${data.coords[1].toFixed(1)}]`
     ).join('\n')
 
-    const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n`
+    const yaml = `patches:\n${patches}\nmetadata:\n  source: web-edit-mode\n  generated: ${new Date().toISOString()}\n  layout: ${MAP_LAYOUT}\n`
 
     void saveTextFile(
       `veydria-coordinate-patch-${new Date().toISOString().slice(0, 10)}.yaml`,
@@ -710,6 +747,13 @@ function App() {
   const handleApplyPatch = useCallback(async (file: File) => {
     if (!geojson) return
     const text = await file.text()
+    // Patches are raw SVG coordinates — a patch captured on a different map
+    // layout would silently move features to wrong places. Refuse anything
+    // not stamped with the current layout and apply nothing.
+    if (parsePatchLayout(text) !== MAP_LAYOUT) {
+      showPatchToast('This patch was made on the old map layout and cannot be applied')
+      return
+    }
     const patches = parsePatchYaml(text)
     if (patches.length === 0) {
       showPatchToast('No valid patches found in file')
@@ -719,7 +763,7 @@ function App() {
     // Imperatively update marker positions to avoid a full 3000-layer rebuild
     for (const idx of result.mutatedFeatures) {
       const feature = result.newFeatures[idx]
-      const id = (feature as unknown as Record<string, unknown>).id as string || (feature.properties.id as string)
+      const id = featureIdOf(feature as GeoJSONFeature)
       if (id && feature.geometry.type === 'Point') {
         mapRef.current?.updateFeaturePosition(id, feature.geometry.coordinates as [number, number])
       }
@@ -853,7 +897,7 @@ function App() {
     window.setTimeout(() => {
       if (starredIds.length > 0 && geojson) {
         const features = geojson.features.filter((f) => {
-          const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+          const id = featureIdOf(f)
           return id && starredIds.includes(id)
         })
         if (features.length > 0) {
@@ -1412,7 +1456,7 @@ function App() {
             </button>
           )}
           {!shareMode && (
-            <CampaignMenu onToast={showLogToast} />
+            <CampaignMenu onToast={showLogToast} geojson={geojson} />
           )}
           {!shareMode && (
             <div className="share-menu" ref={shareMenuRef}>
@@ -1668,7 +1712,7 @@ function App() {
             setSelectedHex(null)
             viewportRef.current = {
               ...viewportRef.current,
-              featureId: ((feature as unknown as Record<string, unknown>).id as string) || (feature.properties.id as string),
+              featureId: featureIdOf(feature),
               hexLabel: undefined,
               hexNote: undefined,
               journeyFrom: undefined,
@@ -1838,7 +1882,7 @@ function App() {
             setPanelOpen(true)
             setSelectedHex(null)
             mapRef.current?.flyToFeature(f)
-            const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+            const id = featureIdOf(f)
             if (id) {
               viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)
@@ -2126,7 +2170,7 @@ function App() {
             setPanelOpen(true)
             setSelectedHex(null)
             mapRef.current?.flyToFeature(f)
-            const id = (f as unknown as Record<string, unknown>).id as string || (f.properties.id as string)
+            const id = featureIdOf(f)
             if (id) {
               viewportRef.current = { ...viewportRef.current, featureId: id, hexLabel: undefined, hexNote: undefined }
               const hash = buildHash(viewportRef.current)

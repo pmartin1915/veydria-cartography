@@ -47,6 +47,19 @@ trying to measure against. The next refresh happens before the *next* cycle
 that touches the journey engine (e.g. before Phase 3 policies, or before a
 world-scale realism pass).
 
+## Phase 1 after-pass (map-hardening)
+
+- `pre-phase1/summary.csv` — 4,320-run full grid on the old derived manifest +
+  2.5 km/unit scale (committed pre-change reference).
+- `post-phase1-stage1/summary.csv` — same grid after the Phase 1 graph
+  rebuild, still at the temporary 2.5 km/unit (isolates graph effects).
+- `post-phase1/summary.csv` — same grid at the committed 4 km/unit scale.
+- The three-run comparison lives in `research/map-hardening/PHASE1-SIM-REPORT.md`,
+  generated from these summaries by `node scripts/sim/compare-summaries.mjs`
+  (the old `compare-*.log` pairwise dumps were removed in favor of the report).
+- `traces.jsonl` per run dir is gitignored (`.gitignore`); only
+  `summary.csv` snapshots are tracked.
+
 ## Conventions
 
 - One baseline per cycle. Old baselines can stay (rename to

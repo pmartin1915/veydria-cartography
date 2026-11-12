@@ -59,20 +59,24 @@ function getCentroid(props: Record<string, unknown>): [number, number] | null {
   return null
 }
 
-/** Bounding-box centre of a Polygon's outer ring — fallback position for place nodes. */
+/** Bounding-box centre of a Polygon's (or MultiPolygon's) outer rings — fallback position for place nodes. */
 function polygonBboxCentroid(geometry: GeoJSONFeature['geometry']): [number, number] | null {
-  if (!geometry || geometry.type !== 'Polygon') return null
-  const ring = (geometry.coordinates as unknown as number[][][])[0]
-  if (!Array.isArray(ring) || ring.length === 0) return null
+  if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) return null
+  const polys = geometry.type === 'Polygon'
+    ? [(geometry.coordinates as unknown as number[][][])[0]]
+    : (geometry.coordinates as unknown as number[][][][]).map(p => p[0])
+  if (polys.length === 0 || !polys[0].length) return null
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  for (const pt of ring) {
-    if (!Array.isArray(pt) || pt.length < 2) continue
-    const [x, y] = pt as number[]
-    if (typeof x !== 'number' || typeof y !== 'number') continue
-    if (x < minX) minX = x
-    if (x > maxX) maxX = x
-    if (y < minY) minY = y
-    if (y > maxY) maxY = y
+  for (const ring of polys) {
+    for (const pt of ring) {
+      if (!Array.isArray(pt) || pt.length < 2) continue
+      const [x, y] = pt as number[]
+      if (typeof x !== 'number' || typeof y !== 'number') continue
+      if (x < minX) minX = x
+      if (x > maxX) maxX = x
+      if (y < minY) minY = y
+      if (y > maxY) maxY = y
+    }
   }
   if (!isFinite(minX)) return null
   return [(minX + maxX) / 2, (minY + maxY) / 2]

@@ -74,8 +74,14 @@ export default function SavedJourneysPanel({
               <div className="journey-history-meta">
                 {entry.season && <span className="journey-history-season">{entry.season}</span>}
                 <span className="journey-history-mode">{entry.mode}</span>
-                <span>{Math.round(entry.totalKm)} km</span>
-                <span>~{formatDays(entry.estimatedDays)}</span>
+                {entry.stale ? (
+                  <span className="journey-history-stale">Route needs replanning</span>
+                ) : (
+                  <>
+                    <span>{Math.round(entry.totalKm)} km</span>
+                    <span>~{formatDays(entry.estimatedDays)}</span>
+                  </>
+                )}
               </div>
             </div>
             <div className="journey-history-actions">

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { findRelatedFeatures, type RelatedFeature } from '../utils/related-features'
+import { featureIdOf } from '../utils/feature-id'
 import { estimateTravelTime, formatTravelEstimate } from '../utils/travel-time'
 import type { LoreEntry, LoreIndex } from '../App'
 import type { MapAnnotation } from '../utils/annotations'
@@ -113,7 +114,7 @@ const LORE_CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 function getFeatureId(f: GeoJSONFeature): string {
-  return ((f as unknown as Record<string, unknown>).id as string) || (f.properties.id as string) || ''
+  return featureIdOf(f)
 }
 
 function LoreSection({ entries }: { entries: LoreEntry[] }) {

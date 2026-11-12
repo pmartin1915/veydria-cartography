@@ -67,6 +67,11 @@ const SYNC_MAP = [
     transform: 'yaml2json',
   },
   {
+    src: 'tools/map-viewer/data/positions.yaml',
+    dest: 'data/positions.yaml',
+    description: 'Normalized canonical positions (worldbuilder map viewer); input to derive-manifest'
+  },
+  {
     src: 'geography/continents/veydria-travel-graph.yaml',
     dest: 'web/src/generated/veydria-travel-graph.json',
     description: 'Authored inter-place travel durations (ADR-0018); yaml→json for the journey graph',

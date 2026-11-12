@@ -2,11 +2,15 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { exportCampaign } from '../persistence/campaign-export'
 import { importCampaign } from '../persistence/campaign-import'
 import { getCampaignIO } from '../persistence/campaign-io'
+import { buildLayoutContext } from '../persistence/map-layout-migration'
 import { reportSaveFailure } from '../persistence/save-status'
 import { kvStore } from '../persistence/kv-store'
+import type { GeoJSONCollection } from '../types/geojson'
 
 interface CampaignMenuProps {
   onToast?: (msg: string) => void
+  /** Loaded geojson — needed to translate a version-1 (April layout) import. */
+  geojson: GeoJSONCollection | null
 }
 
 type PendingMode = 'open' | 'import'
@@ -18,7 +22,7 @@ interface ConfirmState {
   error?: string
 }
 
-export function CampaignMenu({ onToast }: CampaignMenuProps) {
+export function CampaignMenu({ onToast, geojson }: CampaignMenuProps) {
   const [open, setOpen] = useState(false)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -107,7 +111,15 @@ export function CampaignMenu({ onToast }: CampaignMenuProps) {
   const handleConfirm = useCallback(async () => {
     if (!confirm || confirm.error) return
     try {
-      importCampaign(confirm.parsed, confirm.mode === 'open' ? 'replace' : 'merge')
+      // A version-1 file was exported on the April map layout: translate its
+      // content onto the current layout through the same transform as the
+      // local boot migration. v2 (current) imports as-is.
+      const isV1 =
+        !!confirm.parsed &&
+        typeof confirm.parsed === 'object' &&
+        (confirm.parsed as { version?: unknown }).version === 1
+      const layoutCtx = isV1 && geojson ? buildLayoutContext(geojson) : undefined
+      importCampaign(confirm.parsed, confirm.mode === 'open' ? 'replace' : 'merge', layoutCtx)
       // Desktop: importCampaign wrote into the debounced disk cache. Drain it to disk
       // BEFORE reload tears down the JS realm — otherwise boot re-hydrates the stale
       // store file and the import silently vanishes. No-op on web (sync localStorage).

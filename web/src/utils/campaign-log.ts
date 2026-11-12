@@ -224,7 +224,9 @@ export function generateCampaignLog(input: CampaignLogInput): string {
       for (let i = 0; i < group.length; i++) {
         const sj = group[i]
         md += `#### ${i + 1}. ${sj.name || `${sj.fromName} → ${sj.toName}`}\n\n`
-        md += `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
+        md += sj.stale
+          ? `- **Route needs replanning** · **Mode:** ${sj.mode}`
+          : `- **Distance:** ${Math.round(sj.totalKm)} km · **Travel:** ${formatDays(sj.estimatedDays)} · **Mode:** ${sj.mode}`
         if (sj.season) md += ` · **Season:** ${sj.season}`
         if (sj.party && !isDefaultParty(sj.party)) md += ` · **Party:** ${describeParty(sj.party)}`
         if (sj.supply && !isDefaultSupply(sj.supply)) md += ` · **Supply:** ${describeSupply(sj.supply)}`

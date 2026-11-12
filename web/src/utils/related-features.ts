@@ -1,4 +1,6 @@
 import type { GeoJSONFeature } from '../App'
+import { featureIdOf } from './feature-id'
+import { worldScale } from './world-coords'
 
 export interface RelatedFeature {
   feature: GeoJSONFeature
@@ -7,7 +9,7 @@ export interface RelatedFeature {
 }
 
 function getFeatureId(f: GeoJSONFeature): string {
-  return ((f as unknown as Record<string, unknown>).id as string) || (f.properties.id as string) || ''
+  return featureIdOf(f)
 }
 
 function getCentroid(f: GeoJSONFeature): [number, number] | null {
@@ -21,6 +23,14 @@ function getCentroid(f: GeoJSONFeature): [number, number] | null {
     const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length
     const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
     return [cx, cy]
+  }
+  if (type === 'MultiPolygon') {
+    // Vertex-weighted mean of each polygon's outer ring
+    let cx = 0, cy = 0, n = 0
+    for (const poly of coords as unknown as number[][][][]) {
+      for (const p of poly[0]) { cx += p[0]; cy += p[1]; n++ }
+    }
+    return n > 0 ? [cx / n, cy / n] : null
   }
   if (type === 'LineString') {
     const pts = coords as number[][]
@@ -36,7 +46,7 @@ function distanceSq(a: [number, number], b: [number, number]): number {
   return dx * dx + dy * dy
 }
 
-const PROXIMITY_MAX_DIST_SQ = 250 * 250 // 250 SVG units ≈ 625 km
+const PROXIMITY_MAX_DIST_SQ = 250 * 250 // 250 SVG units ≈ 1000 km
 const PROXIMITY_MAX_RESULTS = 6
 const RELATED_MAX_TOTAL = 10
 
@@ -61,7 +71,8 @@ export function findRelatedFeatures(
 
   // 1. Trade route connections
   if (category === 'trade_route') {
-    const endpoints = (props.endpoints as string[]) || []
+    const endpoints = (props.route_endpoints as string[] | undefined)
+      ?? (props.endpoints as string[]) ?? []
     for (const f of allFeatures) {
       const fId = getFeatureId(f)
       const fCat = (f.properties.category as string) || ''
@@ -77,7 +88,10 @@ export function findRelatedFeatures(
     for (const f of allFeatures) {
       const fCat = (f.properties.category as string) || ''
       if (fCat === 'trade_route') {
-        const endpoints = (f.properties.endpoints as string[]) || []
+        // Multi-part routes carry their parent civ endpoints on
+        // `route_endpoints`; single-path routes keep them on `endpoints`.
+        const endpoints = (f.properties.route_endpoints as string[] | undefined)
+          ?? (f.properties.endpoints as string[]) ?? []
         if (endpoints.includes(civId)) {
           const other = endpoints.find((e) => e !== civId)
           add(f, `Trade route to ${other || 'unknown'}`, 'trade')
@@ -137,7 +151,7 @@ export function findRelatedFeatures(
 
     // Partial sort: only need the closest N
     candidates.sort((a, b) => a.distSq - b.distSq)
-    const kmPerSvgUnit = 2.5
+    const kmPerSvgUnit = worldScale.kmPerSvgUnit
     for (const { feature: f, distSq } of candidates.slice(0, PROXIMITY_MAX_RESULTS)) {
       const distKm = Math.round(Math.sqrt(distSq) * kmPerSvgUnit)
       add(f, `${distKm} km away`, 'proximity')

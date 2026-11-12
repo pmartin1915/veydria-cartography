@@ -173,14 +173,18 @@ describe('computePerKeyMetrics biting-tail disaggregation', () => {
 /* ─── Known-finding regression ─── */
 
 describe('known-finding regression', () => {
-  it('Ngaru Bon → Oravan, summer, safest buckets a repeated signature beat and presents customs-raid + plague-quarantine as interactive signature choices (promoted v1.1)', () => {
+  it('repeated signature beat: Kheshkai → Qollari, autumn, cheapest repeats a signature beat (promoted v1.1)', () => {
     // Was Kheshkai → Irrah, winter, direct until the Rubāṭ al-Darb waystation split the
     // Aethelian Basin ↔ Ngaru Bon Caravan Thread leg in two (same total km/days, one extra
     // pass-through node) — that extra edge shifts this crossing's per-edge encounter rolls
     // enough that it no longer repeats a beat here. Retargeted to a crossing this map
     // revision still exhibits both invariants on; see the comment below for why the exact
     // crossing is not itself load-bearing.
-    const opts = makePassageOpts(graph, 'ngaru_bon', 'oravan', 'summer', 'safest', STANDARD_SUPPLY, PASSAGE_PARTY)
+    // Retargeted again for the canon-2026-09-29 layout (phase 1): the map geometry
+    // change shifted every crossing's per-edge day counts, and no crossing now
+    // combines a repeated beat with both promoted choices — so the two invariants
+    // are asserted separately (next test).
+    const opts = makePassageOpts(graph, 'kheshkai', 'qollari', 'autumn', 'cheapest', STANDARD_SUPPLY, PASSAGE_PARTY)
     expect(opts).not.toBeNull()
     const state0 = initPassage(opts!)
     const fires = countSignatureFiresPerCrossing(state0)
@@ -191,7 +195,15 @@ describe('known-finding regression', () => {
     // shifts per-edge day counts and thus encounter-roll timing) — see above. The intent —
     // multiple interactive choices, including a repeat — is what this guards.
     expect(Math.max(0, ...fires.values())).toBeGreaterThanOrEqual(2)
+  })
 
+  it('customs-raid + plague-quarantine present as interactive signature choices (promoted v1.1)', () => {
+    // Ngaru Bon → Irrah, winter, direct carries both promoted beats on the
+    // canon-2026-09-29 layout (retargeted from the same Kheshkai → Irrah
+    // crossing as above, for the same map-revision reason).
+    const opts = makePassageOpts(graph, 'ngaru_bon', 'irrah', 'winter', 'direct', STANDARD_SUPPLY, PASSAGE_PARTY)
+    expect(opts).not.toBeNull()
+    const state0 = initPassage(opts!)
     const signatureKeys = new Set(Object.keys(SIGNATURE_CHOICES))
     const encs = allInitialEncounters(state0)
     // customs-raid + plague-quarantine were promoted to signature choices in v1.1.
