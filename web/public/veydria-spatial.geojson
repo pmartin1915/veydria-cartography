@@ -157589,6 +157589,106 @@
     {
       "type": "Feature",
       "geometry": {
+        "type": "Point",
+        "coordinates": [
+          700,
+          70
+        ]
+      },
+      "properties": {
+        "id": "ngon_tso",
+        "name": "Ngon-Tso",
+        "category": "landmark",
+        "type": "sacred_site",
+        "description": "Frozen sacred lake on the Ngaru-Bon crown, where the monastic astrologers keep their divination.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star",
+        "civ": "ngaru_bon"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          775,
+          130
+        ]
+      },
+      "properties": {
+        "id": "lha_drak",
+        "name": "Lha-Drak",
+        "category": "landmark",
+        "type": "sacred_site",
+        "description": "Sky-burial cliff and reliquary on the Ngaru-Bon crown.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star",
+        "civ": "ngaru_bon"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          930,
+          255
+        ]
+      },
+      "properties": {
+        "id": "xal_tzintla",
+        "name": "Xal-Tzintla",
+        "category": "landmark",
+        "type": "seasonal_camp",
+        "description": "The Dusty Valley: a great depression in the Kheshkai steppe where the herds shelter from winter storms.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star",
+        "civ": "kheshkai"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          675,
+          232
+        ]
+      },
+      "properties": {
+        "id": "iferis_sabkha",
+        "name": "Great White Sabkha",
+        "category": "landmark",
+        "type": "region",
+        "description": "The great white sabkha at Zin-Iferis's edge, where the desert's salt is cut.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star",
+        "civ": "irrah"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          695,
+          275
+        ]
+      },
+      "properties": {
+        "id": "central_erg",
+        "name": "Central Erg",
+        "category": "landmark",
+        "type": "region",
+        "description": "The deep-erg sand sea on the Spine between Qarat al-Fidda and Tin Mashraq. No living oasis lies between the two.",
+        "marker-color": "#c4a862",
+        "marker-symbol": "star",
+        "civ": "irrah"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
         "type": "LineString",
         "coordinates": [
           [
