@@ -50,7 +50,7 @@ function parseAttrs(tag) {
 }
 
 /** Collect <path>/<polygon>/<polyline> elements (never <line>) with parsed attrs. */
-function collectElements(svgText) {
+export function collectElements(svgText) {
   const elements = []
   for (const m of svgText.matchAll(/<(path|polygon|polyline)\b[^>]*\/?\s*>/g)) {
     elements.push({ tag: m[1], attrs: parseAttrs(m[0]) })
@@ -106,7 +106,7 @@ export function flattenPath(d) {
   return pts
 }
 
-function flattenPoints(attr) {
+export function flattenPoints(attr) {
   const nums = attr.match(/-?\d+\.?\d*/g).map(Number)
   const pts = []
   for (let i = 0; i + 1 < nums.length; i += 2) pts.push([nums[i], nums[i + 1]])
@@ -137,7 +137,7 @@ function convexHullClosed(pts) {
 }
 
 /** Signature matcher: exact attribute values, path/polygon/polyline only. */
-function matchBySignature(elements, sig) {
+export function matchBySignature(elements, sig) {
   return elements.filter((el) => {
     if (sig.tag && el.tag !== sig.tag) return false
     for (const [k, v] of Object.entries(sig.attrs)) {

@@ -1,0 +1,185 @@
+# Veydria terrain constraints: the contract Phase 3's terrain must pass.
+# Authored by hand (canon adjudication); spec: research/map-hardening/PHASE2-SPEC.md.
+# No coordinate is typed here. Points, rivers and routes are manifest IDs
+# (data/coordinate-manifest.yaml); lines are keys of data/terrain-geometry.yaml (generated).
+# Units: _u = schematic units (4 km each); elevations in metres above sea level.
+# Cites: SPINE = worldbuilder geography/continents/veydria-climate-spine.md,
+#        AUDIT = research/map-hardening/GEOGRAPHY-AUDIT-2026-11-10.md (cites loc/* there),
+#        MP = geography/MAP-PROMPT.md, TOPO = geography/continents/veydria-topology.yaml.
+# Bands marked "session" are the session's reading where canon gives no number; Perry may move them.
+
+meta:
+  km_per_unit: 4
+  sea_level_m: 0
+  canon_read_at: worldbuilder 4b9a331 (2026-11-11)
+  spec: research/map-hardening/PHASE2-SPEC.md
+
+defaults:
+  point_radius_u: 3
+  route_end_tol_u: 4
+  river_tol_u: 6
+  river_head_skip_u: 8
+  max_fill_m: 10
+  max_uphill_m: 3
+  bank_u: 2
+
+water_bodies:
+  basin: { manifest: water.aethelian_basin }
+  ocean: { rest: true }
+
+# Inputs for Phase 3 synthesis. Not checked here (Invariant 3: physical regions emerge).
+regions:
+  qollari:   { lat_n: [10, 16], elevation_m: [2500, 4500], notes: "NE foothills to ~23.5N, cloud forest; hard frost above ~3500 m", cite: "SPINE Latitude bands" }
+  oravan:    { lat_n: [12, 26], elevation_m: [0, 3000], notes: "volcanic chain; Tevalu sacred peak, Hineta active vent", cite: "SPINE Latitude bands; AUDIT Oravan" }
+  ndjadi:    { lat_n: [16, 24], elevation_m: [0, 50], notes: "sinking trough; fall ~50 m over ~1000 km (0.05 m/km)", cite: "SPINE Latitude bands; SPINE The floodplain" }
+  irrah:     { lat_n: [18, 29], elevation_m: [0, 1500], notes: "two lobes; north lobe gravel plateau, erg, sabkha, wadis only; SE lobe thorn-steppe to frankincense escarpments ~1500 m", cite: "SPINE Rulings 7; TOPO irrah" }
+  basin:     { lat_n: [24, 30], elevation_m: [0, 0], notes: "shallow sea; salt pans S/SE, salt-marsh N, grey mangrove S shore", cite: "SPINE Latitude bands; AUDIT Basin" }
+  kheshkai:  { lat_n: [24, 34], lip_m: [2000, 2500], interior_m: [3500, 4500], notes: "rises northward from the lip; east of the floodplain lower and drier", cite: "SPINE Rulings 4, 7" }
+  ngaru_bon: { lat_n: [28, 34], shelf_m: [1200, 2000], crown_m: [3500, 4800], notes: "shelf on the crown's south face; tsetse foothill belt below the shelf; do not stretch across the top of the map", cite: "SPINE Latitude bands; MP Ngaru-Bon" }
+  southern_rim: { elevation_m: [300, 900], east_escarpments_m: [900, 1500], notes: "old worn upland; short steep seaward face; long gentle landward face draining north", cite: "SPINE The southern rim" }
+  north_arm: { elevation_m: [0, 900], notes: "Basin's northern rim, limestone, winter-rain; no spine band (session)", cite: "SPINE Aethelian Basin row (northern rim)" }
+
+points:
+  # --- chokepoints ---
+  lam_chen_pass:       { class: inland, elevation_m: [1200, 3500], cite: "AUDIT: pass off the plateau down to the steppe; band session" }
+  a_tzalan_ford:       { class: inland, elevation_m: [0, 300], cite: "AUDIT: ford at the foot of Kheshkai's wall, steppe meets delta flood-flats" }
+  smith_spring:        { class: inland, elevation_m: [200, 1200], cite: "AUDIT: foot of the Ngaru-Bon escarpment, gravel plains; band session" }
+  breath_of_cloud:     { class: inland, elevation_m: [1800, 2600], cite: "SPINE Breath-of-Cloud: crest fringe of the wall, lip 2000-2500 m" }
+  qollari_cliff_roads: { class: inland, elevation_m: [1000, 4000], cite: "AUDIT: highland switchbacks; band session" }
+  halkar_straits:      { class: strait, axis: NS, min_u: 2, max_u: 28, cite: "loc/halkar-straits 'half a march wide' (~4 u) vs the schematic mouth (25 u): open item, max set to the schematic" }
+  # --- Basin ports ---
+  ki_mbuhari:          { class: coast, water: basin, faces: N, elevation_m: [0, 30], cite: "AUDIT: Basin SOUTH shore at the delta mouths" }
+  tavakh_qarat:        { class: coast, water: basin, faces: S, elevation_m: [0, 300], cite: "AUDIT: Basin NORTH shore, northern arm, limestone" }
+  halani_tamu:         { class: coast, water: basin, faces: W, radius_u: 5, elevation_m: [0, 150], cite: "AUDIT: Basin EAST shore, coral docks" }
+  dzong_tamu:          { class: coast, water: basin, faces: NW, radius_u: 9, elevation_m: [0, 150], cite: "AUDIT: Basin SOUTHEAST inner shore. radius 9: the schematic pin sits ~8 u offshore" }
+  veyd_kirrha:         { class: coast, water: basin, faces: N, elevation_m: [0, 400], cite: "AUDIT: Basin south shore west of Ki-Mbuhari; vent on a coastal road" }
+  tin_aghiz:           { class: coast, water: ocean, faces: SE, radius_u: 5, elevation_m: [0, 300], cite: "AUDIT new features; SPINE frankincense coast (SE ocean outlet)" }
+  # --- Basin waters ---
+  qhabal_ur:           { class: shoal, water: basin, radius_u: 3, cite: "loc/qhabal-ur: stepped platform half-submerged at high tide, Basin centre" }
+  tavakh_rubat:        { class: shoal, water: basin, radius_u: 3, cite: "loc/aethelian-basin: sandbar relay just inside the mouth" }
+  # --- Irrah oases and towns ---
+  qarat_al_fidda:      { class: inland, elevation_m: [100, 1000], cite: "AUDIT: centre of the northern lobe on the Spine; band session" }
+  ghadam_thalla:       { class: inland, elevation_m: [150, 1000], cite: "AUDIT: escarpment lip at the lobe's W/NW end; band session" }
+  tin_mashraq:         { class: inland, elevation_m: [200, 1300], cite: "AUDIT: east end of the Spine under Kheshkai's flank; band session" }
+  khulut:              { class: inland, elevation_m: [0, 400], cite: "AUDIT: south tip of the northern lobe at the delta's head" }
+  zin_iferis:          { class: inland, elevation_m: [0, 600], cite: "AUDIT: edge of the great white sabkha (sabkha near sea level, TOPO irrah)" }
+  rubat_al_darb:       { class: inland, elevation_m: [100, 1100], cite: "AUDIT: caravanserai on open desert east of the Basin (Irrah SE lobe); band session" }
+  # --- uplands ---
+  zang_ri:             { class: inland, elevation_m: [1200, 3500], cite: "AUDIT: hematite ridge, Ngaru-Bon shelf" }
+  dzong_kha:           { class: inland, elevation_m: [1500, 4500], cite: "AUDIT: southern foot of Lam-Chen; band session" }
+  zang_kalli:          { class: inland, elevation_m: [1800, 4500], cite: "AUDIT: steppe between A-Tzalan and Lam-Chen (Kheshkai plateau)" }
+  kalli_xal:           { class: inland, elevation_m: [1500, 2800], cite: "AUDIT: steppe rise east of Tepet-Apu, on the lip" }
+  kha_tepet:           { class: inland, elevation_m: [2500, 4800], radius_u: 5, cite: "AUDIT: steppe peak; band session" }
+  volata_xal:          { class: inland, cite: "AUDIT: inland steppe near the ford; no band (its water access is an open canon item)" }
+  apu_yana:            { class: inland, elevation_m: [1500, 4500], radius_u: 8, cite: "AUDIT: volcano on Qollari's eastern flank above the floodplain; radius wide because the point sits on the floodplain edge" }
+  wasi_puma:           { class: inland, elevation_m: [1500, 4000], cite: "AUDIT: Qollari fortified settlement" }
+  wasi_pukya:          { class: inland, elevation_m: [1000, 4000], cite: "AUDIT: Qollari cliff-road ledge spring" }
+  tepet_apu:           { class: inland, elevation_m: [200, 2500], radius_u: 5, cite: "AUDIT: shelf where steppe gives way to cloud-forest scrub on the Breath-of-Cloud descent; band session" }
+  # --- floodplain ---
+  ki_jenga:            { class: land, elevation_m: [0, 50], cite: "AUDIT: delta land, its cut below A-Tzalan near the wall" }
+  hassag_nganin:       { class: land, elevation_m: [0, 30], cite: "AUDIT: braided channels near the Basin shore" }
+  the_neck:            { class: land, elevation_m: [0, 50], sample: median, cite: "SPINE Breath-of-Cloud: the neck is lowland, floods every wet season" }
+  # --- Oravan ---
+  halkar_port:         { class: island, cite: "AUDIT: Oravan capital, the island nearest the straits" }
+  kelata:              { class: island, cite: "AUDIT: Oravan obsidian island" }
+  kelata_tamu:         { class: island, distinct_from: kelata, cite: "AUDIT: outer sister-island across a tidal channel" }
+  first_caldera:       { class: island, caldera: true, radius_u: 4, cite: "AUDIT: seawater-filled caldera on an inner Oravan island" }
+  morina:              { class: island, cite: "AUDIT new features: north end of the chain" }
+  arokar:              { class: island, cite: "AUDIT new features: south end of the chain" }
+
+lines:
+  kheshkai_wall:
+    geometry: kheshkai_wall
+    sides:
+      - { toward: S, offset_u: [4, 12], stat: median, elevation_m: [0, 400] }
+      - { toward: N, offset_u: [3, 10], stat: max, elevation_m: [1800, 3000] }
+    cite: "SPINE Rulings 4: lip 2000-2500 m over the floodplain; AUDIT: the sharpest break on the map"
+  kheshkai_east_margin:
+    geometry: kheshkai_east_margin
+    sides:
+      - { toward: N, offset_u: [3, 12], stat: max, elevation_m: [800, 2600] }
+      - { toward: S, offset_u: [3, 12], stat: median, elevation_m: [0, 1200] }
+    cite: "SPINE Rulings 7: east of the floodplain the margin is lower and drier; bands session"
+  ngaru_bon_west_escarpment:
+    geometry: ngaru_bon_west_escarpment
+    y_range: [100, 205]
+    sides:
+      - { toward: E, offset_u: [4, 12], stat: max, elevation_m: [1200, 4800] }
+      - { toward: W, offset_u: [4, 12], stat: median, elevation_m: [0, 1000] }
+    cite: "SPINE Ngaru-Bon shelf 1200-2000 m; AUDIT Smith-Spring at the escarpment foot"
+  southern_rim_west:
+    geometry: southern_rim_crest
+    x_range: [0, 900]
+    on_line: { stat: max, elevation_m: [250, 1000] }
+    water_within_u: { toward: S, max_u: 60 }
+    cite: "SPINE The southern rim: 300-900 m, short steep seaward face. max_u from the schematic (crest ~47 u from the coast), not from prose; Sol review"
+  southern_rim_east:
+    geometry: southern_rim_crest
+    x_range: [900, 1200]
+    on_line: { stat: max, elevation_m: [250, 1600] }
+    water_within_u: { toward: S, max_u: 60 }
+    cite: "SPINE The southern rim: rising to ~1500 m at the frankincense escarpments"
+
+rivers:
+  # Manifest rivers are stored source first. Tributaries meet at the neck; the distributaries
+  # fan NW from the apex to the Basin (MP Ndjadi Rivers; AUDIT Ndjadi).
+  ndjadi_tributary_north:         { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, entry_min_area_km2: 2000, cite: "entry is A-Tzalan Ford at the wall foot; flows west along it. entry area proves an upland catchment" }
+  ndjadi_tributary_wall_east:     { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, entry_min_area_km2: 1000, cite: "off the wall, west along its foot" }
+  ndjadi_trunk_east:              { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, min_area_km2: 20000, cite: "drains west along the wall's foot then north through the neck" }
+  ndjadi_tributary_west:          { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "western tributaries off Qollari" }
+  ndjadi_tributary_qollari_south: { kind: convergent, terminus: { disk: the_neck, r_u: 15 }, cite: "southern rivers turned north by the rim" }
+  ndjadi_dist_1: { kind: distributary, cite: "five distributaries fanning NW into the Basin at Ki-Mbuhari" }
+  ndjadi_dist_2: { kind: distributary, cite: "as above" }
+  ndjadi_dist_3: { kind: distributary, cite: "as above" }
+  ndjadi_dist_4: { kind: distributary, cite: "as above" }
+  ndjadi_dist_5: { kind: distributary, cite: "as above" }
+
+# C8: water topology and coast agreement (spec C8).
+coast:
+  mouth_cut: { point: halkar_straits, r_u: 23 }  # 23 = smallest disk covering the Basin polygon west of the mouth line (to x=268); r 20 leaks on the canon mask
+  basin_area_tol: 0.15
+  coast_band_u: 6
+  min_agree: 0.97
+free_zones:
+  # D7: terrain to the frame. The canon mask asserts nothing here.
+  - { name: unmapped_east, x_range: [1130, 1200], y_range: [0, 430] }
+
+# C9: coarse relief on eroded cores (political edges carry no weight).
+region_cores:
+  kheshkai_interior: { shape: civilizations.kheshkai, erode_u: 20, y_range: [0, 250], p10: [2000, 4800], p50: [3000, 4800], cite: "SPINE Rulings 4: interior 3500-4500 m" }
+  ngaru_bon:         { shape: civilizations.ngaru_bon, erode_u: 15, p10: [1000, 4800], p90: [3500, 4800], cite: "SPINE: shelf 1200-2000, crown 3500-4800" }
+  ndjadi:            { shape: civilizations.ndjadi, erode_u: 20, p50: [0, 50], p90: [0, 80], cite: "SPINE: 0-50 m trough" }
+  qollari:           { shape: civilizations.qollari, erode_u: 20, p75: [2500, 4800], cite: "SPINE: 2500-4500 m" }
+  irrah_north:       { shape: civilizations.irrah, erode_u: 15, p90: [0, 1500], cite: "SPINE: Irrah 0-1500 m" }
+  irrah_se:          { shape: "civilizations.irrah.extra_polygons[0]", erode_u: 15, p90: [0, 1600], cite: "SPINE: frankincense escarpments ~1500 m" }
+  southern_rim:      { shape: land.southern_rim, erode_u: 8, p90: [250, 1600], cite: "SPINE The southern rim" }
+  north_arm:         { shape: land.north_arm, erode_u: 10, p90: [0, 1200], cite: "session band" }
+
+ndjadi_outlet:
+  floodplain: civilizations.ndjadi
+  core_erode_u: 6
+  outlet_near: ki_mbuhari
+  outlet_r_u: 90
+  neck: the_neck
+  neck_r_u: 12
+  cite: "MP Ndjadi Rivers; edges/ndjadi_edges.md:121,127 — no channel runs south"
+
+routes:
+  # stops: named points where samples within route_end_tol_u are dropped (ports and waypoints).
+  copper_for_steel_road:    { mode: land }
+  highland_steppe_corridor: { mode: land, cite: "crosses the neck on levee ground in the dry season" }
+  coastal_monsoon:          { mode: sea, stops: [{ id: halkar_port, r_u: 23 }, halkar_straits, tavakh_rubat, tavakh_qarat, halani_tamu, dzong_tamu] }
+  scribal_ladder:           { modes: [ { vertices: [0, 2], mode: sea }, { vertices: [2, 3], mode: land } ], stops: [qhabal_ur] }
+  western_route:            { mode: sea, stops: [{ id: halkar_port, r_u: 23 }, halkar_straits], cite: "landfall at Halkar: the pin is mid-island, so the stop covers the island crossing" }
+  aethelian_basin_hub:      { parts: [ { mode: sea, stops: [halani_tamu, dzong_tamu, ki_mbuhari, qhabal_ur] }, { mode: river } ] }
+  highland_relay:           { parts: [ { mode: land }, { mode: land, cite: "Veyd-Kirrha's coastal road" } ] }
+  caravan_thread:           { mode: land }
+
+unplaced:
+  # Named physical features with no canon position. Not checked in v1. Perry question: place each
+  # upstream (worldbuilder positions.yaml authored_places, review: true) or let it emerge.
+  ngon_tso:    { kind: lake, relation: "frozen sacred lake on the Ngaru-Bon crown", cite: "edges/ngaru_bon_edges.md:19,130" }
+  lha_drak:    { kind: cliff, relation: "sky-burial and reliquary cliff on the crown", cite: "edges/ngaru_bon_edges.md:19,131" }
+  xal_tzintla: { kind: depression, relation: "Kheshkai steppe, still within grass", cite: "edges/kheshkai_edges.md:30,68" }
+  iferis_sabkha: { kind: sabkha, relation: "the great white sabkha at Zin-Iferis's edge, near sea level", cite: "loc/zin-iferis:76; TOPO irrah" }
+  central_erg: { kind: erg, relation: "deep-erg sand sea between tin_mashraq and qarat_al_fidda on the Spine", cite: "loc/thalli-ruins:44,133" }

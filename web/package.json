@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "sync:data": "node ../scripts/sync-world-data.mjs",
     "derive:manifest": "node ../scripts/derive-manifest.mjs",
+    "derive:terrain-geometry": "node ../scripts/derive-terrain-geometry.mjs",
     "build:asterisms": "node ../scripts/build-asterisms.mjs",
     "generate:calendar": "python ../generator/export/calendar_ts.py",
     "sim:journey": "vite-node ../scripts/sim/sim-journey.ts --",
