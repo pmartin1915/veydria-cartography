@@ -366,7 +366,7 @@ export function generateManifest({ positionsText, svgText, oldManifestText, toda
     if (!a.kind?.startsWith('landmark:')) throw new Error(`authored place ${slug} is not a landmark`)
     return {
       id: slug.replace(/-/g, '_'),
-      name: titleCase(slug),
+      name: a.name ?? titleCase(slug),
       coords: pxOf(a),
       type: a.kind.split(':')[1],
       description,
@@ -381,7 +381,13 @@ export function generateManifest({ positionsText, svgText, oldManifestText, toda
     newLandmark(
       'the-neck',
       "The lowland gap between Qollari's north-east foothills and the west end of Kheshkai's wall, where the Ndjadi drains north to the Basin."
-    )
+    ),
+    // Phase 2 decision Q5: the session placed these; positions.yaml marks them review: true.
+    newLandmark('ngon-tso', 'Frozen sacred lake on the Ngaru-Bon crown, where the monastic astrologers keep their divination.'),
+    newLandmark('lha-drak', 'Sky-burial cliff and reliquary on the Ngaru-Bon crown.'),
+    newLandmark('xal-tzintla', 'The Dusty Valley: a great depression in the Kheshkai steppe where the herds shelter from winter storms.'),
+    newLandmark('iferis-sabkha', "The great white sabkha at Zin-Iferis's edge, where the desert's salt is cut."),
+    newLandmark('central-erg', 'The deep-erg sand sea on the Spine between Qarat al-Fidda and Tin Mashraq. No living oasis lies between the two.')
   )
 
   // --- Waystations ---

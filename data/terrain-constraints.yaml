@@ -11,7 +11,7 @@
 meta:
   km_per_unit: 4
   sea_level_m: 0
-  canon_read_at: worldbuilder 4b9a331 (2026-11-11)
+  canon_read_at: worldbuilder 0b35f36 (2026-11-12)
   spec: research/map-hardening/PHASE2-SPEC.md
 
 defaults:
@@ -86,6 +86,15 @@ points:
   first_caldera:       { class: island, caldera: true, radius_u: 4, cite: "AUDIT: seawater-filled caldera on an inner Oravan island" }
   morina:              { class: island, cite: "AUDIT new features: north end of the chain" }
   arokar:              { class: island, cite: "AUDIT new features: south end of the chain" }
+  # --- placed by the session (Phase 2 Q5; positions.yaml authored_places; approved by Perry 2026-11-12) ---
+  # kind, relation and extent_u are inputs for Phase 3 synthesis and are not checked in v1: C1/C2 check
+  # only the class and the band at the centroid. Phase 3 must carve each kind (a crown lake, a cliff
+  # break, a closed depression, a flat salt pan, a dune field) and leave the closed basins unfilled.
+  ngon_tso:      { class: inland, kind: lake, elevation_m: [3500, 4800], relation: "frozen sacred lake on the Ngaru-Bon crown", cite: "edges/ngaru_bon_edges.md:19,130; band SPINE crown" }
+  lha_drak:      { class: inland, kind: cliff, elevation_m: [3500, 4800], relation: "sky-burial and reliquary cliff at the crown's south lip, over the shelf", cite: "edges/ngaru_bon_edges.md:19,131; band SPINE crown" }
+  xal_tzintla:   { class: inland, kind: depression, elevation_m: [2000, 3500], relation: "great closed depression in the mid plateau, still within grass; floor below its rim", cite: "kheshkai-steppe.yaml:40; edges/kheshkai_edges.md:30,68; band session" }
+  iferis_sabkha: { class: inland, kind: sabkha, extent_u: 16, elevation_m: [2, 60], sample: median, relation: "the great white sabkha; Zin-Iferis on its NE rim; the Zin-Iferis to Qarat road crosses its east side", cite: "loc/zin-iferis:76; TOPO irrah. floor 2 m, not 0: water is elev < sea level" }
+  central_erg:   { class: inland, kind: erg, extent_u: 18, elevation_m: [100, 1100], relation: "deep-erg sand sea on the Spine between tin_mashraq and qarat_al_fidda; neither oasis inside", cite: "loc/thalli-ruins:44,133; band session, between the two oases' bands" }
 
 lines:
   kheshkai_wall:
@@ -175,11 +184,6 @@ routes:
   highland_relay:           { parts: [ { mode: land }, { mode: land, cite: "Veyd-Kirrha's coastal road" } ] }
   caravan_thread:           { mode: land }
 
-unplaced:
-  # Named physical features with no canon position. Not checked in v1. Perry question: place each
-  # upstream (worldbuilder positions.yaml authored_places, review: true) or let it emerge.
-  ngon_tso:    { kind: lake, relation: "frozen sacred lake on the Ngaru-Bon crown", cite: "edges/ngaru_bon_edges.md:19,130" }
-  lha_drak:    { kind: cliff, relation: "sky-burial and reliquary cliff on the crown", cite: "edges/ngaru_bon_edges.md:19,131" }
-  xal_tzintla: { kind: depression, relation: "Kheshkai steppe, still within grass", cite: "edges/kheshkai_edges.md:30,68" }
-  iferis_sabkha: { kind: sabkha, relation: "the great white sabkha at Zin-Iferis's edge, near sea level", cite: "loc/zin-iferis:76; TOPO irrah" }
-  central_erg: { kind: erg, relation: "deep-erg sand sea between tin_mashraq and qarat_al_fidda on the Spine", cite: "loc/thalli-ruins:44,133" }
+unplaced: {}
+  # Empty since 2026-11-12: the five features once listed here were placed upstream (Phase 2
+  # decision Q5) and now live under points: "placed by the session".
