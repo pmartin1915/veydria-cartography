@@ -34,7 +34,8 @@ const SIG = {
   'lines.ngaru_bon_west_escarpment': { tag: 'path', attrs: { stroke: '#3a2e20', 'stroke-width': '1.1' }, count: 1 },
   'lines.ngaru_bon_east_edge': { tag: 'path', attrs: { stroke: '#5a4a35', 'stroke-dasharray': '5,2' }, count: 1 },
   'lines.southern_rim_crest': { tag: 'polyline', attrs: { stroke: '#6b4c2a', 'stroke-width': '1.4' }, count: 1 },
-  'land.north_arm': { tag: 'path', attrs: { fill: '#c4a862' }, count: 1 },
+  'land.continent': { tag: 'path', attrs: { fill: '#c4a862' }, count: 1 },
+  'land.north_arm': { tag: 'polygon', attrs: { fill: '#9fae5a' }, count: 1 },
   'land.southern_rim': { tag: 'polygon', attrs: { fill: '#8b7355' }, count: 1 },
   'land.oravan_islands': { tag: 'path', attrs: { stroke: '#3a7a3a' }, count: 8 },
 }

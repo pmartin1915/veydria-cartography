@@ -30,7 +30,8 @@ is an error.
 | `lines.ngaru_bon_west_escarpment` | `path`, stroke `#3a2e20`, width `1.1` (1) | The shelf's western scarp over Irrah's northern lobe |
 | `lines.ngaru_bon_east_edge` | `path`, stroke `#5a4a35`, dasharray `5,2` (1) | Boundary with Kheshkai. Stored only; not a physical break |
 | `lines.southern_rim_crest` | `polyline`, stroke `#6b4c2a`, width `1.4` (1) | The crest of the southern rim |
-| `land.north_arm` | `path`, fill `#c4a862` (1) | The Basin's northern arm (Tavakh-Qarat's coast) |
+| `land.continent` | `path`, fill `#c4a862` (1) | The continental base fill (the whole landmass outline) |
+| `land.north_arm` | `polygon`, fill `#9fae5a` (1) | The Basin's northern arm (Tavakh-Qarat's coast) |
 | `land.southern_rim` | `polygon`, fill `#8b7355` (1) | The southern rim upland |
 | `land.oravan_islands` | `path`, stroke `#3a7a3a` (8) | The eight islands, one ring each. The manifest only keeps their hull |
 | `basin_mouth` | `line`, x1=x2=`283`, stroke `#d6ecfa`, dasharray `2,2` (1) | Cut line between Basin and ocean water |
@@ -133,7 +134,7 @@ they join at Halkar.
   water must lie within ±67.5° of `faces: N|NE|E|SE|S|SW|W|NW`.
 - **`island`:**
   - The nearest land pixel within the disk belongs to a land component (8-connected) other than
-    the largest, with area at most `max_area_u2` (default 2500).
+    the largest, with area at most `max_area_u2` (default 5000; the largest schematic island is ~2,930 u²).
   - `distinct_from: <id>`, where given, means that point's component must differ.
   - `caldera: true` adds a requirement: some water pixel within `radius_u` (default 4 for a
     caldera) has a ring of radius 1.5 units around it that is at least 70% land in that island's
@@ -154,7 +155,8 @@ wall separates 50 m from 2,500 m.
   `modes: [{vertices: [i, j], mode}]` (vertex ranges of a single path).
 - Sample each part's polyline every `1/ppu` units. Drop samples within `route_end_tol_u` of the
   part's first and last vertex, of any vertex where the mode changes, and of any point named in
-  `stops` (manifest point IDs: ports and waypoints).
+  `stops` (manifest point IDs: ports and waypoints; a stop may be `{id, r_u}` to widen its radius,
+  as at Halkar, whose pin sits mid-island).
 - `land` and `river` parts: no sample on water.
 - `sea` parts: no sample on land.
 - Report each violating run as its start, end and length in units.

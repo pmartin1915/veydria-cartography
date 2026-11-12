@@ -50,10 +50,10 @@ points:
   # --- Basin ports ---
   ki_mbuhari:          { class: coast, water: basin, faces: N, elevation_m: [0, 30], cite: "AUDIT: Basin SOUTH shore at the delta mouths" }
   tavakh_qarat:        { class: coast, water: basin, faces: S, elevation_m: [0, 300], cite: "AUDIT: Basin NORTH shore, northern arm, limestone" }
-  halani_tamu:         { class: coast, water: basin, faces: W, elevation_m: [0, 150], cite: "AUDIT: Basin EAST shore, coral docks" }
-  dzong_tamu:          { class: coast, water: basin, faces: NW, elevation_m: [0, 150], cite: "AUDIT: Basin SOUTHEAST inner shore" }
+  halani_tamu:         { class: coast, water: basin, faces: W, radius_u: 5, elevation_m: [0, 150], cite: "AUDIT: Basin EAST shore, coral docks" }
+  dzong_tamu:          { class: coast, water: basin, faces: NW, radius_u: 9, elevation_m: [0, 150], cite: "AUDIT: Basin SOUTHEAST inner shore. radius 9: the schematic pin sits ~8 u offshore" }
   veyd_kirrha:         { class: coast, water: basin, faces: N, elevation_m: [0, 400], cite: "AUDIT: Basin south shore west of Ki-Mbuhari; vent on a coastal road" }
-  tin_aghiz:           { class: coast, water: ocean, faces: SE, elevation_m: [0, 300], cite: "AUDIT new features; SPINE frankincense coast (SE ocean outlet)" }
+  tin_aghiz:           { class: coast, water: ocean, faces: SE, radius_u: 5, elevation_m: [0, 300], cite: "AUDIT new features; SPINE frankincense coast (SE ocean outlet)" }
   # --- Basin waters ---
   qhabal_ur:           { class: shoal, water: basin, radius_u: 3, cite: "loc/qhabal-ur: stepped platform half-submerged at high tide, Basin centre" }
   tavakh_rubat:        { class: shoal, water: basin, radius_u: 3, cite: "loc/aethelian-basin: sandbar relay just inside the mouth" }
@@ -168,9 +168,9 @@ routes:
   # stops: named points where samples within route_end_tol_u are dropped (ports and waypoints).
   copper_for_steel_road:    { mode: land }
   highland_steppe_corridor: { mode: land, cite: "crosses the neck on levee ground in the dry season" }
-  coastal_monsoon:          { mode: sea, stops: [halkar_port, halkar_straits, tavakh_rubat, tavakh_qarat, halani_tamu, dzong_tamu] }
+  coastal_monsoon:          { mode: sea, stops: [{ id: halkar_port, r_u: 23 }, halkar_straits, tavakh_rubat, tavakh_qarat, halani_tamu, dzong_tamu] }
   scribal_ladder:           { modes: [ { vertices: [0, 2], mode: sea }, { vertices: [2, 3], mode: land } ], stops: [qhabal_ur] }
-  western_route:            { mode: sea, stops: [halkar_port, halkar_straits] }
+  western_route:            { mode: sea, stops: [{ id: halkar_port, r_u: 23 }, halkar_straits], cite: "landfall at Halkar: the pin is mid-island, so the stop covers the island crossing" }
   aethelian_basin_hub:      { parts: [ { mode: sea, stops: [halani_tamu, dzong_tamu, ki_mbuhari, qhabal_ur] }, { mode: river } ] }
   highland_relay:           { parts: [ { mode: land }, { mode: land, cite: "Veyd-Kirrha's coastal road" } ] }
   caravan_thread:           { mode: land }

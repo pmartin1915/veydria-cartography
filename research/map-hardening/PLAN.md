@@ -1,6 +1,6 @@
 # Map hardening: a Skyrim-grade relief map of the canonical continent
 
-Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **Phase 1 in progress (spec frozen 2026-11-11: PHASE1-SPEC.md).**
+Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **Phase 1 merged (#59). Phase 2 in progress (spec PHASE2-SPEC.md, Sol-reviewed 2026-11-11).**
 
 ## Goal
 
