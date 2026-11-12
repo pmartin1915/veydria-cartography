@@ -435,8 +435,8 @@ authored_places:
   # placed from canon prose against the 2026-09-29 schematic. extract-positions.mjs carries
   # this section over verbatim; it does not recompute it. Coordinates are normalized like the
   # rest of this file (x = px/1200, y = px/800); px keeps the schematic pixel value.
-  # kind is <manifest section>:<category or type>. review: true marks a placement canon
-  # leaves open, chosen by the session for Perry's review rather than read from a source.
+  # kind is <manifest section>:<category or type>. Placements canon leaves open were chosen by
+  # the session and approved by Perry on 2026-11-11 (cartography Phase 1 merge gate).
   # Route-bound waystations sit exactly on the schematic's styled route path.
   # Omitted on purpose: ayn-salqat (canon: it has no marker on the merchant schematic).
   places:
@@ -463,7 +463,6 @@ authored_places:
       civ: oravan
       rule: "islet off the outer (west) shore of Kelata's island, across a tidal channel; terrain phase raises the islet"
       cite: "geography/locations/kelata-tamu.md"
-      review: true
     wasi-pukya:
       x: 0.3782
       'y': 0.5794
@@ -510,7 +509,6 @@ authored_places:
       civ: irrah
       rule: "on the frankincense crossing (the Caravan Thread's open-desert leg on the canonical map) just inside Irrah's south-east thorn-steppe lobe; April placed it between the eastern ports and Ngaru-Bon"
       cite: "cartography coordinate-manifest (no worldbuilder location file)"
-      review: true
     halkar:
       x: 0.1792
       'y': 0.3375
@@ -543,7 +541,6 @@ authored_places:
       civ: qollari
       rule: "Qollari's eastern edge facing the floodplain (garrison against Ndjadi expansion)"
       cite: "geography/regions/qollari-highlands.yaml:49"
-      review: true
     kha-tepet:
       x: 0.8167
       'y': 0.4125
@@ -552,7 +549,6 @@ authored_places:
       civ: kheshkai
       rule: "steppe interior clear of routes; canon gives no position"
       cite: "geography/regions/kheshkai-steppe.yaml:44"
-      review: true
     kelata:
       x: 0.1375
       'y': 0.41
@@ -561,7 +557,6 @@ authored_places:
       civ: oravan
       rule: "centre of the third island from the north (the one south of Halkar's)"
       cite: "geography/regions/oravan-archipelago.yaml:39"
-      review: true
     first-caldera:
       x: 0.15
       'y': 0.605
@@ -570,7 +565,6 @@ authored_places:
       civ: oravan
       rule: "inner volcanic island (fifth from the north), east of its vent glyph"
       cite: "religion/05_pilgrimage_and_contested_sites/salt_and_shell_circuit.md:48"
-      review: true
     morina:
       x: 0.1233
       'y': 0.2725
@@ -607,7 +601,6 @@ authored_places:
     # extracted sections). off-map-west is the frame's west edge at the given y.
     scribal-ladder:
       stops: [ki-mbuhari, qhabal-ur, halani-tamu, qarat-al-fidda]
-      review: true
       cite: "cartography coordinate-manifest (pilgrimage route; Ki-Mbuhari to Halani-Tamu via the Basin, then overland into Irrah)"
     western-route:
       stops: [off-map-west@262, halanimoa, halkar, halkar-straits, tavakh-qarat]
