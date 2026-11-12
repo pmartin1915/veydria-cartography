@@ -1,6 +1,6 @@
 # Map hardening: a Skyrim-grade relief map of the canonical continent
 
-Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **Phase 1 merged (#59). Phase 2 built (PHASE2-SPEC.md, canon and prototype reports); next Phase 3 (terrain synthesis spec, Fable).**
+Started 2026-11-10. Owner: Perry. Boss: Claude (Opus). Status: **Phase 1 merged (#59). Phase 2 merged (#60); next Phase 3 (terrain synthesis spec, Fable).**
 
 ## Goal
 
@@ -141,3 +141,8 @@ and Kheshkai facing across the neck, and six Basin ports.
 
 - Q1 palette: decided (D6). Q2 unmapped edges: decided (D7).
 - Q3 saved data: decided 2026-11-11 (PHASE1-SPEC.md, "Perry's decisions").
+- Q4 Kelata-Tamu (2026-11-12): **Phase 3 adds an islet at the pin**, across a tidal channel from
+  Kelata. The pin and the canon prose stand (PHASE2-CANON-REPORT.md).
+- Q5 the unplaced features (2026-11-12): **the session places** Ngon-Tso, Lha-Drak, Xal-Tzintla,
+  the Iferis sabkha and the central erg in worldbuilder `positions.yaml` `authored_places`, marked
+  `review: true`, for Perry's approval. The constraints then reference them.

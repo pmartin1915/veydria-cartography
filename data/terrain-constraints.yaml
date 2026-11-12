@@ -82,7 +82,7 @@ points:
   # --- Oravan ---
   halkar_port:         { class: island, cite: "AUDIT: Oravan capital, the island nearest the straits" }
   kelata:              { class: island, cite: "AUDIT: Oravan obsidian island" }
-  kelata_tamu:         { class: island, distinct_from: kelata, cite: "AUDIT: outer sister-island across a tidal channel" }
+  kelata_tamu:         { class: island, distinct_from: kelata, cite: "AUDIT: outer sister-island across a tidal channel. Not drawn on the schematic; Phase 3 adds an islet at the pin (Perry 2026-11-12)" }
   first_caldera:       { class: island, caldera: true, radius_u: 4, cite: "AUDIT: seawater-filled caldera on an inner Oravan island" }
   morina:              { class: island, cite: "AUDIT new features: north end of the chain" }
   arokar:              { class: island, cite: "AUDIT new features: south end of the chain" }
