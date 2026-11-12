@@ -1,6 +1,6 @@
 # Phase 2 spec: terrain constraints and validator (the contract)
 
-Status: **draft 2026-11-11**, for review before implementation. Parent: `PLAN.md` Phase 2.
+Status: **frozen 2026-11-11** (Sol-reviewed spec; validator built and Sol-reviewed). Parent: `PLAN.md` Phase 2.
 Canon read at worldbuilder `4b9a331`.
 
 Phase 2 builds the test that Phase 3's terrain must pass. Nothing here generates terrain.

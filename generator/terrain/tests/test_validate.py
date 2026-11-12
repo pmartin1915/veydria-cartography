@@ -73,7 +73,7 @@ GOOD_META = {"px_per_unit": 1, "width_u": 4, "height_u": 3, "sea_level_m": 0,
 
 def test_preflight_ok(tmp_path):
     _write_bundle(tmp_path, GOOD_META, flat(3, 4))
-    bundle = V.load_bundle(tmp_path)
+    bundle = V.load_bundle(tmp_path, strict_frame=False)
     assert bundle.ppu == 1 and bundle.relief and bundle.elevation.shape == (3, 4)
 
 
@@ -82,13 +82,13 @@ def test_preflight_rejects_bad_ppu(tmp_path, ppu):
     meta = dict(GOOD_META, px_per_unit=ppu)
     _write_bundle(tmp_path, meta, flat(3, 4))
     with pytest.raises(V.PreflightError):
-        V.load_bundle(tmp_path)
+        V.load_bundle(tmp_path, strict_frame=False)
 
 
 def test_preflight_rejects_wrong_shape(tmp_path):
     _write_bundle(tmp_path, GOOD_META, flat(4, 4))
     with pytest.raises(V.PreflightError, match="shape"):
-        V.load_bundle(tmp_path)
+        V.load_bundle(tmp_path, strict_frame=False)
 
 
 def test_preflight_rejects_non_finite(tmp_path):
@@ -96,7 +96,7 @@ def test_preflight_rejects_non_finite(tmp_path):
     elev[1, 1] = np.nan
     _write_bundle(tmp_path, GOOD_META, elev)
     with pytest.raises(V.PreflightError, match="non-finite"):
-        V.load_bundle(tmp_path)
+        V.load_bundle(tmp_path, strict_frame=False)
 
 
 # ---------------------------------------------------------------------------
@@ -769,8 +769,8 @@ def test_canon_mask_bundle_and_validate(tmp_path):
 
 
 def test_cli_end_to_end(tmp_path):
-    bundle_dir = _write_bundle(tmp_path / "bundle", dict(GOOD_META, width_u=20, height_u=15),
-                               flat(15, 20))
+    bundle_dir = _write_bundle(tmp_path / "bundle", dict(GOOD_META, width_u=1200, height_u=800),
+                               flat(800, 1200))
     constraints = tmp_path / "constraints.yaml"
     constraints.write_text(yaml.safe_dump({
         "points": {"p": {"class": "inland"}},
@@ -794,7 +794,7 @@ def test_cli_end_to_end(tmp_path):
 
     # a failing check exits 1
     np.save(bundle_dir / "elevation.npy",
-            np.full((15, 20), WATER, dtype=np.float32))
+            np.full((800, 1200), WATER, dtype=np.float32))
     code = V.main([str(bundle_dir), "--constraints", str(constraints),
                    "--manifest", str(manifest), "--geometry", str(geometry),
                    "--checks", "C1"])
@@ -806,3 +806,101 @@ def test_cli_preflight_rejects(tmp_path, capsys):
     code = V.main([str(tmp_path / "bundle")])
     assert code == 2
     assert "PREFLIGHT" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# Regressions for the Sol code review of 17a9877 (one per finding)
+# ---------------------------------------------------------------------------
+
+def test_preflight_rejects_redefined_frame(tmp_path):
+    """Spec B: the frame is fixed at 1200x800; a bundle may not redefine it."""
+    _write_bundle(tmp_path, GOOD_META, flat(3, 4))
+    with pytest.raises(V.PreflightError, match="frame"):
+        V.load_bundle(tmp_path)
+
+
+def test_c8b_fail_small_leaking_fragment():
+    """A small Basin fragment still joined to the ocean after the cut must FAIL."""
+    elev = flat(12, 14)
+    elev[1:9, 1:5] = WATER          # basin reservoir
+    elev[5, 5:14] = WATER           # channel from the reservoir east to the ocean
+    elev[:, 13] = WATER             # ocean column outside the basin polygon
+    cons = {"coast": {"mouth_cut": {"point": "m", "r_u": 0.6}}}
+    man = _merge(basin_manifest(0, 0, 8, 10), points_manifest(m=(5.5, 5.5)))
+    rows = V.check_c8(make_ctx(elev, cons=cons, man=man))
+    assert result_of(rows, "C8b:mouth") == V.FAIL
+
+
+def test_c6_joint_requires_tests_together():
+    """Each side passes 4/5 stations, but only 3/5 jointly: the joint row FAILs."""
+    elev = flat(11, 9, 100.0)
+    elev[4, 3] = 0.0    # north of station x=3.5 fails
+    elev[6, 4] = 0.0    # south of station x=4.5 fails
+    geo = {"lines": {"l": [[2.5, 5.5], [6.5, 5.5]]}}
+    cons = {"lines": {"l": {"geometry": "l", "station_u": 1, "sides": [
+        {"toward": "N", "offset_u": [1, 1], "stat": "max", "elevation_m": [100, 100]},
+        {"toward": "S", "offset_u": [1, 1], "stat": "max", "elevation_m": [100, 100]}]}}}
+    rows = V.check_c6(make_ctx(elev, cons=cons, geo=geo))
+    assert result_of(rows, "C6:l:side-N") == V.PASS
+    assert result_of(rows, "C6:l:side-S") == V.PASS
+    assert result_of(rows, "C6:l:joint") == V.FAIL
+
+
+def test_c6_single_station_has_real_perpendicular():
+    """One station: the side sample must leave the line, not reread the station."""
+    elev = flat(11, 11, 100.0)
+    elev[4, 5] = 0.0    # the pixel one unit north of the station
+    geo = {"lines": {"l": [[5.5, 5.5], [6.5, 5.5]]}}
+    cons = {"lines": {"l": {"geometry": "l", "station_u": 10, "sides": [
+        {"toward": "N", "offset_u": [1, 1], "stat": "max", "elevation_m": [100, 100]}]}}}
+    rows = V.check_c6(make_ctx(elev, cons=cons, geo=geo))
+    assert result_of(rows, "C6:l:side-N") == V.FAIL
+
+
+def test_c1_shoal_dry_ring_fails():
+    """A ring that is almost all land fails even if its little water is the right body."""
+    elev = flat(30, 30, 1.0)
+    elev[15, 18] = -1.0
+    cons = {"points": {"p": {"class": "shoal", "water": "basin", "radius_u": 3}}}
+    man = _merge(points_manifest(p=(15.5, 15.5)), basin_manifest(0, 0, 30, 30))
+    rows = V.check_c1(make_ctx(elev, cons=cons, man=man))
+    assert result_of(rows, "C1:p") == V.FAIL
+
+
+def test_c4_ocean_terminus_rejects_basin_water():
+    elev = np.array([[13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, -1]], dtype=float)
+    elev = np.repeat(elev, 3, axis=0)
+    cons = {"rivers": {"r": {"kind": "convergent",
+                             "terminus": {"water": "ocean", "near": "e", "r_u": 2}}},
+            "defaults": {"river_head_skip_u": 0, "river_tol_u": 2}}
+    man = _merge(_merge({"rivers": {"r": {"path": [[0.5, 1.5], [13.5, 1.5]]}}},
+                        basin_manifest(12, 0, 14, 3)), points_manifest(e=(13.5, 1.5)))
+    rows = V.check_c4(make_ctx(elev, cons=cons, man=man))
+    assert result_of(rows, "C4:r") == V.FAIL
+
+
+def test_c5c_neck_cell_is_water_fails():
+    elev = np.array([[10, -1, 8, 7, -1]] * 3, dtype=float)
+    cons = {"ndjadi_outlet": {"floodplain": "civilizations.nd", "neck": "n",
+                              "outlet_near": "o", "outlet_r_u": 10}}
+    man = _merge(_merge(basin_manifest(4, 0, 5, 3), points_manifest(n=(1.9, 1.5), o=(4.5, 1.5))),
+                 {"civilizations": {"nd": {"polygon": [[0, 0], [5, 0], [5, 3], [0, 3]]}}})
+    row = V._check_c5c(make_ctx(elev, cons=cons, man=man), cons["ndjadi_outlet"])
+    assert row.result == V.FAIL and "containing the neck is water" in row.detail
+
+
+def test_c5a_southern_trace_ending_on_land_counts():
+    """A southern core cell whose trace never reaches water still counts against the neck."""
+    elev = flat(20, 20, 50.0)
+    elev[:3, :] = WATER                 # basin to the north
+    yy = np.arange(20)[:, None] * 1.0
+    elev[3:12, :] = (yy[3:12] * 2.0).repeat(20, axis=1)   # drains north
+    elev[14:, :] = 5.0                  # southern pit: lower than its rim, stays a sink
+    elev[12:14, :] = 60.0
+    cons = {"ndjadi_outlet": {"floodplain": "civilizations.nd", "core_erode_u": 0,
+                              "outlet_near": "o", "outlet_r_u": 100, "neck": "n", "neck_r_u": 2}}
+    man = _merge(_merge(basin_manifest(0, 0, 20, 3), points_manifest(o=(10, 1), n=(10, 12.5))),
+                 {"civilizations": {"nd": {"polygon": [[0, 3], [20, 3], [20, 20], [0, 20]]}}})
+    rows = V._check_c5a(make_ctx(elev, cons=cons, man=man), cons["ndjadi_outlet"])
+    neck = [r for r in rows if r.item == "C5a:neck"][0]
+    assert neck.result == V.FAIL

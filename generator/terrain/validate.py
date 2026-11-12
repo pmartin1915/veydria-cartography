@@ -90,7 +90,7 @@ class Bundle:
         return int(self.meta["px_per_unit"])
 
 
-def load_bundle(path: Union[str, Path]) -> Bundle:
+def load_bundle(path: Union[str, Path], strict_frame: bool = True) -> Bundle:
     """Load a bundle and apply the spec B preflight rules.
 
     Rejects (PreflightError) when ppu is not a positive integer, when the
@@ -106,6 +106,10 @@ def load_bundle(path: Union[str, Path]) -> Bundle:
         raise PreflightError(f"px_per_unit must be a positive integer, got {ppu!r}")
     width_u = meta.get("width_u", FRAME_W_U)
     height_u = meta.get("height_u", FRAME_H_U)
+    if strict_frame and (width_u, height_u) != (FRAME_W_U, FRAME_H_U):
+        # spec B: the frame is the schematic viewBox; a bundle may not redefine it.
+        # strict_frame=False exists only for small synthetic test fixtures.
+        raise PreflightError(f"frame {width_u}x{height_u} != the contract's {FRAME_W_U}x{FRAME_H_U}")
     elev_file = bundle_dir / meta.get("elevation", "elevation.npy")
     if not elev_file.is_file():
         raise PreflightError(f"missing elevation file {elev_file}")
@@ -346,6 +350,8 @@ class Context:
 # Flow machinery (spec C4): priority flood, D8, trace.
 # ---------------------------------------------------------------------------
 
+# shortcut: pure-Python heapq flood + per-cell C5(a) traces, ~2 min on the full frame;
+# move to numba or a vectorised flood if Phase 3 runs the validator in a tight loop.
 def _priority_flood(elev: np.ndarray, water: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Priority-flood depression filling with water pixels as outlets (spec C4)."""
     filled = elev.astype(np.float64).copy()
@@ -721,9 +727,9 @@ def _shoal_row(ctx, item, entry, x, y, rr, cc) -> Row:
     if body == "basin" and basin_mask is None:
         return Row(item, SKIP, "manifest has no aethelian_basin polygon")
     body_water = w & basin_mask if body == "basin" else w if basin_mask is None else w & ~basin_mask
-    frac = body_water.sum() / w.sum()
+    frac = body_water.sum() / w.size  # of the whole ring, land included (spec C1 shoal)
     return Row(item, _result(frac >= 0.75),
-               f"shoal band pixel present; {frac:.2f} of ring water is {body} (>=0.75)")
+               f"shoal band pixel present; {frac:.2f} of the ring is {body} water (>=0.75)")
 
 
 def check_c2(ctx: Context) -> list[Row]:
@@ -992,6 +998,8 @@ def check_c4(ctx: Context) -> list[Row]:
                     continue
                 if not in_basin:
                     failures.append("trace ends in water, but not Basin water")
+            elif term["water"] == "ocean" and ctx.basin_cover_point(cx, cy):
+                failures.append("trace ends in Basin water, not ocean")
             if not near_ok:
                 failures.append(f"trace end ({cx:.1f},{cy:.1f}) not within r={r_u} of {near_id!r}")
         else:
@@ -1097,6 +1105,11 @@ def _check_c5a(ctx, params) -> list[Row]:
         end = trace[-1]
         ex, ey = cell_xy(end)
         er, ec = divmod(end, cols_c)
+        if (r + 0.5) > neck_y:  # counted before the terminal test (Sol review)
+            n_south += 1
+            if any((cx - neck_x) ** 2 + (cy - neck_y) ** 2 <= neck_r2
+                   for cx, cy in (cell_xy(t) for t in trace)):
+                n_south_neck += 1
         if not water_c[er, ec]:
             continue  # ended on land/cycle/edge: counted in neither water bucket
         in_basin = ctx.basin_cover_point(ex, ey)
@@ -1104,11 +1117,6 @@ def _check_c5a(ctx, params) -> list[Row]:
             n_ocean += 1
         elif in_basin and (ex - outlet_x) ** 2 + (ey - outlet_y) ** 2 <= outlet_r2:
             n_basin += 1
-        if (r + 0.5) > neck_y:
-            n_south += 1
-            if any((cx - neck_x) ** 2 + (cy - neck_y) ** 2 <= neck_r2
-                   for cx, cy in (cell_xy(t) for t in trace)):
-                n_south_neck += 1
     total = int(core_rr.size)
     rows = [
         Row(f"{item}:ocean", _result(n_ocean == 0),
@@ -1117,7 +1125,7 @@ def _check_c5a(ctx, params) -> list[Row]:
             f"{n_basin}/{total} core traces end in Basin water within "
             f"outlet_r_u {float(params.get('outlet_r_u', 90)):.0f} of "
             f"{params['outlet_near']!r} (>=99%)"),
-        Row(f"{item}:neck", _result(n_south == 0 or n_south_neck >= 0.95 * n_south),
+        Row(f"{item}:neck", SKIP if n_south == 0 else _result(n_south_neck >= 0.95 * n_south),
             f"{n_south_neck}/{n_south} southern core traces pass within neck_r_u "
             f"{float(params.get('neck_r_u', 12)):.0f} of {params['neck']!r} (>=95%)"),
     ]
@@ -1228,9 +1236,13 @@ def _check_c5c(ctx, params) -> Row:
         outlet_x, outlet_y = resolve_point(ctx.manifest, params["outlet_near"])
     except KeyError as exc:
         return Row(item, SKIP, str(exc))
-    start = _nearest_land_cell(elev_c, water_c, neck_x, neck_y)
-    if start is None:
-        return Row(item, FAIL, "no coarse land cell at the neck")
+    # spec C5c: the coarse cell that CONTAINS the neck, never a snapped neighbour
+    nr, nc = int(np.floor(neck_y)), int(np.floor(neck_x))
+    if not (0 <= nr < elev_c.shape[0] and 0 <= nc < elev_c.shape[1]):
+        return Row(item, SKIP, "neck point outside the frame")
+    if water_c[nr, nc]:
+        return Row(item, FAIL, "the coarse cell containing the neck is water")
+    start = nr * elev_c.shape[1] + nc
     trace, terminal = _trace(start, down, water_c)
     cols_c = elev_c.shape[1]
     end = trace[-1]
@@ -1284,29 +1296,47 @@ def check_c6(ctx: Context) -> list[Row]:
                             f"no stations along {geom_key!r} within the given ranges"))
             continue
         min_frac = float(entry.get("min_frac", 0.8))
+        results = []  # (Row, per-station oks or None when the test SKIPs)
         for side in entry.get("sides", []):
-            rows.append(_c6_side(ctx, name, geom_key, stations, side, min_frac))
+            results.append(_c6_side(ctx, name, points, stations, side, min_frac))
         if "on_line" in entry:
-            rows.append(_c6_on_line(ctx, name, geom_key, stations, entry["on_line"], min_frac))
+            results.append(_c6_on_line(ctx, name, points, stations, entry["on_line"], min_frac))
         if "water_within_u" in entry:
-            rows.append(_c6_water_within(ctx, name, geom_key, stations,
-                                         entry["water_within_u"], min_frac))
-        if not (entry.get("sides") or "on_line" in entry or "water_within_u" in entry):
+            results.append(_c6_water_within(ctx, name, points, stations,
+                                             entry["water_within_u"], min_frac))
+        if not results:
             rows.append(Row(f"C6:{name}", SKIP, "no tests configured for this line"))
+            continue
+        rows.extend(r for r, _ in results)
+        # spec C6: the tests must hold TOGETHER at >= min_frac of stations (Sol review)
+        live = [oks for _, oks in results if oks is not None]
+        if len(live) > 1:
+            joint = sum(all(t[i] for t in live) for i in range(len(stations)))
+            frac = joint / len(stations)
+            rows.append(Row(f"C6:{name}:joint", _result(frac >= min_frac),
+                            f"{joint}/{len(stations)} stations pass all {len(live)} tests "
+                            f"together ({frac:.2f} >= {min_frac})"))
     return rows
 
 
-def _side_direction(stations, idx, toward):
+def _tangent_at(points, arc):
+    """Direction of the polyline segment containing arc length `arc`."""
+    acc = 0.0
+    for (x0, y0), (x1, y1) in zip(points[:-1], points[1:]):
+        seg = float(np.hypot(x1 - x0, y1 - y0))
+        if seg > 0 and arc <= acc + seg + 1e-9:
+            return x1 - x0, y1 - y0
+        acc += seg
+    (x0, y0), (x1, y1) = points[-2], points[-1]
+    return x1 - x0, y1 - y0
+
+
+def _side_direction(points, stations, idx, toward):
     """Unit perpendicular at a station whose dot product with the compass
-    vector is positive (spec C6 Sides)."""
-    _, x, y = stations[idx]
-    if len(stations) >= 2:
-        i0 = max(idx - 1, 0)
-        i1 = min(idx + 1, len(stations) - 1)
-        tx = stations[i1][1] - stations[i0][1]
-        ty = stations[i1][2] - stations[i0][2]
-    else:
-        tx, ty = stations[-1][1] - stations[0][1], stations[-1][2] - stations[0][2]
+    vector is positive (spec C6 Sides). The tangent comes from the original
+    polyline, so a single station still has a real perpendicular (Sol review)."""
+    arc, x, y = stations[idx]
+    tx, ty = _tangent_at(points, arc)
     norm = float(np.hypot(tx, ty)) or 1.0
     px, py = -ty / norm, tx / norm
     dx, dy = COMPASS[toward]
@@ -1315,21 +1345,22 @@ def _side_direction(stations, idx, toward):
     return -px, -py
 
 
-def _c6_side(ctx, name, geom_key, stations, side, min_frac) -> Row:
+def _c6_side(ctx, name, points, stations, side, min_frac) -> tuple[Row, Optional[list[bool]]]:
     item = f"C6:{name}:side-{side.get('toward')}"
     if not ctx.relief:
-        return Row(item, SKIP, "bundle declares relief: false (spec D)")
+        return Row(item, SKIP, "bundle declares relief: false (spec D)"), None
     toward = side.get("toward")
     if toward not in COMPASS:
-        return Row(item, SKIP, f"unknown toward {toward!r}")
+        return Row(item, SKIP, f"unknown toward {toward!r}"), None
     a, b = (float(v) for v in side.get("offset_u", [1, 3]))
     lo, hi = (float(v) for v in side.get("elevation_m", [0, 1e9]))
     stat = side.get("stat", "median")
     step = 1.0 / ctx.ppu
     ok_count = 0
+    oks: list[bool] = []
     for idx in range(len(stations)):
         _, x, y = stations[idx]
-        px, py = _side_direction(stations, idx, toward)
+        px, py = _side_direction(points, stations, idx, toward)
         vals = []
         off = a
         while off <= b + 1e-9:
@@ -1338,48 +1369,52 @@ def _c6_side(ctx, name, geom_key, stations, side, min_frac) -> Row:
                 vals.append(ctx.elev[int(sy * ctx.ppu), int(sx * ctx.ppu)])
             off += step
         if not vals:
+            oks.append(False)
             continue
         value = float(np.max(vals)) if stat == "max" else float(np.median(vals))
-        if lo <= value <= hi:
-            ok_count += 1
+        oks.append(lo <= value <= hi)
+        ok_count += oks[-1]
     frac = ok_count / len(stations)
     return Row(item, _result(frac >= min_frac),
                f"{ok_count}/{len(stations)} stations ({frac:.2f} >= {min_frac}) with {stat} "
-               f"over offset [{a},{b}] toward {toward} in [{lo:.0f},{hi:.0f}] m")
+               f"over offset [{a},{b}] toward {toward} in [{lo:.0f},{hi:.0f}] m"), oks
 
 
-def _c6_on_line(ctx, name, geom_key, stations, spec, min_frac) -> Row:
+def _c6_on_line(ctx, name, points, stations, spec, min_frac) -> tuple[Row, Optional[list[bool]]]:
     item = f"C6:{name}:on_line"
     if not ctx.relief:
-        return Row(item, SKIP, "bundle declares relief: false (spec D)")
+        return Row(item, SKIP, "bundle declares relief: false (spec D)"), None
     lo, hi = (float(v) for v in spec.get("elevation_m", [0, 1e9]))
     stat = spec.get("stat", "max")
     ok_count = 0
+    oks: list[bool] = []
     for _, x, y in stations:
         disk = ctx.disk(x, y, 1.0)
         if disk is None:
+            oks.append(False)
             continue
         vals = ctx.elev[disk]
         value = float(np.max(vals)) if stat == "max" else float(np.median(vals))
-        if lo <= value <= hi:
-            ok_count += 1
+        oks.append(lo <= value <= hi)
+        ok_count += oks[-1]
     frac = ok_count / len(stations)
     return Row(item, _result(frac >= min_frac),
                f"{ok_count}/{len(stations)} stations ({frac:.2f} >= {min_frac}) with {stat} "
-               f"of 1-u disk in [{lo:.0f},{hi:.0f}] m")
+               f"of 1-u disk in [{lo:.0f},{hi:.0f}] m"), oks
 
 
-def _c6_water_within(ctx, name, geom_key, stations, spec, min_frac) -> Row:
+def _c6_water_within(ctx, name, points, stations, spec, min_frac) -> tuple[Row, Optional[list[bool]]]:
     item = f"C6:{name}:water_within"
     toward = spec.get("toward")
     if toward not in COMPASS:
-        return Row(item, SKIP, f"unknown toward {toward!r}")
+        return Row(item, SKIP, f"unknown toward {toward!r}"), None
     max_u = float(spec.get("max_u", 60))
     step = 1.0 / ctx.ppu
     ok_count = 0
+    oks: list[bool] = []
     for idx in range(len(stations)):
         _, x, y = stations[idx]
-        px, py = _side_direction(stations, idx, toward)
+        px, py = _side_direction(points, stations, idx, toward)
         found = False
         off = step
         while off <= max_u + 1e-9:
@@ -1390,12 +1425,12 @@ def _c6_water_within(ctx, name, geom_key, stations, spec, min_frac) -> Row:
                 found = True
                 break
             off += step
-        if found:
-            ok_count += 1
+        oks.append(found)
+        ok_count += found
     frac = ok_count / len(stations)
     return Row(item, _result(frac >= min_frac),
                f"{ok_count}/{len(stations)} stations ({frac:.2f} >= {min_frac}) with water "
-               f"toward {toward} within {max_u:.0f} u")
+               f"toward {toward} within {max_u:.0f} u"), oks
 
 
 # ---------------------------------------------------------------------------
@@ -1473,9 +1508,9 @@ def _c8b(ctx, coast, in_basin_poly, water) -> Row:
     if not basin_water.any():
         return Row("C8b:mouth", SKIP, "no Basin water left after mouth cut; no samples")
     labels4, _ = ndimage.label(water_cut, structure=CONN4)
-    comp_sizes = np.bincount(labels4[basin_water].ravel())
-    basin_comp = comp_sizes.argmax()
-    comp = labels4 == basin_comp
+    # every post-cut component holding Basin water, not only the largest (Sol review)
+    comps = np.unique(labels4[basin_water])
+    comp = np.isin(labels4, comps[comps > 0])
     leaks = int((comp & ~in_basin_poly).sum())
     return Row("C8b:mouth", _result(leaks == 0),
                f"after mouth cut r={radius} u at {point_id!r}: {leaks} Basin-component "

@@ -136,7 +136,7 @@ rivers:
 
 # C8: water topology and coast agreement (spec C8).
 coast:
-  mouth_cut: { point: halkar_straits, r_u: 15 }
+  mouth_cut: { point: halkar_straits, r_u: 23 }  # 23 = smallest disk covering the Basin polygon west of the mouth line (to x=268); r 20 leaks on the canon mask
   basin_area_tol: 0.15
   coast_band_u: 6
   min_agree: 0.97
