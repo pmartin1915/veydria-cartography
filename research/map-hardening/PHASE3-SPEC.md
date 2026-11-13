@@ -249,7 +249,8 @@ The skeleton is a directed tree of coarse cells with a fixed elevation for each 
    The northern tributary and the wall-east tributary run 3 to 5 u apart for 60 u along the wall's
    foot; they merge there. A shared chain must stay within 4 u of every polyline it replaces, which
    leaves 2 u of C4's 6 u tolerance.
-3. **Trunk.** All chains join inside the neck disk. The trunk runs from the join through the coarse
+3. **Trunk** (amended in M2, section 14: the eastern chains join at the confluence).
+   All chains join inside the neck disk. The trunk runs from the join through the coarse
    cell holding `the_neck` to the delta apex, then down distributary 3 to the shore. Distributary 3
    is the single coarse outlet, because a lowest-neighbour rule cannot split (C5c).
 4. **Outlet.** The trunk's last land cell is 8-adjacent to a coarse cell that is water by the
@@ -258,7 +259,8 @@ The skeleton is a directed tree of coarse cells with a fixed elevation for each 
 5. **Long profiles.** Elevations fall strictly downstream, cell by cell, and are set from the ends,
    not from a fixed slope:
    - the trunk's last land cell is 0.9 m, the apex `apex_m` (9 m), the neck `neck_m` (11 m). Between
-     the apex and the last land cell the trunk is linear in the row: `T(row)`, about 0.19 m per
+     the apex and the last land cell the trunk is linear in the row: `T(row)` (amended in M2,
+     section 14: `T(y)` at the polyline's own `y` inside the cell), about 0.19 m per
      row. The skeleton's heights are the one profile; S5 derives everything else from them;
    - each chain rises upstream from its join at
      `min(0.2 m/u, (skeleton_top_m - join height) / chain length)`, with `skeleton_top_m = 36`.
@@ -312,7 +314,8 @@ skeleton cell within 4 u.
    - Every non-source cell has a neighbour that is strictly lower: its Dijkstra parent. Every levee
      and fan cell has a lower neighbour by 3 and 4. So the surface has **no pits**, and every
      descent ends on the skeleton or the fan and then in the Basin.
-   - `s_plain` is not a free number. It is `min(0.35, (48 - 36.3) / D)` m/u, where `D` is the
+   - `s_plain` is not a free number (amended in M2, section 14: the highest source on `Lk`
+     replaces 36.3). It is `min(0.35, (48 - 36.3) / D)` m/u, where `D` is the
      largest Dijkstra distance in `Lk`. Assert `max(h on Lk) <= 48`.
    - Fans where canon rivers enter the plain (a cone of up to 4 m over 15 u at each entry) are
      added to the source heights before Dijkstra runs, never after.
@@ -387,6 +390,7 @@ bowl's erodibility to zero and rebuild; if it still is not, the bowl is too smal
      water block that touches `Lk` must be water: at least half negative. Along the delta front the
      fine shoreline is drawn so that this holds: a block whose centre is outside the Basin polygon
      is given at least 9 of 16 land pixels. The land advances, which the one-sided shore allows.
+     (Amended in M2, section 14: S5 already does this; S8 keeps it true.)
    - **Elevation.** For every `Lk` block, add one constant to its **land pixels that are not bed
      pixels** (S9) so the block mean equals the coarse value. Beds are never moved by the restore.
      The constant is never negative enough to bring a ground pixel within 0.6 m of a bed in the
@@ -541,7 +545,7 @@ Found while reading the contract against the geometry. Each has a named answer.
 | A-Tzalan Ford sits on the wall line and needs ground under 300 m within 3 u | The scarp foot must be within 2 u south of the line | S3.4 foot at `o <= -2` |
 | Breath-of-Cloud is 5 u north of the line, 8 u from the wall's west end, and needs 1,800 m within 3 u | The lip must be up by `o = +5` and must not taper before the end vertex | S3.4 lip and quarter-round |
 | The five distributaries are under 2 u apart for the first 8 u below the apex | A bank sample can land in the next channel. At 3 px wide, 12 to 22% of samples do (distributary 2 worst), against a 20% allowance. With one-sample beds it is 3 to 6% | S9 "The fan": one-sample-wide beds, one bed function, a 10% gate |
-| The distributary mouths lie 1 u inside the Basin polygon's south edge | The validator calls a block water when half its pixels are negative, whatever its mean. A shore block centred outside the polygon would count as ocean | S8.6 class rule |
+| The distributary mouths lie 1 u inside the Basin polygon's south edge (true of 1 to 3 only; see section 14, M2) | The validator calls a block water when half its pixels are negative, whatever its mean. A shore block centred outside the polygon would count as ocean | S8.6 class rule |
 | C8b allows no Basin water outside the Basin polygon | Two-sided coast noise breaks it, and so does a sea-route buffer that spills past the polygon (one does, near Tavakh-Qarat) | S1 clipped buffers, Gate S2a, S2.4 one-sided shore |
 | The eastern trunk is 308 u long | At the spine's 0.2 m/u it would stand 62 m above its join, over the 50 m plain | S4.5 profiles set from the ends |
 | The northern and wall-east tributaries run 3 to 5 u apart for 60 u | A lowest-neighbour trace can hop between two close channels | S4.2 merge rule |
@@ -670,3 +674,44 @@ from the revision; all are folded in:
 
 **Round 3: Sol, same day.** All six round 2 items closed, no new high finding, verdict "ready to
 freeze for implementation". Milestone M2's Gate S5 is the first machine check of the routing.
+
+**M2 amendments, 2026-11-12** (Fable built M2; Sol, Codex pmartin1913, reviewed the diff: no high
+finding, two medium findings on the gates, both fixed). Gate S5 passes on the real mask.
+
+1. **S4.3, the join.** The three eastern rivers end 12 to 16 u east-north-east of the neck pin; the
+   two Qollari rivers pass through the neck cell on their way to their ends at about (557, 388).
+   Taking the eastern bundle back to the neck cell would make a hairpin of about 125 degrees. So the
+   chain that passes the neck is bent through the neck cell's centre, its downstream end is the
+   **confluence**, the other chains link to the confluence, and the trunk runs confluence, apex,
+   distributary 3. Every river still passes within 10 u of the neck (C5a asks 12).
+2. **S4.5, the trunk profile.** Distributary 3 crosses 70 columns in 42 rows, so trunk cells share
+   rows and `T(row)` would not fall strictly. A trunk cell takes `T(y)` at the mean `y` of the
+   polyline inside the cell. Fan ground still uses `T` at the row centre. S9 must take its bed
+   heights from the same line.
+3. **S4.5, chains.** Above the neck, heights are set chain by chain: the longest path from a join is
+   one chain at `min(0.2, (36 - join height) / length)`, and each side branch starts its own.
+4. **S4.6, bowls.** A bowl is a fan of half-angle 25 degrees and radius `headwater_len_u` behind the
+   entry, plus the cells beside the extension. Its cross slope is 1.5 times the extension's slope;
+   at a lower cross slope the notch is a ridge and the bowl drains past the entry. The extension
+   leaves from the entry cell's centre and its foot may touch no chain cell but the entry.
+5. **S5.5, `s_plain`.** Entry cones lift sources to about 40 m, so the bound uses the highest source
+   on `Lk` in place of 36.3.
+6. **S8.6, the class rule, pulled forward to S5.** S4 needs the coarse classes, so delta-front blocks
+   that pool to water with their centre outside the Basin polygon are given land pixels in S5, and
+   the validator's Gate S2 pass is run again on the amended mask. A sea route's corridor buffer is
+   optional water and may be released by this rule; kept samples, mouth reservations and witnesses
+   may not. A block those keep wet is left and counted (one, at mouth 1, at 2 px/unit).
+7. **S1, mouth reservations.** M1 did not clip them to the Basin polygon. M2 does, as the table says.
+8. **Gate S5, tightened after review.** A skeleton cell must drain to its own next cell; only inside
+   the neck disk may it take a cell further down its path. A lock cell that no source reaches, or
+   a land cell of C5a's core outside the lock, stops the build.
+
+**Found in M2, open (blocks C5b in M4, not M2).** The manifest ends distributary 4 at (525, 338) and
+distributary 5 at (556, 338). Both points are on land: 1.2 u and 4.5 u south of the Basin polygon.
+C5b asks for Basin water within 1 u of the mouth, and no terrain can supply it there. The two paths
+must be extended to the Basin upstream (worldbuilder schematic, then `derive-manifest`), or the
+contract's mouth test changed. Until then their mouth reservations are empty.
+
+**Measured in M2 (4 px/unit, seed 1).** C5a's neck share is 97.3% against a 95% limit: a strip of
+plain under the wall, north of the merged northern chain, drains along the wall's foot to the fan
+and passes more than 12 u from the neck. `s_plain` comes out at 0.062 m/u over `D` = 123 u.

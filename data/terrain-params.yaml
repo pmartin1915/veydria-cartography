@@ -42,6 +42,42 @@ s2:
   noise_beta: 3.0            # spectral falloff k^(-beta/2)
   min_island_area_u2: 2      # topology cleanup: remove smaller unprotected land components
 
+# --- S4 hydro skeleton (PHASE3-SPEC S4) ---
+s4:
+  trunk_distributary: ndjadi_dist_3  # the single coarse outlet (a lowest-neighbour rule cannot split)
+  merge_u: 4                 # chains closer than this are replaced by one chain on their midline
+  skeleton_tol_u: 4          # Gate S4: every canon sample has a cell of its own chain this close
+  side_by_side_u: 2.5        # Gate S4: skeleton cells this close in space ...
+  side_by_side_hops: 12      # ... must share a cell within this many steps downstream
+  neck_pass_u: 2             # the through-chain passes this close to the neck pin (then is bent onto it)
+  outlet_margin_u: 5         # the plain drains to Basin water within outlet_r_u minus this of the port
+  last_land_m: 0.9           # the trunk's last land cell
+  bowl_factor: 4             # a catchment bowl holds this many times the cells its entry area needs
+  bowl_half_angle_deg: 25    # the bowl is a fan this wide, headwater_len_u long, behind the entry
+  bowl_heading_u: 10         # upstream = the reverse of the river's heading over its first this-many units
+  bowl_cross_factor: 1.5     # a bowl's cross slope, as a multiple of its extension's slope (over 1: the notch is a valley)
+  sinks:                     # closed basins (S4.7); radius from here, or the point's extent_u
+    ngon_tso:      { kind: lake, radius_u: 5 }
+    xal_tzintla:   { kind: depression, radius_u: 7 }
+    iferis_sabkha: { kind: sabkha }
+
+# --- S5 floodplain surface and the hydro lock (PHASE3-SPEC S5) ---
+s5:
+  polygon_erode_u: 3         # the floodplain polygon enters Lk eroded by this
+  skeleton_halo_cells: 2     # halo of Lk around every skeleton cell on the plain
+  fan_widen_u: 3             # delta fan: land between the outer distributaries, widened by this
+  fan_apron_max_u: 8         # the fan runs north to the delta-front shore, at most this far
+  shore_rim_cells: 2         # land this close to other water is shore rim, outside Lk
+  levee_m: 0.3               # a cell beside the skeleton stands this far over the highest cell it touches
+  plain_max_m: 48            # max(h on Lk); s_plain is derived from it
+  entry_cone_m: 4            # alluvial cone where a canon river enters the plain ...
+  entry_cone_len_u: 15       # ... falling to nothing over this length of chain
+  divide_margin_m: 0.5       # outside land touching the lock set stands this far above it
+  min_land_m: 0.2            # no constructed cell under this (the validator clamps land at 0.1)
+
+# M2 only: the upland is flat until S3 (provinces) exists.
+m2_flat_upland_m: 300
+
 # --- Spec section 6 (starting values; read by later milestones) ---
 strait_throat_u: 5           # Halkar throat at its narrowest
 apex_m: 9

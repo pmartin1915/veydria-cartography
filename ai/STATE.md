@@ -98,3 +98,16 @@
 - Gates S1, S2a and S2 pass at 2 and 4 px/unit for seeds 1 and 2. On the flat bundle the validator fails only the two shoals, which need relief (M4). Same seed gives the same mask hash. 96 terrain tests pass.
 - Run: `python -m generator.terrain.build <outdir> --ppu 4` (about 2 minutes), then `python -m generator.terrain.validate <outdir> --checks C1,C3,C8`.
 - Next: M2 (hydro skeleton and floodplain surface on a flat upland; Gate S5). It is the first machine check of the spec's routing design.
+
+## 2026-11-12 map hardening Phase 3 M2 built (branch feat/map-phase3-m2)
+- `generator/terrain/hydro.py`: S4 (the river skeleton: canon chains, the merge rule, one trunk down distributary 3, long profiles, catchment bowls behind the two wall entries) and S5 (the lock set and a floodplain surface with no pits), with Gates S4 and S5. The upland is one flat height until M3.
+- **Gate S5 passes** at 2 and 4 px/unit, seeds 1 and 2, judged by the validator's own flood and routing: all five rivers trace along their chains to the Basin with zero fill, no core cell drains to the ocean, 100% reach the Basin at Ki-Mbuhari, 97.3% pass the neck (limit 95%). C5b still fails, as planned: the channel beds are M4. Two builds give the same hash. 124 terrain tests pass.
+- Fable built it. Sol (Codex, pmartin1913) reviewed the diff twice by reading it (its host had no Python): no high finding; two medium findings on the gates, both fixed; nothing new on the second pass.
+- Eight amendments to the frozen spec are written into `PHASE3-SPEC.md` section 14. The main one: the eastern rivers join the Qollari rivers at the confluence just north of the neck, not back at the neck cell.
+- M1 fix: mouth reservations are now clipped to the Basin polygon, as the spec table says.
+- Run: `python -m generator.terrain.build <outdir> --ppu 4` (10 minutes measured with three builds running at once; not timed alone), then `python -m generator.terrain.validate <outdir>/coarse --checks C4,C5`.
+- Watch: each validator gate costs about 2 minutes (a pure-Python flood). Four more gates are coming, against a 15-minute build budget. The fix is a faster flood inside `validate.py`, which is a frozen file, so it needs a decision before M4.
+- Next: M3 (S3 provinces, S6 rain, S7 coarse erosion; Gate S7). `build_hydro` takes the macro field as an argument, so M3 replaces one line in `build.py`. The bowl's notch profile is a straight line today and will need shaping against the real scarp.
+
+### Waiting on Perry
+- **Distributaries 4 and 5 stop short of the Basin.** The schematic ends them at (525, 338) and (556, 338), which is on land, 5 km and 18 km south of the Basin shore. The contract asks for Basin water at each mouth, so those two rows cannot pass until the two channels are drawn through to the shore in the worldbuilder schematic. It does not block M3. It blocks the last gate of M4.
