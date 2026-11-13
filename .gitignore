@@ -53,3 +53,6 @@ SCOPING-*.md
 
 # Sim traces are large; commit summary.csv only (map-hardening Phase 1)
 traces/**/traces.jsonl
+
+# Phase 3 terrain bundles (generated, never committed)
+output/terrain/

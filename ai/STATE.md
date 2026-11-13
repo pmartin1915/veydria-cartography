@@ -92,3 +92,9 @@
 - `research/map-hardening/PHASE3-SPEC.md`: terrain synthesis, 13 stages, each with a gate that runs the validator's own code. Written by Fable, reviewed by Sol (Codex, pmartin1913) in three rounds; all findings folded in.
 - Next: milestone M1 (protection sets, land mask, build runner; Gate S2), via `/orchestrate`. Then M2 (hydro skeleton and floodplain on a flat upland), which is the first machine check of the routing design.
 - Session readings Perry may move are listed in the spec's section 13. None blocks the build.
+
+## 2026-11-12 map hardening Phase 3 M1 built (branch feat/map-phase3-m1)
+- `generator/terrain/`: `protect.py` (S1), `mask.py` (S2), `noise.py`, `params.py`, `build.py`; `data/terrain-params.yaml`. Kimi wrote the modules, Sol reviewed the diff (five findings, all fixed), Claude wrote the tests.
+- Gates S1, S2a and S2 pass at 2 and 4 px/unit for seeds 1 and 2. On the flat bundle the validator fails only the two shoals, which need relief (M4). Same seed gives the same mask hash. 96 terrain tests pass.
+- Run: `python -m generator.terrain.build <outdir> --ppu 4` (about 2 minutes), then `python -m generator.terrain.validate <outdir> --checks C1,C3,C8`.
+- Next: M2 (hydro skeleton and floodplain surface on a flat upland; Gate S5). It is the first machine check of the spec's routing design.

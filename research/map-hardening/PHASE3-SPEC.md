@@ -103,7 +103,7 @@ change the class of a protected pixel.
 | `inland` points | disk of `radius_u + 1` |
 | `land` points | disk of `radius_u` |
 | `land` and `river` route parts | corridor of half-width 1.5 u along the samples C3 keeps |
-| Canon rivers, convergent and distributary | corridor of half-width 3 u (covers `bank_u`), less every mouth reservation below |
+| Canon rivers, convergent and distributary | corridor of half-width 3 u (covers `bank_u`), less every mouth reservation below. Within 4 u of a distributary mouth the corridor is clipped to canon land, because the mouth vertex lies in canon water (amended in M1) |
 | `the_neck` | disk of 12 u |
 | `island` points | disk of 1.5 u at the pin; for `caldera: true`, a ring from 1.7 u to 3 u instead |
 | `coast` points | one **land witness**: a disk of 0.75 u (below) |
