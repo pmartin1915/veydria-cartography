@@ -133,8 +133,8 @@
   <path d="M 560 380 C 550 364, 439 352, 425 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
   <path d="M 560 380 C 550 364, 472 352, 458 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
   <path d="M 560 380 C 550 364, 504 352, 490 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
-  <path d="M 560 380 C 550 364, 539 352, 525 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
-  <path d="M 560 380 C 550 364, 570 352, 556 338" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 536.5 349.5, 522.5 335.5" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
+  <path d="M 560 380 C 550 364, 565 347, 551 333" fill="none" stroke="#4a8ab0" stroke-width="1.3" opacity="0.9"/>
   <circle cx="500" cy="352" r="1" fill="#e6f4ff"/>
   <line x1="500" y1="352" x2="463" y2="376" stroke="#e6f4ff" stroke-width="0.5" opacity="0.8"/>
   <text x="445" y="384" fill="#e6f4ff" font-family="Georgia, serif" font-size="5.5" text-anchor="middle" paint-order="stroke" stroke="#0e1c2c" stroke-opacity="0.55" stroke-width="1.6" stroke-linejoin="round" font-style="italic">Hassag-Nganin</text>

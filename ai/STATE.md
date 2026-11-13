@@ -109,5 +109,7 @@
 - Watch: each validator gate costs about 2 minutes (a pure-Python flood). Four more gates are coming, against a 15-minute build budget. The fix is a faster flood inside `validate.py`, which is a frozen file, so it needs a decision before M4.
 - Next: M3 (S3 provinces, S6 rain, S7 coarse erosion; Gate S7). `build_hydro` takes the macro field as an argument, so M3 replaces one line in `build.py`. The bowl's notch profile is a straight line today and will need shaping against the real scarp.
 
-### Waiting on Perry
-- **Distributaries 4 and 5 stop short of the Basin.** The schematic ends them at (525, 338) and (556, 338), which is on land, 5 km and 18 km south of the Basin shore. The contract asks for Basin water at each mouth, so those two rows cannot pass until the two channels are drawn through to the shore in the worldbuilder schematic. It does not block M3. It blocks the last gate of M4.
+## 2026-11-12 distributaries 4 and 5 drawn through to the Basin (branch fix/distributaries-reach-basin)
+- The schematic ended the fourth and fifth Ndjadi channels on land, 5 km and 18 km short of the Basin shore, so the contract's mouth test (C5b) could never pass for them. Perry chose to draw both through to the shore.
+- Worldbuilder #427 changes the two curves in `geography/veydria-schematic.svg`. This branch syncs that one file, re-derives the manifest (only those two paths change) and the GeoJSON, and rebuilds the terrain: Gate S5 still passes.
+- The schematic here was copied by hand from the worldbuilder branch, because `sync-world-data.mjs` would also have pulled unrelated newer files.

@@ -545,7 +545,7 @@ Found while reading the contract against the geometry. Each has a named answer.
 | A-Tzalan Ford sits on the wall line and needs ground under 300 m within 3 u | The scarp foot must be within 2 u south of the line | S3.4 foot at `o <= -2` |
 | Breath-of-Cloud is 5 u north of the line, 8 u from the wall's west end, and needs 1,800 m within 3 u | The lip must be up by `o = +5` and must not taper before the end vertex | S3.4 lip and quarter-round |
 | The five distributaries are under 2 u apart for the first 8 u below the apex | A bank sample can land in the next channel. At 3 px wide, 12 to 22% of samples do (distributary 2 worst), against a 20% allowance. With one-sample beds it is 3 to 6% | S9 "The fan": one-sample-wide beds, one bed function, a 10% gate |
-| The distributary mouths lie 1 u inside the Basin polygon's south edge (true of 1 to 3 only; see section 14, M2) | The validator calls a block water when half its pixels are negative, whatever its mean. A shore block centred outside the polygon would count as ocean | S8.6 class rule |
+| The distributary mouths lie 1 u inside the Basin polygon's south edge (0.3 to 1.5 u; channels 4 and 5 were redrawn to reach it, section 14) | The validator calls a block water when half its pixels are negative, whatever its mean. A shore block centred outside the polygon would count as ocean | S8.6 class rule |
 | C8b allows no Basin water outside the Basin polygon | Two-sided coast noise breaks it, and so does a sea-route buffer that spills past the polygon (one does, near Tavakh-Qarat) | S1 clipped buffers, Gate S2a, S2.4 one-sided shore |
 | The eastern trunk is 308 u long | At the spine's 0.2 m/u it would stand 62 m above its join, over the 50 m plain | S4.5 profiles set from the ends |
 | The northern and wall-east tributaries run 3 to 5 u apart for 60 u | A lowest-neighbour trace can hop between two close channels | S4.2 merge rule |
@@ -706,11 +706,11 @@ finding, two medium findings on the gates, both fixed). Gate S5 passes on the re
    the neck disk may it take a cell further down its path. A lock cell that no source reaches, or
    a land cell of C5a's core outside the lock, stops the build.
 
-**Found in M2, open (blocks C5b in M4, not M2).** The manifest ends distributary 4 at (525, 338) and
-distributary 5 at (556, 338). Both points are on land: 1.2 u and 4.5 u south of the Basin polygon.
-C5b asks for Basin water within 1 u of the mouth, and no terrain can supply it there. The two paths
-must be extended to the Basin upstream (worldbuilder schematic, then `derive-manifest`), or the
-contract's mouth test changed. Until then their mouth reservations are empty.
+**Found in M2, fixed 2026-11-12.** The schematic ended distributary 4 at (525, 338) and
+distributary 5 at (556, 338), both on land: 1.2 u and 4.5 u south of the Basin polygon. C5b asks for
+Basin water within 1 u of the mouth, and no terrain can supply it there. Perry chose to draw both
+through to the shore (worldbuilder #427). They now end at (522.5, 335.5) and (551, 333), 1.5 u and
+1.2 u inside the polygon, and all five mouths carry a reservation.
 
 **Measured in M2 (4 px/unit, seed 1).** C5a's neck share is 97.3% against a 95% limit: a strip of
 plain under the wall, north of the merged northern chain, drains along the wall's foot to the fan

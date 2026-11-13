@@ -12,6 +12,7 @@ import dataclasses
 import numpy as np
 import pytest
 from scipy import ndimage
+from shapely.geometry import Point
 
 from generator.terrain import hydro as H
 from generator.terrain import mask as M
@@ -270,19 +271,19 @@ def test_amended_mask_keeps_protection_and_pools_to_the_coarse_classes(built, pr
     assert np.array_equal(H.coarse_water(mask, PPU), hydro.water_c)
 
 
-def test_mouths_short_of_the_basin_leave_no_pond(built, canon, prot):
-    """Distributaries 4 and 5 end on land south of the Basin polygon. Their
-    mouth reservations are clipped to it (spec S1), so no pond is cut off
-    inside the delta."""
-    hydro = built["hydro"]
-    xx, yy = H._cell_centres()
-    for rid in ("ndjadi_dist_4", "ndjadi_dist_5"):
-        mx, my = canon["manifest"]["rivers"][rid]["path"][-1]
+def test_every_mouth_reservation_is_basin_water(canon, prot):
+    """Mouth reservations are clipped to the Basin polygon (spec S1), and
+    since the schematic draws all five channels through to the shore, every
+    mouth has one."""
+    mouths = H._distributaries(canon["manifest"], canon["constraints"])
+    assert len(mouths) == 5
+    for path in mouths.values():
+        mx, my = path[-1]
+        assert H.basin_polygon(canon["manifest"]).covers(Point(mx, my))
         disk = P._disk_raster(prot.p_water.shape, PPU, mx, my, 1.0)
-        assert not prot.in_basin_poly[disk].any()  # the whole disk is outside the Basin
-        assert not prot.p_water[disk].any()
-        near = (xx - mx) ** 2 + (yy - my) ** 2 <= 9
-        assert not (hydro.water_c & ~hydro.front & near).any()
+        reserved = disk & prot.in_basin_poly
+        assert reserved.any() and prot.p_water[reserved].all()
+        assert not prot.p_water[disk & ~prot.in_basin_poly & prot.canon_land].any()
 
 
 def test_construction_is_deterministic(built, canon, prot):

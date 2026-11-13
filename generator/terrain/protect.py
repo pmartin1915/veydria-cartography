@@ -338,10 +338,10 @@ def build_protection(manifest: dict, geometry: dict, constraints: dict,
         if path:
             dist_mouths.append((float(path[-1][0]), float(path[-1][1])))
     for n, (mx, my) in enumerate(dist_mouths):
-        # Clipped to the Basin polygon (spec S1 table). A mouth the manifest
-        # draws short of the Basin (distributaries 4 and 5) reserves nothing:
-        # an unclipped disk there is a pond cut off inside the delta, which
-        # the validator's pooling reads as ocean water in the floodplain.
+        # Clipped to the Basin polygon (spec S1 table). A mouth drawn short
+        # of the Basin reserves nothing: an unclipped disk there is a pond
+        # cut off inside the delta, which the validator's pooling reads as
+        # ocean water in the floodplain.
         add(f"mouth reservation {n}", PRIO_MOUTH,
             _disk_raster(grid_shape, ppu, mx, my, f(params, "s1", "mouth_disk_u"))
             & in_basin_poly,
