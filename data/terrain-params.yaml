@@ -1,0 +1,61 @@
+# Phase 3 terrain synthesis parameters (PHASE3-SPEC section 6 + S1/S2).
+# Every tunable number lives here. No coordinates: every position comes from
+# data/coordinate-manifest.yaml or data/terrain-geometry.yaml.
+# Units: _u = schematic units (4 km each); _m = metres; wavelengths in u.
+
+seed: 1
+
+# --- S1 protection sets (PHASE3-SPEC S1) ---
+s1:
+  inland_extra_u: 1            # inland disk = radius_u + this
+  route_corridor_half_width_u: 1.5   # land/river route parts, and the sea-route buffer
+  river_corridor_half_width_u: 3     # canon rivers (covers bank_u)
+  neck_disk_u: 12            # the_neck
+  island_disk_u: 1.5         # island pins
+  island_disk_overrides:
+    kelata_tamu: 2.0         # S9: Kelata-Tamu islet radius 2 u at the pin
+  caldera_ring_inner_u: 1.7  # caldera island ring (caldera: true)
+  caldera_ring_outer_u: 3
+  witness_radius_u: 0.75     # coast witness disks (land and water)
+  witness_clearance_u: 1.5   # witnesses slide clear of kept samples of the other class
+  strait_disk_u: 2           # strait point
+  shoal_ring_inset_u: 0.5    # shoal ring from radius_u - 0.5 to radius_u + 1.5
+  shoal_ring_outset_u: 1.5
+  mouth_disk_u: 1            # per distributary mouth reservation, clipped to the Basin polygon
+  caldera_pool_radius_u: 1.2 # S9
+  caldera_breach_width_u: 0.5  # S9: one breach, this wide, to the nearest coast
+  kelata_channel_width_u: 1.5  # S9: tidal channel at least this wide (islet <-> Kelata)
+
+# --- S2 land mask and coastline (PHASE3-SPEC S2) ---
+s2:
+  free_zone_heading_u: 10    # a coast entering a free zone keeps the heading of its last this-many units
+  free_zone_match_u: 20      # a coast change this far west is the same coast if within this many units
+  throat_half_span_u: 20     # Halkar funnel: |x - px| <= this
+  basin_one_sided_band_u: 10 # Basin shore: n clamped >= 0 within this of the polygon edge
+  delta_front_zone_u: 20     # a = 0 within this of any distributary mouth
+  a_max_u: 4                 # coastline noise amplitude cap
+  amplitude_distance_scale: 0.5  # a = min(a_max, scale * dist_to(P_land or P_water))
+  noise_octave_1_wavelength_u: [40, 120]
+  noise_octave_1_amp: 1.0
+  noise_octave_2_wavelength_u: [6, 20]
+  noise_octave_2_amp: 0.25
+  noise_beta: 3.0            # spectral falloff k^(-beta/2)
+  min_island_area_u2: 2      # topology cleanup: remove smaller unprotected land components
+
+# --- Spec section 6 (starting values; read by later milestones) ---
+strait_throat_u: 5           # Halkar throat at its narrowest
+apex_m: 9
+neck_m: 11
+s_plain_m_per_u_cap: 0.35    # derived in S5; this is the cap
+river_slope_m_per_u_cap: 0.2 # derived in S4; this is the cap
+skeleton_top_m: 36
+fan_ground_m: 0.6
+lock_lowland_m: 80
+wedge_rim_m: 3
+headwater_len_u: 40
+headwater_notch_m: 150
+lem_coarse: { steps: 60, dt: 500, k0: 4.0e-5 }
+lem_fine: { steps: 8, dt: 400, k0: 2.0e-5 }
+river_min_area_km2: 2000
+cap_wall_m: 2850
+cap_all_m: 4700

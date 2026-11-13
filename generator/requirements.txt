@@ -7,3 +7,4 @@ noise>=1.2.2
 matplotlib>=3.8
 jsonschema>=4.0
 pytest>=7
+numba>=0.59
