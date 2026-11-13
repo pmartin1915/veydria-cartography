@@ -715,3 +715,56 @@ through to the shore (worldbuilder #427). They now end at (522.5, 335.5) and (55
 **Measured in M2 (4 px/unit, seed 1).** C5a's neck share is 97.3% against a 95% limit: a strip of
 plain under the wall, north of the merged northern chain, drains along the wall's foot to the fan
 and passes more than 12 u from the neck. `s_plain` comes out at 0.062 m/u over `D` = 123 u.
+
+**M3 amendments, 2026-11-13** (Fable built M3: `provinces.py`, `climate.py`, `lem.py`; Sol, Codex
+pmartin1913, reviewed the diff: no high finding, three medium findings, all fixed). Gate S7 passes
+on the real mask at 2 and 4 px/unit, seed 1, and at 2 px/unit, seed 2. The contract is untouched.
+
+1. **S3.2, weights.** One rule replaces the width table. A province's score is its signed distance
+   plus a bias, and it fades to nothing `soft_u` behind the best score. Uplands have bias 0 and
+   lowlands 30 to 40, so a lowland keeps its level to its own edge and the ramp lies inside the
+   upland. The trough does not compete: it holds weight 1 to its edge and is gone 30 u outside it.
+   The macro field therefore meets the hydro lock without a step. Land that no shape covers (the
+   Basin's south-west rim) is its own low province, the margin.
+2. **S3.4, scarps.** The offset is the signed distance to the high province's own shape, not to the
+   line, so the wall wraps its west end as a round with no special case. Inside a scarp zone the
+   high province's weight is the ramp and the others share the rest.
+3. **S3.3 and S5.1, Apu-Yana.** Its C2 disk (radius 8 at the pin) lies wholly inside the floodplain
+   polygon, which S5 locks under 48 m, so no profile and no stamp could ever meet the band. S3 builds
+   the cone (radius 5 u, 2,300 m, standing 5 u from the pin toward Qollari's flank) and its 80 cells
+   leave the lock set. Gate S5 exempts them from "the core lies inside the lock"; the validator's
+   C5a still traces them. S7 holds the cone. Perry may instead move the pin onto the flank.
+4. **S3.7 and S4.7, sinks.** The three sinks get a flat floor in S3 (Ngon-Tso 4,050 m, Xal-Tzintla
+   3,150 m, the sabkha 15 m), an apron back to the field and ground that stands over the floor all
+   round. Gate S3 asks C2 of them and S7 needs a base level. S9 still shapes them.
+5. **Gate S3** is judged on the composed coarse field, the macro field with the lock on it. Seed 1
+   needs two anchor stamps before erosion (Wasi-Puma, Tepet-Apu) and one after (Breath-of-Cloud).
+6. **S5.1, the trough lowland.** "Below 80 m, connected to the neck" is taken through ground that
+   is not shore rim. Every coast has a low strip, and without this the lock ran round the Basin.
+   Within 40 u of the neck, lowland outside the floodplain polygon stays out of the lock: added
+   there, it opened a way round the neck and C5a's neck share fell to 88%. It is 97.3% again.
+7. **S4.6, bowls.** A bowl is cut into the upland and never built over it: where its distance field
+   stands above the macro field the cell goes back to the macro field (about 450 of 710 reserved
+   cells stay). Inside a scarp zone the cross slope is five times steeper, so the notch crosses
+   the wall as a gorge and costs C6 one station, not three. A bowl cell beside the plain, other
+   than the channel itself, also goes back to the macro field, so it cannot shed into the plain.
+8. **S7, the notch mouth.** The plain beside a notch's mouth stands about 30 m below the river it
+   feeds (S5's rivers run on their own levees). An eroding mouth is captured by that plain and the
+   entry loses its catchment (96 km2 at the northern entry). Bowl cells within 3 cells of the lock
+   and the walls beside them are held. With that the entries collect 44,000 and 94,000 km2 against
+   minimums of 2,000 and 1,000, and the "set the
+   bowl's erodibility to zero" retry stays as the fallback.
+9. **S7, receivers.** The lowest neighbour everywhere, not only on `Lk`: the validator's rule. The
+   two can still differ on exact ties and on sink floors (the validator breaks a tie by flood order
+   and fills a sink), so Gate S7 reads the validator's own area and never the generator's.
+   Diffusion averages over land only. The shore rim, the sinks and the cone are held, and Gate S7
+   stops if any of them, the lock or the water has moved.
+10. **S6, the rain model.** Each stream keeps its bearing, turns partly along a barrier it cannot
+    climb, and rains by what its own bearing climbs. Both travelling and lifted rain thin with the
+    height of the ground, which is what puts the plateau behind the lip in shadow. Relief noise is
+    limited to 45% of the ground's own height, so it never digs a plateau down to sea level.
+
+**Measured in M3 (4 px/unit, seed 1).** A build to S7 takes 7 minutes, of which the validator's two
+floods (Gates S5 and S7) are about 4. Annual rain ranks wall face 0.0167, Qollari east slope 0.0117,
+rim seaward face 0.0098, Ngaru-Bon shelf 0.0079, floodplain 0.0027, Kheshkai interior 0.0021, Irrah
+north 0.0013; the smallest ratio between neighbours is 1.19.
