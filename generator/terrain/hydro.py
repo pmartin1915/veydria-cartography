@@ -60,6 +60,11 @@ DEVIATIONS = (
     "S8.6 (class rule) pulled forward: delta-front blocks that pool to "
     "water with their centre outside the Basin polygon are given land "
     "pixels here, because S4 already needs the coarse classes.",
+    "S4.6 (M3): a catchment bowl is cut into the upland, never built over "
+    "it; where its distance field stands above the macro field the cell "
+    "goes back to the macro field. Inside a scarp zone its cross slope is "
+    "steeper, so the notch crosses the scarp as a gorge.",
+    "S5.1 (M3): the cells of an authored cone (Apu-Yana) never join Lk.",
 )
 
 
@@ -744,6 +749,7 @@ class Hydro:
     s_plain: float
     d_max: float
     report: dict = field(default_factory=dict)
+    lock_exempt: Optional[np.ndarray] = None  # core cells an authored cone keeps out of Lk (S3)
 
     @property
     def built(self) -> np.ndarray:
@@ -774,16 +780,32 @@ def _fan_footprint(land: np.ndarray, front: np.ndarray, manifest: dict,
 
 def lock_set(skel: Skeleton, water_c: np.ndarray, front: np.ndarray,
              macro: np.ndarray, manifest: dict, geometry: dict,
-             constraints: dict, params: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """S5.1 and S5.2: Lk, the shore rim, and the fan footprint."""
+             constraints: dict, params: dict,
+             lock_exempt: Optional[np.ndarray] = None
+             ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """S5.1 and S5.2: Lk, the shore rim, and the fan footprint. `lock_exempt`
+    cells (an authored cone, S3) never join Lk."""
     s5 = params["s5"]
     land = ~water_c
     outlet = constraints["ndjadi_outlet"]
     plain_skel = np.zeros(SHAPE, dtype=bool)
     plain_skel.ravel()[list(skel.plain)] = True
 
+    other_water = water_c & ~front
+    rim = land & ndimage.binary_dilation(other_water, structure=BOX3,
+                                         iterations=int(s5["shore_rim_cells"]))
+
     lk = np.zeros(SHAPE, dtype=bool)
-    low = land & (macro < float(params["lock_lowland_m"]))
+    # The trough lowland joins the neck through ground that is not shore rim:
+    # every coast has a low strip, and a strip is not the trough.
+    low = land & (macro < float(params["lock_lowland_m"])) & ~rim
+    # Near the neck the lock is the polygon's own. Lowland added outside it
+    # there opens a way round the neck, and C5a wants the plain to pass it.
+    neck_x, neck_y = resolve_point(manifest, outlet["neck"])
+    xx, yy = _cell_centres()
+    clear = float(s5["lowland_neck_clear_u"])
+    floodplain_cells = rasterize_mask(resolve_shape(manifest, geometry, outlet["floodplain"]), 1)
+    low &= floodplain_cells | ((xx - neck_x) ** 2 + (yy - neck_y) ** 2 > clear * clear)
     labels, _ = ndimage.label(low, structure=BOX3)
     neck_label = labels.ravel()[skel.neck_cell]
     if neck_label:
@@ -796,21 +818,23 @@ def lock_set(skel: Skeleton, water_c: np.ndarray, front: np.ndarray,
     lk |= fan
     lk &= land
 
-    other_water = water_c & ~front
-    rim = land & ndimage.binary_dilation(other_water, structure=BOX3,
-                                         iterations=int(s5["shore_rim_cells"]))
     lost = plain_skel & rim
     if lost.any():
         r, c = np.argwhere(lost)[0]
         raise GateError("S5", f"skeleton cell ({c},{r}) lies in the shore rim of water "
                               f"the plain must not drain into")
     lk &= ~rim
+    if lock_exempt is not None:
+        if (plain_skel & lock_exempt).any():
+            raise GateError("S5", "a cell exempt from the lock lies on the skeleton")
+        lk &= ~lock_exempt
     fan &= lk
     return lk, rim, fan
 
 
 def build_surface(skel: Skeleton, lk: np.ndarray, fan: np.ndarray,
-                  bowls: np.ndarray, front: np.ndarray, params: dict
+                  bowls: np.ndarray, front: np.ndarray, params: dict,
+                  bowl_cost: Optional[np.ndarray] = None
                   ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """S5.3 to S5.5: frozen sources and the shortest-path field.
 
@@ -897,19 +921,55 @@ def build_surface(skel: Skeleton, lk: np.ndarray, fan: np.ndarray,
         run = _step(skel.parent[line[0]], line[0]) + sum(
             _step(a, b) for a, b in zip(line, line[1:]))
         cost = np.where(bowls == n, factor * rise / run, cost)
+    if bowl_cost is not None:
+        # a gorge where the notch crosses a scarp: the cross slope is steeper there (S3)
+        cost = np.where(bowls > 0, cost * bowl_cost, cost)
     surface = field_from(source, cost)
     surface[~built] = np.nan
     return surface, fan_src, s_plain, d_max
 
 
+def carve_bowls(surface: np.ndarray, macro: np.ndarray, bowls: np.ndarray,
+                lk: np.ndarray, skel: Skeleton) -> np.ndarray:
+    """A catchment bowl is cut into the upland, never built over it: a bowl
+    cell whose distance-field height is above the macro field goes back to
+    the macro field. The extension and the cells beside it always stay. What
+    is kept is closed under "has a strictly lower kept neighbour", so the
+    bowl is still pit-free with one way out."""
+    source = np.zeros(SHAPE, dtype=bool)
+    for line in skel.ext.values():
+        source.ravel()[line] = True
+    is_skel = np.zeros(SHAPE, dtype=bool)
+    is_skel.ravel()[list(skel.parent)] = True
+    channel = source
+    source = ndimage.binary_dilation(source, structure=BOX3) & (bowls > 0)
+    keep = (bowls > 0) & ((surface <= macro) | source)
+    # A bowl cell beside the plain, other than the channel itself, would shed
+    # into the plain and not through the entry: the plain beside a notch's
+    # mouth is lower than the river. Those cells go back to the macro field,
+    # and the S5.6 boundary then stands them over the channel as its walls.
+    leak = (bowls > 0) & ~channel & ndimage.binary_dilation(lk, structure=BOX3)
+    source &= ~leak
+    keep &= ~leak
+    while True:
+        standing = np.where(keep | lk | is_skel, surface, np.inf)
+        lowest = ndimage.minimum_filter(standing, size=3, mode="constant", cval=np.inf)
+        drop = keep & ~source & ~(lowest < surface)
+        if not drop.any():
+            return np.where(keep, bowls, 0).astype(bowls.dtype)
+        keep &= ~drop
+
+
 def build_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
                 manifest: dict, geometry: dict, constraints: dict,
-                params: dict) -> tuple[Hydro, np.ndarray]:
+                params: dict, lock_exempt: Optional[np.ndarray] = None,
+                bowl_cost: Optional[np.ndarray] = None) -> tuple[Hydro, np.ndarray]:
     """Run S4 and S5 and their gates. `macro` is the coarse upland field
-    (S3; flat in M2). Returns the Hydro result and the fine mask, amended by
-    the delta-front class rule."""
+    (S3; flat in the M2 tests). `lock_exempt` and `bowl_cost` come from S3
+    (the cells of an authored cone; the gorge multiplier). Returns the Hydro
+    result and the fine mask, amended by the delta-front class rule."""
     hydro, amended = construct_hydro(mask, prot, macro, manifest, geometry,
-                                     constraints, params)
+                                     constraints, params, lock_exempt, bowl_cost)
     if hydro.report["front_blocks"]["fixed"]:
         # the mask changed after Gate S2 passed it: pass it again
         M.gate_s2_validator(amended, prot.ppu, constraints, manifest, geometry)
@@ -919,7 +979,8 @@ def build_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
 
 def construct_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
                     manifest: dict, geometry: dict, constraints: dict,
-                    params: dict) -> tuple[Hydro, np.ndarray]:
+                    params: dict, lock_exempt: Optional[np.ndarray] = None,
+                    bowl_cost: Optional[np.ndarray] = None) -> tuple[Hydro, np.ndarray]:
     """S4 and S5 without the validator-judged gates (Gate S4 still runs).
     `build_hydro` is the entry point; this exists so the construction can be
     exercised without the validator's two-minute flood."""
@@ -932,7 +993,7 @@ def construct_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
     s4_report = gate_s4(skel, water_c, front, manifest, constraints, params)
 
     lk, rim, fan = lock_set(skel, water_c, front, macro, manifest, geometry,
-                            constraints, params)
+                            constraints, params, lock_exempt)
     sinks, sink_list = sink_raster(manifest, constraints, params)
     bowls = bowl_raster(skel, water_c, lk, rim, sinks, manifest, constraints, params)
     # cells beside an extension belong to its bowl, not to the plain
@@ -941,7 +1002,10 @@ def construct_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
     if (sinks > 0)[lk | (bowls > 0)].any():
         raise GateError("S4", "a declared sink lies on the plain or in a catchment bowl")
 
-    surface, fan_src, s_plain, d_max = build_surface(skel, lk, fan, bowls, front, params)
+    surface, fan_src, s_plain, d_max = build_surface(skel, lk, fan, bowls, front, params,
+                                                     bowl_cost)
+    reserved = {rid: int((bowls == n).sum()) for n, rid in enumerate(skel.ext, start=1)}
+    bowls = carve_bowls(surface, macro, bowls, lk, skel)
     built = lk | (bowls > 0)
     unreached = built & ~np.isfinite(surface)
     if unreached.any():  # S5.5: every non-source cell of Lk was reached
@@ -971,10 +1035,11 @@ def construct_hydro(mask: np.ndarray, prot: Protection, macro: np.ndarray,
     hydro = Hydro(water_c=water_c, front=front, skeleton=skel, lk=lk, rim=rim,
                   bowls=bowls, sinks=sinks, sink_list=sink_list, fan=fan_src,
                   released_water=released,
-                  coarse=coarse, s_plain=s_plain, d_max=d_max)
+                  coarse=coarse, s_plain=s_plain, d_max=d_max, lock_exempt=lock_exempt)
     hydro.report = {
         "front_blocks": front_counts,
         "lk_cells": int(lk.sum()),
+        "bowl_cells_reserved": reserved,
         "bowl_cells": {rid: int((bowls == n).sum())
                        for n, rid in enumerate(skel.ext, start=1)},
         "fan_cells": int(fan_src.sum()),
@@ -1014,6 +1079,9 @@ def gate_s5(hydro: Hydro, manifest: dict, geometry: dict, constraints: dict,
     if core is None:
         raise GateError("S5", "the floodplain shape does not resolve")
     core_off_lock = core & ~water_c & ~hydro.lk
+    if hydro.lock_exempt is not None:
+        # an authored cone stands in the core; C5a below still traces its cells
+        core_off_lock &= ~hydro.lock_exempt
     if core_off_lock.any():
         r, c = np.argwhere(core_off_lock)[0]
         raise GateError("S5", f"{int(core_off_lock.sum())} land cells of C5a's core are "

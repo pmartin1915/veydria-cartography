@@ -56,15 +56,19 @@ s4:
   bowl_half_angle_deg: 25    # the bowl is a fan this wide, headwater_len_u long, behind the entry
   bowl_heading_u: 10         # upstream = the reverse of the river's heading over its first this-many units
   bowl_cross_factor: 1.5     # a bowl's cross slope, as a multiple of its extension's slope (over 1: the notch is a valley)
+  entry_area_margin: 2       # Gate S7: the validator's area at an entry is this many times entry_min_area_km2
   sinks:                     # closed basins (S4.7); radius from here, or the point's extent_u
-    ngon_tso:      { kind: lake, radius_u: 5 }
-    xal_tzintla:   { kind: depression, radius_u: 7 }
-    iferis_sabkha: { kind: sabkha }
+    # floor_m: the flat floor S3 gives the sink; apron_u: the blend back to the field;
+    # rim_m over rim_u: ground this far over the floor all round it (S9 shapes the rest)
+    ngon_tso:      { kind: lake, radius_u: 5, floor_m: 4050, apron_u: 6, rim_m: 60, rim_u: 2 }
+    xal_tzintla:   { kind: depression, radius_u: 7, floor_m: 3150, apron_u: 10, rim_m: 150, rim_u: 3 }
+    iferis_sabkha: { kind: sabkha, floor_m: 15, apron_u: 12, rim_m: 5, rim_u: 2 }
 
 # --- S5 floodplain surface and the hydro lock (PHASE3-SPEC S5) ---
 s5:
   polygon_erode_u: 3         # the floodplain polygon enters Lk eroded by this
   skeleton_halo_cells: 2     # halo of Lk around every skeleton cell on the plain
+  lowland_neck_clear_u: 40   # within this of the neck, trough lowland outside the floodplain polygon stays out of Lk
   fan_widen_u: 3             # delta fan: land between the outer distributaries, widened by this
   fan_apron_max_u: 8         # the fan runs north to the delta-front shore, at most this far
   shore_rim_cells: 2         # land this close to other water is shore rim, outside Lk
@@ -75,11 +79,141 @@ s5:
   divide_margin_m: 0.5       # outside land touching the lock set stands this far above it
   min_land_m: 0.2            # no constructed cell under this (the validator clamps land at 0.1)
 
-# M2 only: the upland is flat until S3 (provinces) exists.
+# The M2 tests still build S4 and S5 on a flat upland of this height.
 m2_flat_upland_m: 300
+
+# --- S3 provinces and the macro field (PHASE3-SPEC S3) ---
+s3:
+  # A province's score is its signed distance (u, positive inside) plus bias_u; it fades to
+  # nothing soft_u behind the best score. Uplands have bias 0, so a lowland keeps its level to
+  # its own edge and the ramp lies inside the upland. The trough does not compete (overlay). grain_deg: ridge direction, clockwise from
+  # east in the frame (y down); none = no grain. relief_m: relief-noise amplitude.
+  provinces:
+    kheshkai:     { shape: civilizations.kheshkai,  bias_u: 0,  soft_u: 40, grain_deg: 5,   relief_m: 600 }
+    ngaru_bon:    { shape: civilizations.ngaru_bon, bias_u: 0,  soft_u: 40, grain_deg: 0,   relief_m: 700 }
+    qollari:      { shape: civilizations.qollari,   bias_u: 30, soft_u: 30, grain_deg: 45,  relief_m: 900 }
+    ndjadi:       { shape: civilizations.ndjadi,    overlay: true, reach_u: 30, relief_m: 3 }  # the trough: weight 1 to its edge, gone reach_u outside it
+    southern_rim: { shape: land.southern_rim,       bias_u: 30, soft_u: 30, grain_deg: -10, relief_m: 220 }
+    irrah_north:  { shape: civilizations.irrah,     bias_u: 40, soft_u: 20, relief_m: 200 }
+    irrah_se:     { shape: "civilizations.irrah.extra_polygons[0]", bias_u: 40, soft_u: 20, grain_deg: -60, relief_m: 250 }
+    north_arm:    { shape: land.north_arm,          bias_u: 40, soft_u: 30, grain_deg: 0,   relief_m: 280 }
+    margin:       { bias_u: 40, soft_u: 20, relief_m: 60 }   # land no shape covers
+  margin_min_width_u: 3      # land no shape covers counts as margin only where it is wider than twice this
+  warp_wavelength_u: [60, 200]
+  scarp_zone_u: [12, 20]     # a scarp owns the field within 12 u of its line and hands back by 20 u
+  # ramp_u: the cross-profile runs from the low side's level at the first offset to the high
+  # province's profile at the second (offsets in u, positive on the high side).
+  scarps:
+    kheshkai_wall:
+      high: kheshkai
+      ramp_u: [-2, 5]
+      cap_m: 2850            # C6 allows 3000
+      cap_strip_u: [0, 12]
+      cap_fade_u: 8
+      floor_m: 1950          # C6 asks 1800
+      floor_strip_u: [5, 8]
+      floor_fade_u: 2
+      floor_drop_m: 500
+    kheshkai_east_margin:
+      high: kheshkai
+      ramp_u: [-3.5, 3.5]
+    ngaru_bon_west_escarpment:
+      high: ngaru_bon
+      ramp_u: [-3.5, 3.5]
+      floor_m: 1300          # C6 asks 1200
+      floor_strip_u: [4, 8]
+      floor_fade_u: 2
+      floor_drop_m: 400
+  profiles:
+    kheshkai:
+      lip_m: 2200
+      lip_east_m: 1300       # the east margin: the same form at half height
+      lip_taper_u: [-15, 85] # the lip falls from lip_m to lip_east_m over this span, measured from the east margin's west end
+      interior_m: 3900
+      east_drop: 0.35        # the interior is this much lower east of the plain's east end ...
+      east_drop_span: [0.4, 1.0]  # ... over this fraction of the east margin's length
+      rise_u: 160
+      rises_from: [ndjadi, irrah_north, irrah_se]
+    ngaru_bon:
+      shelf_m: [1300, 1900]
+      shelf_lead_u: 5
+      shelf_u: 30
+      crown_m: 4000
+      crown_lead_u: 10
+      crown_u: 80
+      rises_from: [irrah_north]
+    qollari:   { foot_m: 1200, massif_m: 3700, rise_u: 70 }
+    ndjadi:    { low_m: 4, high_m: 50, tilt_u: 420 }
+    southern_rim:
+      crest_m: 600
+      crest_east_m: 1150
+      east_rise_span: [0.8, 1.0]  # fraction of the crest line over which it rises to crest_east_m
+      bench_m: 150
+      seaward_u: 18
+      landward_base_m: 90
+      landward_u: 55
+    irrah_north: { plateau_m: 350, step_m: 450, step_u: 50, steps_toward: [ngaru_bon] }
+    irrah_se:    { steppe_m: 300, escarpment_m: 1000, escarpment_u: 60, shore_u: 4 }
+    north_arm:   { base_m: 250, rise_m: 500, rise_u: 40 }
+    margin:      { base_m: 90, rise_m: 250, rise_u: 30 }
+    oravan:      { peak_m: 2800, cone_power: 1.6, full_radius_u: 20, shore_m: 20, relief_m: 300 }
+  coast_base_m: 10           # land rises from the sea no faster than coast_slope
+  coast_slope_m_per_u: 160
+  min_land_m: 2
+  relief_wavelength_u: [12.5, 167]
+  relief_beta: 1.7
+  relief_ridge_gain: 1.3
+  relief_low_wavelength_u: [60, 400]
+  relief_low_gain: 0.25
+  anchor_taper_u: 3          # relief noise falls to zero this close to an anchor disk
+  shore_taper_u: 6           # ... and to zero at the shore
+  relief_max_share: 0.45     # relief amplitude is at most this share of the ground's own height
+  max_stamps: 8              # more anchor stamps than this means a profile is wrong
+  # A cone the contract asks for where no province profile can reach. Apu-Yana's C2 disk lies
+  # wholly inside the floodplain polygon; the cone stands toward_edge_u from the pin toward
+  # the polygon's edge (Qollari's flank), and its cells leave the hydro lock.
+  cones:
+    apu_yana: { leaves: ndjadi, toward_edge_u: 5, radius_u: 5, peak_m: 2300, cone_power: 1.2 }
+  gorge_factor: 5            # a catchment bowl's cross slope is this many times steeper inside a scarp zone ...
+  gorge_zone_u: [12, 18]     # ... which ends between these distances from the hard line
+
+# --- S6 rain, first pass (PHASE3-SPEC S6) ---
+s6:
+  cell_u: 4                  # rain is solved on a grid this coarse and interpolated
+  terrain_smooth_u: 7        # winds and uplift see terrain smoothed this far
+  block_slope_m_per_u: 60    # an upslope this steep turns the wind along the barrier ...
+  block_max: 0.35            # ... by at most this share of its upslope component
+  min_speed: 0.35            # a blocked wind keeps at least this fraction of its speed
+  base_rain: 0.0065          # fraction of the moisture that falls per unit of travel in humid air
+  base_scale_height_m: 550  # ... thinning with the height of the ground by this scale height
+  dry_air: 0.24              # air with less moisture than this rains only when it is lifted
+  uplift_rain_per_m: 0.00018  # fraction of the moisture that falls per metre climbed
+  lift_scale_height_m: 3500  # ... thinning with the height of the ground by this scale height
+  recharge_per_u: 0.014       # over water the stream regains moisture at this rate
+  # from_deg is the compass bearing the wind blows from. moisture is the stream's strength
+  # where it enters; over the cold water off the frankincense coast it is cold_water.moisture.
+  streams:
+    summer_se:  { season: summer, from_deg: 118, moisture: 1.0 }
+    summer_sw:  { season: summer, from_deg: 213, moisture: 0.33 }
+    winter_w:   { season: winter, from_deg: 255, moisture: 0.24 }
+  cold_water: { province: irrah_se, reach_u: 56, moisture: 0.2, streams: [summer_se] }
+  rock_wavelength_u: [80, 400]
+  rock_range: [0.6, 1.4]
+  limestone: { rock: 1.3, provinces: [north_arm, irrah_se] }
+  slope_min_m_per_u: 70      # Gate S6: a slope this steep, facing east, counts as an east slope
+  rain_floor: 0.3            # K = K0 * rock * (rain_floor + rain_norm)
+  bowl_erodibility: 0.25     # catchment bowls erode at this fraction of the normal rate
+
+# --- S7 coarse erosion (PHASE3-SPEC S7) ---
+s7:
+  m: 0.5
+  diffusion: 0.1
+  flood_eps_m: 0.001
+  mouth_hold_cells: 3        # bowl cells this close to the hydro lock are held (the notch's mouth)
 
 # --- Spec section 6 (starting values; read by later milestones) ---
 strait_throat_u: 5           # Halkar throat at its narrowest
+province_warp_u: 12          # province edges are displaced by at most this (less beside a tight C9 core)
 apex_m: 9
 neck_m: 11
 s_plain_m_per_u_cap: 0.35    # derived in S5; this is the cap
