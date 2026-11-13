@@ -1,7 +1,8 @@
 """Phase 3 milestone M1: noise, S1 protection sets, S2 land mask and gates.
 
 The real-data tests run at 2 px/unit and share one S1 result (S1 does not
-depend on the seed), so the module costs about a minute.
+depend on the seed; `canon` and `prot` live in conftest.py), so the module
+costs about a minute.
 """
 
 from __future__ import annotations
@@ -14,14 +15,7 @@ from scipy import ndimage
 
 from generator.terrain import mask as M
 from generator.terrain import protect as P
-from generator.terrain.canon import (
-    DATA_DIR,
-    load_constraints,
-    load_geometry,
-    load_manifest,
-)
 from generator.terrain.noise import field_seed, spectral_field
-from generator.terrain.params import load_params
 
 PPU = 2
 BANDS = [(40.0, 120.0, 1.0), (6.0, 20.0, 0.25)]
@@ -64,22 +58,6 @@ def test_anisotropy_changes_the_field():
 
 
 # --- real data: S1 and S2 ----------------------------------------------------
-
-@pytest.fixture(scope="module")
-def canon():
-    return {
-        "manifest": load_manifest(DATA_DIR / "coordinate-manifest.yaml"),
-        "geometry": load_geometry(DATA_DIR / "terrain-geometry.yaml"),
-        "constraints": load_constraints(DATA_DIR / "terrain-constraints.yaml"),
-        "params": load_params(),
-    }
-
-
-@pytest.fixture(scope="module")
-def prot(canon):
-    return P.build_protection(canon["manifest"], canon["geometry"],
-                              canon["constraints"], canon["params"], PPU)
-
 
 @pytest.fixture(scope="module", params=[1, 2])
 def stages(request, canon, prot):

@@ -72,6 +72,9 @@ class Protection:
     canon_land: np.ndarray  # fine raster of the canon mask (spec A1)
     in_basin_poly: np.ndarray  # fine raster of the Basin polygon
     mouth_cut: np.ndarray  # fine raster of the mouth-cut disk (spec C8b)
+    # P_water pixels claimed only by a sea route's optional corridor buffer
+    # (never a kept sample). The delta-front class rule in S5 may release these.
+    p_water_buffer: Optional[np.ndarray] = None
 
     @property
     def protected(self) -> np.ndarray:
@@ -335,8 +338,13 @@ def build_protection(manifest: dict, geometry: dict, constraints: dict,
         if path:
             dist_mouths.append((float(path[-1][0]), float(path[-1][1])))
     for n, (mx, my) in enumerate(dist_mouths):
+        # Clipped to the Basin polygon (spec S1 table). A mouth the manifest
+        # draws short of the Basin (distributaries 4 and 5) reserves nothing:
+        # an unclipped disk there is a pond cut off inside the delta, which
+        # the validator's pooling reads as ocean water in the floodplain.
         add(f"mouth reservation {n}", PRIO_MOUTH,
-            _disk_raster(grid_shape, ppu, mx, my, f(params, "s1", "mouth_disk_u")),
+            _disk_raster(grid_shape, ppu, mx, my, f(params, "s1", "mouth_disk_u"))
+            & in_basin_poly,
             water=True)
 
     caldera_pool = None
@@ -515,8 +523,10 @@ def build_protection(manifest: dict, geometry: dict, constraints: dict,
                     in_basin_poly, mouth_cut)
     p_land = (owner >= 0) & ~is_water
     p_water = (owner >= 0) & is_water
+    buffer_seqs = [src.seq for src in sources if src.name.startswith("sea corridor ")]
+    p_water_buffer = p_water & np.isin(owner, buffer_seqs)
 
     gate_s1_disjoint(p_land, p_water)
     return Protection(ppu=ppu, p_land=p_land, p_water=p_water,
                       canon_land=canon_land, in_basin_poly=in_basin_poly,
-                      mouth_cut=mouth_cut)
+                      mouth_cut=mouth_cut, p_water_buffer=p_water_buffer)
